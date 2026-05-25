@@ -34,14 +34,25 @@ const AUTH_STORAGE_KEYS = {
   LEGACY_ACCESS_TOKEN: 'auth_token',
 } as const;
 
+/** Browser calls same-origin `/api` (Next proxy); SSR hits backend directly. */
+function getApiBaseUrl(): string {
+  if (typeof window !== 'undefined') {
+    const configured = process.env.NEXT_PUBLIC_API_URL;
+    return configured && configured.length > 0 ? configured : '/api';
+  }
+  return (
+    process.env.BACKEND_API_BASE_URL ??
+    process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL ??
+    'http://localhost:5000/api'
+  );
+}
+
 class ApiClient {
   private baseURL: string;
   private defaultHeaders: Record<string, string>;
 
   constructor() {
-    this.baseURL =
-      (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_API_URL) ||
-      'http://localhost:3001';
+    this.baseURL = getApiBaseUrl();
     this.defaultHeaders = {
       'Content-Type': 'application/json',
     };
