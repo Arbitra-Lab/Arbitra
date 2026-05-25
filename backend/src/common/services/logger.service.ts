@@ -59,6 +59,19 @@ function createRedactor(options: {
       return value.map((v) => redact(v, depth + 1));
     }
 
+    if (depth === 0) {
+      const obj = value as AnyRecord;
+      for (const [k, v] of Object.entries(obj)) {
+        const nk = normalizeKey(k);
+        if (redactSet.has(nk)) {
+          obj[k] = placeholder;
+        } else {
+          obj[k] = redact(v, depth + 1);
+        }
+      }
+      return obj;
+    }
+
     const obj = value as AnyRecord;
     const out: AnyRecord = {};
     for (const [k, v] of Object.entries(obj)) {
