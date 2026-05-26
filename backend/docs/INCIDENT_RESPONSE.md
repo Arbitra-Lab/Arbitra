@@ -35,6 +35,7 @@ This document defines the end-to-end incident response procedures for the Chioma
 - [Comprehensive Monitoring](./COMPREHENSIVE_MONITORING.md) — metrics, alerting, observability
 - [Disaster Recovery Plan](./deployment/DISASTER_RECOVERY_PLAN.md) — full platform outage and DR scenarios
 - [Error Handling](./ERROR_HANDLING.md) — exception filters, error classification
+- [Resilience Patterns](./RESILIENCE.md) — fallback, bulkhead, graceful degradation, and the `IncidentService`
 - [Security Policies](./security/SECURITY_POLICIES_AND_STANDARDS.md) — breach response, encryption
 - [Backup and Recovery](./deployment/BACKUP_AND_RECOVERY.md) — database restore, file recovery
 
@@ -420,6 +421,35 @@ Track these incident metrics to measure response effectiveness:
 | **MTTR** (Mean Time to Resolve)     | ≤4 hours   | Time from alert to full resolution           |
 | **Incident Rate**                   | Decreasing | Number of SEV1/SEV2 incidents per month      |
 | **Repeat Incident Rate**            | <10%       | Incidents with same root cause               |
+
+### Programmatic Incident Tracking
+
+The backend exposes an in-process `IncidentService`
+(`src/common/resilience/incident.service.ts`) that mirrors the record and
+timeline described above. It is intended for in-process coordination and for
+surfacing current incident status — not as the system of record.
+
+- **Identifiers** follow the documented `INC-YYYY-NNN` format.
+- **Lifecycle** transitions map to the documented statuses (`open` →
+  `investigating` → `mitigating` → `monitoring` → `resolved` / `closed`), and
+  `mitigatedAt` / `resolvedAt` are stamped automatically.
+- **Metrics** (`getMetrics`) compute time-to-detect, time-to-mitigate, and
+  time-to-resolve in line with the MTTM / MTTR targets above.
+- **Degradation linkage**: declaring or resolving an incident recomputes the
+  platform degradation level from the highest open severity (SEV1 → `SEVERE`,
+  SEV2 → `PARTIAL`), so non-essential features are shed for the duration of an
+  active incident. See [Resilience Patterns](./RESILIENCE.md).
+
+```ts
+const incident = incidents.declare({
+  title: 'API 503 errors on /api/v1/properties',
+  severity: IncidentSeverity.SEV2,
+  affectedServices: ['API', 'Property Search'],
+});
+incidents.addEvent(incident.id, 'Rollback initiated to v2.4.0');
+incidents.mitigate(incident.id, 'Rollback complete');
+incidents.resolve(incident.id, 'Error rate <0.1% for 15 minutes');
+```
 
 ---
 

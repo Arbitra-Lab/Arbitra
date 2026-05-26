@@ -90,6 +90,11 @@ export enum ErrorCode {
   CONFIGURATION_ERROR = 'SYS_11004',
   MAINTENANCE_MODE = 'SYS_11005',
 
+  // Resilience & Degradation (12xxx)
+  BULKHEAD_CAPACITY_EXCEEDED = 'RESIL_12001',
+  SERVICE_DEGRADED = 'RESIL_12002',
+  FEATURE_DISABLED = 'RESIL_12003',
+
   // Unknown
   UNKNOWN_ERROR = 'UNKNOWN',
 }
@@ -194,6 +199,13 @@ export const ERROR_MESSAGES: Record<ErrorCode, string> = {
   [ErrorCode.NOT_IMPLEMENTED]: 'This feature is not yet implemented',
   [ErrorCode.CONFIGURATION_ERROR]: 'System configuration error',
   [ErrorCode.MAINTENANCE_MODE]: 'System is under maintenance',
+
+  // Resilience & Degradation
+  [ErrorCode.BULKHEAD_CAPACITY_EXCEEDED]:
+    'Service is at capacity. Please try again shortly',
+  [ErrorCode.SERVICE_DEGRADED]: 'Service is currently running in a degraded state',
+  [ErrorCode.FEATURE_DISABLED]:
+    'This feature is temporarily unavailable due to degraded service',
 
   // Unknown
   [ErrorCode.UNKNOWN_ERROR]: 'An unknown error occurred',

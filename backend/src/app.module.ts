@@ -56,6 +56,7 @@ import { InquiriesModule } from './modules/inquiries/inquiries.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { LockModule } from './common/lock';
 import { IdempotencyModule } from './common/idempotency';
+import { ResilienceModule } from './common/resilience';
 import { FraudModule } from './modules/fraud/fraud.module';
 import { TransactionModule } from './modules/transactions/transaction.module';
 
@@ -70,6 +71,7 @@ const appLogger = new Logger('AppModule');
     LoggerModule,
     LockModule,
     IdempotencyModule,
+    ResilienceModule,
     require('./common/services/encryption.module').EncryptionModule,
     process.env.NODE_ENV === 'test'
       ? CacheModule.register({
