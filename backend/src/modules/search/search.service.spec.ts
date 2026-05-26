@@ -284,6 +284,52 @@ describe('SearchService', () => {
       );
     });
 
+    it('applies location, type, and explicit status filters', async () => {
+      const qb = setupQbForSearch([], 0);
+
+      await service.searchProperties({
+        city: 'Lagos',
+        state: 'Lagos State',
+        country: 'NG',
+        type: PropertyType.APARTMENT,
+        status: ListingStatus.DRAFT,
+      });
+
+      expect(qb.andWhere).toHaveBeenCalledWith(
+        'property.city ILIKE :city',
+        { city: '%Lagos%' },
+      );
+      expect(qb.andWhere).toHaveBeenCalledWith(
+        'property.state ILIKE :state',
+        { state: '%Lagos State%' },
+      );
+      expect(qb.andWhere).toHaveBeenCalledWith(
+        'property.country = :country',
+        { country: 'NG' },
+      );
+      expect(qb.andWhere).toHaveBeenCalledWith('property.type = :type', {
+        type: PropertyType.APARTMENT,
+      });
+      expect(qb.andWhere).toHaveBeenCalledWith('property.status = :status', {
+        status: ListingStatus.DRAFT,
+      });
+    });
+
+    it('applies bedroom and bathroom minimum filters', async () => {
+      const qb = setupQbForSearch([], 0);
+
+      await service.searchProperties({ bedrooms: 2, bathrooms: 1 });
+
+      expect(qb.andWhere).toHaveBeenCalledWith(
+        'property.bedrooms >= :bedrooms',
+        { bedrooms: 2 },
+      );
+      expect(qb.andWhere).toHaveBeenCalledWith(
+        'property.bathrooms >= :bathrooms',
+        { bathrooms: 1 },
+      );
+    });
+
     // ── full-text search ────────────────────────────────────────────────────
 
     it('applies full-text search_vector filter when query is provided', async () => {
@@ -384,6 +430,26 @@ describe('SearchService', () => {
       expect(result.facets.amenities.parking).toBe(0);
       expect(result.facets.amenities.petsAllowed).toBe(0);
     });
+
+    it('maps type and city facet rows to numeric counts', async () => {
+      const qb = buildMockQb({
+        getMany: jest.fn().mockResolvedValue([]),
+        getCount: jest.fn().mockResolvedValue(0),
+        getRawMany: jest
+          .fn()
+          .mockResolvedValueOnce([{ type: PropertyType.HOUSE, count: '4' }])
+          .mockResolvedValueOnce([{ city: 'Accra', count: '3' }]),
+        getRawOne: jest.fn().mockResolvedValue(null),
+      });
+      mockPropertyRepo.createQueryBuilder.mockReturnValue(qb);
+
+      const result = await service.searchProperties({});
+
+      expect(result.facets.types).toEqual([
+        { type: PropertyType.HOUSE, count: 4 },
+      ]);
+      expect(result.facets.cities).toEqual([{ city: 'Accra', count: 3 }]);
+    });
   });
 
   // ─── suggest ─────────────────────────────────────────────────────────────────
@@ -415,6 +481,20 @@ describe('SearchService', () => {
       expect(result).toContain('Lagos');
       // Lagos should appear only once despite two properties in same city
       expect(result.filter((s) => s === 'Lagos')).toHaveLength(1);
+    });
+
+    it('limits suggestions after combining titles and cities', async () => {
+      const qb = buildMockQb({
+        getMany: jest.fn().mockResolvedValue([
+          { title: 'Modern Flat', city: 'Lagos' },
+          { title: 'Modern Duplex', city: 'Abuja' },
+          { title: 'Modern Loft', city: 'Kigali' },
+        ]),
+      });
+      mockPropertyRepo.createQueryBuilder.mockReturnValue(qb);
+
+      await expect(service.suggest('mo', 3)).resolves.toHaveLength(3);
+      expect(qb.limit).toHaveBeenCalledWith(3);
     });
 
     it('uses cache for suggestions', async () => {
