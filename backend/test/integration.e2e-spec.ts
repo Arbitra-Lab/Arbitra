@@ -89,6 +89,7 @@ describe('Integration (e2e)', () => {
       expect(res.headers['content-type']).toMatch(/text\/html/);
       expect(res.text).toContain('Chioma Developer Portal');
       expect(res.text).toContain('api/docs');
+      expect(res.text).toContain('Documentation');
     });
   });
 

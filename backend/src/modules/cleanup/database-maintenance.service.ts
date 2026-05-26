@@ -54,7 +54,7 @@ export class DatabaseMaintenanceService {
       return [];
     }
 
-    const rows = (await this.dataSource.query(
+    const rows = await this.dataSource.query(
       `
         SELECT relname AS "tableName", n_dead_tup AS "deadTuples"
         FROM pg_stat_user_tables
@@ -62,7 +62,7 @@ export class DatabaseMaintenanceService {
         ORDER BY n_dead_tup DESC
       `,
       [minimumDeadTuples],
-    )) as Array<{ tableName: string; deadTuples: string | number }>;
+    );
 
     return rows.map((row) => ({
       tableName: row.tableName,

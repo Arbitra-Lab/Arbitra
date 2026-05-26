@@ -65,6 +65,7 @@ The API will be available at `http://localhost:5000/api` and Swagger UI at `http
 | Document                                                        | Summary                                                   |
 | --------------------------------------------------------------- | --------------------------------------------------------- |
 | [API Overview](./api/api-documentation.md)                      | Base URL, auth, all endpoint groups                       |
+| [Usage Guide](./api/USAGE_GUIDE.md)                             | Step-by-step integration walkthrough with curl examples |
 | [API Standards](./api/API-STANDARDS.md)                         | Annotation conventions, request/response formats          |
 | [Documentation Standards](./DOCUMENTATION-STANDARDS.md)         | README, code comments, API docs, architecture standards   |
 | [Authentication Guide](./api/AUTHENTICATION.md)                 | JWT flow, SEP-0010, refresh tokens                        |

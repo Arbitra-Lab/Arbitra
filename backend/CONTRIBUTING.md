@@ -854,6 +854,13 @@ make security-lint
 make security-test
 ```
 
+## API Documentation
+
+- [docs/README.md](./docs/README.md) — documentation hub
+- [docs/api/api-documentation.md](./docs/api/api-documentation.md) — API reference
+- [docs/api/USAGE_GUIDE.md](./docs/api/USAGE_GUIDE.md) — integration walkthrough
+- Interactive Swagger: `http://localhost:5000/api/docs` (when server is running)
+
 **OpenAPI Generation**
 
 ```bash
@@ -1019,7 +1026,7 @@ make ci
 pnpm run openapi:generate
 
 # View API documentation
-# http://localhost:3000/api/docs
+# http://localhost:5000/api/docs
 ```
 
 ### Git Workflow
