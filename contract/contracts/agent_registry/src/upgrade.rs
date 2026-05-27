@@ -1,7 +1,7 @@
-use soroban_sdk::{Address, Bytes, Env, String, Vec};
 use crate::errors::AgentError;
 use crate::storage::DataKey;
 use crate::types::ContractState;
+use soroban_sdk::{Address, Bytes, Env, String, Vec};
 
 /// Contract upgrade proposal
 #[derive(Clone)]
@@ -28,13 +28,13 @@ pub fn propose_upgrade(
     delay_seconds: u64,
 ) -> Result<(), AgentError> {
     proposer.require_auth();
-    
+
     let state = env
         .storage()
         .instance()
         .get::<DataKey, ContractState>(&DataKey::State)
         .ok_or(AgentError::NotInitialized)?;
-    
+
     if proposer != state.admin {
         return Err(AgentError::Unauthorized);
     }
@@ -81,13 +81,13 @@ pub fn approve_upgrade(
     proposal_id: String,
 ) -> Result<(), AgentError> {
     approver.require_auth();
-    
+
     let state = env
         .storage()
         .instance()
         .get::<DataKey, ContractState>(&DataKey::State)
         .ok_or(AgentError::NotInitialized)?;
-    
+
     if approver != state.admin {
         return Err(AgentError::Unauthorized);
     }
@@ -117,13 +117,13 @@ pub fn execute_upgrade(
     proposal_id: String,
 ) -> Result<(), AgentError> {
     executor.require_auth();
-    
+
     let state = env
         .storage()
         .instance()
         .get::<DataKey, ContractState>(&DataKey::State)
         .ok_or(AgentError::NotInitialized)?;
-    
+
     if executor != state.admin {
         return Err(AgentError::Unauthorized);
     }
@@ -151,10 +151,7 @@ pub fn execute_upgrade(
 }
 
 /// Get an upgrade proposal
-pub fn get_upgrade_proposal(
-    env: &Env,
-    proposal_id: String,
-) -> Result<UpgradeProposal, AgentError> {
+pub fn get_upgrade_proposal(env: &Env, proposal_id: String) -> Result<UpgradeProposal, AgentError> {
     env.storage()
         .persistent()
         .get(&DataKey::UpgradeProposal(proposal_id))

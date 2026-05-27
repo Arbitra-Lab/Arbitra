@@ -1,6 +1,6 @@
-use soroban_sdk::{Address, Bytes, Env, String, Vec};
 use crate::errors::PaymentError;
 use crate::storage::DataKey;
+use soroban_sdk::{Address, Bytes, Env, String, Vec};
 
 /// Contract upgrade proposal
 #[derive(Clone)]

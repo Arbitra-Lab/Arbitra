@@ -1,6 +1,6 @@
-use soroban_sdk::{Address, Bytes, Env, String, Vec};
 use crate::errors::ContractError;
 use crate::storage::DataKey;
+use soroban_sdk::{Address, Bytes, Env, String, Vec};
 
 /// Contract upgrade proposal
 #[derive(Clone)]
@@ -27,13 +27,13 @@ pub fn propose_upgrade(
     delay_seconds: u64,
 ) -> Result<(), ContractError> {
     proposer.require_auth();
-    
+
     let admin: Address = env
         .storage()
         .instance()
         .get(&DataKey::Admin)
         .ok_or(ContractError::AdminNotConfigured)?;
-    
+
     if proposer != admin {
         return Err(ContractError::UnauthorizedAdmin);
     }
@@ -80,13 +80,13 @@ pub fn approve_upgrade(
     proposal_id: String,
 ) -> Result<(), ContractError> {
     approver.require_auth();
-    
+
     let admin: Address = env
         .storage()
         .instance()
         .get(&DataKey::Admin)
         .ok_or(ContractError::AdminNotConfigured)?;
-    
+
     if approver != admin {
         return Err(ContractError::UnauthorizedAdmin);
     }
@@ -116,13 +116,13 @@ pub fn execute_upgrade(
     proposal_id: String,
 ) -> Result<(), ContractError> {
     executor.require_auth();
-    
+
     let admin: Address = env
         .storage()
         .instance()
         .get(&DataKey::Admin)
         .ok_or(ContractError::AdminNotConfigured)?;
-    
+
     if executor != admin {
         return Err(ContractError::UnauthorizedAdmin);
     }

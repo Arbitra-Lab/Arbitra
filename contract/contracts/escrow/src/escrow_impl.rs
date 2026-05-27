@@ -8,8 +8,8 @@ use crate::errors::EscrowError;
 use crate::events;
 use crate::rate_limit;
 use crate::storage::EscrowStorage;
-use crate::upgrade;
 use crate::types::{Escrow, EscrowStatus, ReleaseApproval, ReleaseRecord, TimeoutConfig};
+use crate::upgrade;
 
 /// Core escrow contract implementation.
 #[contract]

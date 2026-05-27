@@ -1,7 +1,7 @@
-use soroban_sdk::{Address, Bytes, Env, String, Vec};
 use crate::errors::PropertyError;
 use crate::storage::DataKey;
 use crate::types::ContractState;
+use soroban_sdk::{Address, Bytes, Env, String, Vec};
 
 /// Contract upgrade proposal
 #[derive(Clone)]
@@ -28,13 +28,13 @@ pub fn propose_upgrade(
     delay_seconds: u64,
 ) -> Result<(), PropertyError> {
     proposer.require_auth();
-    
+
     let state = env
         .storage()
         .instance()
         .get::<DataKey, ContractState>(&DataKey::State)
         .ok_or(PropertyError::NotInitialized)?;
-    
+
     if proposer != state.admin {
         return Err(PropertyError::Unauthorized);
     }
@@ -81,13 +81,13 @@ pub fn approve_upgrade(
     proposal_id: String,
 ) -> Result<(), PropertyError> {
     approver.require_auth();
-    
+
     let state = env
         .storage()
         .instance()
         .get::<DataKey, ContractState>(&DataKey::State)
         .ok_or(PropertyError::NotInitialized)?;
-    
+
     if approver != state.admin {
         return Err(PropertyError::Unauthorized);
     }
@@ -117,13 +117,13 @@ pub fn execute_upgrade(
     proposal_id: String,
 ) -> Result<(), PropertyError> {
     executor.require_auth();
-    
+
     let state = env
         .storage()
         .instance()
         .get::<DataKey, ContractState>(&DataKey::State)
         .ok_or(PropertyError::NotInitialized)?;
-    
+
     if executor != state.admin {
         return Err(PropertyError::Unauthorized);
     }
