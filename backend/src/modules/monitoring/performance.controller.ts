@@ -46,6 +46,25 @@ export class PerformanceController {
     };
   }
 
+  @Get('database')
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  @ApiOperation({
+    summary: 'Get database query performance statistics',
+    description:
+      'Per-operation query timings (avg/p95), the slowest operations, and recent slow queries.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Database query performance statistics retrieved successfully',
+  })
+  @HttpCode(HttpStatus.OK)
+  async getDatabaseStats() {
+    return {
+      timestamp: new Date().toISOString(),
+      database: this.performanceMonitor.getDatabaseStats(),
+    };
+  }
+
   @Get('endpoints')
   @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
   @ApiOperation({ summary: 'Get performance statistics for all endpoints' })

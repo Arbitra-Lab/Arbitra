@@ -73,6 +73,16 @@ export class PerformanceMonitorService {
   private memoryUsageHistory: NodeJS.MemoryUsage[] = [];
   private readonly MAX_HISTORY_SIZE = 1000;
 
+  // Database query performance tracking (per operation)
+  private readonly databaseQueryData: Map<string, number[]> = new Map();
+  private readonly slowQueries: Array<{
+    operation: string;
+    duration: number;
+    timestamp: Date;
+  }> = [];
+  private readonly SLOW_QUERY_THRESHOLD_MS = 500;
+  private readonly MAX_SLOW_QUERY_HISTORY = 100;
+
   constructor(
     private readonly metricsService: MetricsService,
     private readonly alertService: AlertService,
@@ -113,6 +123,86 @@ export class PerformanceMonitorService {
 
     // Check thresholds immediately for critical issues
     this.checkPerformanceThresholds(key, metrics);
+  }
+
+  /**
+   * Record the duration of a database query for an operation (e.g. a repository
+   * method). Wired from the `DatabasePerformanceTrack` decorator. Durations are
+   * forwarded to the metrics service and slow queries are tracked for
+   * bottleneck detection.
+   */
+  recordDatabaseQuery(operation: string, duration: number): void {
+    const durations = this.databaseQueryData.get(operation) ?? [];
+    durations.push(duration);
+    if (durations.length > this.MAX_HISTORY_SIZE) {
+      durations.shift();
+    }
+    this.databaseQueryData.set(operation, durations);
+
+    this.metricsService.recordDatabaseQuery(operation, duration);
+
+    if (duration >= this.SLOW_QUERY_THRESHOLD_MS) {
+      this.slowQueries.push({ operation, duration, timestamp: new Date() });
+      if (this.slowQueries.length > this.MAX_SLOW_QUERY_HISTORY) {
+        this.slowQueries.shift();
+      }
+      this.logger.warn(
+        `Slow database query: ${operation} took ${duration}ms (threshold: ${this.SLOW_QUERY_THRESHOLD_MS}ms)`,
+      );
+    }
+  }
+
+  /**
+   * Aggregated database query statistics, including the slowest operations
+   * (bottleneck detection) and recent slow queries.
+   */
+  getDatabaseStats(): {
+    timestamp: Date;
+    totalQueries: number;
+    slowQueryThresholdMs: number;
+    operations: Array<{
+      operation: string;
+      count: number;
+      avgDuration: number;
+      minDuration: number;
+      maxDuration: number;
+      p95Duration: number;
+      slowCount: number;
+    }>;
+    slowestOperations: Array<{ operation: string; avgDuration: number }>;
+    recentSlowQueries: Array<{
+      operation: string;
+      duration: number;
+      timestamp: Date;
+    }>;
+  } {
+    const operations = Array.from(this.databaseQueryData.entries()).map(
+      ([operation, durations]) => ({
+        operation,
+        count: durations.length,
+        avgDuration: this.calculateAverage(durations),
+        minDuration: Math.min(...durations),
+        maxDuration: Math.max(...durations),
+        p95Duration: this.calculatePercentile(durations, 95),
+        slowCount: durations.filter((d) => d >= this.SLOW_QUERY_THRESHOLD_MS)
+          .length,
+      }),
+    );
+
+    const totalQueries = operations.reduce((sum, op) => sum + op.count, 0);
+    const slowestOperations = [...operations]
+      .sort((a, b) => b.avgDuration - a.avgDuration)
+      .slice(0, 5)
+      .map(({ operation, avgDuration }) => ({ operation, avgDuration }));
+
+    return {
+      timestamp: new Date(),
+      totalQueries,
+      slowQueryThresholdMs: this.SLOW_QUERY_THRESHOLD_MS,
+      operations,
+      slowestOperations,
+      recentSlowQueries: this.slowQueries.slice(-20),
+    };
   }
 
   /**
