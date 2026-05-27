@@ -70,7 +70,10 @@ backend/
 
 ## CI/CD
 
-GitHub Actions workflow: [`.github/workflows/backend-ci-cd.yml`](../.github/workflows/backend-ci-cd.yml)
+GitHub Actions workflows:
+
+- [`.github/workflows/backend-ci-cd.yml`](../.github/workflows/backend-ci-cd.yml) for release-oriented CI/CD (lint, test, build, Docker, deploy).
+- [`.github/workflows/backend-tests.yml`](../.github/workflows/backend-tests.yml) for continuous testing (PRs, pushes, and scheduled runs every 6 hours).
 
 PRs touching `backend/**` run: ESLint → Prettier → TypeScript → unit tests → coverage → build.
 

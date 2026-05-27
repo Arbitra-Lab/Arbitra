@@ -127,7 +127,7 @@ ci: install format-check lint typecheck test-cov build ## Run full CI pipeline (
 security-ci: install security-lint security-test build ## Run security CI pipeline (matches backend-security-ci-cd.yml)
 	@echo "$(GREEN)✓ Security CI pipeline passed$(NC)"
 
-test-ci: install test-unit test-cov ## Run test pipeline (matches backend-tests.yml unit tests)
+test-ci: install test-unit test-cov ## Run continuous testing baseline (matches backend-tests.yml)
 	@echo "$(GREEN)✓ Test CI pipeline passed$(NC)"
 
 all: ci security-ci ## Run all CI/CD pipelines
