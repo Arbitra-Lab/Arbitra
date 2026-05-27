@@ -27,6 +27,7 @@ import { AuditRetentionService } from './audit-retention.service';
       provide: APP_INTERCEPTOR,
       useClass: AuditLogInterceptor,
     },
+    AuditLogInterceptor,
     AuditRetentionService,
   ],
   exports: [AuditService, AuditLogInterceptor, AuditRetentionService],
