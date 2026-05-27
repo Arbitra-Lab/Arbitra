@@ -49,6 +49,31 @@ Standards:
 
 ---
 
+## Contract Testing
+
+Contract testing validates the agreement between our backend and external API providers.
+
+Standards:
+
+- Use `nock` to intercept outgoing requests.
+- Use `jest-json-schema` to validate provider response shapes.
+- Focus on request/response compatibility.
+- Cover both success and error contracts.
+
+Recommended tools:
+
+- Nock
+- Jest-json-schema
+
+Commands:
+
+- `make test-contract`: Run all contract tests.
+- `pnpm run test:contract`: Run contract tests via Jest.
+
+For more details, see [CONTRACT_TESTING.md](../api/CONTRACT_TESTING.md).
+
+---
+
 ## Coverage Requirements
 
 Minimum expectations for backend pull requests:

@@ -68,6 +68,11 @@ test: ## Run all unit tests
 
 test-unit: test ## Alias for test
 
+test-contract: ## Run contract tests (Pact)
+	@echo "$(BLUE)Running contract tests...$(NC)"
+	pnpm run test:contract
+	@echo "$(GREEN)✓ Contract tests passed$(NC)"
+
 test-cov: ## Run tests with coverage report
 	@echo "$(BLUE)Running tests with coverage...$(NC)"
 	pnpm run test:cov --ci --forceExit
@@ -128,16 +133,16 @@ security-test: ## Run security smoke tests
 
 ##@ CI/CD Pipeline Validation
 
-pre-commit: format-check lint typecheck test ## Run pre-commit checks (format, lint, typecheck, test)
+pre-commit: format-check lint typecheck test test-contract ## Run pre-commit checks (format, lint, typecheck, test)
 	@echo "$(GREEN)✓ All pre-commit checks passed$(NC)"
 
-ci: install format-check lint typecheck test-cov build ## Run full CI pipeline (matches backend-ci-cd.yml)
+ci: install format-check lint typecheck test-contract test-cov build ## Run full CI pipeline (matches backend-ci-cd.yml)
 	@echo "$(GREEN)✓ Full CI pipeline passed$(NC)"
 
 security-ci: install security-lint security-test build ## Run security CI pipeline (matches backend-security-ci-cd.yml)
 	@echo "$(GREEN)✓ Security CI pipeline passed$(NC)"
 
-test-ci: install test-unit test-cov ## Run test pipeline (matches backend-tests.yml unit tests)
+test-ci: install test-unit test-contract test-cov ## Run test pipeline (matches backend-tests.yml unit tests)
 	@echo "$(GREEN)✓ Test CI pipeline passed$(NC)"
 
 all: ci security-ci ## Run all CI/CD pipelines
