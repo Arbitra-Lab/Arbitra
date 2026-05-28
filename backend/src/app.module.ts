@@ -8,7 +8,7 @@ import {
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
-import { APP_GUARD, APP_FILTER } from '@nestjs/core';
+import { APP_GUARD, APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AgreementsModule } from './modules/agreements/agreements.module';
@@ -60,6 +60,7 @@ import { IdempotencyModule } from './common/idempotency';
 import { ResilienceModule } from './common/resilience';
 import { FraudModule } from './modules/fraud/fraud.module';
 import { TransactionModule } from './modules/transactions/transaction.module';
+import { ResponseTimeInterceptor } from './common/interceptors/response-time.interceptor';
 
 const appLogger = new Logger('AppModule');
 
@@ -262,6 +263,10 @@ const appLogger = new Logger('AppModule');
     {
       provide: APP_FILTER,
       useClass: AllExceptionsFilter,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ResponseTimeInterceptor,
     },
   ],
 })

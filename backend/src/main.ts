@@ -90,6 +90,21 @@ async function bootstrap() {
     }
   };
 
+  // Stamp request start time as the outermost layer so wall-clock latency
+  // includes auth, guards, and all middleware — including rejected 401/403s.
+  if (process.env.RESPONSE_TIME_ENABLED !== 'false') {
+    app.use(
+      (
+        req: express.Request,
+        _res: express.Response,
+        next: express.NextFunction,
+      ) => {
+        (req as any)._startTime = Date.now();
+        next();
+      },
+    );
+  }
+
   app.use(express.json({ limit: jsonLimit, verify: rawBodySaver }));
   app.use(
     express.urlencoded({

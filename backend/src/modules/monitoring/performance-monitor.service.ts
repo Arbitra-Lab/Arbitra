@@ -16,6 +16,10 @@ export interface PerformanceMetrics {
   cpuUsage?: number;
 }
 
+/** Requests exceeding this duration (ms) are classified as slow. Overridden by RESPONSE_TIME_SLOW_THRESHOLD_MS (falls back to LOG_SLOW_REQUEST_THRESHOLD for backwards compat). */
+export const SLOW_REQUEST_THRESHOLD_MS: number =
+  parseInt(process.env.RESPONSE_TIME_SLOW_THRESHOLD_MS ?? process.env.LOG_SLOW_REQUEST_THRESHOLD ?? '1000', 10);
+
 export interface PerformanceThreshold {
   endpoint: string;
   maxResponseTime: number; // milliseconds
@@ -71,7 +75,8 @@ export class PerformanceMonitorService {
 
   // Memory usage tracking
   private memoryUsageHistory: NodeJS.MemoryUsage[] = [];
-  private readonly MAX_HISTORY_SIZE = 1000;
+  private readonly MAX_HISTORY_SIZE: number =
+    parseInt(process.env.RESPONSE_TIME_BUFFER_SIZE ?? '1000', 10);
 
   // Database query performance tracking (per operation)
   private readonly databaseQueryData: Map<string, number[]> = new Map();
@@ -216,6 +221,17 @@ export class PerformanceMonitorService {
       return null;
     }
 
+    return this.buildEndpointStats(method, endpoint, data);
+  }
+
+  /**
+   * Build stats object from raw data — shared by getEndpointStats and getSystemStats.
+   */
+  private buildEndpointStats(
+    method: string,
+    endpoint: string,
+    data: PerformanceMetrics[],
+  ): any {
     const responseTimes = data.map((d) => d.responseTime);
     const errorCount = data.filter((d) => d.statusCode >= 400).length;
     const recentData = data.filter(
@@ -240,6 +256,124 @@ export class PerformanceMonitorService {
   }
 
   /**
+   * Return the response-time summary for all routes within a sliding window.
+   * This is the data source for GET /api/performance/response-times.
+   */
+  getResponseTimeStats(windowSeconds = parseInt(process.env.RESPONSE_TIME_WINDOW_SECONDS ?? '60', 10)): {
+    generatedAt: Date;
+    windowSeconds: number;
+    routes: Array<{
+      route: string;
+      count: number;
+      rps: number;
+      p50Ms: number;
+      p95Ms: number;
+      p99Ms: number;
+      slowCount: number;
+    }>;
+  } {
+    const cutoff = Date.now() - windowSeconds * 1000;
+    const routes: ReturnType<typeof this.getResponseTimeStats>['routes'] = [];
+
+    for (const [key, data] of this.performanceData.entries()) {
+      const window = data.filter((d) => d.timestamp.getTime() > cutoff);
+      if (window.length === 0) continue;
+
+      const colonIdx = key.indexOf(':');
+      const method = key.slice(0, colonIdx);
+      const endpoint = key.slice(colonIdx + 1);
+      const times = window.map((d) => d.responseTime);
+
+      routes.push({
+        route: `${method} ${endpoint}`,
+        count: window.length,
+        rps: parseFloat((window.length / windowSeconds).toFixed(2)),
+        p50Ms: this.calculatePercentile(times, 50),
+        p95Ms: this.calculatePercentile(times, 95),
+        p99Ms: this.calculatePercentile(times, 99),
+        slowCount: window.filter(
+          (d) => d.responseTime > SLOW_REQUEST_THRESHOLD_MS,
+        ).length,
+      });
+    }
+
+    routes.sort((a, b) => b.p99Ms - a.p99Ms);
+
+    return { generatedAt: new Date(), windowSeconds, routes };
+  }
+
+  /**
+   * Return the N slowest endpoints by average response time.
+   */
+  getSlowEndpoints(limit = 10, thresholdMs = 0): any[] {
+    const results: any[] = [];
+
+    for (const [key, data] of this.performanceData.entries()) {
+      if (data.length === 0) continue;
+      // Split only on the FIRST colon so paths like /api/items/:id are preserved.
+      const colonIdx = key.indexOf(':');
+      const method = key.slice(0, colonIdx);
+      const endpoint = key.slice(colonIdx + 1);
+      const stats = this.buildEndpointStats(method, endpoint, data);
+      if (stats.avgResponseTime >= thresholdMs) {
+        results.push(stats);
+      }
+    }
+
+    return results
+      .sort((a, b) => b.avgResponseTime - a.avgResponseTime)
+      .slice(0, limit);
+  }
+
+  /**
+   * Return percentile breakdown for a specific endpoint.
+   */
+  getEndpointPercentiles(
+    method: string,
+    endpoint: string,
+  ): { p50: number; p75: number; p90: number; p95: number; p99: number } | null {
+    const key = `${method}:${endpoint}`;
+    const data = this.performanceData.get(key);
+    if (!data || data.length === 0) return null;
+
+    const responseTimes = data.map((d) => d.responseTime);
+    return {
+      p50: this.calculatePercentile(responseTimes, 50),
+      p75: this.calculatePercentile(responseTimes, 75),
+      p90: this.calculatePercentile(responseTimes, 90),
+      p95: this.calculatePercentile(responseTimes, 95),
+      p99: this.calculatePercentile(responseTimes, 99),
+    };
+  }
+
+  /**
+   * Return percentile breakdown for ALL tracked endpoints.
+   */
+  getAllEndpointPercentiles(): any[] {
+    const results: any[] = [];
+
+    for (const [key, data] of this.performanceData.entries()) {
+      if (data.length === 0) continue;
+      const colonIdx = key.indexOf(':');
+      const method = key.slice(0, colonIdx);
+      const endpoint = key.slice(colonIdx + 1);
+      const responseTimes = data.map((d) => d.responseTime);
+      results.push({
+        method,
+        endpoint,
+        sampleSize: data.length,
+        p50: this.calculatePercentile(responseTimes, 50),
+        p75: this.calculatePercentile(responseTimes, 75),
+        p90: this.calculatePercentile(responseTimes, 90),
+        p95: this.calculatePercentile(responseTimes, 95),
+        p99: this.calculatePercentile(responseTimes, 99),
+      });
+    }
+
+    return results.sort((a, b) => b.p95 - a.p95);
+  }
+
+  /**
    * Get overall system performance statistics
    */
   getSystemStats(): any {
@@ -254,7 +388,9 @@ export class PerformanceMonitorService {
     const allEndpoints = Array.from(this.performanceData.keys());
     const endpointStats = allEndpoints
       .map((key) => {
-        const [method, endpoint] = key.split(':');
+        const colonIdx = key.indexOf(':');
+        const method = key.slice(0, colonIdx);
+        const endpoint = key.slice(colonIdx + 1);
         return this.getEndpointStats(method, endpoint);
       })
       .filter(Boolean);
@@ -290,7 +426,8 @@ export class PerformanceMonitorService {
     key: string,
     metrics: PerformanceMetrics,
   ): void {
-    const [method, endpoint] = key.split(':');
+    const colonIdx = key.indexOf(':');
+    const endpoint = key.slice(colonIdx + 1);
     const threshold = this.performanceThresholds.find(
       (t) => t.endpoint === endpoint,
     );
@@ -457,11 +594,11 @@ export class PerformanceMonitorService {
 
     // Check for slow endpoints
     const slowEndpoints = systemStats.endpointStats.filter(
-      (stat) => stat.avgResponseTime > 1000,
+      (stat) => stat.avgResponseTime > SLOW_REQUEST_THRESHOLD_MS,
     );
     if (slowEndpoints.length > 0) {
       recommendations.push(
-        `Consider optimizing ${slowEndpoints.length} slow endpoints with average response time > 1000ms`,
+        `Consider optimizing ${slowEndpoints.length} slow endpoints with average response time > ${SLOW_REQUEST_THRESHOLD_MS}ms`,
       );
     }
 

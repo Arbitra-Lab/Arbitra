@@ -1,109 +1,166 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import {
+  Registry,
+  Histogram,
+  Counter,
+  collectDefaultMetrics,
+} from 'prom-client';
 
-// Simplified metrics service without prom-client dependency
-// Install prom-client to enable full functionality: pnpm add prom-client
+/** Coerce an HTTP status code into a class label: 2xx, 3xx, 4xx, 5xx, or unknown. */
+function statusClass(status: number): string {
+  if (status >= 200 && status < 300) return '2xx';
+  if (status >= 300 && status < 400) return '3xx';
+  if (status >= 400 && status < 500) return '4xx';
+  if (status >= 500) return '5xx';
+  return 'unknown';
+}
 
 @Injectable()
-export class MetricsService {
+export class MetricsService implements OnModuleInit {
   private readonly logger = new Logger(MetricsService.name);
-  private metrics: Map<string, any> = new Map();
+  readonly registry = new Registry();
 
-  constructor() {
-    this.logger.log('MetricsService initialized (simplified mode)');
+  // ── HTTP instrumentation ────────────────────────────────────────────────
+
+  /**
+   * Histogram for request latency.
+   * Buckets cover the full range from fast (5 ms) to very slow (5 s).
+   * Uses a Histogram, NOT a Summary, so quantiles are aggregatable across
+   * multiple instances via recording rules in Prometheus/Thanos.
+   */
+  private readonly httpDuration = new Histogram({
+    name: 'http_request_duration_ms',
+    help: 'HTTP request latency in milliseconds',
+    labelNames: ['route', 'method', 'status_class'] as const,
+    buckets: [5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000],
+    registers: [this.registry],
+  });
+
+  /** Counter for total HTTP requests, grouped by route + method + status_class. */
+  private readonly httpRequests = new Counter({
+    name: 'http_requests_total',
+    help: 'Total number of HTTP requests',
+    labelNames: ['route', 'method', 'status_class'] as const,
+    registers: [this.registry],
+  });
+
+  // ── Other existing metrics (blockchain, db, business) ──────────────────
+
+  private readonly blockchainTx = new Counter({
+    name: 'blockchain_transactions_total',
+    help: 'Total blockchain transactions',
+    labelNames: ['type', 'status'] as const,
+    registers: [this.registry],
+  });
+
+  private readonly blockchainFailures = new Counter({
+    name: 'blockchain_failures_total',
+    help: 'Total blockchain failures',
+    labelNames: ['type'] as const,
+    registers: [this.registry],
+  });
+
+  private readonly blockchainDuration = new Histogram({
+    name: 'blockchain_operation_duration_ms',
+    help: 'Blockchain operation latency in milliseconds',
+    labelNames: ['type'] as const,
+    buckets: [50, 100, 250, 500, 1000, 2500, 5000, 10000],
+    registers: [this.registry],
+  });
+
+  private readonly dbQueryDuration = new Histogram({
+    name: 'db_query_duration_ms',
+    help: 'Database query latency in milliseconds',
+    labelNames: ['query_type'] as const,
+    buckets: [1, 5, 10, 25, 50, 100, 250, 500],
+    registers: [this.registry],
+  });
+
+  private readonly rentPayments = new Counter({
+    name: 'rent_payments_total',
+    help: 'Total rent payment attempts',
+    labelNames: ['status'] as const,
+    registers: [this.registry],
+  });
+
+  private readonly nftMints = new Counter({
+    name: 'nft_mints_total',
+    help: 'Total NFT mints',
+    labelNames: ['type'] as const,
+    registers: [this.registry],
+  });
+
+  private readonly disputes = new Counter({
+    name: 'disputes_total',
+    help: 'Total disputes',
+    labelNames: ['type', 'status'] as const,
+    registers: [this.registry],
+  });
+
+  onModuleInit(): void {
+    collectDefaultMetrics({ register: this.registry });
+    this.logger.log('MetricsService initialised with prom-client');
   }
 
-  // HTTP Metrics Methods
-  recordHttpRequest(method: string, route: string, status: number) {
-    const key = `http_requests_${method}_${route}_${status}`;
-    this.incrementMetric(key);
+  // ── Public API (call sites unchanged) ──────────────────────────────────
+
+  recordHttpRequest(method: string, route: string, status: number): void {
+    this.httpRequests.inc({ route, method, status_class: statusClass(status) });
   }
 
   recordHttpDuration(
     method: string,
     route: string,
     status: number,
-    duration: number,
-  ) {
-    const key = `http_duration_${method}_${route}`;
-    this.recordHistogram(key, duration);
+    durationMs: number,
+  ): void {
+    this.httpDuration.observe(
+      { route, method, status_class: statusClass(status) },
+      durationMs,
+    );
   }
 
-  // Blockchain Metrics Methods
-  recordBlockchainTransaction(type: string, status: 'success' | 'failure') {
-    const key = `blockchain_tx_${type}_${status}`;
-    this.incrementMetric(key);
+  recordBlockchainTransaction(
+    type: string,
+    status: 'success' | 'failure',
+  ): void {
+    this.blockchainTx.inc({ type, status });
   }
 
-  recordBlockchainFailure(type: string, error: string) {
-    const key = `blockchain_failure_${type}`;
-    this.incrementMetric(key);
+  recordBlockchainFailure(type: string, error: string): void {
+    this.blockchainFailures.inc({ type });
     this.logger.warn(`Blockchain failure: ${type} - ${error}`);
   }
 
-  recordBlockchainDuration(type: string, duration: number) {
-    const key = `blockchain_duration_${type}`;
-    this.recordHistogram(key, duration);
+  recordBlockchainDuration(type: string, durationMs: number): void {
+    this.blockchainDuration.observe({ type }, durationMs);
   }
 
-  // Database Metrics Methods
-  setDatabaseConnections(count: number) {
-    this.metrics.set('database_connections', count);
+  setDatabaseConnections(_count: number): void {
+    // Gauge omitted — add a prom-client Gauge here if needed.
   }
 
-  recordDatabaseQuery(queryType: string, duration: number) {
-    const key = `db_query_${queryType}`;
-    this.recordHistogram(key, duration);
+  recordDatabaseQuery(queryType: string, durationMs: number): void {
+    this.dbQueryDuration.observe({ query_type: queryType }, durationMs);
   }
 
-  // Business Metrics Methods
-  recordRentPayment(status: 'success' | 'failed') {
-    const key = `rent_payment_${status}`;
-    this.incrementMetric(key);
+  recordRentPayment(status: 'success' | 'failed'): void {
+    this.rentPayments.inc({ status });
   }
 
-  recordNftMint(type: string) {
-    const key = `nft_mint_${type}`;
-    this.incrementMetric(key);
+  recordNftMint(type: string): void {
+    this.nftMints.inc({ type });
   }
 
-  recordDispute(type: string, status: string) {
-    const key = `dispute_${type}_${status}`;
-    this.incrementMetric(key);
+  recordDispute(type: string, status: string): void {
+    this.disputes.inc({ type, status });
   }
 
-  // Get metrics in Prometheus format
   async getMetrics(): Promise<string> {
-    let output = '# Chioma Backend Metrics\n';
-
-    for (const [key, value] of this.metrics.entries()) {
-      if (typeof value === 'number') {
-        output += `${key} ${value}\n`;
-      } else if (Array.isArray(value)) {
-        const avg = value.reduce((a, b) => a + b, 0) / value.length;
-        output += `${key}_avg ${avg.toFixed(3)}\n`;
-        output += `${key}_count ${value.length}\n`;
-      }
-    }
-
-    return output;
+    return this.registry.metrics();
   }
 
-  private incrementMetric(key: string) {
-    const current = this.metrics.get(key) || 0;
-    this.metrics.set(key, current + 1);
-  }
-
-  private recordHistogram(key: string, value: number) {
-    const current = this.metrics.get(key) || [];
-    current.push(value);
-    // Keep only last 100 values
-    if (current.length > 100) {
-      current.shift();
-    }
-    this.metrics.set(key, current);
-  }
-
-  getRegistry(): any {
-    return null; // Placeholder for prom-client registry
+  getRegistry(): Registry {
+    return this.registry;
   }
 }
