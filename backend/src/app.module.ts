@@ -6,6 +6,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { validateEnvironment } from './config/env.validation';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD, APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
@@ -70,6 +71,7 @@ const appLogger = new Logger('AppModule');
     ...(process.env.NODE_ENV === 'test' ? [] : [SentryModule.forRoot()]),
     ConfigModule.forRoot({
       isGlobal: true,
+      validate: validateEnvironment,
     }),
     LoggerModule,
     LockModule,
@@ -286,30 +288,6 @@ const appLogger = new Logger('AppModule');
   ],
 })
 export class AppModule implements NestModule {
-  constructor() {
-    appLogger.log('Validating rate limit config');
-    this.validateRateLimitConfig();
-    appLogger.log('Rate limit config validation passed');
-  }
-
-  private validateRateLimitConfig(): void {
-    const required = [
-      'RATE_LIMIT_TTL',
-      'RATE_LIMIT_MAX',
-      'RATE_LIMIT_AUTH_TTL',
-      'RATE_LIMIT_AUTH_MAX',
-      'RATE_LIMIT_STRICT_TTL',
-      'RATE_LIMIT_STRICT_MAX',
-    ];
-
-    const missing = required.filter((key) => !process.env[key]);
-    if (missing.length > 0) {
-      throw new Error(
-        `Missing required environment variables: ${missing.join(', ')}`,
-      );
-    }
-  }
-
   configure(consumer: MiddlewareConsumer) {
     consumer.apply(LocalizationMiddleware).forRoutes('*');
 
