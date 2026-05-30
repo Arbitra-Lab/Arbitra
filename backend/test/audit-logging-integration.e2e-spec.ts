@@ -29,7 +29,7 @@ describe('Audit Logging Integration (e2e)', () => {
     ip_address: '127.0.0.1',
     user_agent: 'test-agent',
     status: AuditStatus.SUCCESS,
-    error_message: "",
+    error_message: '',
     level: AuditLevel.INFO,
     metadata: null,
   } as unknown as AuditLog;

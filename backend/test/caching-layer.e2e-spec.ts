@@ -261,9 +261,7 @@ describe('Caching Layer Integration', () => {
 
       await service.invalidatePropertyDomainCaches();
 
-      const calls = mockCacheManager.del.mock.calls.map(
-        ([k]: [string]) => k,
-      ) as string[];
+      const calls = mockCacheManager.del.mock.calls.map(([k]: [string]) => k);
       expect(
         calls.every((k) => !k.startsWith(`${CACHE_PREFIX_PROPERTY}:`)),
       ).toBe(true);

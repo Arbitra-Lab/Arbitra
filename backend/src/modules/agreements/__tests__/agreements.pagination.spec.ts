@@ -2,7 +2,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { AgreementsService } from '../agreements.service';
-import { RentAgreement, AgreementStatus } from '../../rent/entities/rent-contract.entity';
+import {
+  RentAgreement,
+  AgreementStatus,
+} from '../../rent/entities/rent-contract.entity';
 import { Payment } from '../../rent/entities/payment.entity';
 import { AuditService } from '../../audit/audit.service';
 import { ReviewPromptService } from '../../reviews/review-prompt.service';
@@ -26,14 +29,21 @@ describe('AgreementsService – Pagination', () => {
     count: jest.fn().mockResolvedValue(0),
   };
 
-  const mockPaymentRepo = { create: jest.fn(), save: jest.fn(), find: jest.fn() };
+  const mockPaymentRepo = {
+    create: jest.fn(),
+    save: jest.fn(),
+    find: jest.fn(),
+  };
 
   beforeEach(async () => {
     jest.clearAllMocks();
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AgreementsService,
-        { provide: getRepositoryToken(RentAgreement), useValue: mockAgreementRepo },
+        {
+          provide: getRepositoryToken(RentAgreement),
+          useValue: mockAgreementRepo,
+        },
         { provide: getRepositoryToken(Payment), useValue: mockPaymentRepo },
         { provide: AuditService, useValue: {} },
         { provide: ReviewPromptService, useValue: {} },
@@ -41,11 +51,17 @@ describe('AgreementsService – Pagination', () => {
         { provide: BlockchainSyncService, useValue: {} },
         { provide: EscrowIntegrationService, useValue: {} },
         { provide: TemplateRenderingService, useValue: { render: jest.fn() } },
-        { provide: PDFGenerationService, useValue: { generateAgreement: jest.fn() } },
+        {
+          provide: PDFGenerationService,
+          useValue: { generateAgreement: jest.fn() },
+        },
         {
           provide: LockService,
           useValue: {
-            withLock: jest.fn(async (_k: string, _t: number, fn: () => Promise<unknown>) => fn()),
+            withLock: jest.fn(
+              async (_k: string, _t: number, fn: () => Promise<unknown>) =>
+                fn(),
+            ),
           },
         },
         {
@@ -54,7 +70,11 @@ describe('AgreementsService – Pagination', () => {
         },
         {
           provide: AgreementStateService,
-          useValue: { validateTransition: jest.fn(), getAvailableTransitions: jest.fn().mockReturnValue([]), transition: jest.fn() },
+          useValue: {
+            validateTransition: jest.fn(),
+            getAvailableTransitions: jest.fn().mockReturnValue([]),
+            transition: jest.fn(),
+          },
         },
         { provide: EventEmitter2, useValue: {} },
       ],
@@ -64,7 +84,10 @@ describe('AgreementsService – Pagination', () => {
 
   describe('offset pagination', () => {
     it('returns data and total on page 1', async () => {
-      mockAgreementRepo.findAndCount.mockResolvedValue([[{ id: 'a1' }, { id: 'a2' }], 20]);
+      mockAgreementRepo.findAndCount.mockResolvedValue([
+        [{ id: 'a1' }, { id: 'a2' }],
+        20,
+      ]);
 
       const result = await service.findAll({ page: 1, limit: 10 });
 

@@ -2,7 +2,11 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 import { DisputesService } from '../disputes.service';
-import { Dispute, DisputeStatus, DisputeType } from '../entities/dispute.entity';
+import {
+  Dispute,
+  DisputeStatus,
+  DisputeType,
+} from '../entities/dispute.entity';
 import { DisputeEvidence } from '../entities/dispute-evidence.entity';
 import { DisputeComment } from '../entities/dispute-comment.entity';
 import { RentAgreement } from '../../rent/entities/rent-contract.entity';
@@ -42,7 +46,10 @@ describe('DisputesService – Pagination', () => {
     }),
   };
   const mockLockService = { acquire: jest.fn().mockResolvedValue(jest.fn()) };
-  const mockIdempotencyService = { check: jest.fn().mockResolvedValue(null), store: jest.fn() };
+  const mockIdempotencyService = {
+    check: jest.fn().mockResolvedValue(null),
+    store: jest.fn(),
+  };
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -50,9 +57,18 @@ describe('DisputesService – Pagination', () => {
       providers: [
         DisputesService,
         { provide: getRepositoryToken(Dispute), useValue: mockDisputeRepo },
-        { provide: getRepositoryToken(DisputeEvidence), useValue: mockEvidenceRepo },
-        { provide: getRepositoryToken(DisputeComment), useValue: mockCommentRepo },
-        { provide: getRepositoryToken(RentAgreement), useValue: mockAgreementRepo },
+        {
+          provide: getRepositoryToken(DisputeEvidence),
+          useValue: mockEvidenceRepo,
+        },
+        {
+          provide: getRepositoryToken(DisputeComment),
+          useValue: mockCommentRepo,
+        },
+        {
+          provide: getRepositoryToken(RentAgreement),
+          useValue: mockAgreementRepo,
+        },
         { provide: getRepositoryToken(User), useValue: mockUserRepo },
         { provide: AuditService, useValue: mockAuditService },
         { provide: DataSource, useValue: mockDataSource },
@@ -122,10 +138,9 @@ describe('DisputesService – Pagination', () => {
 
       await service.findAll({ status: DisputeStatus.OPEN });
 
-      expect(qb.andWhere).toHaveBeenCalledWith(
-        'dispute.status = :status',
-        { status: DisputeStatus.OPEN },
-      );
+      expect(qb.andWhere).toHaveBeenCalledWith('dispute.status = :status', {
+        status: DisputeStatus.OPEN,
+      });
     });
 
     it('filters by disputeType', async () => {
