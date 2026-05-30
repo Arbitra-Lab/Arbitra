@@ -369,8 +369,8 @@ describe('Database Transaction Integration (e2e)', () => {
         (runner.manager.save as jest.Mock).mockResolvedValueOnce({ id: 1 });
         (runner.manager.save as jest.Mock).mockResolvedValueOnce({ id: 2 });
 
-        const r1 = await runner.manager.save({}) as { id: number };
-        const r2 = await runner.manager.save({}) as { id: number };
+        const r1 = (await runner.manager.save({})) as { id: number };
+        const r2 = (await runner.manager.save({})) as { id: number };
         results.push(r1.id, r2.id);
       });
 

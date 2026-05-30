@@ -152,7 +152,9 @@ describe('PaginationUtils', () => {
     it('should produce consistent offsets across pages', () => {
       const limit = 10;
       const pages = [1, 2, 3, 4, 5];
-      const offsets = pages.map((p) => PaginationUtils.calculateOffset(p, limit));
+      const offsets = pages.map((p) =>
+        PaginationUtils.calculateOffset(p, limit),
+      );
 
       expect(offsets).toEqual([0, 10, 20, 30, 40]);
     });

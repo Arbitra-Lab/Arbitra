@@ -145,11 +145,31 @@ describe('PropertiesService – Pagination', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         PropertiesService,
-        { provide: getRepositoryToken(Property), useValue: mockPropertyRepository },
-        { provide: getRepositoryToken(PropertyImage), useValue: { create: jest.fn(), save: jest.fn(), delete: jest.fn() } },
-        { provide: getRepositoryToken(PropertyAmenity), useValue: { create: jest.fn(), save: jest.fn(), delete: jest.fn() } },
-        { provide: getRepositoryToken(RentalUnit), useValue: { create: jest.fn(), save: jest.fn(), delete: jest.fn() } },
-        { provide: getRepositoryToken(PropertyListingDraft), useValue: { create: jest.fn(), save: jest.fn(), findOne: jest.fn(), remove: jest.fn() } },
+        {
+          provide: getRepositoryToken(Property),
+          useValue: mockPropertyRepository,
+        },
+        {
+          provide: getRepositoryToken(PropertyImage),
+          useValue: { create: jest.fn(), save: jest.fn(), delete: jest.fn() },
+        },
+        {
+          provide: getRepositoryToken(PropertyAmenity),
+          useValue: { create: jest.fn(), save: jest.fn(), delete: jest.fn() },
+        },
+        {
+          provide: getRepositoryToken(RentalUnit),
+          useValue: { create: jest.fn(), save: jest.fn(), delete: jest.fn() },
+        },
+        {
+          provide: getRepositoryToken(PropertyListingDraft),
+          useValue: {
+            create: jest.fn(),
+            save: jest.fn(),
+            findOne: jest.fn(),
+            remove: jest.fn(),
+          },
+        },
         { provide: CacheService, useValue: mockCacheService },
         { provide: FraudHooksService, useValue: mockFraudHooksService },
       ],
@@ -162,7 +182,10 @@ describe('PropertiesService – Pagination', () => {
 
   describe('offset-based pagination', () => {
     it('should return first page with correct meta', async () => {
-      const properties = [makeProperty({ id: 'p1' }), makeProperty({ id: 'p2' })];
+      const properties = [
+        makeProperty({ id: 'p1' }),
+        makeProperty({ id: 'p2' }),
+      ];
       mockQb = makeQueryBuilder(properties, 20);
       mockPropertyRepository.createQueryBuilder.mockReturnValue(mockQb);
 
@@ -298,10 +321,9 @@ describe('PropertiesService – Pagination', () => {
 
       await service.findAll({ type: PropertyType.APARTMENT });
 
-      expect(mockQb.andWhere).toHaveBeenCalledWith(
-        'property.type = :type',
-        { type: PropertyType.APARTMENT },
-      );
+      expect(mockQb.andWhere).toHaveBeenCalledWith('property.type = :type', {
+        type: PropertyType.APARTMENT,
+      });
     });
 
     it('should filter by listing status', async () => {

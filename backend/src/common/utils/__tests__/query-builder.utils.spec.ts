@@ -17,10 +17,9 @@ describe('QueryBuilderUtils', () => {
     it('should apply equality filter for a string value', () => {
       QueryBuilderUtils.applyFilters(mockQb, { status: 'ACTIVE' });
 
-      expect(mockQb.andWhere).toHaveBeenCalledWith(
-        'entity.status = :status',
-        { status: 'ACTIVE' },
-      );
+      expect(mockQb.andWhere).toHaveBeenCalledWith('entity.status = :status', {
+        status: 'ACTIVE',
+      });
     });
 
     it('should apply equality filter for a numeric value', () => {
@@ -103,9 +102,12 @@ describe('QueryBuilderUtils', () => {
 
       // The implementation checks `value !== undefined && value !== null && value !== ''`
       // so `false` passes through and is applied as an equality filter
-      expect(mockQb.andWhere).toHaveBeenCalledWith('entity.isActive = :isActive', {
-        isActive: false,
-      });
+      expect(mockQb.andWhere).toHaveBeenCalledWith(
+        'entity.isActive = :isActive',
+        {
+          isActive: false,
+        },
+      );
     });
   });
 
@@ -166,7 +168,11 @@ describe('QueryBuilderUtils', () => {
     });
 
     it('should return the query builder for chaining', () => {
-      const result = QueryBuilderUtils.applySorting(mockQb, 'createdAt', 'DESC');
+      const result = QueryBuilderUtils.applySorting(
+        mockQb,
+        'createdAt',
+        'DESC',
+      );
       expect(result).toBe(mockQb);
     });
   });

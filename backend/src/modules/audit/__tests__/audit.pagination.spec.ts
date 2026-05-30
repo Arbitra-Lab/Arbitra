@@ -1,7 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { AuditService } from '../audit.service';
-import { AuditLog, AuditAction, AuditLevel, AuditStatus } from '../entities/audit-log.entity';
+import {
+  AuditLog,
+  AuditAction,
+  AuditLevel,
+  AuditStatus,
+} from '../entities/audit-log.entity';
 
 describe('AuditService – Pagination', () => {
   let service: AuditService;
@@ -110,10 +115,9 @@ describe('AuditService – Pagination', () => {
 
       await service.query({ level: AuditLevel.SECURITY });
 
-      expect(mockQb.andWhere).toHaveBeenCalledWith(
-        'audit_log.level = :level',
-        { level: AuditLevel.SECURITY },
-      );
+      expect(mockQb.andWhere).toHaveBeenCalledWith('audit_log.level = :level', {
+        level: AuditLevel.SECURITY,
+      });
     });
 
     it('filters by status', async () => {
@@ -206,7 +210,10 @@ describe('AuditService – Pagination', () => {
 
       await service.query({ page: 1, limit: 10 });
 
-      expect(mockQb.orderBy).toHaveBeenCalledWith('audit_log.performed_at', 'DESC');
+      expect(mockQb.orderBy).toHaveBeenCalledWith(
+        'audit_log.performed_at',
+        'DESC',
+      );
     });
   });
 
