@@ -5,6 +5,11 @@ import {
   ConflictException,
   UnauthorizedException,
 } from '@nestjs/common';
+import {
+  AuthenticationError,
+  DuplicateEntryError,
+  ValidationError,
+} from '../../common/errors';
 import { Test, TestingModule } from '@nestjs/testing';
 import { User, UserRole } from '../users/entities/user.entity';
 
@@ -217,7 +222,7 @@ describe('AuthService', () => {
       mockUserRepository.findOne.mockResolvedValue(mockUser);
 
       await expect(service.register(registerDto)).rejects.toThrow(
-        ConflictException,
+        DuplicateEntryError,
       );
     });
   });
@@ -254,7 +259,7 @@ describe('AuthService', () => {
       jest.spyOn(bcrypt, 'compare').mockResolvedValue(false as never);
 
       await expect(service.login(loginDto)).rejects.toThrow(
-        UnauthorizedException,
+        AuthenticationError,
       );
     });
 
@@ -267,7 +272,7 @@ describe('AuthService', () => {
       mockUserRepository.findOne.mockResolvedValue(null);
 
       await expect(service.login(loginDto)).rejects.toThrow(
-        UnauthorizedException,
+        AuthenticationError,
       );
     });
 
@@ -279,11 +284,11 @@ describe('AuthService', () => {
 
       mockUserRepository.findOne.mockResolvedValue({
         ...mockUser,
-        status: 'inactive',
+        isActive: false,
       });
 
       await expect(service.login(loginDto)).rejects.toThrow(
-        UnauthorizedException,
+        AuthenticationError,
       );
     });
 
@@ -295,14 +300,13 @@ describe('AuthService', () => {
 
       const lockedUser = {
         ...mockUser,
-        accountLocked: true,
-        lockedUntil: new Date(Date.now() + 30 * 60 * 1000),
+        accountLockedUntil: new Date(Date.now() + 3600000),
       };
 
       mockUserRepository.findOne.mockResolvedValue(lockedUser);
 
       await expect(service.login(loginDto)).rejects.toThrow(
-        UnauthorizedException,
+        AuthenticationError,
       );
     });
   });
@@ -377,7 +381,7 @@ describe('AuthService', () => {
       mockUserRepository.findOne.mockResolvedValue(null);
 
       await expect(service.resetPassword(resetPasswordDto)).rejects.toThrow(
-        BadRequestException,
+        ValidationError,
       );
     });
 
@@ -397,7 +401,7 @@ describe('AuthService', () => {
       jest.spyOn(bcrypt, 'compare').mockResolvedValue(true as never);
 
       await expect(service.resetPassword(resetPasswordDto)).rejects.toThrow(
-        BadRequestException,
+        ValidationError,
       );
     });
   });
@@ -433,7 +437,7 @@ describe('AuthService', () => {
       mockUserRepository.findOne.mockResolvedValue(null);
 
       await expect(service.verifyEmail('invalid-token')).rejects.toThrow(
-        BadRequestException,
+        ValidationError,
       );
     });
   });
@@ -467,7 +471,7 @@ describe('AuthService', () => {
       mockUserRepository.findOne.mockResolvedValue(null);
 
       await expect(service.validateUserById('non-existent-id')).rejects.toThrow(
-        UnauthorizedException,
+        AuthenticationError,
       );
     });
   });
