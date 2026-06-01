@@ -10,6 +10,7 @@ import {
   Res,
   Req,
   UnauthorizedException,
+  UseInterceptors,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -42,10 +43,14 @@ import {
 import { CompleteMfaLoginDto } from './dto/complete-mfa-login.dto';
 import { Request, Response } from 'express';
 import { RateLimitCategory, EndpointCategory } from '../rate-limiting';
+import { AuditLog } from '../audit/decorators/audit-log.decorator';
+import { AuditAction, AuditLevel } from '../audit/entities/audit-log.entity';
+import { AuditLogInterceptor } from '../audit/interceptors/audit-log.interceptor';
 
 @ApiTags('Authentication')
 @Controller('auth')
 @RateLimitCategory(EndpointCategory.AUTH)
+@UseInterceptors(AuditLogInterceptor)
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
@@ -56,6 +61,12 @@ export class AuthController {
   ) {}
 
   @Post('register')
+  @AuditLog({
+    action: AuditAction.USER_REGISTERED,
+    entityType: 'User',
+    level: AuditLevel.SECURITY,
+    sensitive: true,
+  })
   @Throttle({ default: { limit: 3, ttl: 60000 } })
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
@@ -124,6 +135,12 @@ export class AuthController {
   }
 
   @Post('login')
+  @AuditLog({
+    action: AuditAction.LOGIN,
+    entityType: 'User',
+    level: AuditLevel.INFO,
+    sensitive: true,
+  })
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
@@ -208,6 +225,11 @@ export class AuthController {
   }
 
   @Post('login/mfa/complete')
+  @AuditLog({
+    action: AuditAction.LOGIN,
+    entityType: 'User',
+    level: AuditLevel.INFO,
+  })
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
@@ -330,6 +352,11 @@ export class AuthController {
   }
 
   @Post('logout')
+  @AuditLog({
+    action: AuditAction.LOGOUT,
+    entityType: 'User',
+    level: AuditLevel.INFO,
+  })
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('JWT-auth')
   @HttpCode(HttpStatus.OK)

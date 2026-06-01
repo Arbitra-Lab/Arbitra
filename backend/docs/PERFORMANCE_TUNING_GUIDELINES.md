@@ -85,6 +85,22 @@ pnpm run perf        # autocannon against /health, /api/docs-json, etc.
 - Route read-heavy, eventually-consistent endpoints to replicas when configured.
 - Never route payment or escrow writes to replicas.
 
+### Database Performance Analysis
+
+We have built-in tools to monitor and analyze database performance:
+
+1.  **API Endpoints (Admin/Super Admin only):**
+    -   `GET /database-performance/report`: Returns a comprehensive report including index usage, sizes, and slow queries.
+    -   `GET /database-performance/slow-queries`: Returns statistics from `pg_stat_statements`.
+    -   `GET /database-performance/indexes/usage`: Returns index scan statistics.
+
+2.  **CLI Report Script:**
+    You can run a local performance report against the database using:
+    ```bash
+    pnpm run db:perf-report
+    ```
+    This script provides a terminal-friendly output of slow queries, unused indexes, largest tables, and cache hit ratios. Note: `pg_stat_statements` must be enabled (via migration `1900000000000` and `shared_preload_libraries=pg_stat_statements` in the database configuration, which is configured in `docker-compose.yml`) for slow query analysis to work.
+
 ---
 
 ## 4. Redis and caching

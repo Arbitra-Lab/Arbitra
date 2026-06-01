@@ -256,6 +256,13 @@ export class AuthService {
         );
       }
 
+      if (!user.isActive) {
+        throw new AuthenticationError(
+          ErrorCode.AUTH_ACCOUNT_DISABLED,
+          'Account is inactive',
+        );
+      }
+
       const isValidRefreshToken = await bcrypt.compare(
         refreshToken,
         user.refreshToken,

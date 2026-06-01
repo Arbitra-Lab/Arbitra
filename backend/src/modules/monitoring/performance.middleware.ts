@@ -48,13 +48,6 @@ export class PerformanceMiddleware implements NestMiddleware {
           this.performanceMonitor.recordRequestMetrics(performanceMetrics);
         }
 
-        // Log slow requests
-        if (responseTime > 1000) {
-          this.logger.warn(
-            `Slow request detected: ${req.method} ${req.path} - ${responseTime}ms (Status: ${res.statusCode})`,
-          );
-        }
-
         // Log errors
         if (res.statusCode >= 400) {
           this.logger.warn(
@@ -92,12 +85,6 @@ export class PerformanceMiddleware implements NestMiddleware {
 
         if (req.path.startsWith('/api') || req.path.startsWith('/health')) {
           this.performanceMonitor.recordRequestMetrics(performanceMetrics);
-        }
-
-        if (responseTime > 1000) {
-          this.logger.warn(
-            `Slow request detected: ${req.method} ${req.path} - ${responseTime}ms (Status: ${res.statusCode})`,
-          );
         }
 
         if (res.statusCode >= 400) {

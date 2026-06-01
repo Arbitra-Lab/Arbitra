@@ -61,6 +61,10 @@ backend/
 └── public/            # Static assets (developer portal)
 ```
 
+## Observability
+
+Every HTTP request is instrumented by `ResponseTimeInterceptor` (global `APP_INTERCEPTOR`). It records wall-clock latency — including auth, guards, and all inner middleware — and emits three signals: a Prometheus `http_request_duration_ms` Histogram (buckets 5–5000 ms) and `http_requests_total` Counter scraped by the existing Prometheus sidecar; one structured JSON log line per request (`event`, `route`, `method`, `status`, `duration_ms`, `slow`) shipped to Loki; and an in-process ring buffer queryable via `GET /api/performance/response-times` (admin auth required). Requests exceeding `RESPONSE_TIME_SLOW_THRESHOLD_MS` (default 500 ms) additionally emit a structured WARN log. See [`docs/response-time-tracking.md`](./docs/response-time-tracking.md) for the full ADR, Prometheus queries, and log aggregator query patterns.
+
 ## Health checks
 
 | Endpoint | Description |
@@ -71,7 +75,10 @@ backend/
 
 ## CI/CD
 
-GitHub Actions workflow: [`.github/workflows/backend-ci-cd.yml`](../.github/workflows/backend-ci-cd.yml)
+GitHub Actions workflows:
+
+- [`.github/workflows/backend-ci-cd.yml`](../.github/workflows/backend-ci-cd.yml) for release-oriented CI/CD (lint, test, build, Docker, deploy).
+- [`.github/workflows/backend-tests.yml`](../.github/workflows/backend-tests.yml) for continuous testing (PRs, pushes, and scheduled runs every 6 hours).
 
 PRs touching `backend/**` run: ESLint → Prettier → TypeScript → unit tests → coverage → build.
 
