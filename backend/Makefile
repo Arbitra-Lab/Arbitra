@@ -49,10 +49,15 @@ format-check: ## Check code formatting without modifying files
 	npx prettier --check "src/**/*.ts" "test/**/*.ts"
 	@echo "$(GREEN)✓ Format check passed$(NC)"
 
-verify-backup: ## Verify the latest database backup
+verify-backup: ## Verify the latest database backup (set BACKUP_VERIFY_METADATA_ONLY=true for lightweight check)
 	@echo "$(BLUE)Verifying database backup...$(NC)"
 	bash ./scripts/verify-backup.sh
 	@echo "$(GREEN)✓ Backup verification passed$(NC)"
+
+verify-backup-metadata: ## Verify backup file exists and gzip integrity only (no PostgreSQL restore)
+	@echo "$(BLUE)Verifying backup metadata...$(NC)"
+	BACKUP_VERIFY_METADATA_ONLY=true bash ./scripts/verify-backup.sh
+	@echo "$(GREEN)✓ Backup metadata verification passed$(NC)"
 
 typecheck: ## Run TypeScript type checking
 	@echo "$(BLUE)Running TypeScript type checking...$(NC)"
@@ -137,7 +142,7 @@ ci: install format-check lint typecheck test-cov build ## Run full CI pipeline (
 security-ci: install security-lint security-test build ## Run security CI pipeline (matches backend-security-ci-cd.yml)
 	@echo "$(GREEN)✓ Security CI pipeline passed$(NC)"
 
-test-ci: install test-unit test-cov ## Run test pipeline (matches backend-tests.yml unit tests)
+test-ci: install test-unit test-cov ## Run continuous testing baseline (matches backend-tests.yml)
 	@echo "$(GREEN)✓ Test CI pipeline passed$(NC)"
 
 all: ci security-ci ## Run all CI/CD pipelines

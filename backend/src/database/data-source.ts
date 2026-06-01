@@ -52,4 +52,13 @@ export const AppDataSource = new DataSource({
   migrationsTransactionMode: 'each',
   synchronize: false,
   logging: process.env.TYPEORM_LOGGING === 'true',
+  // Connection pooling configuration
+  extra: {
+    max: parseInt(process.env.DB_POOL_MAX || '20'),
+    min: parseInt(process.env.DB_POOL_MIN || '5'),
+    idleTimeoutMillis: parseInt(process.env.DB_POOL_IDLE_TIMEOUT || '30000'),
+    connectionTimeoutMillis: parseInt(
+      process.env.DB_POOL_CONNECTION_TIMEOUT || '2000',
+    ),
+  },
 });

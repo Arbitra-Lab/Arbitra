@@ -6,9 +6,10 @@ import {
   Logger,
 } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { validateEnvironment } from './config/env.validation';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
-import { APP_GUARD, APP_FILTER } from '@nestjs/core';
+import { APP_GUARD, APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AgreementsModule } from './modules/agreements/agreements.module';
@@ -19,6 +20,7 @@ import { PropertiesModule } from './modules/properties/properties.module';
 import { StellarModule } from './modules/stellar/stellar.module';
 import { DisputesModule } from './modules/disputes/disputes.module';
 import { MonitoringModule } from './modules/monitoring/monitoring.module';
+import { StatusModule } from './modules/status/status.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 import { PaymentModule } from './modules/payments/payment.module';
@@ -59,6 +61,8 @@ import { IdempotencyModule } from './common/idempotency';
 import { ResilienceModule } from './common/resilience';
 import { FraudModule } from './modules/fraud/fraud.module';
 import { TransactionModule } from './modules/transactions/transaction.module';
+import { ApiVersionModule } from './common/api-versioning/api-version.module';
+import { ResponseTimeInterceptor } from './common/interceptors/response-time.interceptor';
 
 const appLogger = new Logger('AppModule');
 
@@ -67,6 +71,8 @@ const appLogger = new Logger('AppModule');
     ...(process.env.NODE_ENV === 'test' ? [] : [SentryModule.forRoot()]),
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath: [`.env.${process.env.NODE_ENV || 'development'}`, '.env'],
+      validate: validateEnvironment,
     }),
     LoggerModule,
     LockModule,
@@ -190,8 +196,19 @@ const appLogger = new Logger('AppModule');
           entities: [__dirname + '/modules/**/*.entity{.ts,.js}'],
           migrations: isTest ? [] : [__dirname + '/migrations/*{.ts,.js}'],
           synchronize: false,
-          logging: true,
+          logging: process.env.TYPEORM_LOGGING === 'true',
           logger: 'advanced-console' as const,
+          // Connection pooling configuration
+          extra: {
+            max: parseInt(process.env.DB_POOL_MAX || '20'),
+            min: parseInt(process.env.DB_POOL_MIN || '5'),
+            idleTimeoutMillis: parseInt(
+              process.env.DB_POOL_IDLE_TIMEOUT || '30000',
+            ),
+            connectionTimeoutMillis: parseInt(
+              process.env.DB_POOL_CONNECTION_TIMEOUT || '2000',
+            ),
+          },
         };
         console.log('[DEBUG] TypeORM Config:', {
           host: config.host,
@@ -200,6 +217,7 @@ const appLogger = new Logger('AppModule');
           database: config.database,
           synchronize: config.synchronize,
           logging: config.logging,
+          pool: config.extra,
         });
         return config;
       },
@@ -212,6 +230,7 @@ const appLogger = new Logger('AppModule');
     StellarModule,
     DisputesModule,
     MonitoringModule,
+    StatusModule,
     // Load HealthModule only when not generating OpenAPI (avoids loading broken @nestjs/terminus in script)
     ...(process.env.OPENAPI_GENERATE !== 'true'
       ? [require('./health/health.module').HealthModule]
@@ -234,6 +253,8 @@ const appLogger = new Logger('AppModule');
     ReferralModule,
     InquiriesModule,
     AnalyticsModule,
+    require('./modules/database-performance/database-performance.module')
+      .DatabasePerformanceModule,
     TransactionModule,
     ...(process.env.OPENAPI_GENERATE !== 'true' ? [RateLimitingModule] : []),
     // Maintenance module
@@ -242,6 +263,8 @@ const appLogger = new Logger('AppModule');
     require('./modules/kyc/kyc.module').KycModule,
     // Queue module
     ...(process.env.OPENAPI_GENERATE !== 'true' ? [QueuesModule] : []),
+    // API versioning module
+    ApiVersionModule,
   ],
   controllers: [AppController],
   providers: [
@@ -259,33 +282,13 @@ const appLogger = new Logger('AppModule');
       provide: APP_FILTER,
       useClass: AllExceptionsFilter,
     },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ResponseTimeInterceptor,
+    },
   ],
 })
 export class AppModule implements NestModule {
-  constructor() {
-    appLogger.log('Validating rate limit config');
-    this.validateRateLimitConfig();
-    appLogger.log('Rate limit config validation passed');
-  }
-
-  private validateRateLimitConfig(): void {
-    const required = [
-      'RATE_LIMIT_TTL',
-      'RATE_LIMIT_MAX',
-      'RATE_LIMIT_AUTH_TTL',
-      'RATE_LIMIT_AUTH_MAX',
-      'RATE_LIMIT_STRICT_TTL',
-      'RATE_LIMIT_STRICT_MAX',
-    ];
-
-    const missing = required.filter((key) => !process.env[key]);
-    if (missing.length > 0) {
-      throw new Error(
-        `Missing required environment variables: ${missing.join(', ')}`,
-      );
-    }
-  }
-
   configure(consumer: MiddlewareConsumer) {
     consumer.apply(LocalizationMiddleware).forRoutes('*');
 
