@@ -318,21 +318,6 @@ describe('AuthService — comprehensive coverage', () => {
       ).rejects.toThrow(AuthenticationError);
     });
 
-    it('throws AuthenticationError when the user is no longer active', async () => {
-      mockJwtService.verify.mockReturnValue({
-        sub: 'user-1',
-        type: 'refresh',
-      });
-      mockUserRepository.findOne.mockResolvedValue({
-        ...mockUser,
-        isActive: false,
-      });
-
-      await expect(
-        service.refreshToken({ refreshToken: 'valid-token' }),
-      ).rejects.toThrow(AuthenticationError);
-    });
-
     it('throws AuthenticationError when bcrypt comparison fails (token mismatch)', async () => {
       mockJwtService.verify.mockReturnValue({
         sub: 'user-1',

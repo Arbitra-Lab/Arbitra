@@ -17,10 +17,13 @@ import { User, UserRole } from '../../users/entities/user.entity';
 import { AuditService } from '../../audit/audit.service';
 import { CreateDisputeDto } from '../dto/create-dispute.dto';
 import {
-  NotFoundException,
-  BadRequestException,
-  ForbiddenException,
-} from '@nestjs/common';
+  AgreementNotFoundError,
+  UserNotFoundError,
+  AuthorizationError,
+  BusinessRuleViolationError,
+  DisputeNotFoundError,
+  ValidationError,
+} from '../../../common/errors/domain-errors';
 import { LockService } from '../../../common/lock';
 import { IdempotencyService } from '../../../common/idempotency';
 
@@ -222,7 +225,7 @@ describe('DisputesService', () => {
 
       await expect(
         service.createDispute(createDisputeDto, 'user-1'),
-      ).rejects.toThrow(NotFoundException);
+      ).rejects.toThrow(AgreementNotFoundError);
     });
 
     it('should throw ForbiddenException if user not party to agreement', async () => {
@@ -241,7 +244,7 @@ describe('DisputesService', () => {
 
       await expect(
         service.createDispute(createDisputeDto, 'other-user'),
-      ).rejects.toThrow(ForbiddenException);
+      ).rejects.toThrow(AuthorizationError);
     });
 
     it('should throw BadRequestException if active dispute already exists', async () => {
@@ -255,7 +258,7 @@ describe('DisputesService', () => {
 
       await expect(
         service.createDispute(createDisputeDto, 'user-1'),
-      ).rejects.toThrow(BadRequestException);
+      ).rejects.toThrow(BusinessRuleViolationError);
     });
   });
 
@@ -275,7 +278,7 @@ describe('DisputesService', () => {
     it('should throw NotFoundException when dispute not found', async () => {
       jest.spyOn(disputeRepository, 'findOne').mockResolvedValue(null);
 
-      await expect(service.findOne(999)).rejects.toThrow(NotFoundException);
+      await expect(service.findOne(999)).rejects.toThrow(DisputeNotFoundError);
     });
   });
 

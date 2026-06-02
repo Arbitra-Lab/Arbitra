@@ -100,6 +100,7 @@ test-mutation-fast: ## Run mutation tests on a subset of files (common utils)
 	@echo "$(BLUE)Running fast mutation tests...$(NC)"
 	pnpm run test:mutation:fast
 	@echo "$(GREEN)✓ Fast mutation tests complete$(NC)"
+
 test-chaos: ## Run chaos engineering resilience tests (requires PostgreSQL)
 	@echo "$(BLUE)Running chaos engineering tests...$(NC)"
 	@echo "$(YELLOW)Note: Ensure PostgreSQL is running and environment variables are set$(NC)"
@@ -153,7 +154,6 @@ security-ci: install security-lint security-test build ## Run security CI pipeli
 	@echo "$(GREEN)✓ Security CI pipeline passed$(NC)"
 
 test-ci: install test-unit test-contract test-cov ## Run test pipeline (matches backend-tests.yml unit tests)
-test-ci: install test-unit test-cov ## Run continuous testing baseline (matches backend-tests.yml)
 	@echo "$(GREEN)✓ Test CI pipeline passed$(NC)"
 
 all: ci security-ci ## Run all CI/CD pipelines

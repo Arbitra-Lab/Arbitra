@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-  ForbiddenException,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource, In } from 'typeorm';
 import { Dispute, DisputeStatus } from './entities/dispute.entity';
@@ -26,6 +21,14 @@ import { AuditLog } from '../audit/decorators/audit-log.decorator';
 import { randomUUID } from 'crypto';
 import { Locked, LockService } from '../../common/lock';
 import { Idempotent, IdempotencyService } from '../../common/idempotency';
+import {
+  AgreementNotFoundError,
+  UserNotFoundError,
+  AuthorizationError,
+  BusinessRuleViolationError,
+  DisputeNotFoundError,
+  ValidationError,
+} from '../../common/errors/domain-errors';
 
 @Injectable()
 export class DisputesService {
@@ -84,7 +87,7 @@ export class DisputesService {
       });
 
       if (!agreement) {
-        throw new NotFoundException('Rent agreement not found');
+        throw new AgreementNotFoundError(createDisputeDto.agreementId);
       }
 
       // Check if user is party to the agreement
@@ -93,14 +96,14 @@ export class DisputesService {
       });
 
       if (!user) {
-        throw new NotFoundException('User not found');
+        throw new UserNotFoundError(userId);
       }
 
       const isLandlord = agreement.adminId === user.id;
       const isTenant = agreement.userId === user.id;
 
       if (!isLandlord && !isTenant && user.role !== UserRole.ADMIN) {
-        throw new ForbiddenException(
+        throw new AuthorizationError(
           'You can only create disputes for agreements you are party to',
         );
       }
@@ -114,7 +117,7 @@ export class DisputesService {
       });
 
       if (existingDispute) {
-        throw new BadRequestException(
+        throw new BusinessRuleViolationError(
           'There is already an active dispute for this agreement',
         );
       }
@@ -235,7 +238,7 @@ export class DisputesService {
     });
 
     if (!dispute) {
-      throw new NotFoundException('Dispute not found');
+      throw new DisputeNotFoundError(id.toString());
     }
 
     return dispute;
@@ -259,7 +262,7 @@ export class DisputesService {
     });
 
     if (!dispute) {
-      throw new NotFoundException('Dispute not found');
+      throw new DisputeNotFoundError(disputeId);
     }
 
     return dispute;
@@ -290,7 +293,7 @@ export class DisputesService {
       updateDisputeDto.status &&
       !this.isValidStatusTransition(dispute.status, updateDisputeDto.status)
     ) {
-      throw new BadRequestException(
+      throw new BusinessRuleViolationError(
         `Invalid status transition from ${dispute.status} to ${updateDisputeDto.status}`,
       );
     }
@@ -346,7 +349,7 @@ export class DisputesService {
     // Only admins can add internal comments
     const user = await this.userRepository.findOne({ where: { id: userId } });
     if (addCommentDto.isInternal && user?.role !== UserRole.ADMIN) {
-      throw new ForbiddenException('Only admins can add internal comments');
+      throw new AuthorizationError('Only admins can add internal comments');
     }
 
     const comment = this.commentRepository.create({
@@ -383,11 +386,11 @@ export class DisputesService {
     // Only admins can resolve disputes
     const user = await this.userRepository.findOne({ where: { id: userId } });
     if (user?.role !== UserRole.ADMIN) {
-      throw new ForbiddenException('Only admins can resolve disputes');
+      throw new AuthorizationError('Only admins can resolve disputes');
     }
 
     if (dispute.status !== DisputeStatus.UNDER_REVIEW) {
-      throw new BadRequestException(
+      throw new BusinessRuleViolationError(
         'Only disputes under review can be resolved',
       );
     }
@@ -436,7 +439,7 @@ export class DisputesService {
     });
 
     if (!agreement) {
-      throw new NotFoundException('Rent agreement not found');
+      throw new AgreementNotFoundError(agreementId);
     }
 
     if (userId) {
@@ -446,7 +449,7 @@ export class DisputesService {
       const isAdmin = user?.role === UserRole.ADMIN;
 
       if (!isLandlord && !isTenant && !isAdmin) {
-        throw new ForbiddenException(
+        throw new AuthorizationError(
           'You can only view disputes for agreements you are party to',
         );
       }
@@ -469,7 +472,7 @@ export class DisputesService {
   ): Promise<void> {
     const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new UserNotFoundError(userId);
     }
 
     const isInitiator = dispute.initiatedBy.toString() === userId;
@@ -478,7 +481,7 @@ export class DisputesService {
     const isAdmin = user.role === UserRole.ADMIN;
 
     if (!isAdmin && !isInitiator && !isLandlord && !isTenant) {
-      throw new ForbiddenException(
+      throw new AuthorizationError(
         'You do not have permission to perform this action on this dispute',
       );
     }
@@ -489,7 +492,7 @@ export class DisputesService {
       !isAdmin &&
       dispute.status !== DisputeStatus.OPEN
     ) {
-      throw new ForbiddenException(
+      throw new AuthorizationError(
         'Only admins can update disputes that are not open',
       );
     }
@@ -541,15 +544,13 @@ export class DisputesService {
     const maxSize = 10 * 1024 * 1024; // 10MB
 
     if (!allowedTypes.includes(file.mimetype)) {
-      throw new BadRequestException(
+      throw new ValidationError(
         'Invalid file type. Only images, PDFs, and documents are allowed',
       );
     }
 
     if (file.size > maxSize) {
-      throw new BadRequestException(
-        'File size too large. Maximum size is 10MB',
-      );
+      throw new ValidationError('File size too large. Maximum size is 10MB');
     }
   }
 }

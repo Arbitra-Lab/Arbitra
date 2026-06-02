@@ -1,9 +1,4 @@
-import {
-  BadRequestException,
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Review } from './review.entity';
@@ -17,6 +12,13 @@ import {
   AgreementStatus,
   RentAgreement,
 } from '../rent/entities/rent-contract.entity';
+import {
+  ReviewNotFoundError,
+  AuthorizationError,
+  ValidationError,
+  BusinessRuleViolationError,
+  AgreementNotFoundError,
+} from '../../common/errors/domain-errors';
 
 @Injectable()
 export class ReviewsService {
@@ -76,7 +78,7 @@ export class ReviewsService {
     hostId: string,
   ): Promise<GuestReview> {
     if (containsProhibitedLanguage(dto.comment ?? '')) {
-      throw new BadRequestException('Review contains prohibited language.');
+      throw new ValidationError('Review contains prohibited language.');
     }
 
     const agreement = await this.agreementRepository.findOne({
@@ -84,15 +86,15 @@ export class ReviewsService {
     });
 
     if (!agreement) {
-      throw new NotFoundException('Booking not found');
+      throw new AgreementNotFoundError(dto.bookingId);
     }
 
     if (agreement.status !== AgreementStatus.EXPIRED) {
-      throw new BadRequestException('Booking must be completed');
+      throw new BusinessRuleViolationError('Booking must be completed');
     }
 
     if (agreement.adminId !== hostId) {
-      throw new ForbiddenException('Not authorized');
+      throw new AuthorizationError('Not authorized');
     }
 
     const existing = await this.guestReviewRepository.findOne({
@@ -100,7 +102,7 @@ export class ReviewsService {
     });
 
     if (existing) {
-      throw new BadRequestException('Review already posted');
+      throw new BusinessRuleViolationError('Review already posted');
     }
 
     const review = this.guestReviewRepository.create({
@@ -122,7 +124,7 @@ export class ReviewsService {
     guestId: string,
   ): Promise<HostReview> {
     if (containsProhibitedLanguage(dto.comment ?? '')) {
-      throw new BadRequestException('Review contains prohibited language.');
+      throw new ValidationError('Review contains prohibited language.');
     }
 
     const agreement = await this.agreementRepository.findOne({
@@ -130,15 +132,15 @@ export class ReviewsService {
     });
 
     if (!agreement) {
-      throw new NotFoundException('Booking not found');
+      throw new AgreementNotFoundError(dto.bookingId);
     }
 
     if (agreement.status !== AgreementStatus.EXPIRED) {
-      throw new BadRequestException('Booking must be completed');
+      throw new BusinessRuleViolationError('Booking must be completed');
     }
 
     if (agreement.userId !== guestId) {
-      throw new ForbiddenException('Not authorized');
+      throw new AuthorizationError('Not authorized');
     }
 
     const existing = await this.hostReviewRepository.findOne({
@@ -146,7 +148,7 @@ export class ReviewsService {
     });
 
     if (existing) {
-      throw new BadRequestException('Review already posted');
+      throw new BusinessRuleViolationError('Review already posted');
     }
 
     const review = this.hostReviewRepository.create({
@@ -246,7 +248,7 @@ export class ReviewsService {
     });
     if (guestReview) {
       if (guestReview.hostId !== userId) {
-        throw new ForbiddenException('Not authorized');
+        throw new AuthorizationError('Not authorized');
       }
       Object.assign(guestReview, dto);
       return this.guestReviewRepository.save(guestReview);
@@ -257,13 +259,13 @@ export class ReviewsService {
     });
     if (hostReview) {
       if (hostReview.guestId !== userId) {
-        throw new ForbiddenException('Not authorized');
+        throw new AuthorizationError('Not authorized');
       }
       Object.assign(hostReview, dto);
       return this.hostReviewRepository.save(hostReview);
     }
 
-    throw new NotFoundException('Review not found');
+    throw new ReviewNotFoundError(id);
   }
 
   async deleteReview(id: string, userId: string) {
@@ -272,7 +274,7 @@ export class ReviewsService {
     });
     if (guestReview) {
       if (guestReview.hostId !== userId) {
-        throw new ForbiddenException('Not authorized');
+        throw new AuthorizationError('Not authorized');
       }
       await this.guestReviewRepository.delete({ id });
       return { deleted: true };
@@ -283,12 +285,12 @@ export class ReviewsService {
     });
     if (hostReview) {
       if (hostReview.guestId !== userId) {
-        throw new ForbiddenException('Not authorized');
+        throw new AuthorizationError('Not authorized');
       }
       await this.hostReviewRepository.delete({ id });
       return { deleted: true };
     }
 
-    throw new NotFoundException('Review not found');
+    throw new ReviewNotFoundError(id);
   }
 }

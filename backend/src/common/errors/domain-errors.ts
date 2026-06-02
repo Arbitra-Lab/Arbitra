@@ -119,6 +119,16 @@ export class NotificationNotFoundError extends ResourceNotFoundError {
   }
 }
 
+export class DisputeNotFoundError extends ResourceNotFoundError {
+  constructor(disputeId?: string) {
+    super(
+      ErrorCode.DISPUTE_NOT_FOUND,
+      disputeId ? `Dispute with ID ${disputeId} not found` : undefined,
+      disputeId ? { disputeId } : undefined,
+    );
+  }
+}
+
 /**
  * Business Logic Errors
  */
