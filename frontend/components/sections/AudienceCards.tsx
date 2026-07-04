@@ -8,11 +8,11 @@ const audiences = [
     description:
       'Instant background checks and deposit-free options available through our trusted partner network.',
     cta: 'Start Renting',
-    borderColor: 'border-blue-700',
-    iconBg: 'bg-blue-100',
-    iconColor: 'text-blue-700',
-    ctaColor: 'text-blue-700',
-    icon: <Key className="w-8 h-8 text-blue-700" strokeWidth={1.5} />,
+    borderColor: 'border-brand-blue-dark',
+    iconBg: 'bg-brand-blue-dark/10',
+    iconColor: 'text-brand-blue-dark',
+    ctaColor: 'text-brand-blue-dark',
+    icon: <Key className="w-8 h-8 text-brand-blue-dark" strokeWidth={1.5} />,
   },
   {
     role: 'Hosts',

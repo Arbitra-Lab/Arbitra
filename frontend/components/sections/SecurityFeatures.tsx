@@ -39,8 +39,8 @@ export default function SecurityFeatures() {
               key={index}
               className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-6 md:p-8 text-center hover:bg-white/10 transition-all"
             >
-              <div className="w-16 h-16 bg-blue-500/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                <feature.icon className="size-12 text-blue-400" />
+              <div className="w-16 h-16 bg-brand-accent/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                <feature.icon className="size-12 text-brand-accent" />
               </div>
               <h3 className="text-xl font-bold text-white mb-3">
                 {feature.title}
