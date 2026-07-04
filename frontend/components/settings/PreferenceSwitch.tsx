@@ -22,7 +22,7 @@ export function PreferenceSwitch({
           {label}
         </label>
         {description && (
-          <p className="mt-1 text-xs text-blue-200/50">{description}</p>
+          <p className="mt-1 text-xs text-neutral-200/50">{description}</p>
         )}
       </div>
 
@@ -34,7 +34,7 @@ export function PreferenceSwitch({
         disabled={disabled}
         onClick={() => onChange(!checked)}
         className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${
-          checked ? 'bg-blue-500' : 'bg-white/20'
+          checked ? 'bg-brand-accent' : 'bg-white/20'
         } ${disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}
       >
         <span

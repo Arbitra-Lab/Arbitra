@@ -17,7 +17,7 @@ interface SettingsPageClientProps {
   requireAuthGuard?: boolean;
 }
 
-const SETTINGS_STORAGE_KEY = 'huston-housing_user_preferences';
+const SETTINGS_STORAGE_KEY = 'arbitra_user_preferences';
 
 const DEFAULT_PREFERENCES: UserPreferences = {
   notifications: {
@@ -380,7 +380,7 @@ export function SettingsPageClient({
           'Content-Type': 'application/json',
           Authorization: `Bearer ${accessToken}`,
         },
-        body: JSON.stringify({ deviceName: 'Houston Housing Web' }),
+        body: JSON.stringify({ deviceName: 'Arbitra Web' }),
       });
 
       if (!response.ok) {
@@ -470,7 +470,7 @@ export function SettingsPageClient({
           <h1 className="text-2xl font-bold text-white md:text-3xl">
             Settings & Preferences
           </h1>
-          <p className="mt-1 text-sm text-blue-200/60">
+          <p className="mt-1 text-sm text-neutral-200/60">
             Manage your security, notification delivery, appearance, and
             regional preferences.
           </p>
@@ -599,7 +599,7 @@ export function SettingsPageClient({
               }
             />
           </div>
-          <div className="mt-4 rounded-xl bg-white/5 border border-white/10 px-4 py-3 text-sm text-blue-200/70">
+          <div className="mt-4 rounded-xl bg-white/5 border border-white/10 px-4 py-3 text-sm text-neutral-200/70">
             In-app summary: {enabledEmailCount} email types and{' '}
             {enabledPushCount} push types are currently enabled.
           </div>
@@ -607,7 +607,7 @@ export function SettingsPageClient({
 
         <SettingsCard
           title="Appearance"
-          description="Choose how Houston Housing should look across sessions."
+          description="Choose how Arbitra should look across sessions."
         >
           <ThemeSelector
             value={preferences.appearanceTheme}
@@ -638,7 +638,7 @@ export function SettingsPageClient({
                     language: event.target.value,
                   })
                 }
-                className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50"
+                className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-brand-accent focus:ring-1 focus:ring-brand-accent/50"
               >
                 {LANGUAGE_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -664,7 +664,7 @@ export function SettingsPageClient({
                     currency: event.target.value,
                   })
                 }
-                className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50"
+                className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-brand-accent focus:ring-1 focus:ring-brand-accent/50"
               >
                 {CURRENCY_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -698,7 +698,7 @@ export function SettingsPageClient({
                   type="password"
                   autoComplete="current-password"
                   {...register('currentPassword')}
-                  className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-blue-500 placeholder:text-white/20"
+                  className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-brand-accent placeholder:text-white/20"
                 />
                 {errors.currentPassword && (
                   <p className="mt-1 text-xs text-red-400">
@@ -718,7 +718,7 @@ export function SettingsPageClient({
                   type="password"
                   autoComplete="new-password"
                   {...register('newPassword')}
-                  className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-blue-500 placeholder:text-white/20"
+                  className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-brand-accent placeholder:text-white/20"
                 />
                 {errors.newPassword && (
                   <p className="mt-1 text-xs text-red-400">
@@ -738,7 +738,7 @@ export function SettingsPageClient({
                   type="password"
                   autoComplete="new-password"
                   {...register('confirmPassword')}
-                  className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-blue-500 placeholder:text-white/20"
+                  className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-brand-accent placeholder:text-white/20"
                 />
                 {errors.confirmPassword && (
                   <p className="mt-1 text-xs text-red-400">
@@ -749,12 +749,12 @@ export function SettingsPageClient({
             </div>
 
             <div className="rounded-xl bg-white/5 border border-white/10 p-3">
-              <p className="mb-2 text-xs font-medium text-blue-200/70">
+              <p className="mb-2 text-xs font-medium text-neutral-200/70">
                 Password strength: {strength.label}
               </p>
               <div className="h-2 w-full rounded-full bg-white/10">
                 <div
-                  className="h-2 rounded-full bg-blue-500 transition-all"
+                  className="h-2 rounded-full bg-brand-accent transition-all"
                   style={{ width: `${strength.score}%` }}
                 />
               </div>
@@ -764,7 +764,7 @@ export function SettingsPageClient({
               <button
                 type="submit"
                 disabled={isUpdatingPassword}
-                className="rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 px-4 py-2 text-sm font-semibold text-white transition-all hover:from-blue-600 hover:to-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-xl bg-gradient-to-r from-brand-blue to-brand-blue-dark px-4 py-2 text-sm font-semibold text-white transition-all hover:from-brand-blue-dark hover:to-brand-blue-dark disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isUpdatingPassword
                   ? 'Updating password...'
@@ -800,7 +800,7 @@ export function SettingsPageClient({
                 <h3 className="text-sm font-semibold text-white">
                   Complete MFA setup
                 </h3>
-                <p className="mt-1 text-xs text-blue-200/60">
+                <p className="mt-1 text-xs text-neutral-200/60">
                   Scan the QR code with your authenticator app, then enter a
                   generated code to confirm.
                 </p>
@@ -814,13 +814,13 @@ export function SettingsPageClient({
                     className="mt-3 rounded-lg border border-white/10 bg-white p-2"
                   />
                 )}
-                <p className="mt-3 text-xs text-blue-200/70">
+                <p className="mt-3 text-xs text-neutral-200/70">
                   Setup key:{' '}
                   <span className="font-mono text-white">
                     {mfaSetup.secret}
                   </span>
                 </p>
-                <p className="mt-2 text-xs text-blue-200/70">
+                <p className="mt-2 text-xs text-neutral-200/70">
                   Backup codes:{' '}
                   <span className="font-mono text-white">
                     {mfaSetup.backupCodes.join(', ')}
@@ -835,13 +835,13 @@ export function SettingsPageClient({
                     type="text"
                     inputMode="numeric"
                     placeholder="Enter 6-digit code"
-                    className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-blue-500 placeholder:text-white/20 sm:max-w-xs"
+                    className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-brand-accent placeholder:text-white/20 sm:max-w-xs"
                   />
                   <button
                     type="button"
                     disabled={!mfaVerificationCode.trim() || isMfaBusy}
                     onClick={() => void confirmMfaSetup()}
-                    className="rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 px-4 py-2 text-sm font-semibold text-white transition-all hover:from-blue-600 hover:to-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="rounded-xl bg-gradient-to-r from-brand-blue to-brand-blue-dark px-4 py-2 text-sm font-semibold text-white transition-all hover:from-brand-blue-dark hover:to-brand-blue-dark disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     Verify & enable MFA
                   </button>
@@ -854,7 +854,7 @@ export function SettingsPageClient({
                 <h3 className="text-sm font-semibold text-white">
                   Disable MFA
                 </h3>
-                <p className="mt-1 text-xs text-blue-200/60">
+                <p className="mt-1 text-xs text-neutral-200/60">
                   Enter a valid authenticator or backup code to disable MFA.
                 </p>
                 <div className="mt-4 flex flex-col gap-3 sm:flex-row">
@@ -864,7 +864,7 @@ export function SettingsPageClient({
                     type="text"
                     inputMode="numeric"
                     placeholder="Authenticator or backup code"
-                    className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-blue-500 placeholder:text-white/20 sm:max-w-xs"
+                    className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-brand-accent placeholder:text-white/20 sm:max-w-xs"
                   />
                   <button
                     type="button"

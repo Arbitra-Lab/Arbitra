@@ -16,7 +16,7 @@ export function SettingsCard({
       <div className="mb-5">
         <h2 className="text-lg font-semibold text-white">{title}</h2>
         {description && (
-          <p className="mt-1 text-sm text-blue-200/60">{description}</p>
+          <p className="mt-1 text-sm text-neutral-200/60">{description}</p>
         )}
       </div>
       {children}
