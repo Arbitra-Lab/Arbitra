@@ -137,7 +137,7 @@ export default function WithdrawModal({
                     placeholder="0.00"
                     step="any"
                     disabled={status === 'processing'}
-                    className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-mono"
+                    className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-brand-accent transition-all font-mono"
                   />
                   <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-2">
                     <button
@@ -166,7 +166,7 @@ export default function WithdrawModal({
                   onChange={(e) => setAddress(e.target.value)}
                   placeholder="G..."
                   disabled={status === 'processing'}
-                  className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-mono text-sm"
+                  className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-brand-accent transition-all font-mono text-sm"
                 />
               </div>
 
@@ -182,7 +182,7 @@ export default function WithdrawModal({
               <button
                 type="submit"
                 disabled={status === 'processing' || status === 'connecting'}
-                className="w-full py-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold transition-all shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                className="w-full py-4 rounded-xl bg-brand-blue hover:bg-brand-blue-dark text-white font-bold transition-all shadow-lg shadow-brand-blue/20 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 {status === 'connecting' ? (
                   <>
