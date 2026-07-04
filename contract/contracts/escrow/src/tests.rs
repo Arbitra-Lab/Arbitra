@@ -65,8 +65,8 @@ fn test_escrow_lifecycle() {
         &depositor,
         &beneficiary,
         &arbiter,
-        &platform_governance,
-        &agent_referral,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
         &amount,
         &token_address,
     );
@@ -130,8 +130,8 @@ fn test_dispute_resolution() {
         &depositor,
         &beneficiary,
         &arbiter,
-        &platform_governance,
-        &agent_referral,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
         &amount,
         &token_address,
     );
@@ -177,8 +177,8 @@ fn test_unauthorized_funding() {
         &depositor,
         &beneficiary,
         &arbiter,
-        &platform_governance,
-        &agent_referral,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
         &amount,
         &token_address,
     );
@@ -214,8 +214,8 @@ fn test_unique_escrow_ids() {
                 depositor.clone(),
                 beneficiary.clone(),
                 arbiter.clone(),
-                platform_governance.clone(),
-                agent_referral.clone(),
+                Some(platform_governance.clone()),
+                Some(agent_referral.clone()),
                 1000,
                 token.clone(),
             )
@@ -231,8 +231,8 @@ fn test_unique_escrow_ids() {
                 depositor.clone(),
                 beneficiary.clone(),
                 arbiter.clone(),
-                platform_governance.clone(),
-                agent_referral.clone(),
+                Some(platform_governance.clone()),
+                Some(agent_referral.clone()),
                 1000,
                 token.clone(),
             )
@@ -279,8 +279,8 @@ fn test_duplicate_approval_rejected() {
         &depositor,
         &beneficiary,
         &arbiter,
-        &platform_governance,
-        &agent_referral,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
         &amount,
         &token_address,
     );
@@ -321,8 +321,8 @@ fn test_approval_count_tracks_per_target() {
         &depositor,
         &beneficiary,
         &arbiter,
-        &platform_governance,
-        &agent_referral,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
         &amount,
         &token_address,
     );
@@ -377,8 +377,8 @@ fn test_release_escrow_on_timeout_refunds_depositor() {
         &depositor,
         &beneficiary,
         &arbiter,
-        &platform_governance,
-        &agent_referral,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
         &amount,
         &token_address,
     );
@@ -423,8 +423,8 @@ fn test_release_escrow_on_timeout_before_deadline_fails() {
         &depositor,
         &beneficiary,
         &arbiter,
-        &platform_governance,
-        &agent_referral,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
         &amount,
         &token_address,
     );
@@ -456,8 +456,8 @@ fn test_resolve_dispute_on_timeout_refunds_depositor() {
         &depositor,
         &beneficiary,
         &arbiter,
-        &platform_governance,
-        &agent_referral,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
         &amount,
         &token_address,
     );
@@ -509,8 +509,8 @@ fn test_partial_release_success() {
         &depositor,
         &beneficiary,
         &arbiter,
-        &platform_governance,
-        &agent_referral,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
         &amount,
         &token_address,
     );
@@ -569,8 +569,8 @@ fn test_partial_release_insufficient_approvals() {
         &depositor,
         &beneficiary,
         &arbiter,
-        &platform_governance,
-        &agent_referral,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
         &amount,
         &token_address,
     );
@@ -611,8 +611,8 @@ fn test_partial_release_exceeds_balance() {
         &depositor,
         &beneficiary,
         &arbiter,
-        &platform_governance,
-        &agent_referral,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
         &amount,
         &token_address,
     );
@@ -653,8 +653,8 @@ fn test_multiple_partial_releases() {
         &depositor,
         &beneficiary,
         &arbiter,
-        &platform_governance,
-        &agent_referral,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
         &amount,
         &token_address,
     );
@@ -718,8 +718,8 @@ fn test_damage_deduction_success() {
         &depositor,
         &beneficiary,
         &arbiter,
-        &platform_governance,
-        &agent_referral,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
         &amount,
         &token_address,
     );
@@ -773,8 +773,8 @@ fn test_damage_deduction_full_amount() {
         &depositor,
         &beneficiary,
         &arbiter,
-        &platform_governance,
-        &agent_referral,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
         &amount,
         &token_address,
     );
@@ -824,8 +824,8 @@ fn test_damage_deduction_no_damage() {
         &depositor,
         &beneficiary,
         &arbiter,
-        &platform_governance,
-        &agent_referral,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
         &amount,
         &token_address,
     );
@@ -871,8 +871,8 @@ fn test_damage_deduction_exceeds_balance() {
         &depositor,
         &beneficiary,
         &arbiter,
-        &platform_governance,
-        &agent_referral,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
         &amount,
         &token_address,
     );
@@ -913,8 +913,8 @@ fn test_damage_deduction_insufficient_approvals() {
         &depositor,
         &beneficiary,
         &arbiter,
-        &platform_governance,
-        &agent_referral,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
         &amount,
         &token_address,
     );
@@ -954,8 +954,8 @@ fn test_partial_release_invalid_recipient() {
         &depositor,
         &beneficiary,
         &arbiter,
-        &platform_governance,
-        &agent_referral,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
         &amount,
         &token_address,
     );
@@ -991,8 +991,8 @@ fn test_partial_release_empty_reason() {
         &depositor,
         &beneficiary,
         &arbiter,
-        &platform_governance,
-        &agent_referral,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
         &amount,
         &token_address,
     );
@@ -1034,8 +1034,8 @@ fn test_is_depositor_correct_address() {
         &depositor,
         &beneficiary,
         &arbiter,
-        &platform_governance,
-        &agent_referral,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
         &amount,
         &token_address,
     );
@@ -1065,8 +1065,8 @@ fn test_is_depositor_incorrect_address() {
         &depositor,
         &beneficiary,
         &arbiter,
-        &platform_governance,
-        &agent_referral,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
         &amount,
         &token_address,
     );
@@ -1095,8 +1095,8 @@ fn test_is_beneficiary_correct_address() {
         &depositor,
         &beneficiary,
         &arbiter,
-        &platform_governance,
-        &agent_referral,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
         &amount,
         &token_address,
     );
@@ -1126,8 +1126,8 @@ fn test_is_beneficiary_incorrect_address() {
         &depositor,
         &beneficiary,
         &arbiter,
-        &platform_governance,
-        &agent_referral,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
         &amount,
         &token_address,
     );
@@ -1156,8 +1156,8 @@ fn test_is_arbiter_correct_address() {
         &depositor,
         &beneficiary,
         &arbiter,
-        &platform_governance,
-        &agent_referral,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
         &amount,
         &token_address,
     );
@@ -1187,8 +1187,8 @@ fn test_is_arbiter_incorrect_address() {
         &depositor,
         &beneficiary,
         &arbiter,
-        &platform_governance,
-        &agent_referral,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
         &amount,
         &token_address,
     );
@@ -1217,8 +1217,8 @@ fn test_is_party_depositor() {
         &depositor,
         &beneficiary,
         &arbiter,
-        &platform_governance,
-        &agent_referral,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
         &amount,
         &token_address,
     );
@@ -1252,8 +1252,8 @@ fn test_is_party_beneficiary() {
         &depositor,
         &beneficiary,
         &arbiter,
-        &platform_governance,
-        &agent_referral,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
         &amount,
         &token_address,
     );
@@ -1287,8 +1287,8 @@ fn test_is_party_arbiter() {
         &depositor,
         &beneficiary,
         &arbiter,
-        &platform_governance,
-        &agent_referral,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
         &amount,
         &token_address,
     );
@@ -1321,8 +1321,8 @@ fn test_is_party_non_party() {
         &depositor,
         &beneficiary,
         &arbiter,
-        &platform_governance,
-        &agent_referral,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
         &amount,
         &token_address,
     );
@@ -1354,8 +1354,8 @@ fn test_authorization_fund_escrow_depositor_only() {
         &depositor,
         &beneficiary,
         &arbiter,
-        &platform_governance,
-        &agent_referral,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
         &amount,
         &token_address,
     );
@@ -1387,8 +1387,8 @@ fn test_authorization_fund_escrow_beneficiary_fails() {
         &depositor,
         &beneficiary,
         &arbiter,
-        &platform_governance,
-        &agent_referral,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
         &amount,
         &token_address,
     );
@@ -1416,8 +1416,8 @@ fn test_authorization_fund_escrow_arbiter_fails() {
         &depositor,
         &beneficiary,
         &arbiter,
-        &platform_governance,
-        &agent_referral,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
         &amount,
         &token_address,
     );
@@ -1447,8 +1447,8 @@ fn test_authorization_initiate_dispute_beneficiary() {
         &depositor,
         &beneficiary,
         &arbiter,
-        &platform_governance,
-        &agent_referral,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
         &amount,
         &token_address,
     );
@@ -1482,8 +1482,8 @@ fn test_authorization_initiate_dispute_depositor() {
         &depositor,
         &beneficiary,
         &arbiter,
-        &platform_governance,
-        &agent_referral,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
         &amount,
         &token_address,
     );
@@ -1517,8 +1517,8 @@ fn test_authorization_initiate_dispute_arbiter_fails() {
         &depositor,
         &beneficiary,
         &arbiter,
-        &platform_governance,
-        &agent_referral,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
         &amount,
         &token_address,
     );
@@ -1552,8 +1552,8 @@ fn test_authorization_resolve_dispute_arbiter_only() {
         &depositor,
         &beneficiary,
         &arbiter,
-        &platform_governance,
-        &agent_referral,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
         &amount,
         &token_address,
     );
@@ -1591,8 +1591,8 @@ fn test_authorization_resolve_dispute_depositor_fails() {
         &depositor,
         &beneficiary,
         &arbiter,
-        &platform_governance,
-        &agent_referral,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
         &amount,
         &token_address,
     );
@@ -1630,8 +1630,8 @@ fn test_authorization_resolve_dispute_beneficiary_fails() {
         &depositor,
         &beneficiary,
         &arbiter,
-        &platform_governance,
-        &agent_referral,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
         &amount,
         &token_address,
     );
@@ -1712,8 +1712,8 @@ fn test_release_rent_splits_90_5_5() {
         &depositor,
         &beneficiary,
         &arbiter,
-        &platform_governance,
-        &agent_referral,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
         &amount,
         &token_address,
     );
@@ -1757,8 +1757,8 @@ fn test_release_rent_rounding_remainder_goes_to_agent() {
         &depositor,
         &beneficiary,
         &arbiter,
-        &platform_governance,
-        &agent_referral,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
         &amount,
         &token_address,
     );
@@ -1773,6 +1773,69 @@ fn test_release_rent_rounding_remainder_goes_to_agent() {
     assert_eq!(token_client.balance(&beneficiary), 90);
     assert_eq!(token_client.balance(&platform_governance), 5);
     assert_eq!(token_client.balance(&agent_referral), 6);
+    assert_eq!(token_client.balance(&client.address), 0);
+}
+
+#[test]
+fn test_release_rent_no_fees_beneficiary_gets_all() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let (client, depositor, beneficiary, arbiter, _, _, token_address) =
+        setup_test_with_fees(&env);
+    let amount = 1000i128;
+
+    // A plain 2-party escrow (freelance/trade-finance/insurance style): no
+    // governance or referral cut configured.
+    let escrow_id = client.create(
+        &depositor,
+        &beneficiary,
+        &arbiter,
+        &None,
+        &None,
+        &amount,
+        &token_address,
+    );
+
+    let token_admin = TokenAdminClient::new(&env, &token_address);
+    token_admin.mint(&depositor, &amount);
+    client.fund_escrow(&escrow_id, &depositor);
+
+    client.release_rent(&escrow_id, &arbiter);
+
+    let token_client = TokenClient::new(&env, &token_address);
+    assert_eq!(token_client.balance(&beneficiary), 1000);
+    assert_eq!(token_client.balance(&client.address), 0);
+}
+
+#[test]
+fn test_release_rent_governance_only_splits_95_5() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let (client, depositor, beneficiary, arbiter, platform_governance, _, token_address) =
+        setup_test_with_fees(&env);
+    let amount = 1000i128;
+
+    let escrow_id = client.create(
+        &depositor,
+        &beneficiary,
+        &arbiter,
+        &Some(platform_governance.clone()),
+        &None,
+        &amount,
+        &token_address,
+    );
+
+    let token_admin = TokenAdminClient::new(&env, &token_address);
+    token_admin.mint(&depositor, &amount);
+    client.fund_escrow(&escrow_id, &depositor);
+
+    client.release_rent(&escrow_id, &arbiter);
+
+    let token_client = TokenClient::new(&env, &token_address);
+    assert_eq!(token_client.balance(&beneficiary), 950);
+    assert_eq!(token_client.balance(&platform_governance), 50);
     assert_eq!(token_client.balance(&client.address), 0);
 }
 
@@ -1796,8 +1859,8 @@ fn test_release_rent_only_arbiter_can_call() {
         &depositor,
         &beneficiary,
         &arbiter,
-        &platform_governance,
-        &agent_referral,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
         &amount,
         &token_address,
     );
@@ -1833,8 +1896,8 @@ fn test_release_rent_blocked_when_disputed() {
         &depositor,
         &beneficiary,
         &arbiter,
-        &platform_governance,
-        &agent_referral,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
         &amount,
         &token_address,
     );
@@ -1873,8 +1936,8 @@ fn test_withdraw_safety_deposit_success_after_timeout() {
         &depositor,
         &beneficiary,
         &arbiter,
-        &platform_governance,
-        &agent_referral,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
         &amount,
         &token_address,
     );
@@ -1920,8 +1983,8 @@ fn test_withdraw_safety_deposit_blocked_before_timeout() {
         &depositor,
         &beneficiary,
         &arbiter,
-        &platform_governance,
-        &agent_referral,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
         &amount,
         &token_address,
     );
@@ -1954,8 +2017,8 @@ fn test_withdraw_safety_deposit_blocked_when_disputed() {
         &depositor,
         &beneficiary,
         &arbiter,
-        &platform_governance,
-        &agent_referral,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
         &amount,
         &token_address,
     );
@@ -2000,8 +2063,8 @@ fn test_withdraw_safety_deposit_only_depositor_can_call() {
         &depositor,
         &beneficiary,
         &arbiter,
-        &platform_governance,
-        &agent_referral,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
         &amount,
         &token_address,
     );
