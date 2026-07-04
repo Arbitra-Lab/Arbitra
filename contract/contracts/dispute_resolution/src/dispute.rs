@@ -1,4 +1,4 @@
-use soroban_sdk::{contracttype, Address, Env, Map, String};
+use soroban_sdk::{contracttype, Address, Env, String};
 
 use crate::errors::DisputeError;
 use crate::events;
@@ -57,9 +57,11 @@ pub fn set_timeout_config(
     Ok(())
 }
 
+/// Lifecycle status of a case as reported by its originating registry contract
+/// (an escrow, freelance milestone, trade-finance, or insurance-claim contract).
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub enum AgreementStatus {
+pub enum CaseStatus {
     Draft,
     Pending,
     Active,
@@ -69,35 +71,19 @@ pub enum AgreementStatus {
     Disputed,
 }
 
+/// Generic arbitrable case, fetched cross-contract from whichever registry
+/// contract owns `case_id` (escrow, freelance, trade-finance, insurance, etc.).
+/// Any contract wishing to route disputes through this arbitration engine
+/// must expose a `get_case(case_id) -> Option<Case>` function matching this shape.
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct RentAgreement {
-    pub agreement_id: String,
-    pub landlord: Address,
-    pub tenant: Address,
-    pub agent: Option<Address>,
-    pub monthly_rent: i128,
-    pub security_deposit: i128,
-    pub start_date: u64,
-    pub end_date: u64,
-    pub agent_commission_rate: u32,
-    pub status: AgreementStatus,
-    pub total_rent_paid: i128,
-    pub payment_count: u32,
-    pub signed_at: Option<u64>,
-    pub payment_token: Address,
-    pub next_payment_due: u64,
-    pub payment_history: Map<u32, PaymentSplit>,
-}
-
-#[contracttype]
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct PaymentSplit {
-    pub landlord_amount: i128,
-    pub platform_amount: i128,
-    pub token: Address,
-    pub payment_date: u64,
-    pub payer: Address,
+pub struct Case {
+    pub case_id: String,
+    /// Party that initiated the underlying agreement (e.g. depositor, client, buyer, insurer).
+    pub claimant: Address,
+    /// Counterparty to the agreement (e.g. beneficiary, freelancer, seller, policyholder).
+    pub respondent: Address,
+    pub status: CaseStatus,
 }
 
 pub fn add_arbiter(env: &Env, admin: Address, arbiter: Address) -> Result<(), DisputeError> {
@@ -154,7 +140,7 @@ pub fn add_arbiter(env: &Env, admin: Address, arbiter: Address) -> Result<(), Di
 pub fn raise_dispute(
     env: &Env,
     raiser: Address,
-    agreement_id: String,
+    case_id: String,
     details_hash: String,
 ) -> Result<(), DisputeError> {
     raiser.require_auth();
@@ -172,45 +158,46 @@ pub fn raise_dispute(
         return Err(DisputeError::InvalidDetailsHash);
     }
 
-    let key = DataKey::Dispute(agreement_id.clone());
+    let key = DataKey::Dispute(case_id.clone());
     if env.storage().persistent().has(&key) {
         return Err(DisputeError::DisputeAlreadyExists);
     }
 
-    // Cross-contract call to get agreement from huston-housing contract
-    let agreement: Option<RentAgreement> = env.invoke_contract(
-        &state.huston-housing_contract,
-        &soroban_sdk::symbol_short!("get_agr"),
-        soroban_sdk::vec![env, agreement_id.clone().into()],
+    // Cross-contract call to the case's registry contract (escrow, freelance,
+    // trade-finance, insurance, ...) to fetch its current parties and status.
+    let case: Option<Case> = env.invoke_contract(
+        &state.case_registry,
+        &soroban_sdk::symbol_short!("get_case"),
+        soroban_sdk::vec![env, case_id.clone().into()],
     );
 
-    let agreement = agreement.ok_or(DisputeError::AgreementNotFound)?;
+    let case = case.ok_or(DisputeError::CaseNotFound)?;
 
-    // Validate agreement is in Active status
-    if agreement.status != AgreementStatus::Active {
-        return Err(DisputeError::InvalidAgreementState);
+    // Validate the case is in Active status
+    if case.status != CaseStatus::Active {
+        return Err(DisputeError::InvalidCaseState);
     }
 
-    // Validate raiser is either tenant or landlord
-    if raiser != agreement.tenant && raiser != agreement.landlord {
+    // Validate raiser is either the claimant or the respondent
+    if raiser != case.claimant && raiser != case.respondent {
         return Err(DisputeError::Unauthorized);
     }
 
     let dispute = Dispute {
-        agreement_id: agreement_id.clone(),
+        case_id: case_id.clone(),
         details_hash: details_hash.clone(),
         raised_at: env.ledger().timestamp(),
         resolved: false,
         resolved_at: None,
-        votes_favor_landlord: 0,
-        votes_favor_tenant: 0,
+        votes_favor_claimant: 0,
+        votes_favor_respondent: 0,
         voters: soroban_sdk::Vec::new(env),
     };
 
     env.storage().persistent().set(&key, &dispute);
     env.storage().persistent().extend_ttl(&key, 500000, 500000);
 
-    events::dispute_raised(env, agreement_id, details_hash);
+    events::dispute_raised(env, case_id, details_hash);
 
     Ok(())
 }
@@ -218,8 +205,8 @@ pub fn raise_dispute(
 pub fn vote_on_dispute(
     env: &Env,
     arbiter: Address,
-    agreement_id: String,
-    favor_landlord: bool,
+    case_id: String,
+    favor_claimant: bool,
 ) -> Result<(), DisputeError> {
     if !env.storage().persistent().has(&DataKey::Initialized) {
         return Err(DisputeError::NotInitialized);
@@ -241,7 +228,7 @@ pub fn vote_on_dispute(
         return Err(DisputeError::ArbiterNotFound);
     }
 
-    let dispute_key = DataKey::Dispute(agreement_id.clone());
+    let dispute_key = DataKey::Dispute(case_id.clone());
     let mut dispute: Dispute = env
         .storage()
         .persistent()
@@ -252,15 +239,15 @@ pub fn vote_on_dispute(
         return Err(DisputeError::DisputeAlreadyResolved);
     }
 
-    let vote_key = DataKey::Vote(agreement_id.clone(), arbiter.clone());
+    let vote_key = DataKey::Vote(case_id.clone(), arbiter.clone());
     if env.storage().persistent().has(&vote_key) {
         return Err(DisputeError::AlreadyVoted);
     }
 
     let vote = Vote {
         arbiter: arbiter.clone(),
-        agreement_id: agreement_id.clone(),
-        favor_landlord,
+        case_id: case_id.clone(),
+        favor_claimant,
         voted_at: env.ledger().timestamp(),
     };
 
@@ -269,10 +256,10 @@ pub fn vote_on_dispute(
         .persistent()
         .extend_ttl(&vote_key, 500000, 500000);
 
-    if favor_landlord {
-        dispute.votes_favor_landlord += 1;
+    if favor_claimant {
+        dispute.votes_favor_claimant += 1;
     } else {
-        dispute.votes_favor_tenant += 1;
+        dispute.votes_favor_respondent += 1;
     }
     dispute.voters.push_back(arbiter.clone());
 
@@ -281,19 +268,19 @@ pub fn vote_on_dispute(
         .persistent()
         .extend_ttl(&dispute_key, 500000, 500000);
 
-    events::vote_cast(env, agreement_id, arbiter, favor_landlord);
+    events::vote_cast(env, case_id, arbiter, favor_claimant);
 
     Ok(())
 }
 
-pub fn resolve_dispute(env: &Env, agreement_id: String) -> Result<DisputeOutcome, DisputeError> {
+pub fn resolve_dispute(env: &Env, case_id: String) -> Result<DisputeOutcome, DisputeError> {
     let state: ContractState = env
         .storage()
         .instance()
         .get(&DataKey::State)
         .ok_or(DisputeError::NotInitialized)?;
 
-    let dispute_key = DataKey::Dispute(agreement_id.clone());
+    let dispute_key = DataKey::Dispute(case_id.clone());
     let mut dispute: Dispute = env
         .storage()
         .persistent()
@@ -304,7 +291,7 @@ pub fn resolve_dispute(env: &Env, agreement_id: String) -> Result<DisputeOutcome
         return Err(DisputeError::DisputeAlreadyResolved);
     }
 
-    let total_votes = dispute.votes_favor_landlord + dispute.votes_favor_tenant;
+    let total_votes = dispute.votes_favor_claimant + dispute.votes_favor_respondent;
 
     if total_votes < state.min_votes_required {
         return Err(DisputeError::InsufficientVotes);
@@ -318,18 +305,18 @@ pub fn resolve_dispute(env: &Env, agreement_id: String) -> Result<DisputeOutcome
         .persistent()
         .extend_ttl(&dispute_key, 500000, 500000);
 
-    let outcome = if dispute.votes_favor_landlord > dispute.votes_favor_tenant {
-        DisputeOutcome::FavorLandlord
+    let outcome = if dispute.votes_favor_claimant > dispute.votes_favor_respondent {
+        DisputeOutcome::FavorClaimant
     } else {
-        DisputeOutcome::FavorTenant
+        DisputeOutcome::FavorRespondent
     };
 
     events::dispute_resolved(
         env,
-        agreement_id,
+        case_id,
         outcome.clone(),
-        dispute.votes_favor_landlord,
-        dispute.votes_favor_tenant,
+        dispute.votes_favor_claimant,
+        dispute.votes_favor_respondent,
     );
 
     Ok(outcome)
@@ -337,9 +324,9 @@ pub fn resolve_dispute(env: &Env, agreement_id: String) -> Result<DisputeOutcome
 
 pub fn resolve_dispute_on_timeout(
     env: &Env,
-    agreement_id: String,
+    case_id: String,
 ) -> Result<DisputeOutcome, DisputeError> {
-    let dispute_key = DataKey::Dispute(agreement_id.clone());
+    let dispute_key = DataKey::Dispute(case_id.clone());
     let mut dispute: Dispute = env
         .storage()
         .persistent()
@@ -365,25 +352,25 @@ pub fn resolve_dispute_on_timeout(
         .persistent()
         .extend_ttl(&dispute_key, 500000, 500000);
 
-    let outcome = if dispute.votes_favor_landlord > dispute.votes_favor_tenant {
-        DisputeOutcome::FavorLandlord
+    let outcome = if dispute.votes_favor_claimant > dispute.votes_favor_respondent {
+        DisputeOutcome::FavorClaimant
     } else {
-        DisputeOutcome::FavorTenant
+        DisputeOutcome::FavorRespondent
     };
 
-    events::dispute_timeout(env, agreement_id.clone());
+    events::dispute_timeout(env, case_id.clone());
     events::dispute_resolved(
         env,
-        agreement_id,
+        case_id,
         outcome.clone(),
-        dispute.votes_favor_landlord,
-        dispute.votes_favor_tenant,
+        dispute.votes_favor_claimant,
+        dispute.votes_favor_respondent,
     );
     Ok(outcome)
 }
 
-pub fn get_dispute(env: &Env, agreement_id: String) -> Option<Dispute> {
-    let key = DataKey::Dispute(agreement_id);
+pub fn get_dispute(env: &Env, case_id: String) -> Option<Dispute> {
+    let key = DataKey::Dispute(case_id);
     env.storage().persistent().get(&key)
 }
 
@@ -397,8 +384,8 @@ pub fn get_arbiter_count(env: &Env) -> u32 {
     env.storage().persistent().get(&key).unwrap_or(0)
 }
 
-pub fn get_vote(env: &Env, agreement_id: String, arbiter: Address) -> Option<Vote> {
-    let key = DataKey::Vote(agreement_id, arbiter);
+pub fn get_vote(env: &Env, case_id: String, arbiter: Address) -> Option<Vote> {
+    let key = DataKey::Vote(case_id, arbiter);
     env.storage().persistent().get(&key)
 }
 
@@ -426,7 +413,7 @@ pub fn create_appeal(
         .ok_or(DisputeError::DisputeNotFound)?;
 
     if !dispute.resolved {
-        return Err(DisputeError::InvalidAgreementState);
+        return Err(DisputeError::InvalidCaseState);
     }
 
     let resolved_at = dispute
@@ -609,21 +596,21 @@ pub fn resolve_appeal(env: &Env, appeal_id: String) -> Result<(), DisputeError> 
         return Err(DisputeError::InsufficientAppealVotes);
     }
 
-    let mut votes_favor_landlord = 0u32;
-    let mut votes_favor_tenant = 0u32;
+    let mut votes_favor_claimant = 0u32;
+    let mut votes_favor_respondent = 0u32;
 
     for appeal_vote in appeal.votes.iter() {
-        if appeal_vote.vote == DisputeOutcome::FavorLandlord {
-            votes_favor_landlord += 1;
+        if appeal_vote.vote == DisputeOutcome::FavorClaimant {
+            votes_favor_claimant += 1;
         } else {
-            votes_favor_tenant += 1;
+            votes_favor_respondent += 1;
         }
     }
 
-    let appeal_outcome = if votes_favor_landlord > votes_favor_tenant {
-        DisputeOutcome::FavorLandlord
+    let appeal_outcome = if votes_favor_claimant > votes_favor_respondent {
+        DisputeOutcome::FavorClaimant
     } else {
-        DisputeOutcome::FavorTenant
+        DisputeOutcome::FavorRespondent
     };
 
     let dispute: Dispute = env
@@ -888,14 +875,14 @@ pub fn vote_on_dispute_weighted(
             .persistent()
             .get(&wdisp_key)
             .unwrap_or(WeightedDisputeVotes {
-                weighted_votes_favor_landlord: 0,
-                weighted_votes_favor_tenant: 0,
+                w_votes_claimant: 0,
+                w_votes_respondent: 0,
                 voters: soroban_sdk::Vec::new(env),
             });
 
     match vote.clone() {
-        DisputeOutcome::FavorLandlord => wdisp.weighted_votes_favor_landlord += weight,
-        DisputeOutcome::FavorTenant => wdisp.weighted_votes_favor_tenant += weight,
+        DisputeOutcome::FavorClaimant => wdisp.w_votes_claimant += weight,
+        DisputeOutcome::FavorRespondent => wdisp.w_votes_respondent += weight,
     }
 
     wdisp.voters.push_back(arbiter.clone());
@@ -943,8 +930,8 @@ pub fn resolve_dispute_weighted(
             .persistent()
             .get(&wdisp_key)
             .unwrap_or(WeightedDisputeVotes {
-                weighted_votes_favor_landlord: 0,
-                weighted_votes_favor_tenant: 0,
+                w_votes_claimant: 0,
+                w_votes_respondent: 0,
                 voters: soroban_sdk::Vec::new(env),
             });
 
@@ -952,14 +939,14 @@ pub fn resolve_dispute_weighted(
         return Err(DisputeError::InsufficientVotes);
     }
 
-    let total_weight = wdisp.weighted_votes_favor_landlord + wdisp.weighted_votes_favor_tenant;
+    let total_weight = wdisp.w_votes_claimant + wdisp.w_votes_respondent;
 
     let outcome = match wdisp
-        .weighted_votes_favor_landlord
-        .cmp(&wdisp.weighted_votes_favor_tenant)
+        .w_votes_claimant
+        .cmp(&wdisp.w_votes_respondent)
     {
-        core::cmp::Ordering::Greater => DisputeOutcome::FavorLandlord,
-        core::cmp::Ordering::Less => DisputeOutcome::FavorTenant,
+        core::cmp::Ordering::Greater => DisputeOutcome::FavorClaimant,
+        core::cmp::Ordering::Less => DisputeOutcome::FavorRespondent,
         core::cmp::Ordering::Equal => {
             // Tie: first vote wins — look up voters[0]'s WeightedVote
             let first_voter = wdisp.voters.get(0).unwrap();
@@ -995,8 +982,8 @@ pub fn get_dispute_votes_weighted(
             .persistent()
             .get(&wdisp_key)
             .unwrap_or(WeightedDisputeVotes {
-                weighted_votes_favor_landlord: 0,
-                weighted_votes_favor_tenant: 0,
+                w_votes_claimant: 0,
+                w_votes_respondent: 0,
                 voters: soroban_sdk::Vec::new(env),
             });
 
