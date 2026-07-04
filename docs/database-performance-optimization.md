@@ -1,6 +1,6 @@
 # Database Performance Optimization
 
-Indexing strategies, query optimization, execution plan analysis, caching, connection pooling, monitoring, benchmarking, and troubleshooting for Houston Housing's PostgreSQL database.
+Indexing strategies, query optimization, execution plan analysis, caching, connection pooling, monitoring, benchmarking, and troubleshooting for Arbitra's PostgreSQL database.
 
 ---
 
@@ -49,7 +49,7 @@ Do **not** add an index when:
 | Composite | Multiple column filters | `WHERE city = 'Lagos' AND status = 'published'` |
 | Expression | Computed values | `LOWER(email)` for case-insensitive lookup |
 
-### 1.3 Key Indexes in Houston Housing
+### 1.3 Key Indexes in Arbitra
 
 ```sql
 -- Properties: most common listing query
@@ -270,7 +270,7 @@ open report.html
 
 ### 4.1 Application-Level Caching (Redis)
 
-Houston Housing uses Redis (or Upstash) via `NestJS CacheManager`. Cache queries that are:
+Arbitra uses Redis (or Upstash) via `NestJS CacheManager`. Cache queries that are:
 
 - Expensive to compute
 - Read frequently
