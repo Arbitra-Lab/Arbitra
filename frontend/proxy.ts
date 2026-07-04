@@ -11,7 +11,7 @@ import { NextRequest, NextResponse } from 'next/server';
  */
 export function proxy(request: NextRequest) {
   // AUTH DISABLED - Allow all access
-  // const authToken = request.cookies.get('huston-housing_auth_token')?.value;
+  // const authToken = request.cookies.get('arbitra_auth_token')?.value;
   // if (!authToken) {
   //   console.log('🔒 Proxy: No auth token, redirecting to home');
   //   return NextResponse.redirect(new URL('/', request.url));

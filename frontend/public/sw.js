@@ -2,7 +2,7 @@
  * Service Worker for offline support, install prompts, and background sync.
  */
 
-const VERSION = 'huston-housing-pwa-v2';
+const VERSION = 'arbitra-pwa-v3';
 const STATIC_CACHE = `${VERSION}-static`;
 const RUNTIME_CACHE = `${VERSION}-runtime`;
 const OFFLINE_URL = '/offline';
@@ -98,7 +98,7 @@ self.addEventListener('push', (event) => {
     payload = {};
   }
 
-  const title = payload.title || 'Houston Housing update';
+  const title = payload.title || 'Arbitra update';
   const options = {
     body: payload.body || 'A new update is available.',
     icon: '/android_192.png',
@@ -112,7 +112,7 @@ self.addEventListener('push', (event) => {
 });
 
 self.addEventListener('sync', (event) => {
-  if (event.tag === 'huston-housing-offline-sync') {
+  if (event.tag === 'arbitra-offline-sync') {
     event.waitUntil(
       self.clients.matchAll().then((clients) => {
         clients.forEach((client) => {
