@@ -52,7 +52,7 @@ export default function NotificationsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-white">Notifications</h1>
-          <p className="text-sm text-blue-200/60 mt-1">
+          <p className="text-sm text-neutral-200/60 mt-1">
             {unreadCount > 0
               ? `You have ${unreadCount} unread notification${unreadCount > 1 ? 's' : ''}`
               : 'You\u2019re all caught up!'}
@@ -62,7 +62,7 @@ export default function NotificationsPage() {
         {unreadCount > 0 && (
           <button
             onClick={markAllAsRead}
-            className="flex items-center gap-1.5 text-sm font-medium text-blue-300 hover:text-white transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 text-sm font-medium text-brand-accent hover:text-white transition-colors cursor-pointer"
           >
             <CheckCheck size={16} />
             Mark all as read
@@ -72,15 +72,15 @@ export default function NotificationsPage() {
 
       {/* Filters */}
       <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-1">
-        <Filter size={16} className="text-blue-300/50 shrink-0" />
+        <Filter size={16} className="text-brand-accent/50 shrink-0" />
         {FILTERS.map((f) => (
           <button
             key={f.value}
             onClick={() => setFilter(f.value)}
             className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors whitespace-nowrap cursor-pointer ${
               filter === f.value
-                ? 'bg-blue-500 text-white shadow-sm'
-                : 'bg-white/5 text-blue-200/70 hover:bg-white/10 hover:text-white border border-white/10'
+                ? 'bg-brand-accent text-white shadow-sm'
+                : 'bg-white/5 text-neutral-200/70 hover:bg-white/10 hover:text-white border border-white/10'
             }`}
           >
             {f.label}
@@ -91,7 +91,7 @@ export default function NotificationsPage() {
       {/* List */}
       <div className="backdrop-blur-sm bg-white/5 rounded-xl border border-white/10 divide-y divide-white/5 overflow-hidden">
         {filtered.length === 0 ? (
-          <p className="px-4 py-12 text-center text-sm text-blue-200/40">
+          <p className="px-4 py-12 text-center text-sm text-neutral-200/40">
             No notifications to show.
           </p>
         ) : (

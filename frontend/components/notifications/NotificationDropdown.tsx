@@ -33,7 +33,7 @@ export default function NotificationDropdown({
         <h3 className="text-sm font-semibold text-white">
           Notifications
           {unreadCount > 0 && (
-            <span className="ml-2 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold rounded-full bg-blue-500/20 text-blue-300">
+            <span className="ml-2 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold rounded-full bg-brand-accent/20 text-brand-accent">
               {unreadCount}
             </span>
           )}
@@ -42,7 +42,7 @@ export default function NotificationDropdown({
         {unreadCount > 0 && (
           <button
             onClick={markAllAsRead}
-            className="flex items-center gap-1 text-xs text-blue-300 hover:text-white transition-colors cursor-pointer"
+            className="flex items-center gap-1 text-xs text-brand-accent hover:text-white transition-colors cursor-pointer"
           >
             <CheckCheck size={14} />
             Mark all read
@@ -53,7 +53,7 @@ export default function NotificationDropdown({
       {/* List */}
       <div className="divide-y divide-white/5">
         {recent.length === 0 ? (
-          <p className="px-3 py-6 text-center text-sm text-blue-200/40">
+          <p className="px-3 py-6 text-center text-sm text-neutral-200/40">
             No notifications yet.
           </p>
         ) : (
@@ -74,7 +74,7 @@ export default function NotificationDropdown({
         <Link
           href={viewAllHref}
           onClick={onClose}
-          className="block text-center text-sm font-medium text-blue-300 hover:text-white py-2.5 transition-colors"
+          className="block text-center text-sm font-medium text-brand-accent hover:text-white py-2.5 transition-colors"
         >
           View All Notifications
         </Link>
