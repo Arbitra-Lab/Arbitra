@@ -1,7 +1,7 @@
 /** Deployed Soroban contract IDs (testnet defaults from contract/.env.testnet). */
 
 export interface ContractIds {
-  huston-housing: string;
+  houstonHousing: string;
   disputeResolution: string;
   escrow: string;
   payment: string;
@@ -16,7 +16,7 @@ function env(name: string, fallback = ''): string {
 }
 
 const TESTNET_DEFAULTS: ContractIds = {
-  huston-housing: 'CBFLJVOHQ2LRVUMYBZQCHCVP5JGZ6WFTOSMYYUZQHAPHX6JKSDQXF5JD',
+  houstonHousing: 'CBFLJVOHQ2LRVUMYBZQCHCVP5JGZ6WFTOSMYYUZQHAPHX6JKSDQXF5JD',
   disputeResolution: 'CA4GNSPPX6RMHPKMJB5GSOKQU6WDPBEGMPSU3SJ5SEJWA5F7RFK2NN65',
   escrow: 'CDDUZKXCDSK3TZVFUUEEJRMSFNILCUEO5E5RORTREEH4KOALQC637DEZ',
   payment: 'CDXNI4WNAIFVVN5RIVETAENYYQ5OTT7TLFQSF2JWAHU3X3B3RT5KQBED',
@@ -34,7 +34,7 @@ export function getContractIds(): ContractIds {
   const defaults = useDefaults ? TESTNET_DEFAULTS : ({} as ContractIds);
 
   return {
-    huston-housing: env('NEXT_PUBLIC_HUSTON_HOUSING_CONTRACT_ID', defaults.huston-housing),
+    houstonHousing: env('NEXT_PUBLIC_HUSTON_HOUSING_CONTRACT_ID', defaults.houstonHousing),
     disputeResolution: env(
       'NEXT_PUBLIC_DISPUTE_RESOLUTION_CONTRACT_ID',
       defaults.disputeResolution,
