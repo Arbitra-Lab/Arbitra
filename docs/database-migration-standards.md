@@ -1,6 +1,6 @@
 # Database Migration Standards
 
-Standards, procedures, and best practices for creating, testing, deploying, and rolling back database migrations in the Houston Housing platform.
+Standards, procedures, and best practices for creating, testing, deploying, and rolling back database migrations in the Arbitra platform.
 
 ---
 
@@ -30,7 +30,7 @@ Database migrations are versioned, incremental scripts that evolve the database 
 - Safe, reversible updates via rollback
 - Coordination across team members without manual SQL execution
 
-Houston Housing uses **TypeORM migrations** backed by raw SQL files in `backend/src/database/migrations/`. The TypeORM CLI generates and runs migration files; raw SQL files are provided for DBA review and manual recovery.
+Arbitra uses **TypeORM migrations** backed by raw SQL files in `backend/src/database/migrations/`. The TypeORM CLI generates and runs migration files; raw SQL files are provided for DBA review and manual recovery.
 
 **Migration flow:**
 
