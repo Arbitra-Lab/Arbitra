@@ -212,7 +212,7 @@ export function ProfileMetadataManagement({
             <h1 className="text-3xl font-bold tracking-tight text-white">
               Profile Metadata
             </h1>
-            <p className="text-blue-200/60 mt-1">
+            <p className="text-neutral-200/60 mt-1">
               Manage and customize your profile information.
             </p>
           </div>
@@ -253,7 +253,7 @@ export function ProfileMetadataManagement({
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-white/5 backdrop-blur-sm rounded-3xl p-6 border border-white/10">
-          <p className="text-xs text-blue-200/60 uppercase tracking-wider">
+          <p className="text-xs text-neutral-200/60 uppercase tracking-wider">
             Total Fields
           </p>
           <h3 className="text-2xl font-bold text-white mt-1">
@@ -261,7 +261,7 @@ export function ProfileMetadataManagement({
           </h3>
         </div>
         <div className="bg-white/5 backdrop-blur-sm rounded-3xl p-6 border border-white/10">
-          <p className="text-xs text-blue-200/60 uppercase tracking-wider">
+          <p className="text-xs text-neutral-200/60 uppercase tracking-wider">
             Public Fields
           </p>
           <h3 className="text-2xl font-bold text-white mt-1">
@@ -269,7 +269,7 @@ export function ProfileMetadataManagement({
           </h3>
         </div>
         <div className="bg-white/5 backdrop-blur-sm rounded-3xl p-6 border border-white/10">
-          <p className="text-xs text-blue-200/60 uppercase tracking-wider">
+          <p className="text-xs text-neutral-200/60 uppercase tracking-wider">
             Custom Fields
           </p>
           <h3 className="text-2xl font-bold text-white mt-1">
@@ -339,7 +339,7 @@ export function ProfileMetadataManagement({
             </>
           ) : (
             <div className="bg-white/5 backdrop-blur-sm rounded-3xl p-6 border border-white/10 flex items-center justify-center min-h-[400px]">
-              <p className="text-blue-200/60">Select a field to view details</p>
+              <p className="text-neutral-200/60">Select a field to view details</p>
             </div>
           )}
         </div>

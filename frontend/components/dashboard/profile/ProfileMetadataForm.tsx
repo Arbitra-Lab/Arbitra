@@ -73,7 +73,7 @@ export function ProfileMetadataForm({
         <button
           type="button"
           onClick={onCancel}
-          className="p-2 text-blue-200/60 hover:text-white transition-colors"
+          className="p-2 text-neutral-200/60 hover:text-white transition-colors"
         >
           <X size={20} />
         </button>
@@ -89,7 +89,7 @@ export function ProfileMetadataForm({
               {...register('label', { required: 'Label is required' })}
               type="text"
               placeholder="e.g., Bio"
-              className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-blue-200/40 focus:outline-none focus:bg-white/10 focus:border-blue-500 transition-all"
+              className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-neutral-200/40 focus:outline-none focus:bg-white/10 focus:border-brand-accent transition-all"
               disabled={isLoading || !!field}
             />
             {errors.label && (
@@ -107,7 +107,7 @@ export function ProfileMetadataForm({
               {...register('key', { required: 'Key is required' })}
               type="text"
               placeholder="e.g., bio"
-              className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-blue-200/40 focus:outline-none focus:bg-white/10 focus:border-blue-500 transition-all font-mono text-sm"
+              className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-neutral-200/40 focus:outline-none focus:bg-white/10 focus:border-brand-accent transition-all font-mono text-sm"
               disabled={isLoading || !!field}
             />
             {errors.key && (
@@ -122,7 +122,7 @@ export function ProfileMetadataForm({
           </label>
           <select
             {...register('type')}
-            className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:bg-white/10 focus:border-blue-500 transition-all appearance-none"
+            className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:bg-white/10 focus:border-brand-accent transition-all appearance-none"
             disabled={isLoading || !!field}
           >
             {FIELD_TYPES.map((type) => (
@@ -141,7 +141,7 @@ export function ProfileMetadataForm({
             {...register('value')}
             placeholder="Enter field value"
             rows={3}
-            className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-blue-200/40 focus:outline-none focus:bg-white/10 focus:border-blue-500 transition-all resize-none"
+            className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-neutral-200/40 focus:outline-none focus:bg-white/10 focus:border-brand-accent transition-all resize-none"
             disabled={isLoading}
           />
         </div>

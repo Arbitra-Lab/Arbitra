@@ -26,13 +26,13 @@ export function ProfileMetadataPreview({
         <h3 className="text-lg font-bold text-white">Public Profile Preview</h3>
       </div>
 
-      <p className="text-sm text-blue-200/60">
+      <p className="text-sm text-neutral-200/60">
         This is how your profile appears to other users:
       </p>
 
       {publicFields.length === 0 ? (
         <div className="text-center py-8 bg-white/5 border border-white/10 rounded-xl">
-          <p className="text-blue-200/60">
+          <p className="text-neutral-200/60">
             No public fields. Add fields and make them public to create your
             profile.
           </p>
@@ -75,7 +75,7 @@ export function ProfileMetadataPreview({
         </div>
       )}
 
-      <p className="text-xs text-blue-200/60">
+      <p className="text-xs text-neutral-200/60">
         Fields marked as &quot;Private&quot; are only visible to you and
         won&apos;t appear on your public profile.
       </p>

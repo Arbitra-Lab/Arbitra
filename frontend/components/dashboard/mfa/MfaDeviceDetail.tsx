@@ -101,7 +101,7 @@ export function MfaDeviceDetail({
                 type="text"
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
-                className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:bg-white/10 focus:border-blue-500"
+                className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:bg-white/10 focus:border-brand-accent"
                 autoFocus
               />
               <button
@@ -126,13 +126,13 @@ export function MfaDeviceDetail({
                 <h2 className="text-2xl font-bold text-white">{device.name}</h2>
                 <button
                   onClick={() => setIsRenaming(true)}
-                  className="p-2 text-blue-200/60 hover:text-white transition-colors"
+                  className="p-2 text-neutral-200/60 hover:text-white transition-colors"
                   title="Rename"
                 >
                   <Edit2 size={16} />
                 </button>
               </div>
-              <p className="text-blue-200/60 mt-1">
+              <p className="text-neutral-200/60 mt-1">
                 {DEVICE_NAMES[device.type]}
               </p>
             </div>
@@ -170,7 +170,7 @@ export function MfaDeviceDetail({
               onChange={(e) => setVerificationCode(e.target.value)}
               placeholder="Enter 6-digit code"
               maxLength={6}
-              className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-blue-200/40 focus:outline-none focus:bg-white/10 focus:border-blue-500 font-mono text-lg tracking-widest"
+              className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-neutral-200/40 focus:outline-none focus:bg-white/10 focus:border-brand-accent font-mono text-lg tracking-widest"
             />
           </div>
           <button
@@ -184,7 +184,7 @@ export function MfaDeviceDetail({
 
       <div className="grid grid-cols-2 gap-4">
         <div className="bg-white/5 rounded-xl p-4 border border-white/10">
-          <p className="text-xs text-blue-200/60 uppercase tracking-wide">
+          <p className="text-xs text-neutral-200/60 uppercase tracking-wide">
             Created
           </p>
           <p className="text-sm text-white mt-2">
@@ -192,7 +192,7 @@ export function MfaDeviceDetail({
           </p>
         </div>
         <div className="bg-white/5 rounded-xl p-4 border border-white/10">
-          <p className="text-xs text-blue-200/60 uppercase tracking-wide">
+          <p className="text-xs text-neutral-200/60 uppercase tracking-wide">
             Last Used
           </p>
           <p className="text-sm text-white mt-2">
@@ -242,14 +242,14 @@ export function MfaDeviceDetail({
                   </code>
                   <Copy
                     size={12}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-blue-200/40 group-hover:text-blue-200 transition-colors"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-neutral-200/40 group-hover:text-brand-accent transition-colors"
                   />
                 </button>
               ))}
             </div>
           )}
 
-          <p className="text-xs text-blue-200/60 mt-3">
+          <p className="text-xs text-neutral-200/60 mt-3">
             Save these codes in a secure location. Each code can only be used
             once if you lose access to your device.
           </p>

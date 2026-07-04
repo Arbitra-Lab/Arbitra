@@ -60,7 +60,7 @@ export function MfaDeviceList({
 
       <div className="relative">
         <Search
-          className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-300/40"
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-200/40"
           size={16}
         />
         <input
@@ -68,16 +68,16 @@ export function MfaDeviceList({
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search devices..."
-          className="w-full pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-sm text-white placeholder-blue-200/40 focus:outline-none focus:bg-white/10 focus:border-blue-500 transition-all"
+          className="w-full pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-sm text-white placeholder-neutral-200/40 focus:outline-none focus:bg-white/10 focus:border-brand-accent transition-all"
         />
       </div>
 
       {devices.length === 0 ? (
-        <div className="text-center py-8 text-blue-200/60 text-sm">
+        <div className="text-center py-8 text-neutral-200/60 text-sm">
           No devices added yet
         </div>
       ) : filteredDevices.length === 0 ? (
-        <div className="text-center py-8 text-blue-200/60 text-sm">
+        <div className="text-center py-8 text-neutral-200/60 text-sm">
           No matching devices
         </div>
       ) : (
@@ -102,7 +102,7 @@ export function MfaDeviceList({
                       <p className="text-sm text-white font-medium truncate">
                         {device.name}
                       </p>
-                      <p className="text-xs text-blue-200/60 mt-0.5">
+                      <p className="text-xs text-neutral-200/60 mt-0.5">
                         {DEVICE_NAMES[device.type]}
                       </p>
                     </div>
@@ -130,7 +130,7 @@ export function MfaDeviceList({
                     className={`p-1.5 rounded-lg transition-all text-sm ${
                       device.enabled && device.verified
                         ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400'
-                        : 'bg-white/5 border border-white/10 text-blue-200/60'
+                        : 'bg-white/5 border border-white/10 text-neutral-200/60'
                     }`}
                     title={device.enabled ? 'Disable' : 'Enable'}
                   >
