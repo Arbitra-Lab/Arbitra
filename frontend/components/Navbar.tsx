@@ -52,7 +52,7 @@ const Navbar = ({ theme = 'dark' }: NavbarProps) => {
     <nav
       className={`top-0 left-0 right-0 z-50 transition-all duration-300 sticky ${
         isScrolled
-          ? 'backdrop-blur-xl bg-slate-950/95 border-b border-white/20 py-2 shadow-xl shadow-black/20'
+          ? 'backdrop-blur-xl bg-neutral-900/95 border-b border-white/20 py-2 shadow-xl shadow-black/20'
           : 'bg-transparent py-3'
       }`}
       suppressHydrationWarning
@@ -74,12 +74,12 @@ const Navbar = ({ theme = 'dark' }: NavbarProps) => {
                 key={link.name}
                 href={link.href}
                 className={`relative text-sm font-medium transition-colors ${
-                  active ? 'text-white' : 'text-blue-200/80 hover:text-white'
+                  active ? 'text-white' : 'text-neutral-200/80 hover:text-white'
                 }`}
               >
                 {link.name}
                 {active && (
-                  <span className="absolute -bottom-1 left-0 right-0 h-0.5 bg-blue-400 rounded-full" />
+                  <span className="absolute -bottom-1 left-0 right-0 h-0.5 bg-brand-accent rounded-full" />
                 )}
               </Link>
             );
@@ -89,8 +89,8 @@ const Navbar = ({ theme = 'dark' }: NavbarProps) => {
         {/* Connect Wallet Button */}
         <div className="hidden md:flex items-center space-x-4">
           {walletAddress ? (
-            <div className="px-4 py-2.5 rounded-lg bg-green-500/20 border border-green-500/50 backdrop-blur-sm">
-              <p className="text-sm text-green-200 font-mono">
+            <div className="px-4 py-2.5 rounded-lg bg-brand-accent/10 border border-brand-accent/40 backdrop-blur-sm">
+              <p className="text-sm text-brand-accent font-mono">
                 {walletAddress.slice(0, 6)}...{walletAddress.slice(-6)}
               </p>
             </div>
@@ -114,7 +114,7 @@ const Navbar = ({ theme = 'dark' }: NavbarProps) => {
 
       {/* Mobile Navigation Drawer */}
       {isMobileMenuOpen && (
-        <div className="md:hidden absolute top-full left-0 right-0 backdrop-blur-xl bg-slate-950/98 border-b border-white/20 shadow-xl shadow-black/20">
+        <div className="md:hidden absolute top-full left-0 right-0 backdrop-blur-xl bg-neutral-900/98 border-b border-white/20 shadow-xl shadow-black/20">
           <div className="flex flex-col p-6 space-y-4">
             {NAV_LINKS.map((link) => {
               const active = isActive(link.href);
@@ -125,7 +125,7 @@ const Navbar = ({ theme = 'dark' }: NavbarProps) => {
                   href={link.href}
                   onClick={() => setIsMobileMenuOpen(false)}
                   className={`text-lg font-medium transition-colors ${
-                    active ? 'text-white' : 'text-blue-200/80 hover:text-white'
+                    active ? 'text-white' : 'text-neutral-200/80 hover:text-white'
                   }`}
                 >
                   {link.name}
@@ -136,8 +136,8 @@ const Navbar = ({ theme = 'dark' }: NavbarProps) => {
             <div className="pt-4 flex flex-col space-y-4 border-t border-white/10">
               <div onClick={() => setIsMobileMenuOpen(false)}>
                 {walletAddress ? (
-                  <div className="px-4 py-3 rounded-lg bg-green-500/20 border border-green-500/50 backdrop-blur-sm">
-                    <p className="text-sm text-green-200 font-mono">
+                  <div className="px-4 py-3 rounded-lg bg-brand-accent/10 border border-brand-accent/40 backdrop-blur-sm">
+                    <p className="text-sm text-brand-accent font-mono">
                       {walletAddress.slice(0, 6)}...{walletAddress.slice(-6)}
                     </p>
                   </div>

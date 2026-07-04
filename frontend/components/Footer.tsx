@@ -123,7 +123,7 @@ export default function Footer() {
           {/* Footer Bottom */}
           <div className="border-t border-gray-800 pt-8 sm:pt-12 flex flex-col sm:flex-row justify-between items-center gap-6">
             <p className="text-gray-400 text-xs sm:text-sm text-center sm:text-left">
-              © 2024 Houston Housing. All rights reserved.
+              © 2024 Arbitra. All rights reserved.
             </p>
 
             {/* Social Links */}
