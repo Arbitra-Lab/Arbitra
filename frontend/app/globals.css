@@ -76,6 +76,14 @@
     -webkit-text-fill-color: transparent;
   }
 
+  /* Escrow (teal) resolving to verdict (coral) — the arbitration signature gradient */
+  .text-gradient-verdict {
+    background: linear-gradient(to right, #2dd4bf, #ff6b5e);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
   /* Custom Scrollbar */
   ::-webkit-scrollbar {
     width: 8px;
