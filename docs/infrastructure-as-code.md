@@ -1,6 +1,6 @@
 # Infrastructure as Code
 
-Docker, Docker Compose, Kubernetes, Terraform, environment variable management, secrets handling, CI/CD integration, and best practices for the Houston Housing platform infrastructure.
+Docker, Docker Compose, Kubernetes, Terraform, environment variable management, secrets handling, CI/CD integration, and best practices for the Arbitra platform infrastructure.
 
 ---
 
@@ -23,7 +23,7 @@ Docker, Docker Compose, Kubernetes, Terraform, environment variable management, 
 
 ### 1.1 Image Structure
 
-Houston Housing uses multi-stage Docker builds to minimize image size and separate build-time from runtime dependencies.
+Arbitra uses multi-stage Docker builds to minimize image size and separate build-time from runtime dependencies.
 
 #### Backend Dockerfile
 
