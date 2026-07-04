@@ -48,8 +48,8 @@ export function StellarAccountsView() {
       {/* Page Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center">
-            <Wallet size={20} className="text-blue-400" />
+          <div className="w-10 h-10 rounded-xl bg-brand-accent/10 flex items-center justify-center">
+            <Wallet size={20} className="text-brand-accent" />
           </div>
           <div>
             <h1 className="text-xl font-bold text-white">Stellar Accounts</h1>
