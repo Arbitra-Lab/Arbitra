@@ -32,19 +32,19 @@ export default function ErrorFallback({
     accent === 'amber'
       ? 'bg-amber-50'
       : accent === 'blue'
-        ? 'bg-blue-50'
+        ? 'bg-brand-accent/10'
         : 'bg-red-50';
   const iconColor =
     accent === 'amber'
       ? 'text-amber-500'
       : accent === 'blue'
-        ? 'text-blue-500'
+        ? 'text-brand-accent'
         : 'text-red-500';
   const detailBg =
     accent === 'amber'
       ? 'bg-amber-50 text-amber-700'
       : accent === 'blue'
-        ? 'bg-blue-50 text-blue-700'
+        ? 'bg-brand-accent/10 text-brand-accent'
         : 'bg-red-50 text-red-700';
 
   return (
@@ -91,7 +91,7 @@ export default function ErrorFallback({
           {retry && (
             <button
               onClick={retry}
-              className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              className="rounded-lg bg-brand-blue px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-blue-dark focus:outline-none focus:ring-2 focus:ring-brand-accent focus:ring-offset-2"
             >
               Retry
             </button>
