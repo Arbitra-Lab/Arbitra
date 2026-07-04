@@ -47,7 +47,7 @@ async function simulateContractCall(
   return retval ? scValToNative(retval) : null;
 }
 
-export interface Houston HousingContractState {
+export interface HoustonHousingContractState {
   admin?: string;
   config?: {
     fee_bps?: number;
@@ -57,13 +57,13 @@ export interface Houston HousingContractState {
   initialized?: boolean;
 }
 
-export async function readHouston HousingState(): Promise<Houston HousingContractState | null> {
-  const { huston-housing } = getContractIds();
-  if (!huston-housing) return null;
+export async function readHoustonHousingState(): Promise<HoustonHousingContractState | null> {
+  const { houstonHousing } = getContractIds();
+  if (!houstonHousing) return null;
   return (await simulateContractCall(
-    huston-housing,
+    houstonHousing,
     'get_state',
-  )) as Houston HousingContractState;
+  )) as HoustonHousingContractState;
 }
 
 export async function readContractMethod<T>(

@@ -34,7 +34,10 @@ export function getContractIds(): ContractIds {
   const defaults = useDefaults ? TESTNET_DEFAULTS : ({} as ContractIds);
 
   return {
-    houstonHousing: env('NEXT_PUBLIC_HUSTON_HOUSING_CONTRACT_ID', defaults.houstonHousing),
+    houstonHousing: env(
+      'NEXT_PUBLIC_HUSTON_HOUSING_CONTRACT_ID',
+      defaults.houstonHousing,
+    ),
     disputeResolution: env(
       'NEXT_PUBLIC_DISPUTE_RESOLUTION_CONTRACT_ID',
       defaults.disputeResolution,
