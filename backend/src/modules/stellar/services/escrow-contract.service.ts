@@ -25,6 +25,10 @@ export interface CreateEscrowParams {
   arbiter: string;
   amount: string;
   token: string;
+  /** Optional platform governance cut (5% on release_rent). Omit for a plain 2-party escrow. */
+  platformGovernance?: string;
+  /** Optional agent/referral cut (5% on release_rent). Omit for a plain 2-party escrow. */
+  agentReferral?: string;
 }
 
 export interface EscrowData {
@@ -37,6 +41,8 @@ export interface EscrowData {
   status: string;
   createdAt: number;
   disputeReason?: string;
+  platformGovernance?: string;
+  agentReferral?: string;
 }
 
 @Injectable()
@@ -110,6 +116,12 @@ export class EscrowContractService {
         new StellarSdk.Address(params.depositor).toScVal(),
         new StellarSdk.Address(params.beneficiary).toScVal(),
         new StellarSdk.Address(params.arbiter).toScVal(),
+        params.platformGovernance
+          ? new StellarSdk.Address(params.platformGovernance).toScVal()
+          : xdr.ScVal.scvVoid(),
+        params.agentReferral
+          ? new StellarSdk.Address(params.agentReferral).toScVal()
+          : xdr.ScVal.scvVoid(),
         StellarSdk.nativeToScVal(BigInt(params.amount), { type: 'i128' }),
         new StellarSdk.Address(params.token).toScVal(),
       );
@@ -226,7 +238,7 @@ export class EscrowContractService {
       const account = await this.server.getAccount(caller);
 
       const operation = this.contract.call(
-        'raise_dispute',
+        'initiate_dispute',
         xdr.ScVal.scvBytes(Buffer.from(escrowId, 'hex')),
         new StellarSdk.Address(caller).toScVal(),
         xdr.ScVal.scvString(reason),
@@ -422,6 +434,8 @@ export class EscrowContractService {
         status: native.status,
         createdAt: native.created_at,
         disputeReason: native.dispute_reason,
+        platformGovernance: native.platform_governance || undefined,
+        agentReferral: native.agent_referral || undefined,
       };
     } catch (error) {
       this.logger.error(
