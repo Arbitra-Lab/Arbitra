@@ -84,7 +84,7 @@ const mockData: Record<string, unknown> = {
         status: 'ACTIVE',
         propertyName: 'Sunset Apartments, Unit 4B',
         propertyId: 'prop-001',
-        tenantName: 'Houston Housing Okafor',
+        tenantName: 'Alex Okafor',
         tenantId: 'tenant-001',
         fileSize: 2458000,
         fileType: 'application/pdf',
@@ -100,7 +100,7 @@ const mockData: Record<string, unknown> = {
         status: 'ACTIVE',
         propertyName: 'Sunset Apartments, Unit 4B',
         propertyId: 'prop-001',
-        tenantName: 'Houston Housing Okafor',
+        tenantName: 'Alex Okafor',
         tenantId: 'tenant-001',
         fileSize: 1850000,
         fileType: 'application/pdf',
@@ -119,7 +119,7 @@ const mockData: Record<string, unknown> = {
         requestId: 'MNT-2026-001',
         propertyName: 'Sunset Apartments, Unit 4B',
         propertyId: 'prop-001',
-        tenantName: 'Houston Housing Okafor',
+        tenantName: 'Alex Okafor',
         tenantId: 'tenant-001',
         title: 'Water leak in bathroom',
         description:
@@ -168,7 +168,7 @@ const mockData: Record<string, unknown> = {
     data: [
       {
         id: 'room-001',
-        name: 'Houston Housing Okafor',
+        name: 'Alex Okafor',
         lastMessage: 'The lease agreement looks good.',
         unreadCount: 2,
         updatedAt: '2026-03-31T14:20:00Z',
@@ -234,8 +234,8 @@ const dynamicPatterns: Array<{
         propertyId: 'prop-001',
         tenant: {
           id: 'tenant-001',
-          name: 'Houston Housing Okafor',
-          email: 'huston-housing.okafor@email.com',
+          name: 'Alex Okafor',
+          email: 'alex.okafor@email.com',
           phone: '+234 805 123 4567',
         },
         title: 'Water leak in bathroom',
@@ -262,7 +262,7 @@ const dynamicPatterns: Array<{
         comments: [
           {
             id: 'c-1',
-            author: { id: 'tenant-001', name: 'Houston Housing Okafor', role: 'tenant' },
+            author: { id: 'tenant-001', name: 'Alex Okafor', role: 'tenant' },
             content:
               "The leak started yesterday evening. It's getting worse today.",
             createdAt: '2026-03-25T10:10:00Z',

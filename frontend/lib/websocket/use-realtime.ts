@@ -8,7 +8,7 @@ import * as ws from './manager';
 import { queryKeys } from '@/lib/query/keys';
 import type { Notification } from '@/components/notifications/types';
 
-const SETTINGS_STORAGE_KEY = 'huston-housing_user_preferences';
+const SETTINGS_STORAGE_KEY = 'arbitra_user_preferences';
 
 function isSoundEnabled(): boolean {
   if (typeof window === 'undefined') return false;

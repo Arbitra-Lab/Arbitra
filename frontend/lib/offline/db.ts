@@ -35,7 +35,7 @@ export interface ConflictRecord {
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
-const DB_NAME = 'huston-housing_offline';
+const DB_NAME = 'arbitra_offline';
 const DB_VERSION = 1;
 
 const STORES = {

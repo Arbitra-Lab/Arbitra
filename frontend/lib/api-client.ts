@@ -30,7 +30,7 @@ type ApiResponse<T> = {
 };
 
 const AUTH_STORAGE_KEYS = {
-  ACCESS_TOKEN: 'huston-housing_access_token',
+  ACCESS_TOKEN: 'arbitra_access_token',
   LEGACY_ACCESS_TOKEN: 'auth_token',
 } as const;
 
