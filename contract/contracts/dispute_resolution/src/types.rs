@@ -42,8 +42,8 @@ pub struct WeightedVote {
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct WeightedDisputeVotes {
-    pub weighted_votes_favor_landlord: u32,
-    pub weighted_votes_favor_tenant: u32,
+    pub w_votes_claimant: u32,
+    pub w_votes_respondent: u32,
     /// Ordered list of arbiters who have cast a weighted vote.
     /// voters[0] is used for tie-breaking (first vote wins).
     pub voters: Vec<Address>,
@@ -52,8 +52,8 @@ pub struct WeightedDisputeVotes {
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum DisputeOutcome {
-    FavorLandlord,
-    FavorTenant,
+    FavorClaimant,
+    FavorRespondent,
 }
 
 #[contracttype]
@@ -62,7 +62,7 @@ pub struct ContractState {
     pub admin: Address,
     pub initialized: bool,
     pub min_votes_required: u32,
-    pub huston-housing_contract: Address,
+    pub case_registry: Address,
 }
 
 #[contracttype]
@@ -84,13 +84,13 @@ pub struct Arbiter {
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Dispute {
-    pub agreement_id: String,
+    pub case_id: String,
     pub details_hash: String,
     pub raised_at: u64,
     pub resolved: bool,
     pub resolved_at: Option<u64>,
-    pub votes_favor_landlord: u32,
-    pub votes_favor_tenant: u32,
+    pub votes_favor_claimant: u32,
+    pub votes_favor_respondent: u32,
     pub voters: Vec<Address>,
 }
 
@@ -100,10 +100,10 @@ impl Dispute {
             return None;
         }
 
-        if self.votes_favor_landlord > self.votes_favor_tenant {
-            Some(DisputeOutcome::FavorLandlord)
+        if self.votes_favor_claimant > self.votes_favor_respondent {
+            Some(DisputeOutcome::FavorClaimant)
         } else {
-            Some(DisputeOutcome::FavorTenant)
+            Some(DisputeOutcome::FavorRespondent)
         }
     }
 }
@@ -112,8 +112,8 @@ impl Dispute {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Vote {
     pub arbiter: Address,
-    pub agreement_id: String,
-    pub favor_landlord: bool,
+    pub case_id: String,
+    pub favor_claimant: bool,
     pub voted_at: u64,
 }
 
