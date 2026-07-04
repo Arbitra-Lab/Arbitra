@@ -2,7 +2,7 @@
 
 ## 1. Overview
 
-This document establishes the Know Your Customer (KYC) and verification framework for the Houston Housing platform. It defines the procedures for identity verification, document validation, third-party integrations, compliance obligations, data handling, and operational controls.
+This document establishes the Know Your Customer (KYC) and verification framework for the Arbitra platform. It defines the procedures for identity verification, document validation, third-party integrations, compliance obligations, data handling, and operational controls.
 
 KYC processes are implemented to mitigate fraud, establish user authenticity, strengthen platform trust, and ensure alignment with regulatory and compliance requirements.
 
