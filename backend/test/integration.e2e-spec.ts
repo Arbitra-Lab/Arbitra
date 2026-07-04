@@ -47,7 +47,7 @@ describe('Integration (e2e)', () => {
 
     // Set up Swagger
     const config = new DocumentBuilder()
-      .setTitle('Chioma API')
+      .setTitle('Houston Housing API')
       .setVersion('1.0')
       .addBearerAuth(
         { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
@@ -98,7 +98,7 @@ describe('Integration (e2e)', () => {
         .get('/developer-portal')
         .expect(200);
       expect(res.headers['content-type']).toMatch(/text\/html/);
-      expect(res.text).toContain('Chioma Developer Portal');
+      expect(res.text).toContain('Houston Housing Developer Portal');
       expect(res.text).toContain('api/docs');
       expect(res.text).toContain('Documentation');
     });

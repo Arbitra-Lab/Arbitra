@@ -1,6 +1,6 @@
 # Load Balancing and Auto-Scaling Configuration
 
-This document describes the load balancing and auto-scaling setup for the Chioma backend infrastructure, ensuring high availability and optimal resource utilization in production.
+This document describes the load balancing and auto-scaling setup for the Houston Housing backend infrastructure, ensuring high availability and optimal resource utilization in production.
 
 ## Table of Contents
 
@@ -15,7 +15,7 @@ This document describes the load balancing and auto-scaling setup for the Chioma
 
 ## Overview
 
-The Chioma backend infrastructure is designed for high availability with:
+The Houston Housing backend infrastructure is designed for high availability with:
 
 - **Multi-tier load balancing** via Nginx with least-connections strategy
 - **Kubernetes-based auto-scaling** with HPA (Horizontal Pod Autoscaler)
@@ -288,14 +288,14 @@ docker-compose -f docker-compose.production.yml up -d --scale backend=3
 kubectl create namespace production
 
 # Create secrets
-kubectl create secret generic chioma-backend-secrets \
+kubectl create secret generic huston-housing-backend-secrets \
   --from-literal=database_url=$DATABASE_URL \
   --from-literal=redis_url=$REDIS_URL \
   --from-literal=jwt_secret=$JWT_SECRET \
   -n production
 
 # Create ConfigMap
-kubectl create configmap chioma-backend-config \
+kubectl create configmap huston-housing-backend-config \
   --from-literal=db_host=$DB_HOST \
   --from-literal=db_port=$DB_PORT \
   -n production
@@ -401,7 +401,7 @@ process_resident_memory_bytes / 1024 / 1024 / 1024
 
 ```bash
 # Check error logs
-kubectl logs -n production -l app=chioma-backend --tail=100 | grep ERROR
+kubectl logs -n production -l app=huston-housing-backend --tail=100 | grep ERROR
 
 # Check error rate by endpoint
 curl http://prometheus:9090/api/v1/query?query='rate(http_requests_total{status=~"5.."}[5m]) by (path)'
@@ -428,7 +428,7 @@ kubectl exec -it <pod-name> -n production -- npm run db:monitor:health
 curl http://prometheus:9090/api/v1/query?query='histogram_quantile(0.95, rate(db_query_duration_seconds_bucket[5m]))'
 
 # Check request distribution
-kubectl logs -n production -l app=chioma-backend | grep "duration"
+kubectl logs -n production -l app=huston-housing-backend | grep "duration"
 
 # Check database performance
 kubectl exec -it <pod-name> -n production -- npm run db:perf-report
@@ -455,7 +455,7 @@ curl http://prometheus:9090/api/v1/query_range?query='process_resident_memory_by
 kubectl exec -it <pod-name> -n production -- npm run test:leaks
 
 # Check for connection leaks
-kubectl logs -n production -l app=chioma-backend | grep "connection"
+kubectl logs -n production -l app=huston-housing-backend | grep "connection"
 ```
 
 **Resolution**:
@@ -476,7 +476,7 @@ kubectl logs -n production -l app=chioma-backend | grep "connection"
 curl http://prometheus:9090/api/v1/query?query='db_pool_active_connections'
 
 # Check connection wait time
-kubectl logs -n production -l app=chioma-backend | grep "connection pool"
+kubectl logs -n production -l app=huston-housing-backend | grep "connection pool"
 
 # Check for long-running queries
 kubectl exec -it <pod-name> -n production -- npm run db:monitor:health
@@ -497,7 +497,7 @@ kubectl exec -it <pod-name> -n production -- npm run db:monitor:health
 
 ```bash
 # Check HPA status
-kubectl describe hpa chioma-backend-hpa -n production
+kubectl describe hpa huston-housing-backend-hpa -n production
 
 # Check metrics availability
 kubectl get --raw /apis/custom.metrics.k8s.io/v1beta1/namespaces/production/pods/*/http_requests_per_second
@@ -520,7 +520,7 @@ kubectl get events -n production | grep HPA
 kubectl get pods -n production -o wide
 
 # Get pod logs
-kubectl logs -n production -l app=chioma-backend --tail=100 -f
+kubectl logs -n production -l app=huston-housing-backend --tail=100 -f
 
 # Get pod events
 kubectl describe pod <pod-name> -n production
@@ -532,10 +532,10 @@ kubectl get hpa -n production -o wide
 kubectl top pods -n production
 
 # Get service endpoints
-kubectl get endpoints chioma-backend -n production
+kubectl get endpoints huston-housing-backend -n production
 
 # Port forward for debugging
-kubectl port-forward -n production svc/chioma-backend 3000:80
+kubectl port-forward -n production svc/huston-housing-backend 3000:80
 
 # Execute command in pod
 kubectl exec -it <pod-name> -n production -- sh

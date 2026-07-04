@@ -53,7 +53,7 @@ export class TestSeeder {
 
     const admin = await repo.save(
       repo.create({
-        email: 'test.admin@chioma.local',
+        email: 'test.admin@huston-housing.local',
         firstName: 'Test',
         lastName: 'Admin',
         password: passwordHash,
@@ -66,7 +66,7 @@ export class TestSeeder {
 
     const tenant = await repo.save(
       repo.create({
-        email: 'test.tenant@chioma.local',
+        email: 'test.tenant@huston-housing.local',
         firstName: 'Test',
         lastName: 'Tenant',
         password: passwordHash,

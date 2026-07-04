@@ -1,6 +1,6 @@
 # Contract Debugging Guide
 
-This guide provides step-by-step procedures for debugging Chioma smart contracts, including local testing, deployment issues, and production troubleshooting.
+This guide provides step-by-step procedures for debugging Houston Housing smart contracts, including local testing, deployment issues, and production troubleshooting.
 
 ## Table of Contents
 
@@ -440,7 +440,7 @@ RUST_BACKTRACE=1 cargo test
 
    ```bash
    # Check backend logs for contract interactions
-   tail -f /var/log/chioma/backend.log | grep contract
+   tail -f /var/log/huston-housing/backend.log | grep contract
    ```
 
 2. **Monitor network transactions**:

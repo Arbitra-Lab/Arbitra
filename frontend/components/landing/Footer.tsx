@@ -7,9 +7,9 @@ import Logo from '@/components/Logo';
 
 const footerLinks = {
   platform: [
-    { name: 'Find a Home', href: '/properties' },
-    { name: 'List Property', href: '/landlords' },
-    { name: 'For Agents', href: '/agents' },
+    { name: 'Agreements', href: '/user/contracts' },
+    { name: 'Disputes', href: '/user/disputes' },
+    { name: 'Arbiters', href: '/admin/arbiters' },
     { name: 'Pricing', href: '/pricing' },
   ],
   company: [
@@ -36,7 +36,7 @@ const socialLinks = [
   { icon: Twitter, href: 'https://twitter.com', label: 'Twitter' },
   { icon: Linkedin, href: 'https://linkedin.com', label: 'LinkedIn' },
   { icon: Github, href: 'https://github.com', label: 'GitHub' },
-  { icon: Mail, href: 'mailto:hello@chioma.io', label: 'Email' },
+  { icon: Mail, href: 'mailto:hello@arbitra.io', label: 'Email' },
 ];
 
 export default function Footer() {
@@ -51,8 +51,8 @@ export default function Footer() {
               textClassName="text-xl font-bold text-white"
               className="mb-4"
             />
-            <p className="text-blue-200/70 text-sm leading-relaxed mb-6">
-              Open financial infrastructure for housing, powered by Stellar
+            <p className="text-neutral-200/70 text-sm leading-relaxed mb-6">
+              Open escrow and arbitration infrastructure, powered by the Stellar
               blockchain.
             </p>
             <div className="flex gap-4">
@@ -62,7 +62,7 @@ export default function Footer() {
                   href={social.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-10 h-10 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg flex items-center justify-center text-blue-200 hover:text-white transition-all"
+                  className="w-10 h-10 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg flex items-center justify-center text-neutral-200 hover:text-white transition-all"
                   aria-label={social.label}
                 >
                   <social.icon className="w-5 h-5" />
@@ -79,7 +79,7 @@ export default function Footer() {
                 <li key={link.name}>
                   <Link
                     href={link.href}
-                    className="text-blue-200/70 hover:text-white text-sm transition-colors"
+                    className="text-neutral-200/70 hover:text-white text-sm transition-colors"
                   >
                     {link.name}
                   </Link>
@@ -96,7 +96,7 @@ export default function Footer() {
                 <li key={link.name}>
                   <Link
                     href={link.href}
-                    className="text-blue-200/70 hover:text-white text-sm transition-colors"
+                    className="text-neutral-200/70 hover:text-white text-sm transition-colors"
                   >
                     {link.name}
                   </Link>
@@ -113,7 +113,7 @@ export default function Footer() {
                 <li key={link.name}>
                   <Link
                     href={link.href}
-                    className="text-blue-200/70 hover:text-white text-sm transition-colors"
+                    className="text-neutral-200/70 hover:text-white text-sm transition-colors"
                   >
                     {link.name}
                   </Link>
@@ -130,7 +130,7 @@ export default function Footer() {
                 <li key={link.name}>
                   <Link
                     href={link.href}
-                    className="text-blue-200/70 hover:text-white text-sm transition-colors"
+                    className="text-neutral-200/70 hover:text-white text-sm transition-colors"
                   >
                     {link.name}
                   </Link>
@@ -142,12 +142,12 @@ export default function Footer() {
 
         {/* Bottom Bar */}
         <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-blue-200/60 text-sm">
-            © {new Date().getFullYear()} Chioma. All rights reserved.
+          <p className="text-neutral-200/60 text-sm">
+            © {new Date().getFullYear()} Arbitra. All rights reserved.
           </p>
           <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-            <span className="text-blue-200/60 text-sm">
+            <div className="w-2 h-2 bg-brand-accent rounded-full animate-pulse" />
+            <span className="text-neutral-200/60 text-sm">
               All systems operational
             </span>
           </div>

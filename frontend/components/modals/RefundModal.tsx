@@ -168,8 +168,8 @@ export const RefundModal: React.FC<RefundModalProps> = ({
           </div>
 
           {isPartialRefund && (
-            <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30 rounded-lg">
-              <p className="text-sm text-blue-900 dark:text-blue-100">
+            <div className="mt-3 p-3 bg-brand-accent/10 dark:bg-brand-accent/20 border border-brand-accent/20 dark:border-brand-accent/30 rounded-lg">
+              <p className="text-sm text-neutral-900 dark:text-neutral-100">
                 <span className="font-semibold">Partial Refund:</span> Refunding
                 ${formData.amount.toLocaleString()} of $
                 {maxAmount.toLocaleString()}
@@ -207,7 +207,7 @@ export const RefundModal: React.FC<RefundModalProps> = ({
                 key={method.value}
                 className={`flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${
                   formData.refundMethod === method.value
-                    ? 'border-brand-blue bg-blue-50 dark:bg-blue-900/20'
+                    ? 'border-brand-blue bg-brand-blue/10 dark:bg-brand-blue/20'
                     : 'border-neutral-200 dark:border-neutral-700 hover:border-neutral-300 dark:hover:border-neutral-600'
                 }`}
               >

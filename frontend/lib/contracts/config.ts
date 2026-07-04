@@ -1,7 +1,7 @@
 /** Deployed Soroban contract IDs (testnet defaults from contract/.env.testnet). */
 
 export interface ContractIds {
-  chioma: string;
+  houstonHousing: string;
   disputeResolution: string;
   escrow: string;
   payment: string;
@@ -16,7 +16,7 @@ function env(name: string, fallback = ''): string {
 }
 
 const TESTNET_DEFAULTS: ContractIds = {
-  chioma: 'CBFLJVOHQ2LRVUMYBZQCHCVP5JGZ6WFTOSMYYUZQHAPHX6JKSDQXF5JD',
+  houstonHousing: 'CBFLJVOHQ2LRVUMYBZQCHCVP5JGZ6WFTOSMYYUZQHAPHX6JKSDQXF5JD',
   disputeResolution: 'CA4GNSPPX6RMHPKMJB5GSOKQU6WDPBEGMPSU3SJ5SEJWA5F7RFK2NN65',
   escrow: 'CDDUZKXCDSK3TZVFUUEEJRMSFNILCUEO5E5RORTREEH4KOALQC637DEZ',
   payment: 'CDXNI4WNAIFVVN5RIVETAENYYQ5OTT7TLFQSF2JWAHU3X3B3RT5KQBED',
@@ -29,12 +29,15 @@ const TESTNET_DEFAULTS: ContractIds = {
 export function getContractIds(): ContractIds {
   const useDefaults =
     process.env.NODE_ENV === 'development' &&
-    !env('NEXT_PUBLIC_CHIOMA_CONTRACT_ID');
+    !env('NEXT_PUBLIC_HUSTON_HOUSING_CONTRACT_ID');
 
   const defaults = useDefaults ? TESTNET_DEFAULTS : ({} as ContractIds);
 
   return {
-    chioma: env('NEXT_PUBLIC_CHIOMA_CONTRACT_ID', defaults.chioma),
+    houstonHousing: env(
+      'NEXT_PUBLIC_HUSTON_HOUSING_CONTRACT_ID',
+      defaults.houstonHousing,
+    ),
     disputeResolution: env(
       'NEXT_PUBLIC_DISPUTE_RESOLUTION_CONTRACT_ID',
       defaults.disputeResolution,

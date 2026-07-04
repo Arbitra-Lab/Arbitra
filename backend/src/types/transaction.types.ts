@@ -46,7 +46,7 @@ export interface IndexedTransaction {
   memo?: string;
   memoType?: 'text' | 'id' | 'hash';
 
-  // Chioma-specific references
+  // Houston Housing-specific references
   agreementId?: UUID;
   propertyId?: UUID;
   paymentId?: UUID;

@@ -1,4 +1,4 @@
-//! Agreement management logic for the Chioma/Rental contract.
+//! Agreement management logic for the Houston Housing/Rental contract.
 use soroban_sdk::{Address, Env, String, Vec};
 
 use crate::errors::RentalError;

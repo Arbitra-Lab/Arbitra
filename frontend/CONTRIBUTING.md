@@ -1,6 +1,6 @@
 # Frontend Contributing Guide
 
-This document provides comprehensive guidelines for contributing to the Chioma frontend. It covers project architecture, design system, component development, testing requirements, and CI/CD pipeline expectations.
+This document provides comprehensive guidelines for contributing to the Houston Housing frontend. It covers project architecture, design system, component development, testing requirements, and CI/CD pipeline expectations.
 
 ## Table of Contents
 
@@ -18,7 +18,7 @@ This document provides comprehensive guidelines for contributing to the Chioma f
 
 ## Project Overview
 
-**Chioma** is a modern Next.js 16 application built with:
+**Houston Housing** is a modern Next.js 16 application built with:
 
 - **Framework**: Next.js 16.1.5 with App Router
 - **Styling**: Tailwind CSS 4 with PostCSS
@@ -822,7 +822,7 @@ pnpm test:watch
 ```bash
 # 1. Clone the repository
 git clone <repo-url>
-cd chioma
+cd huston-housing
 
 # 2. Install dependencies
 cd frontend
@@ -1138,4 +1138,4 @@ For questions or assistance:
 - Participate in team discussions and code reviews
 - Submit detailed issue reports for bugs or feature requests
 
-We appreciate your contributions to the Chioma platform.
+We appreciate your contributions to the Houston Housing platform.

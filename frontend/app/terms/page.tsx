@@ -8,11 +8,11 @@ export default function TermsPage() {
 
   return (
     <>
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 selection:bg-blue-200 selection:text-slate-900 pb-20">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-neutral-100 selection:bg-brand-accent/30 selection:text-slate-900 pb-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6">
           {/* Header */}
           <div className="text-center mb-8 sm:mb-12 pt-12 sm:pt-20">
-            <h1 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-slate-900 to-blue-900 bg-clip-text text-transparent mb-4">
+            <h1 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-slate-900 to-brand-blue-dark bg-clip-text text-transparent mb-4">
               Terms and Conditions
             </h1>
             <p className="text-slate-600 text-sm sm:text-base">
@@ -31,13 +31,13 @@ export default function TermsPage() {
                   1. Acceptance of Terms
                 </h2>
                 <p className="mb-4 text-sm sm:text-base leading-relaxed">
-                  By accessing and using Chioma Properties (hereinafter referred
-                  to as &quot;the Platform&quot;), you accept and agree to be
-                  bound by the terms and provision of this agreement.
-                  Additionally, when using the Platform&apos;s services, you
-                  shall be subject to any posted guidelines or rules applicable
-                  to such services. All such guidelines or rules are hereby
-                  incorporated by reference into the Terms of Service.
+                  By accessing and using Arbitra (hereinafter referred to as
+                  &quot;the Platform&quot;), you accept and agree to be bound by
+                  the terms and provision of this agreement. Additionally, when
+                  using the Platform&apos;s services, you shall be subject to
+                  any posted guidelines or rules applicable to such services.
+                  All such guidelines or rules are hereby incorporated by
+                  reference into the Terms of Service.
                 </p>
                 <p className="text-sm sm:text-base leading-relaxed">
                   This agreement constitutes the entire agreement between you
@@ -54,20 +54,20 @@ export default function TermsPage() {
                   2. Description of Service
                 </h2>
                 <p className="mb-4 text-sm sm:text-base leading-relaxed">
-                  Chioma Properties provides users with access to a rich
-                  collection of resources, including various communications
-                  tools, forums, shopping services, personalized content, and
-                  branded programming through its network of properties. You
-                  also understand and agree that the Platform may include
+                  Arbitra provides users with access to a rich collection of
+                  resources, including various communications tools, forums,
+                  shopping services, personalized content, and branded
+                  programming through its network of properties. You also
+                  understand and agree that the Platform may include
                   advertisements and that these advertisements are necessary for
                   the Platform to provide the Service.
                 </p>
                 <p className="text-sm sm:text-base leading-relaxed">
                   Unless explicitly stated otherwise, any new features that
                   augment or enhance the current Service, including the release
-                  of new Chioma Properties properties, shall be subject to the
-                  Terms of Service. You understand and agree that the Service is
-                  provided &quot;AS IS&quot; and that the Platform assumes no
+                  of new Arbitra properties, shall be subject to the Terms of
+                  Service. You understand and agree that the Service is provided
+                  &quot;AS IS&quot; and that the Platform assumes no
                   responsibility for the timeliness, deletion, misdelivery, or
                   failure to store any user communications or personalization
                   settings.
@@ -136,7 +136,7 @@ export default function TermsPage() {
                   defamatory, vulgar, obscene, libelous, invasive of
                   another&apos;s privacy, hateful, or racially, ethnically, or
                   otherwise objectionable; harm minors in any way; impersonate
-                  any person or entity, including, but not limited to, a Chioma
+                  any person or entity, including, but not limited to, a Arbitra
                   Properties official, forum leader, guide, or host, or falsely
                   state or otherwise misrepresent your affiliation with a person
                   or entity.
@@ -301,8 +301,8 @@ export default function TermsPage() {
                 </h2>
                 <p className="text-sm sm:text-base leading-relaxed">
                   If you have any questions about these Terms and Conditions,
-                  please contact us at: support@chiomaproperties.com or call our
-                  customer service line at +234 800 CHIOMA (244662).
+                  please contact us at: support@arbitra.io or call our customer
+                  service line at +234 800 ARBITRA (244662).
                 </p>
               </section>
             </div>
@@ -317,7 +317,7 @@ export default function TermsPage() {
                     name="terms-acceptance"
                     checked={accepted}
                     onChange={(e) => setAccepted(e.target.checked)}
-                    className="w-5 h-5 mt-0.5 cursor-pointer accent-blue-600"
+                    className="w-5 h-5 mt-0.5 cursor-pointer accent-brand-blue"
                   />
                   <label
                     htmlFor="accept-terms"
@@ -326,7 +326,7 @@ export default function TermsPage() {
                     I have read and understood the Terms and Conditions and I
                     agree to be bound by all of its provisions. I understand
                     that by checking this box, I am entering into a legally
-                    binding agreement with Chioma Properties.
+                    binding agreement with Arbitra.
                   </label>
                 </div>
 
@@ -335,7 +335,7 @@ export default function TermsPage() {
                     disabled={!accepted}
                     className={`w-full sm:w-auto px-8 py-3 rounded-lg font-semibold transition ${
                       accepted
-                        ? 'bg-blue-600 text-white hover:bg-blue-700'
+                        ? 'bg-brand-blue text-white hover:bg-brand-blue-dark'
                         : 'bg-neutral-300 text-slate-500 cursor-not-allowed'
                     }`}
                   >

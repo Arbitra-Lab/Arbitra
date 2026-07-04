@@ -14,10 +14,10 @@ const SEVERITY_STYLES: Record<
   { bg: string; border: string; icon: React.ReactNode; text: string }
 > = {
   info: {
-    bg: 'bg-blue-50',
-    border: 'border-blue-200',
-    text: 'text-blue-800',
-    icon: <Info size={16} className="text-blue-500 shrink-0 mt-0.5" />,
+    bg: 'bg-brand-accent/10',
+    border: 'border-brand-accent/20',
+    text: 'text-brand-accent',
+    icon: <Info size={16} className="text-brand-accent shrink-0 mt-0.5" />,
   },
   warning: {
     bg: 'bg-amber-50',

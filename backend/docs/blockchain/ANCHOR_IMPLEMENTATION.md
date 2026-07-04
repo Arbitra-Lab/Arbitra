@@ -261,7 +261,7 @@ npm test
 - [SEP-24 Specification](https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0024.md)
 - [Stellar SDK Documentation](https://stellar.github.io/js-stellar-sdk/)
 - [Anchor Directory](https://anchors.stellar.org/)
-- [Chioma Documentation](./anchor-integration.md)
+- [Houston Housing Documentation](./anchor-integration.md)
 
 ## 🤝 Contributing
 

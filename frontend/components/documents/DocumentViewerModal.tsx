@@ -68,21 +68,21 @@ export const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({
           <div className="flex items-center gap-2">
             <button
               onClick={handleDownload}
-              className="p-2 text-neutral-600 dark:text-neutral-400 hover:text-brand-blue dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all"
+              className="p-2 text-neutral-600 dark:text-neutral-400 hover:text-brand-blue dark:hover:text-brand-blue hover:bg-brand-blue/10 dark:hover:bg-brand-blue/20 rounded-xl transition-all"
               title="Download"
             >
               <Download size={20} />
             </button>
             <button
               onClick={handlePrint}
-              className="p-2 text-neutral-600 dark:text-neutral-400 hover:text-brand-blue dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all"
+              className="p-2 text-neutral-600 dark:text-neutral-400 hover:text-brand-blue dark:hover:text-brand-blue hover:bg-brand-blue/10 dark:hover:bg-brand-blue/20 rounded-xl transition-all"
               title="Print"
             >
               <Printer size={20} />
             </button>
             <button
               onClick={handleOpenInNewTab}
-              className="p-2 text-neutral-600 dark:text-neutral-400 hover:text-brand-blue dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all"
+              className="p-2 text-neutral-600 dark:text-neutral-400 hover:text-brand-blue dark:hover:text-brand-blue hover:bg-brand-blue/10 dark:hover:bg-brand-blue/20 rounded-xl transition-all"
               title="Open in new tab"
             >
               <ExternalLink size={20} />
@@ -99,7 +99,7 @@ export const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6">
           {document.description && (
-            <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30 rounded-xl">
+            <div className="mb-4 p-4 bg-neutral-100 dark:bg-neutral-700/20 border border-neutral-200 dark:border-neutral-700/30 rounded-xl">
               <p className="text-sm text-neutral-700 dark:text-neutral-300">
                 {document.description}
               </p>
@@ -126,7 +126,7 @@ export const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({
               </p>
               <button
                 onClick={handleDownload}
-                className="px-6 py-2.5 bg-brand-blue hover:bg-blue-700 text-white font-bold rounded-xl transition-colors shadow-md"
+                className="px-6 py-2.5 bg-brand-blue hover:bg-brand-blue-dark text-white font-bold rounded-xl transition-colors shadow-md"
               >
                 Download File
               </button>
@@ -144,7 +144,7 @@ export const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({
           </button>
           <button
             onClick={handleDownload}
-            className="px-6 py-2.5 rounded-xl font-bold text-white bg-brand-blue hover:bg-blue-700 shadow-md transition-colors"
+            className="px-6 py-2.5 rounded-xl font-bold text-white bg-brand-blue hover:bg-brand-blue-dark shadow-md transition-colors"
           >
             Download
           </button>

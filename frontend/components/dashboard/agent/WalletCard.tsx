@@ -25,15 +25,15 @@ const WalletCard = ({
     currency === 'USDC' ? formattedBalance : `${balance.toLocaleString()} XLM`;
 
   return (
-    <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-3xl p-6 text-white shadow-xl shadow-blue-500/20 relative overflow-hidden group hover:scale-[1.02] transition-all duration-300">
+    <div className="bg-gradient-to-br from-brand-blue to-brand-blue-dark rounded-3xl p-6 text-white shadow-xl shadow-brand-blue/20 relative overflow-hidden group hover:scale-[1.02] transition-all duration-300">
       {/* Decorative Elements */}
       <div className="absolute top-0 right-0 -mr-8 -mt-8 w-40 h-40 bg-white/20 rounded-full blur-3xl pointer-events-none group-hover:bg-white/30 transition-all duration-500" />
-      <div className="absolute bottom-0 left-0 -ml-8 -mb-8 w-32 h-32 bg-indigo-500/20 rounded-full blur-2xl pointer-events-none" />
+      <div className="absolute bottom-0 left-0 -ml-8 -mb-8 w-32 h-32 bg-brand-blue-dark/20 rounded-full blur-2xl pointer-events-none" />
 
       <div className="relative z-10 flex flex-col h-full justify-between">
         <div className="flex justify-between items-start mb-8">
           <div className="flex flex-col">
-            <span className="text-blue-100/60 text-[10px] font-bold uppercase tracking-widest">
+            <span className="text-neutral-100/60 text-[10px] font-bold uppercase tracking-widest">
               Main Wallet
             </span>
             <span className="text-white text-xs font-bold tracking-tight mt-1 opacity-80">
@@ -54,12 +54,12 @@ const WalletCard = ({
           <h2 className="text-3xl font-bold tracking-tight text-white flex items-baseline gap-2">
             {displayBalance}
             {currency === 'USDC' && (
-              <span className="text-base font-bold text-blue-200">USDC</span>
+              <span className="text-base font-bold text-neutral-100">USDC</span>
             )}
           </h2>
           <div className="flex items-center gap-2 mt-2">
             <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
-            <p className="text-[10px] font-bold text-blue-100/60 uppercase tracking-widest">
+            <p className="text-[10px] font-bold text-neutral-100/60 uppercase tracking-widest">
               Live on Stellar
             </p>
           </div>

@@ -48,8 +48,8 @@ const typeStyles: Record<
   },
   tenant: {
     icon: UserRound,
-    badge: 'bg-sky-500/15 text-sky-200 border-sky-400/20',
-    iconWrap: 'bg-sky-500/15 text-sky-300',
+    badge: 'bg-brand-accent/15 text-brand-accent border-brand-accent/20',
+    iconWrap: 'bg-brand-accent/15 text-brand-accent',
   },
   system: {
     icon: Settings2,
@@ -73,10 +73,10 @@ export default function NotificationItem({
     <article
       className={`rounded-2xl border transition-all ${
         isSelected
-          ? 'border-blue-400/50 bg-blue-500/10 shadow-lg shadow-blue-950/20'
+          ? 'border-brand-accent/50 bg-brand-accent/10 shadow-lg shadow-brand-accent/20'
           : notification.isRead
             ? 'border-white/10 bg-slate-900/40 hover:border-white/20 hover:bg-white/5'
-            : 'border-blue-400/20 bg-blue-500/10 hover:border-blue-300/35 hover:bg-blue-500/15'
+            : 'border-brand-accent/20 bg-brand-accent/10 hover:border-brand-accent/35 hover:bg-brand-accent/15'
       }`}
     >
       <button
@@ -98,7 +98,7 @@ export default function NotificationItem({
               {NOTIFICATION_TYPE_LABELS[notification.type]}
             </span>
             {!notification.isRead && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-blue-400/15 px-2 py-1 text-[11px] font-semibold text-blue-200">
+              <span className="inline-flex items-center gap-1 rounded-full bg-brand-accent/15 px-2 py-1 text-[11px] font-semibold text-brand-accent">
                 <Bell className="h-3.5 w-3.5" />
                 Unread
               </span>
@@ -116,7 +116,7 @@ export default function NotificationItem({
             </div>
 
             {!notification.isRead && (
-              <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-blue-300" />
+              <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-brand-accent" />
             )}
           </div>
 

@@ -1,19 +1,19 @@
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: chioma-backend
+  name: huston-housing-backend
   namespace: production
   labels:
-    app: chioma-backend
+    app: huston-housing-backend
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: chioma-backend
+  name: huston-housing-backend
   namespace: production
   labels:
-    app: chioma-backend
+    app: huston-housing-backend
 rules:
   - apiGroups: ['']
     resources: ['configmaps']
@@ -29,15 +29,15 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: chioma-backend
+  name: huston-housing-backend
   namespace: production
   labels:
-    app: chioma-backend
+    app: huston-housing-backend
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: chioma-backend
+  name: huston-housing-backend
 subjects:
   - kind: ServiceAccount
-    name: chioma-backend
+    name: huston-housing-backend
     namespace: production

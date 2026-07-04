@@ -12,7 +12,7 @@ import {
   NotificationSettingsState,
 } from './notifications.types';
 
-const EXTRA_SETTINGS_STORAGE_KEY = 'chioma_landlord_notification_settings';
+const EXTRA_SETTINGS_STORAGE_KEY = 'arbitra_landlord_notification_settings';
 const preferencesQueryKey = ['landlord-notification-preferences'];
 
 type NotificationSettingsProps = {
@@ -171,7 +171,7 @@ export default function NotificationSettings({
     <section className="space-y-6">
       <div className="rounded-3xl border border-white/10 bg-slate-900/50 p-6 shadow-xl">
         <div className="flex items-start gap-3">
-          <div className="rounded-2xl bg-blue-500/15 p-3 text-blue-200">
+          <div className="rounded-2xl bg-brand-accent/15 p-3 text-brand-accent">
             <Bell className="h-5 w-5" />
           </div>
           <div>
@@ -240,7 +240,7 @@ export default function NotificationSettings({
             Notification Frequency
           </h3>
           <p className="mt-1 text-sm text-slate-300">
-            Choose how often Chioma should bundle landlord notifications.
+            Choose how often Arbitra should bundle landlord notifications.
           </p>
 
           <div className="mt-5 grid gap-3 sm:grid-cols-3">
@@ -277,7 +277,7 @@ export default function NotificationSettings({
                   }
                   className={`rounded-2xl border p-4 text-left transition ${
                     isActive
-                      ? 'border-blue-400/50 bg-blue-500/10 text-white'
+                      ? 'border-brand-accent/50 bg-brand-accent/10 text-white'
                       : 'border-white/10 bg-white/5 text-slate-200 hover:bg-white/10'
                   }`}
                 >
@@ -329,7 +329,7 @@ export default function NotificationSettings({
                           : [...current.mutedTypes, type],
                       }))
                     }
-                    className="h-4 w-4 rounded border-white/20 bg-slate-950 text-blue-500 focus:ring-blue-500"
+                    className="h-4 w-4 rounded border-white/20 bg-slate-950 text-brand-accent focus:ring-brand-accent"
                   />
                 </label>
               );
@@ -375,12 +375,12 @@ function PreferenceToggleCard({
       onClick={onChange}
       className={`rounded-2xl border p-4 text-left transition ${
         checked
-          ? 'border-blue-400/40 bg-blue-500/10'
+          ? 'border-brand-accent/40 bg-brand-accent/10'
           : 'border-white/10 bg-white/5 hover:bg-white/10'
       } ${disabled ? 'cursor-not-allowed opacity-60' : ''}`}
     >
       <div className="flex items-start justify-between gap-4">
-        <div className="rounded-2xl bg-white/10 p-3 text-blue-200">
+        <div className="rounded-2xl bg-white/10 p-3 text-brand-accent">
           <Icon className="h-5 w-5" />
         </div>
         <span

@@ -1,6 +1,6 @@
 # Architecture Decisions and Trade-offs
 
-This document captures the key architecture decisions made for the Chioma backend, along with the rationale, alternatives considered, and trade-offs accepted for each.
+This document captures the key architecture decisions made for the Houston Housing backend, along with the rationale, alternatives considered, and trade-offs accepted for each.
 
 ## Table of Contents
 
@@ -33,7 +33,7 @@ Accepted (maintained since project inception)
 
 ### Context
 
-The Chioma platform manages rental agreements, payments, escrow, property listings, blockchain transactions, and user management — domains that share a unified data model and transactional boundaries.
+The Houston Housing platform manages rental agreements, payments, escrow, property listings, blockchain transactions, and user management — domains that share a unified data model and transactional boundaries.
 
 ### Alternatives Considered
 
@@ -144,7 +144,7 @@ Accepted
 
 ### Context
 
-Chioma targets both traditional web users (email/password) and blockchain-native users (Stellar wallets). Both must authenticate to the same API.
+Houston Housing targets both traditional web users (email/password) and blockchain-native users (Stellar wallets). Both must authenticate to the same API.
 
 ### Alternatives Considered
 
@@ -245,7 +245,7 @@ Read-heavy endpoints (property listings, user profiles, static reference data) b
 
 ### Decision
 
-The entire Chioma platform — backend, frontend, smart contracts — lives in a single monorepo.
+The entire Houston Housing platform — backend, frontend, smart contracts — lives in a single monorepo.
 
 ### Status
 

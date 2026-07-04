@@ -1,6 +1,6 @@
 # Encryption at Rest and in Transit
 
-Chioma uses AES-256-GCM authenticated encryption for data at rest and enforces
+Houston Housing uses AES-256-GCM authenticated encryption for data at rest and enforces
 TLS 1.2/1.3 for all data in transit.
 
 ---

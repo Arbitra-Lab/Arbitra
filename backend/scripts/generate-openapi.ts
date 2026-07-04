@@ -43,13 +43,13 @@ async function generate() {
   app.enableVersioning({ type: VersioningType.URI, defaultVersion: '1' });
 
   const config = new DocumentBuilder()
-    .setTitle('Chioma API')
+    .setTitle('Houston Housing API')
     .setDescription(
-      'REST API for Chioma — Stellar blockchain-based rental payment platform.',
+      'REST API for Houston Housing — Stellar blockchain-based rental payment platform.',
     )
     .setVersion('1.0')
-    .setContact('Chioma', 'https://chioma.app', 'support@chioma.app')
-    .setLicense('Open Source', 'https://github.com/chioma/chioma')
+    .setContact('Houston Housing', 'https://huston-housing.app', 'support@huston-housing.app')
+    .setLicense('Open Source', 'https://github.com/huston-housing/huston-housing')
     .addServer('http://localhost:5000', 'Default')
     .addBearerAuth(
       {

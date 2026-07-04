@@ -84,7 +84,7 @@ describe('LoggerService', () => {
   });
 
   it('removes log files older than retention', async () => {
-    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'chioma-logs-'));
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'huston-housing-logs-'));
     const oldLog = path.join(tempDir, 'application-2026-01-01.log');
     const freshLog = path.join(tempDir, 'application-2026-05-26.log');
 

@@ -1,4 +1,4 @@
-//! NFT Royalty Mechanism for Chioma rental agreements.
+//! NFT Royalty Mechanism for Houston Housing rental agreements.
 
 use soroban_sdk::{token, Address, Env, String, Vec};
 

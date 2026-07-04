@@ -1,6 +1,6 @@
 # Authentication Guide
 
-Chioma supports two authentication methods: **JWT (email/password)** and **Stellar SEP-0010 (wallet-based)**. Both methods issue a JWT access token that is used the same way in subsequent requests.
+Houston Housing supports two authentication methods: **JWT (email/password)** and **Stellar SEP-0010 (wallet-based)**. Both methods issue a JWT access token that is used the same way in subsequent requests.
 
 ---
 

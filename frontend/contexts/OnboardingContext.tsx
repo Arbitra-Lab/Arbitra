@@ -37,7 +37,7 @@ function emitOnboardingEvent(
   if (typeof window === 'undefined') return;
 
   window.dispatchEvent(
-    new CustomEvent('chioma:onboarding:event', {
+    new CustomEvent('arbitra:onboarding:event', {
       detail: {
         eventName,
         payload,

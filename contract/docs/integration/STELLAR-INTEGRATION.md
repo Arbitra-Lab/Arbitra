@@ -8,11 +8,11 @@
 
 ## 1. Introduction
 
-Chioma integrates with the Stellar network to provide secure, fast, and low-cost housing financial transactions. This guide covers the usage of the Stellar SDK, account management, token handling, and transaction processing within the Chioma ecosystem.
+Houston Housing integrates with the Stellar network to provide secure, fast, and low-cost housing financial transactions. This guide covers the usage of the Stellar SDK, account management, token handling, and transaction processing within the Houston Housing ecosystem.
 
 ## 2. Stellar SDK Integration
 
-Chioma uses the official `@stellar/stellar-sdk` for JavaScript/TypeScript environments.
+Houston Housing uses the official `@stellar/stellar-sdk` for JavaScript/TypeScript environments.
 
 ### 2.1 Initialization
 The `StellarService` initializes the Horizon server connection using configuration from the environment.
@@ -44,11 +44,11 @@ const response = await fetch(`https://friendbot.stellar.org?addr=${publicKey}`);
 ```
 
 ### 3.3 Account Synchronization
-Chioma synchronizes account balances and sequence numbers from the network to ensure local data accuracy.
+Houston Housing synchronizes account balances and sequence numbers from the network to ensure local data accuracy.
 
 ## 4. Token Handling
 
-Chioma supports both the native XLM asset and custom Stellar assets (tokens).
+Houston Housing supports both the native XLM asset and custom Stellar assets (tokens).
 
 ### 4.1 Native Asset (XLM)
 ```typescript
@@ -81,7 +81,7 @@ transaction.sign(sourceKeypair);
 ```
 
 ### 5.2 Idempotency
-Chioma uses an `idempotencyKey` to prevent duplicate transactions. Before submitting, the system checks if a transaction with the same key already exists.
+Houston Housing uses an `idempotencyKey` to prevent duplicate transactions. Before submitting, the system checks if a transaction with the same key already exists.
 
 ### 5.3 Resilience and Retries
 - **Timeout Management:** Transactions have a set timeout (typically 180s).
@@ -90,14 +90,14 @@ Chioma uses an `idempotencyKey` to prevent duplicate transactions. Before submit
 
 ## 6. Escrow Implementation
 
-Chioma implements escrows by creating temporary Stellar accounts.
+Houston Housing implements escrows by creating temporary Stellar accounts.
 1. **Create Account:** A new random keypair is generated.
 2. **Fund:** The source account sends a `createAccount` operation with the required collateral.
 3. **Release:** When conditions are met, the escrow account sends its balance to the destination and performs an `accountMerge` to close itself.
 
 ## 7. Event Handling
 
-Chioma monitors the Stellar network for events using Horizon's streaming capabilities.
+Houston Housing monitors the Stellar network for events using Horizon's streaming capabilities.
 - **Payments:** Detected via the `/payments` stream.
 - **Ledgers:** Monitored to confirm transaction finality.
 

@@ -9,7 +9,7 @@ import { createHash, randomBytes } from 'crypto';
 import { ApiKey, ApiKeyStatus } from './entities/api-key.entity';
 import { ApiKeyRotationHistory } from './entities/api-key-rotation-history.entity';
 
-const PREFIX = 'chioma_sk_';
+const PREFIX = 'huston-housing_sk_';
 const KEY_BYTES = 32;
 const HASH_ALG = 'sha256';
 const DEFAULT_EXPIRATION_DAYS = 90;
@@ -88,7 +88,7 @@ export class DeveloperService {
     return keys.map((k) => ({
       id: k.id,
       name: k.name,
-      prefix: k.keyPrefix ?? 'chioma_sk_...',
+      prefix: k.keyPrefix ?? 'huston-housing_sk_...',
       lastUsedAt: k.lastUsedAt,
       createdAt: k.createdAt,
       expiresAt: k.expiresAt,

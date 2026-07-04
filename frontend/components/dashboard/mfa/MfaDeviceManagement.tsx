@@ -129,7 +129,7 @@ export function MfaDeviceManagement({ userId }: MfaDeviceManagementProps) {
             <h1 className="text-3xl font-bold tracking-tight text-white">
               MFA Device Management
             </h1>
-            <p className="text-blue-200/60 mt-1">
+            <p className="text-neutral-200/60 mt-1">
               Manage your multi-factor authentication devices.
             </p>
           </div>
@@ -166,7 +166,7 @@ export function MfaDeviceManagement({ userId }: MfaDeviceManagementProps) {
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-white/5 backdrop-blur-sm rounded-3xl p-6 border border-white/10">
-          <p className="text-xs text-blue-200/60 uppercase tracking-wider">
+          <p className="text-xs text-neutral-200/60 uppercase tracking-wider">
             Total Devices
           </p>
           <h3 className="text-2xl font-bold text-white mt-1">
@@ -174,7 +174,7 @@ export function MfaDeviceManagement({ userId }: MfaDeviceManagementProps) {
           </h3>
         </div>
         <div className="bg-white/5 backdrop-blur-sm rounded-3xl p-6 border border-white/10">
-          <p className="text-xs text-blue-200/60 uppercase tracking-wider">
+          <p className="text-xs text-neutral-200/60 uppercase tracking-wider">
             Enabled
           </p>
           <h3 className="text-2xl font-bold text-white mt-1">
@@ -182,7 +182,7 @@ export function MfaDeviceManagement({ userId }: MfaDeviceManagementProps) {
           </h3>
         </div>
         <div className="bg-white/5 backdrop-blur-sm rounded-3xl p-6 border border-white/10">
-          <p className="text-xs text-blue-200/60 uppercase tracking-wider">
+          <p className="text-xs text-neutral-200/60 uppercase tracking-wider">
             Unverified
           </p>
           <h3 className="text-2xl font-bold text-white mt-1">
@@ -216,7 +216,7 @@ export function MfaDeviceManagement({ userId }: MfaDeviceManagementProps) {
             />
           ) : (
             <div className="bg-white/5 backdrop-blur-sm rounded-3xl p-6 border border-white/10 flex items-center justify-center min-h-[400px]">
-              <p className="text-blue-200/60">
+              <p className="text-neutral-200/60">
                 {devices.length === 0
                   ? 'Add a device to get started'
                   : 'Select a device to view details'}

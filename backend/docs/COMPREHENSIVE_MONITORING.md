@@ -1,6 +1,6 @@
 # Comprehensive Monitoring and Observability Guide
 
-This document provides comprehensive guidance on monitoring and observability for the Chioma platform, covering metrics collection, event monitoring, alerting strategies, and observability best practices.
+This document provides comprehensive guidance on monitoring and observability for the Houston Housing platform, covering metrics collection, event monitoring, alerting strategies, and observability best practices.
 
 ## Table of Contents
 
@@ -80,7 +80,7 @@ global:
     cluster: us-east-1
 
 scrape_configs:
-  - job_name: 'chioma-backend'
+  - job_name: 'huston-housing-backend'
     static_configs:
       - targets: ['backend:5000']
     metrics_path: '/metrics'
@@ -243,10 +243,10 @@ node_network_transmit_bytes_total{device="eth0"}
 #### Container Metrics (cAdvisor)
 
 ```
-container_cpu_usage_seconds_total{container_name="chioma-backend"}
-container_memory_usage_bytes{container_name="chioma-backend"}
-container_network_receive_bytes_total{container_name="chioma-backend"}
-container_fs_usage_bytes{container_name="chioma-backend"}
+container_cpu_usage_seconds_total{container_name="huston-housing-backend"}
+container_memory_usage_bytes{container_name="huston-housing-backend"}
+container_network_receive_bytes_total{container_name="huston-housing-backend"}
+container_fs_usage_bytes{container_name="huston-housing-backend"}
 ```
 
 ### 4. Database Metrics
@@ -411,7 +411,7 @@ const logger = winston.createLogger({
     winston.format.errors({ stack: true }),
     winston.format.json(),
   ),
-  defaultMeta: { service: 'chioma-backend' },
+  defaultMeta: { service: 'huston-housing-backend' },
   transports: [
     new winston.transports.File({ filename: 'error.log', level: 'error' }),
     new winston.transports.File({ filename: 'combined.log' }),
@@ -486,19 +486,19 @@ scrape_configs:
 
 ```logql
 # All errors in last hour
-{service="chioma-backend"} | json | level="error" | __error__=""
+{service="huston-housing-backend"} | json | level="error" | __error__=""
 
 # Errors by endpoint
-{service="chioma-backend"} | json | level="error" | pattern `<_> <endpoint> <_>`
+{service="huston-housing-backend"} | json | level="error" | pattern `<_> <endpoint> <_>`
 
 # User registration events
-{service="chioma-backend"} | json | action="user_registered"
+{service="huston-housing-backend"} | json | action="user_registered"
 
 # Slow requests
-{service="chioma-backend"} | json | duration > 1000
+{service="huston-housing-backend"} | json | duration > 1000
 
 # Failed transactions
-{service="chioma-backend"} | json | action="transaction" | status="failed"
+{service="huston-housing-backend"} | json | action="transaction" | status="failed"
 ```
 
 ---
@@ -542,14 +542,14 @@ scrape_configs:
 
 ```yaml
 - alert: ServiceDown
-  expr: up{job="chioma-backend"} == 0
+  expr: up{job="huston-housing-backend"} == 0
   for: 1m
   labels:
     severity: critical
   annotations:
-    summary: 'Chioma backend is down'
+    summary: 'Houston Housing backend is down'
     description: 'Backend service {{ $labels.instance }} has been unreachable for 1 minute'
-    runbook: 'https://docs.chioma.io/runbooks/service-down'
+    runbook: 'https://docs.huston-housing.io/runbooks/service-down'
 
 - alert: HighErrorRate
   expr: |
@@ -562,7 +562,7 @@ scrape_configs:
   annotations:
     summary: 'High error rate detected'
     description: 'Error rate is {{ $value | humanizePercentage }} over 5 minutes'
-    runbook: 'https://docs.chioma.io/runbooks/high-error-rate'
+    runbook: 'https://docs.huston-housing.io/runbooks/high-error-rate'
 
 - alert: HighLatency
   expr: |
@@ -575,7 +575,7 @@ scrape_configs:
   annotations:
     summary: 'High request latency detected'
     description: 'P95 latency is {{ $value }}s'
-    runbook: 'https://docs.chioma.io/runbooks/high-latency'
+    runbook: 'https://docs.huston-housing.io/runbooks/high-latency'
 ```
 
 #### Database Alerts
@@ -753,12 +753,12 @@ receivers:
   - name: 'team-channel'
     slack_configs:
       - api_url: '${SLACK_WEBHOOK_URL}'
-        channel: '#chioma-alerts'
+        channel: '#huston-housing-alerts'
 
   - name: 'email'
     email_configs:
-      - to: 'team@chioma.io'
-        from: 'alerts@chioma.io'
+      - to: 'team@huston-housing.io'
+        from: 'alerts@huston-housing.io'
         smarthost: 'smtp.gmail.com:587'
         auth_username: '${SMTP_USERNAME}'
         auth_password: '${SMTP_PASSWORD}'
@@ -980,7 +980,7 @@ import { PrometheusModule } from '@willsoto/nestjs-prometheus';
       path: '/metrics',
       defaultMetrics: { enabled: true },
       defaultLabels: {
-        app: 'chioma-backend',
+        app: 'huston-housing-backend',
         environment: process.env.NODE_ENV,
       },
     }),

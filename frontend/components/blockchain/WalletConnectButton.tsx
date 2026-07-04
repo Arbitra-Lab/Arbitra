@@ -63,7 +63,7 @@ export function WalletConnectButton({
         className={`flex flex-col sm:flex-row sm:items-center gap-2 ${className}`}
       >
         <div className="flex items-center gap-2 min-w-0 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white">
-          <StellarLogo size={18} className="shrink-0 text-sky-400" />
+          <StellarLogo size={18} className="shrink-0 text-brand-accent" />
           <span className="font-mono truncate" title={publicKey}>
             {truncateMiddle(publicKey)}
           </span>
@@ -86,7 +86,7 @@ export function WalletConnectButton({
         type="button"
         onClick={() => void connect()}
         disabled={loading}
-        className={`inline-flex items-center justify-center font-semibold rounded-xl bg-gradient-to-r from-sky-600 to-indigo-600 text-white shadow-lg shadow-sky-900/30 hover:from-sky-500 hover:to-indigo-500 disabled:opacity-60 transition-all ${SIZE_CLASSES[size]}`}
+        className={`inline-flex items-center justify-center font-semibold rounded-xl bg-gradient-to-r from-brand-blue to-brand-blue-dark text-white shadow-lg shadow-brand-blue-dark/30 hover:from-brand-blue-dark hover:to-brand-blue disabled:opacity-60 transition-all ${SIZE_CLASSES[size]}`}
       >
         {loading ? (
           <>

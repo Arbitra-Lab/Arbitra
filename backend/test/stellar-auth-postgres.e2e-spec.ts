@@ -311,7 +311,7 @@ POSTGRESQL SETUP INSTRUCTIONS:
 To run full E2E tests with PostgreSQL:
 
 1. Install PostgreSQL and create test database:
-   createdb chioma_test
+   createdb huston-housing_test
 
 2. Set environment variables in .env.test:
    DB_TYPE=postgres
@@ -319,7 +319,7 @@ To run full E2E tests with PostgreSQL:
    DB_PORT=5432
    DB_USERNAME=postgres
    DB_PASSWORD=your_password
-   DB_NAME=chioma_test
+   DB_NAME=huston-housing_test
 
 3. Update the test configuration to use PostgreSQL:
    TypeOrmModule.forRoot({

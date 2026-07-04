@@ -1,10 +1,10 @@
 # Performance Testing and Benchmarking Guide
 
-This document provides comprehensive guidance on performance testing and benchmarking for the Chioma platform.
+This document provides comprehensive guidance on performance testing and benchmarking for the Houston Housing platform.
 
 ## Overview
 
-The Chioma platform includes a robust performance testing and monitoring infrastructure designed to ensure optimal performance under various load conditions. This includes:
+The Houston Housing platform includes a robust performance testing and monitoring infrastructure designed to ensure optimal performance under various load conditions. This includes:
 
 - **Real-time Performance Monitoring**: Automatic collection of performance metrics
 - **Load Testing**: Comprehensive load testing scenarios for critical endpoints
@@ -94,8 +94,8 @@ node scripts/load-test.mjs [environment] [options]
 
 **Environments:**
 - `local`: http://localhost:5000
-- `staging`: https://staging-api.chioma.com
-- `production`: https://api.chioma.com
+- `staging`: https://staging-api.huston-housing.com
+- `production`: https://api.huston-housing.com
 
 **Options:**
 - `--scenario=NAME`: Run specific scenario

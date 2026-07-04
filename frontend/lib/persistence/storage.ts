@@ -28,7 +28,7 @@ function isServer(): boolean {
 }
 
 function buildKey(namespace: string, key: string): string {
-  return `chioma_${namespace}_${key}`;
+  return `arbitra_${namespace}_${key}`;
 }
 
 // ─── Public API ──────────────────────────────────────────────────────────────
@@ -108,12 +108,12 @@ export function removeStorage(namespace: string, key: string): void {
 }
 
 /**
- * Clear all Chioma-namespaced keys from localStorage.
+ * Clear all Arbitra-namespaced keys from localStorage.
  */
 export function clearNamespace(namespace: string): void {
   if (isServer()) return;
 
-  const prefix = `chioma_${namespace}_`;
+  const prefix = `arbitra_${namespace}_`;
   const keysToRemove: string[] = [];
 
   for (let i = 0; i < localStorage.length; i++) {

@@ -19,6 +19,9 @@ mod tests_raise_dispute;
 #[cfg(test)]
 mod tests_rate_limit;
 
+#[cfg(test)]
+mod tests_escrow_integration;
+
 pub use dispute::{
     add_arbiter, calculate_voting_weight, cancel_appeal, create_appeal, get_appeal, get_arbiter,
     get_arbiter_count, get_dispute, get_dispute_votes_weighted, get_timeout_config, get_vote,
@@ -43,7 +46,7 @@ impl DisputeResolutionContract {
     /// # Arguments
     /// * `admin` - The address that will have admin privileges to add arbiters
     /// * `min_votes_required` - Minimum number of votes required to resolve a dispute (default: 3)
-    /// * `chioma_contract` - Address of the chioma rental agreement contract
+    /// * `case_registry` - Address of the registry contract (escrow, freelance, trade-finance, insurance, ...) that owns this case's parties and status
     ///
     /// # Errors
     /// * `AlreadyInitialized` - If the contract has already been initialized
@@ -51,7 +54,7 @@ impl DisputeResolutionContract {
         env: Env,
         admin: Address,
         min_votes_required: u32,
-        chioma_contract: Address,
+        case_registry: Address,
     ) -> Result<(), DisputeError> {
         if env.storage().persistent().has(&DataKey::Initialized) {
             return Err(DisputeError::AlreadyInitialized);
@@ -68,7 +71,7 @@ impl DisputeResolutionContract {
             admin: admin.clone(),
             initialized: true,
             min_votes_required,
-            chioma_contract,
+            case_registry,
         };
 
         env.storage().instance().set(&DataKey::State, &state);
@@ -104,8 +107,8 @@ impl DisputeResolutionContract {
     /// Raise a dispute for a specific agreement.
     ///
     /// # Arguments
-    /// * `raiser` - The address raising the dispute (must be tenant or landlord)
-    /// * `agreement_id` - Unique identifier for the agreement in dispute
+    /// * `raiser` - The address raising the dispute (must be the claimant or respondent)
+    /// * `case_id` - Unique identifier for the agreement in dispute
     /// * `details_hash` - Hash reference to off-chain evidence/details (IPFS, etc.)
     ///
     /// # Errors
@@ -116,18 +119,18 @@ impl DisputeResolutionContract {
     pub fn raise_dispute(
         env: Env,
         raiser: Address,
-        agreement_id: String,
+        case_id: String,
         details_hash: String,
     ) -> Result<(), DisputeError> {
-        dispute::raise_dispute(&env, raiser, agreement_id, details_hash)
+        dispute::raise_dispute(&env, raiser, case_id, details_hash)
     }
 
     /// Vote on an existing dispute (arbiters only).
     ///
     /// # Arguments
     /// * `arbiter` - The address of the arbiter voting
-    /// * `agreement_id` - The ID of the agreement in dispute
-    /// * `favor_landlord` - True to vote in favor of landlord, false for tenant
+    /// * `case_id` - The ID of the agreement in dispute
+    /// * `favor_claimant` - True to vote in favor of the claimant, false for the respondent
     ///
     /// # Errors
     /// * `NotInitialized` - If the contract hasn't been initialized
@@ -138,45 +141,45 @@ impl DisputeResolutionContract {
     pub fn vote_on_dispute(
         env: Env,
         arbiter: Address,
-        agreement_id: String,
-        favor_landlord: bool,
+        case_id: String,
+        favor_claimant: bool,
     ) -> Result<(), DisputeError> {
-        dispute::vote_on_dispute(&env, arbiter, agreement_id, favor_landlord)
+        dispute::vote_on_dispute(&env, arbiter, case_id, favor_claimant)
     }
 
     /// Resolve a dispute by evaluating votes and determining the outcome.
     ///
     /// # Arguments
-    /// * `agreement_id` - The ID of the agreement in dispute
+    /// * `case_id` - The ID of the agreement in dispute
     ///
     /// # Returns
-    /// * `DisputeOutcome` - The outcome of the dispute (FavorLandlord or FavorTenant)
+    /// * `DisputeOutcome` - The outcome of the dispute (FavorClaimant or FavorRespondent)
     ///
     /// # Errors
     /// * `NotInitialized` - If the contract hasn't been initialized
     /// * `DisputeNotFound` - If the dispute doesn't exist
     /// * `DisputeAlreadyResolved` - If the dispute has already been resolved
     /// * `InsufficientVotes` - If minimum required votes haven't been cast
-    pub fn resolve_dispute(env: Env, agreement_id: String) -> Result<DisputeOutcome, DisputeError> {
-        dispute::resolve_dispute(&env, agreement_id)
+    pub fn resolve_dispute(env: Env, case_id: String) -> Result<DisputeOutcome, DisputeError> {
+        dispute::resolve_dispute(&env, case_id)
     }
 
     pub fn resolve_dispute_on_timeout(
         env: Env,
-        agreement_id: String,
+        case_id: String,
     ) -> Result<DisputeOutcome, DisputeError> {
-        dispute::resolve_dispute_on_timeout(&env, agreement_id)
+        dispute::resolve_dispute_on_timeout(&env, case_id)
     }
 
     /// Get information about a specific dispute.
     ///
     /// # Arguments
-    /// * `agreement_id` - The ID of the agreement in dispute
+    /// * `case_id` - The ID of the agreement in dispute
     ///
     /// # Returns
     /// * `Option<Dispute>` - The dispute information if it exists
-    pub fn get_dispute(env: Env, agreement_id: String) -> Option<Dispute> {
-        dispute::get_dispute(&env, agreement_id)
+    pub fn get_dispute(env: Env, case_id: String) -> Option<Dispute> {
+        dispute::get_dispute(&env, case_id)
     }
 
     /// Get information about a specific arbiter.
@@ -201,13 +204,13 @@ impl DisputeResolutionContract {
     /// Get a specific vote for a dispute.
     ///
     /// # Arguments
-    /// * `agreement_id` - The ID of the agreement in dispute
+    /// * `case_id` - The ID of the agreement in dispute
     /// * `arbiter` - The address of the arbiter who voted
     ///
     /// # Returns
     /// * `Option<Vote>` - The vote information if it exists
-    pub fn get_vote(env: Env, agreement_id: String, arbiter: Address) -> Option<Vote> {
-        dispute::get_vote(&env, agreement_id, arbiter)
+    pub fn get_vote(env: Env, case_id: String, arbiter: Address) -> Option<Vote> {
+        dispute::get_vote(&env, case_id, arbiter)
     }
 
     pub fn set_timeout_config(

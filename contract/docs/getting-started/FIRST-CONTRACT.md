@@ -1,9 +1,9 @@
 # Your First Soroban Contract
 
-> **Chioma Housing Protocol** — Developer Onboarding  
-> Related Issues: [#01](https://github.com/Listoncrypt/chioma/issues/1), [#04](https://github.com/Listoncrypt/chioma/issues/4), [#12](https://github.com/Listoncrypt/chioma/issues/12)
+> **Houston Housing Housing Protocol** — Developer Onboarding  
+> Related Issues: [#01](https://github.com/Listoncrypt/huston-housing/issues/1), [#04](https://github.com/Listoncrypt/huston-housing/issues/4), [#12](https://github.com/Listoncrypt/huston-housing/issues/12)
 
-In this guide, you will create a simple **Housing Registry** contract from scratch — a miniature version of Chioma's own `property_registry` contract. By the end, you will understand the anatomy of a Soroban contract, how to build it to WebAssembly, and where the compiled artifacts live.
+In this guide, you will create a simple **Housing Registry** contract from scratch — a miniature version of Houston Housing's own `property_registry` contract. By the end, you will understand the anatomy of a Soroban contract, how to build it to WebAssembly, and where the compiled artifacts live.
 
 **Prerequisites:** Complete the [Environment Setup](./SETUP.md) guide before proceeding.
 
@@ -272,8 +272,8 @@ contract/
     └── wasm32-unknown-unknown/
         └── release/
             ├── hello_housing.wasm        ← Your compiled contract
-            ├── property_registry.wasm     ← Chioma's property registry
-            ├── escrow.wasm                ← Chioma's escrow contract
+            ├── property_registry.wasm     ← Houston Housing's property registry
+            ├── escrow.wasm                ← Houston Housing's escrow contract
             └── ...                        ← Other workspace contracts
 ```
 
@@ -291,7 +291,7 @@ ls -lh target/wasm32-unknown-unknown/release/hello_housing.wasm
 Get-Item target\wasm32-unknown-unknown\release\hello_housing.wasm | Select-Object Name, Length
 ```
 
-A typical minimal Soroban contract is between **1 KB and 50 KB**. The Chioma workspace's `Cargo.toml` already configures aggressive optimizations:
+A typical minimal Soroban contract is between **1 KB and 50 KB**. The Houston Housing workspace's `Cargo.toml` already configures aggressive optimizations:
 
 ```toml
 [profile.release]
@@ -305,7 +305,7 @@ panic = "abort"       # Smaller panic handling
 
 ## Step 6 — Validate Your Code
 
-Before committing, run the Chioma quality checks:
+Before committing, run the Houston Housing quality checks:
 
 ```bash
 # Format your code
@@ -338,10 +338,10 @@ Now that your contract builds and tests pass, let's deploy it to the **Stellar T
 The Soroban CLI manages **identities** (keypairs) for signing transactions. Create one with a name you'll remember:
 
 ```bash
-stellar keys generate --global chioma-dev --network testnet
+stellar keys generate --global huston-housing-dev --network testnet
 ```
 
-Replace `chioma-dev` with any name you like — this is a local label, not visible on-chain.
+Replace `huston-housing-dev` with any name you like — this is a local label, not visible on-chain.
 
 > **What this does:** Generates a new Stellar keypair and stores it in your global CLI config (`~/.config/stellar/` on Linux/macOS, `%APPDATA%\stellar\` on Windows). The `--network testnet` flag automatically configures the identity for the Stellar Testnet and funds it via Friendbot.
 
@@ -354,13 +354,13 @@ stellar keys ls
 You should see your identity listed:
 
 ```
-chioma-dev
+huston-housing-dev
 ```
 
 To view the public address associated with your identity:
 
 ```bash
-stellar keys address chioma-dev
+stellar keys address huston-housing-dev
 ```
 
 ### 7b. Fund the Account via Friendbot
@@ -368,13 +368,13 @@ stellar keys address chioma-dev
 The **Stellar Friendbot** dispenses free Testnet XLM (lumens) to any account. If your account wasn't automatically funded during key generation, fund it manually:
 
 ```bash
-curl "https://friendbot.stellar.org/?addr=$(stellar keys address chioma-dev)"
+curl "https://friendbot.stellar.org/?addr=$(stellar keys address huston-housing-dev)"
 ```
 
 Or on **Windows (PowerShell)**:
 
 ```powershell
-$addr = stellar keys address chioma-dev
+$addr = stellar keys address huston-housing-dev
 Invoke-WebRequest -Uri "https://friendbot.stellar.org/?addr=$addr"
 ```
 
@@ -384,7 +384,7 @@ You can also visit the Friendbot URL directly in your browser:
 https://friendbot.stellar.org/?addr=YOUR_PUBLIC_ADDRESS_HERE
 ```
 
-Replace `YOUR_PUBLIC_ADDRESS_HERE` with the output from `stellar keys address chioma-dev`.
+Replace `YOUR_PUBLIC_ADDRESS_HERE` with the output from `stellar keys address huston-housing-dev`.
 
 > **Note:** Friendbot is **Testnet only**. On Mainnet, you need real XLM from an exchange or another account.
 
@@ -395,7 +395,7 @@ Deploy your compiled WASM to the Testnet:
 ```bash
 stellar contract deploy \
   --wasm target/wasm32-unknown-unknown/release/hello_housing.wasm \
-  --source chioma-dev \
+  --source huston-housing-dev \
   --network testnet
 ```
 
@@ -404,7 +404,7 @@ On **Windows (PowerShell)**, use backticks for line continuation:
 ```powershell
 stellar contract deploy `
   --wasm target\wasm32-unknown-unknown\release\hello_housing.wasm `
-  --source chioma-dev `
+  --source huston-housing-dev `
   --network testnet
 ```
 
@@ -423,7 +423,7 @@ Register a property:
 ```bash
 stellar contract invoke \
   --id CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2OOTGW6P \
-  --source chioma-dev \
+  --source huston-housing-dev \
   --network testnet \
   -- \
   register_property \
@@ -438,7 +438,7 @@ Retrieve the property:
 ```bash
 stellar contract invoke \
   --id CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2OOTGW6P \
-  --source chioma-dev \
+  --source huston-housing-dev \
   --network testnet \
   -- \
   get_property \
@@ -457,7 +457,7 @@ You should see a JSON response containing your registered property data. 🎉
 
 ---
 
-## Understanding the Chioma Contract Structure
+## Understanding the Houston Housing Contract Structure
 
 Now that you've built your first contract, take a look at how the production `property_registry` contract is organized:
 
@@ -485,7 +485,7 @@ contracts/property_registry/
 | **Module structure** | Single `lib.rs`              | Split across multiple modules     |
 | **Admin control**    | None                         | Admin initialization + verification |
 
-As you contribute to Chioma, you'll follow the production patterns. But the fundamentals — `#[contract]`, `#[contractimpl]`, storage, and types — are exactly what you've learned here.
+As you contribute to Houston Housing, you'll follow the production patterns. But the fundamentals — `#[contract]`, `#[contractimpl]`, storage, and types — are exactly what you've learned here.
 
 ---
 
@@ -517,4 +517,4 @@ Your first contract is built! Continue to the next guide:
 
 ---
 
-*Last updated: April 2026 · Chioma Housing Protocol · [CONTRIBUTING.md](../../CONTRIBUTING.md)*
+*Last updated: April 2026 · Houston Housing Housing Protocol · [CONTRIBUTING.md](../../CONTRIBUTING.md)*

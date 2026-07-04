@@ -6,7 +6,7 @@ import { DataSource, QueryRunner } from 'typeorm';
  * TransactionService wraps critical database operations in TypeORM transactions,
  * ensuring atomicity, automatic rollback on error, and idempotency-key support.
  *
- * Resolves: https://github.com/chioma-housing-protocol-I/chioma/issues/456
+ * Resolves: https://github.com/huston-housing-housing-protocol-I/huston-housing/issues/456
  */
 @Injectable()
 export class TransactionService {

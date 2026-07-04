@@ -114,7 +114,7 @@ Webhook endpoints are public by design. Implement layered controls.
 
 ### Signature verification
 
-Chioma’s signature scheme is documented in:
+Houston Housing’s signature scheme is documented in:
 
 - `WEBHOOK_SIGNATURE_VERIFICATION.md`
 

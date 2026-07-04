@@ -9,7 +9,7 @@ import {
 import { Payment } from '../../rent/entities/payment.entity';
 import { AuditService } from '../../audit/audit.service';
 import { ReviewPromptService } from '../../reviews/review-prompt.service';
-import { ChiomaContractService } from '../../stellar/services/chioma-contract.service';
+import { Houston HousingContractService } from '../../stellar/services/huston-housing-contract.service';
 import { BlockchainSyncService } from '../blockchain-sync.service';
 import { EscrowIntegrationService } from '../escrow-integration.service';
 import { TemplateRenderingService } from '../template-rendering.service';
@@ -47,7 +47,7 @@ describe('AgreementsService – Pagination', () => {
         { provide: getRepositoryToken(Payment), useValue: mockPaymentRepo },
         { provide: AuditService, useValue: {} },
         { provide: ReviewPromptService, useValue: {} },
-        { provide: ChiomaContractService, useValue: {} },
+        { provide: Houston HousingContractService, useValue: {} },
         { provide: BlockchainSyncService, useValue: {} },
         { provide: EscrowIntegrationService, useValue: {} },
         { provide: TemplateRenderingService, useValue: { render: jest.fn() } },

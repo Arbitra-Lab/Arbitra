@@ -1,6 +1,6 @@
 # Disaster Recovery Plan
 
-**Project:** Chioma Platform  
+**Project:** Houston Housing Platform  
 **Version:** 1.0  
 **Last Updated:** April 2026  
 **Owner:** Platform Engineering  
@@ -10,11 +10,11 @@
 
 ## 1. Purpose and Scope
 
-This Disaster Recovery Plan (DRP) defines the procedures, responsibilities, and recovery objectives for restoring the Chioma platform following a disruptive event. It covers all production infrastructure including the NestJS backend API, Next.js frontend, PostgreSQL (Neon) database, Redis cache, Stellar blockchain integrations, S3 file storage, and supporting services.
+This Disaster Recovery Plan (DRP) defines the procedures, responsibilities, and recovery objectives for restoring the Houston Housing platform following a disruptive event. It covers all production infrastructure including the NestJS backend API, Next.js frontend, PostgreSQL (Neon) database, Redis cache, Stellar blockchain integrations, S3 file storage, and supporting services.
 
 This plan applies to:
 
-- Production environment (`api.chioma.io`, `app.chioma.io`)
+- Production environment (`api.huston-housing.io`, `app.huston-housing.io`)
 - Staging environment (used for DR validation)
 - All data stores and third-party integrations
 
@@ -84,7 +84,7 @@ This plan applies to:
 
 ### 5.2 External Communication
 
-- **Status page:** Update `status.chioma.io` within 30 minutes of confirmed outage
+- **Status page:** Update `status.huston-housing.io` within 30 minutes of confirmed outage
 - **User notification:** In-app banner and email for outages exceeding 1 hour
 - **Regulatory notification:** If personal data is involved, notify within 72 hours per applicable regulations
 
@@ -96,7 +96,7 @@ This plan applies to:
 
 - **Automated backups:** Neon provides continuous WAL archiving with point-in-time recovery (PITR) up to 7 days
 - **Manual snapshots:** Taken before every production deployment via `pg_dump`
-- **Snapshot storage:** Encrypted and stored in S3 (`s3://chioma-backups/db/`)
+- **Snapshot storage:** Encrypted and stored in S3 (`s3://huston-housing-backups/db/`)
 - **Retention:** 7 daily, 4 weekly, 12 monthly snapshots
 
 **Restore command:**
@@ -104,7 +104,7 @@ This plan applies to:
 ```bash
 pg_restore --clean --no-acl --no-owner \
   -d $DATABASE_URL \
-  backups/chioma_$(date +%Y%m%d).dump
+  backups/huston-housing_$(date +%Y%m%d).dump
 ```
 
 ### 6.2 File Storage (S3)
@@ -141,7 +141,7 @@ pg_restore --clean --no-acl --no-owner \
 
    ```bash
    # Download latest backup
-   aws s3 cp s3://chioma-backups/db/latest.dump ./restore.dump
+   aws s3 cp s3://huston-housing-backups/db/latest.dump ./restore.dump
 
    # Restore to new database
    pg_restore --clean --no-acl --no-owner -d $DATABASE_URL ./restore.dump
@@ -159,11 +159,11 @@ pg_restore --clean --no-acl --no-owner \
 
 **Steps:**
 
-1. Check container logs: `docker logs chioma-api --tail 200`
+1. Check container logs: `docker logs huston-housing-api --tail 200`
 2. Attempt restart: `docker compose restart api`
 3. If restart fails, redeploy from last known good image:
    ```bash
-   docker pull ghcr.io/chioma/api:stable
+   docker pull ghcr.io/huston-housing/api:stable
    docker compose up -d api
    ```
 4. If image is corrupt, trigger a fresh build from the last stable Git tag:
@@ -178,7 +178,7 @@ pg_restore --clean --no-acl --no-owner \
 
 ### 7.3 Frontend Failure
 
-**Symptoms:** `app.chioma.io` returns 502/503, Vercel/CDN reports deployment failure.
+**Symptoms:** `app.huston-housing.io` returns 502/503, Vercel/CDN reports deployment failure.
 
 **Steps:**
 
@@ -224,7 +224,7 @@ pg_restore --clean --no-acl --no-owner \
 2. If primary region (`us-east-1`) is down, update `AWS_S3_BUCKET_REGION` to the replica region (`eu-west-1`) in Secrets Manager and restart the API
 3. If bucket is accidentally deleted, restore from cross-region replica:
    ```bash
-   aws s3 sync s3://chioma-files-replica s3://chioma-files --source-region eu-west-1
+   aws s3 sync s3://huston-housing-files-replica s3://huston-housing-files --source-region eu-west-1
    ```
 4. Update CloudFront distribution origin if bucket endpoint changes
 
@@ -296,7 +296,7 @@ Use this procedure when the entire platform needs to be rebuilt from scratch.
 docker compose -f docker-compose.production.yml pull
 
 # 2. Restore environment variables
-aws secretsmanager get-secret-value --secret-id chioma/production \
+aws secretsmanager get-secret-value --secret-id huston-housing/production \
   | jq -r '.SecretString' > backend/.env.production
 
 # 3. Start database and wait for it to be healthy
@@ -304,7 +304,7 @@ docker compose -f docker-compose.production.yml up -d postgres redis
 sleep 10
 
 # 4. Restore database from latest backup
-aws s3 cp s3://chioma-backups/db/latest.dump ./restore.dump
+aws s3 cp s3://huston-housing-backups/db/latest.dump ./restore.dump
 pg_restore --clean --no-acl --no-owner -d $DATABASE_URL ./restore.dump
 
 # 5. Run migrations
@@ -314,8 +314,8 @@ cd backend && npm run migration:run
 docker compose -f docker-compose.production.yml up -d
 
 # 7. Verify health
-curl https://api.chioma.io/health
-curl https://app.chioma.io
+curl https://api.huston-housing.io/health
+curl https://app.huston-housing.io
 ```
 
 ---

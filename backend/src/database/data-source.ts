@@ -35,7 +35,7 @@ export const AppDataSource = new DataSource({
     : process.env.DB_PASSWORD || 'password',
   database: process.env.DATABASE_URL
     ? undefined
-    : process.env.DB_NAME || 'chioma_db',
+    : process.env.DB_NAME || 'huston-housing_db',
   ssl:
     process.env.DB_SSL === 'true'
       ? {

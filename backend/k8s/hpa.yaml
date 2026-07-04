@@ -1,15 +1,15 @@
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: chioma-backend-hpa
+  name: huston-housing-backend-hpa
   namespace: production
   labels:
-    app: chioma-backend
+    app: huston-housing-backend
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: chioma-backend
+    name: huston-housing-backend
 
   # Scaling bounds
   minReplicas: 3

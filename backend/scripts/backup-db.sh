@@ -1,24 +1,24 @@
 #!/bin/bash
 # Database Backup Script
 # Uses DB_HOST, DB_PORT, DB_USERNAME, DB_PASSWORD, DB_NAME from env (or .env).
-# Optional: BACKUP_DIR (default /var/backups/chioma), RETENTION_DAYS (default 30).
-# For Docker: set USE_DOCKER=1 and DOCKER_CONTAINER=chioma-postgres-production.
+# Optional: BACKUP_DIR (default /var/backups/huston-housing), RETENTION_DAYS (default 30).
+# For Docker: set USE_DOCKER=1 and DOCKER_CONTAINER=huston-housing-postgres-production.
 
 set -e
 
-BACKUP_DIR="${BACKUP_DIR:-/var/backups/chioma}"
+BACKUP_DIR="${BACKUP_DIR:-/var/backups/huston-housing}"
 RETENTION_DAYS="${RETENTION_DAYS:-30}"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 DB_HOST="${DB_HOST:-localhost}"
 DB_PORT="${DB_PORT:-5432}"
 DB_USERNAME="${DB_USERNAME:-postgres}"
-DB_NAME="${DB_NAME:-chioma_db}"
+DB_NAME="${DB_NAME:-huston-housing_db}"
 
 mkdir -p "$BACKUP_DIR"
 echo "Starting database backup..."
 
 if [ "${USE_DOCKER}" = "1" ]; then
-  CONTAINER="${DOCKER_CONTAINER:-chioma-postgres-production}"
+  CONTAINER="${DOCKER_CONTAINER:-huston-housing-postgres-production}"
   docker exec "$CONTAINER" pg_dump -U "$DB_USERNAME" "$DB_NAME" > "$BACKUP_DIR/backup_${TIMESTAMP}.sql"
 else
   export PGPASSWORD="${DB_PASSWORD}"

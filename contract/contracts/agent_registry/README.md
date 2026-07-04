@@ -196,9 +196,9 @@ make test
 make fmt
 ```
 
-## Integration with Chioma Ecosystem
+## Integration with Houston Housing Ecosystem
 
-This contract integrates with the Chioma rent payment system by:
+This contract integrates with the Houston Housing rent payment system by:
 1. Preventing fraudulent addresses from being added as agents in rent agreements
 2. Tracking agent involvement in property transactions
 3. Building verifiable reputation for agents based on completed transactions

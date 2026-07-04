@@ -1,6 +1,6 @@
 # Backend Contributing Guide
 
-This document provides comprehensive guidelines for contributing to the Chioma backend. It covers project architecture, development standards, testing requirements, and CI/CD pipeline expectations.
+This document provides comprehensive guidelines for contributing to the Houston Housing backend. It covers project architecture, development standards, testing requirements, and CI/CD pipeline expectations.
 
 ## Table of Contents
 
@@ -19,7 +19,7 @@ This document provides comprehensive guidelines for contributing to the Chioma b
 
 ## Project Overview
 
-**Chioma Backend** is a NestJS-based REST API with blockchain integration, built for a property rental platform.
+**Houston Housing Backend** is a NestJS-based REST API with blockchain integration, built for a property rental platform.
 
 ### Tech Stack
 
@@ -736,7 +736,7 @@ export class MyFeatureController {
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 
 const config = new DocumentBuilder()
-  .setTitle('Chioma API')
+  .setTitle('Houston Housing API')
   .setDescription('Property rental platform API')
   .setVersion('1.0')
   .addBearerAuth()
@@ -983,7 +983,7 @@ pnpm run build
 ```bash
 # 1. Clone the repository
 git clone <repo-url>
-cd chioma/backend
+cd huston-housing/backend
 
 # 2. Install dependencies
 pnpm install
@@ -1071,7 +1071,7 @@ logger.debug('Debug info');
 
 ```bash
 # Connect to PostgreSQL
-psql -h localhost -U postgres -d chioma_db
+psql -h localhost -U postgres -d huston-housing_db
 
 # View tables
 \dt
@@ -1293,4 +1293,4 @@ For questions or assistance:
 - Participate in team discussions and code reviews
 - Submit detailed issue reports for bugs or feature requests
 
-We appreciate your contributions to the Chioma platform.
+We appreciate your contributions to the Houston Housing platform.

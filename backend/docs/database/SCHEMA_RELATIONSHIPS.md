@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document provides a detailed description of the Chioma database schema, entity relationships, data flow patterns, and key design decisions. It serves as the definitive reference for understanding how data is structured and connected across the platform.
+This document provides a detailed description of the Houston Housing database schema, entity relationships, data flow patterns, and key design decisions. It serves as the definitive reference for understanding how data is structured and connected across the platform.
 
 Use this document alongside:
 

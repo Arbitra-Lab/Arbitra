@@ -2,7 +2,7 @@
 
 ## 1. Objective
 
-Scaling in Chioma contract workloads means keeping hot agreement and payment paths efficient as the number of agreements, extensions, payments, and governance actions grows.
+Scaling in Houston Housing contract workloads means keeping hot agreement and payment paths efficient as the number of agreements, extensions, payments, and governance actions grows.
 
 ## 2. Scaling principles
 

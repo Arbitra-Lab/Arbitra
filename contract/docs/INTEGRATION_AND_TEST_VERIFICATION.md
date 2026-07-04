@@ -1,6 +1,6 @@
 # Contract integration + test verification (PR-ready checklist)
 
-This document explains how to **credibly demonstrate** that Chioma’s Soroban contracts are working together as intended **from a testing/CI perspective**, and what evidence belongs in a PR description.
+This document explains how to **credibly demonstrate** that Houston Housing’s Soroban contracts are working together as intended **from a testing/CI perspective**, and what evidence belongs in a PR description.
 
 It is intentionally **not** a substitute for running the checks yourself: a PR should include **commands run + results** (pass/fail), not assertions without proof.
 
@@ -14,7 +14,7 @@ In Soroban, “integration” in this monorepo usually means one or more of the 
 
 Concrete example worth highlighting in PR text when relevant:
 
-- `dispute_resolution` validates disputes against agreements stored in the Chioma contract via a cross-contract fetch (see `raise_dispute` implementation).
+- `dispute_resolution` validates disputes against agreements stored in the Houston Housing contract via a cross-contract fetch (see `raise_dispute` implementation).
 
 ## What GitHub Actions will run for contract changes
 
@@ -71,7 +71,7 @@ Result:
 - PASS (exit 0)
 
 Notes:
-- Focus: <e.g. dispute_resolution ↔ chioma agreement fetch + error matrix>
+- Focus: <e.g. dispute_resolution ↔ huston-housing agreement fetch + error matrix>
 ```
 
 ### If you only ran a subset (acceptable, but say so)

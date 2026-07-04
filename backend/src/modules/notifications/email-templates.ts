@@ -36,14 +36,14 @@ function wrapInLayout(title: string, content: string): string {
   <div style="padding: 20px;">
     <div class="container">
       <div class="header">
-        <h1>Chioma Housing</h1>
+        <h1>Houston Housing Housing</h1>
       </div>
       <div class="body">
         ${content}
       </div>
       <div class="footer">
-        <p>Chioma Housing Protocol &mdash; Decentralized Housing on Stellar</p>
-        <p>You received this email because you have an account with Chioma.</p>
+        <p>Houston Housing Housing Protocol &mdash; Decentralized Housing on Stellar</p>
+        <p>You received this email because you have an account with Houston Housing.</p>
       </div>
     </div>
   </div>
@@ -59,7 +59,7 @@ export function verificationEmailTemplate(
   return wrapInLayout(
     'Verify Your Email',
     `
-    <h2>Welcome to Chioma${data.recipientName ? `, ${data.recipientName}` : ''}!</h2>
+    <h2>Welcome to Houston Housing${data.recipientName ? `, ${data.recipientName}` : ''}!</h2>
     <p>Thank you for registering. Please verify your email address to get started.</p>
     <p style="text-align: center;">
       <a class="btn" href="${data.verificationUrl}">Verify Email Address</a>
@@ -176,7 +176,7 @@ export function kycStatusUpdateTemplate(
       ${data.reason ? `<p style="margin: 4px 0; font-size: 14px; color: #6b7280;">Reason: ${data.reason}</p>` : ''}
     </div>
     ${data.status === 'rejected' ? '<p>Please update your documents and resubmit for verification.</p>' : ''}
-    ${data.status === 'approved' ? '<p>You now have full access to all Chioma features.</p>' : ''}
+    ${data.status === 'approved' ? '<p>You now have full access to all Houston Housing features.</p>' : ''}
     `,
   );
 }

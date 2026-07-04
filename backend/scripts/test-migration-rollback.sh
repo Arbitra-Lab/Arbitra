@@ -35,7 +35,7 @@ DB_HOST="${DB_HOST:-localhost}"
 DB_PORT="${DB_PORT:-5432}"
 DB_USERNAME="${DB_USERNAME:-postgres}"
 DB_PASSWORD="${DB_PASSWORD:-password}"
-TEST_DB="chioma_migration_test_$(date +%s)"
+TEST_DB="huston-housing_migration_test_$(date +%s)"
 
 log()   { echo -e "${GREEN}[✓]${NC} $1"; }
 warn()  { echo -e "${YELLOW}[!]${NC} $1"; }

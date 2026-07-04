@@ -1,9 +1,9 @@
 #![no_std]
 #![allow(clippy::too_many_arguments)]
 
-//! Chioma rental agreement contract.
+//! Houston Housing rental agreement contract.
 //!
-//! @title Chioma
+//! @title Houston Housing
 //! @notice On-chain rental agreement lifecycle: create, sign, submit, cancel, and query agreements.
 //! Optimized for gas efficiency and security.
 
@@ -87,7 +87,7 @@ pub use types::{
     UserCallCount, VersionStatus,
 };
 
-/// Chioma rental agreement contract.
+/// Houston Housing rental agreement contract.
 ///
 /// @title Contract
 #[contract]

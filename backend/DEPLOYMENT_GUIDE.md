@@ -1,6 +1,6 @@
 # Deployment Guide: Load Balancing, Auto-Scaling & Graceful Shutdown
 
-This guide provides step-by-step instructions for deploying the Chioma backend with load balancing, auto-scaling, and graceful shutdown capabilities.
+This guide provides step-by-step instructions for deploying the Houston Housing backend with load balancing, auto-scaling, and graceful shutdown capabilities.
 
 ## Table of Contents
 
@@ -58,10 +58,10 @@ This guide provides step-by-step instructions for deploying the Chioma backend w
 cd backend
 
 # Build production image
-docker build -f Dockerfile.production -t chioma-backend:latest .
+docker build -f Dockerfile.production -t huston-housing-backend:latest .
 
 # Verify image
-docker images | grep chioma-backend
+docker images | grep huston-housing-backend
 ```
 
 ### 2. Start Services with Docker Compose
@@ -124,7 +124,7 @@ kubectl create namespace staging
 source .env.staging
 
 # Create secrets
-kubectl create secret generic chioma-backend-secrets \
+kubectl create secret generic huston-housing-backend-secrets \
   --from-literal=database_url=$DATABASE_URL \
   --from-literal=redis_url=$REDIS_URL \
   --from-literal=jwt_secret=$JWT_SECRET \
@@ -142,12 +142,12 @@ kubectl get secrets -n staging
 ### 3. Create ConfigMap
 
 ```bash
-kubectl create configmap chioma-backend-config \
+kubectl create configmap huston-housing-backend-config \
   --from-literal=db_host=postgres.staging.svc.cluster.local \
   --from-literal=db_port=5432 \
-  --from-literal=db_name=chioma_staging \
+  --from-literal=db_name=huston-housing_staging \
   --from-literal=aws_region=us-east-1 \
-  --from-literal=aws_s3_bucket=chioma-staging \
+  --from-literal=aws_s3_bucket=huston-housing-staging \
   -n staging
 
 # Verify ConfigMap
@@ -179,7 +179,7 @@ sed -i 's/namespace: production/namespace: staging/g' backend/k8s/deployment.yam
 kubectl apply -f backend/k8s/deployment.yaml
 
 # Watch deployment
-kubectl rollout status deployment/chioma-backend -n staging
+kubectl rollout status deployment/huston-housing-backend -n staging
 
 # Verify pods
 kubectl get pods -n staging
@@ -231,13 +231,13 @@ kubectl get pdb -n staging
 kubectl get pods -n staging -o wide
 
 # Check pod logs
-kubectl logs -n staging -l app=chioma-backend --tail=50
+kubectl logs -n staging -l app=huston-housing-backend --tail=50
 
 # Check service endpoints
 kubectl get endpoints -n staging
 
 # Test health endpoint
-kubectl port-forward -n staging svc/chioma-backend 8080:80 &
+kubectl port-forward -n staging svc/huston-housing-backend 8080:80 &
 curl http://localhost:8080/health
 kill %1
 ```
@@ -257,7 +257,7 @@ kubectl create namespace production
 source .env.production
 
 # Create secrets
-kubectl create secret generic chioma-backend-secrets \
+kubectl create secret generic huston-housing-backend-secrets \
   --from-literal=database_url=$DATABASE_URL \
   --from-literal=redis_url=$REDIS_URL \
   --from-literal=jwt_secret=$JWT_SECRET \
@@ -275,12 +275,12 @@ kubectl get secrets -n production
 ### 3. Create ConfigMap
 
 ```bash
-kubectl create configmap chioma-backend-config \
+kubectl create configmap huston-housing-backend-config \
   --from-literal=db_host=postgres.production.svc.cluster.local \
   --from-literal=db_port=5432 \
-  --from-literal=db_name=chioma_production \
+  --from-literal=db_name=huston-housing_production \
   --from-literal=aws_region=us-east-1 \
-  --from-literal=aws_s3_bucket=chioma-production \
+  --from-literal=aws_s3_bucket=huston-housing-production \
   -n production
 
 # Verify ConfigMap
@@ -305,7 +305,7 @@ kubectl get rolebinding -n production
 kubectl apply -f backend/k8s/deployment.yaml
 
 # Watch deployment
-kubectl rollout status deployment/chioma-backend -n production
+kubectl rollout status deployment/huston-housing-backend -n production
 
 # Verify pods
 kubectl get pods -n production -o wide
@@ -346,7 +346,7 @@ kubectl apply -f - <<EOF
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: chioma-backend-ingress
+  name: huston-housing-backend-ingress
   namespace: production
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
@@ -355,17 +355,17 @@ spec:
   ingressClassName: nginx
   tls:
     - hosts:
-        - api.chioma.app
-      secretName: chioma-tls
+        - api.huston-housing.app
+      secretName: huston-housing-tls
   rules:
-    - host: api.chioma.app
+    - host: api.huston-housing.app
       http:
         paths:
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: chioma-backend
+                name: huston-housing-backend
                 port:
                   number: 80
 EOF
@@ -401,7 +401,7 @@ kubectl get endpoints -n production
 # Test service connectivity
 kubectl run -it --rm debug --image=busybox --restart=Never -- sh
 # Inside pod:
-wget -O- http://chioma-backend/health
+wget -O- http://huston-housing-backend/health
 exit
 ```
 
@@ -412,7 +412,7 @@ exit
 kubectl get hpa -n production -o wide
 
 # Check HPA events
-kubectl describe hpa chioma-backend-hpa -n production
+kubectl describe hpa huston-housing-backend-hpa -n production
 
 # Check metrics
 kubectl top pods -n production
@@ -450,13 +450,13 @@ open http://grafana:3000
 
 ```bash
 # Check rollout history
-kubectl rollout history deployment/chioma-backend -n production
+kubectl rollout history deployment/huston-housing-backend -n production
 
 # Rollback to previous version
-kubectl rollout undo deployment/chioma-backend -n production
+kubectl rollout undo deployment/huston-housing-backend -n production
 
 # Verify rollback
-kubectl rollout status deployment/chioma-backend -n production
+kubectl rollout status deployment/huston-housing-backend -n production
 
 # Check pods
 kubectl get pods -n production
@@ -466,25 +466,25 @@ kubectl get pods -n production
 
 ```bash
 # Rollback to specific revision
-kubectl rollout undo deployment/chioma-backend -n production --to-revision=<revision>
+kubectl rollout undo deployment/huston-housing-backend -n production --to-revision=<revision>
 
 # Verify rollback
-kubectl rollout status deployment/chioma-backend -n production
+kubectl rollout status deployment/huston-housing-backend -n production
 ```
 
 ### Manual Rollback
 
 ```bash
 # Get previous image
-PREVIOUS_IMAGE=$(kubectl get deployment chioma-backend -n production -o jsonpath='{.spec.template.spec.containers[0].image}')
+PREVIOUS_IMAGE=$(kubectl get deployment huston-housing-backend -n production -o jsonpath='{.spec.template.spec.containers[0].image}')
 
 # Update deployment with previous image
-kubectl set image deployment/chioma-backend \
+kubectl set image deployment/huston-housing-backend \
   backend=$PREVIOUS_IMAGE \
   -n production
 
 # Verify rollback
-kubectl rollout status deployment/chioma-backend -n production
+kubectl rollout status deployment/huston-housing-backend -n production
 ```
 
 ## Post-Deployment Monitoring
@@ -516,13 +516,13 @@ curl http://alertmanager:9093/api/v1/alerts?filter=status%3Dfiring
 
 ```bash
 # Stream logs from all pods
-kubectl logs -n production -l app=chioma-backend -f
+kubectl logs -n production -l app=huston-housing-backend -f
 
 # Search for errors
-kubectl logs -n production -l app=chioma-backend | grep ERROR
+kubectl logs -n production -l app=huston-housing-backend | grep ERROR
 
 # Search for warnings
-kubectl logs -n production -l app=chioma-backend | grep WARN
+kubectl logs -n production -l app=huston-housing-backend | grep WARN
 ```
 
 ### 4. Performance Testing
@@ -571,7 +571,7 @@ kubectl get pod <pod-name> -n production -o yaml | grep -A 5 resources
 
 ```bash
 # Check error logs
-kubectl logs -n production -l app=chioma-backend | grep ERROR
+kubectl logs -n production -l app=huston-housing-backend | grep ERROR
 
 # Check database connectivity
 kubectl exec -it <pod-name> -n production -- npm run db:monitor:health
@@ -597,7 +597,7 @@ kubectl delete pod <pod-name> -n production
 
 ```bash
 # Check HPA status
-kubectl describe hpa chioma-backend-hpa -n production
+kubectl describe hpa huston-housing-backend-hpa -n production
 
 # Check metrics
 kubectl get --raw /apis/custom.metrics.k8s.io/v1beta1/namespaces/production/pods/*/http_requests_per_second

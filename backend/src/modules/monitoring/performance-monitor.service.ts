@@ -525,7 +525,7 @@ export class PerformanceMonitorService {
         labels: {
           alertname: `performance_${alert.type}`,
           severity: alert.severity,
-          service: 'chioma-backend',
+          service: 'huston-housing-backend',
         },
         annotations: {
           summary: alert.message,

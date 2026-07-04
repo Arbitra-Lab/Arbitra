@@ -14,11 +14,11 @@ describe('EmailService', () => {
 
   const mockConfig: Record<string, string> = {
     EMAIL_SERVICE: 'gmail',
-    EMAIL_USER: 'test@chioma.app',
+    EMAIL_USER: 'test@huston-housing.app',
     EMAIL_PASSWORD: 'test-password',
-    EMAIL_FROM: '"Chioma App" <noreply@chioma.app>',
-    FRONTEND_URL: 'https://app.chioma.io',
-    PASSWORD_RESET_URL: 'https://app.chioma.io/reset-password',
+    EMAIL_FROM: '"Houston Housing App" <noreply@huston-housing.app>',
+    FRONTEND_URL: 'https://app.huston-housing.io',
+    PASSWORD_RESET_URL: 'https://app.huston-housing.io/reset-password',
   };
 
   beforeEach(async () => {
@@ -69,14 +69,14 @@ describe('EmailService', () => {
       await service.sendVerificationEmail('user@example.com', 'tok123');
       const mailOptions = sendMailMock.mock.calls[0][0];
       expect(mailOptions.html).toContain(
-        'https://app.chioma.io/verify-email?token=tok123',
+        'https://app.huston-housing.io/verify-email?token=tok123',
       );
     });
 
     it('uses configured FROM address', async () => {
       await service.sendVerificationEmail('user@example.com', 'tok');
       const mailOptions = sendMailMock.mock.calls[0][0];
-      expect(mailOptions.from).toBe('"Chioma App" <noreply@chioma.app>');
+      expect(mailOptions.from).toBe('"Houston Housing App" <noreply@huston-housing.app>');
     });
 
     it('throws when transporter fails', async () => {
@@ -122,7 +122,7 @@ describe('EmailService', () => {
       await service.sendPasswordResetEmail('reset@example.com', 'tok');
       const mailOptions = sendMailMock.mock.calls[0][0];
       expect(mailOptions.html).toContain(
-        'https://app.chioma.io/reset-password?token=tok',
+        'https://app.huston-housing.io/reset-password?token=tok',
       );
     });
 
@@ -143,7 +143,7 @@ describe('EmailService', () => {
       await svc.sendPasswordResetEmail('reset@example.com', 'tok');
       const mailOptions = sendMailMock.mock.calls[0][0];
       expect(mailOptions.html).toContain(
-        'https://app.chioma.io/reset-password?token=tok',
+        'https://app.huston-housing.io/reset-password?token=tok',
       );
     });
 
@@ -201,11 +201,11 @@ describe('EmailService', () => {
       await service.sendNotificationEmail('n@example.com', 'Action', 'tmpl', {
         title: 'Click',
         message: '',
-        actionUrl: 'https://app.chioma.io/action',
+        actionUrl: 'https://app.huston-housing.io/action',
         actionText: 'View Now',
       });
       const mailOptions = sendMailMock.mock.calls[0][0];
-      expect(mailOptions.html).toContain('https://app.chioma.io/action');
+      expect(mailOptions.html).toContain('https://app.huston-housing.io/action');
       expect(mailOptions.html).toContain('View Now');
     });
 
@@ -221,19 +221,19 @@ describe('EmailService', () => {
 
   describe('sendAlertEmail', () => {
     it('sends alert to the given address with correct subject', async () => {
-      await service.sendAlertEmail('admin@chioma.app', 'High CPU Alert', {
+      await service.sendAlertEmail('admin@huston-housing.app', 'High CPU Alert', {
         message: 'CPU usage exceeded 90%',
       });
       expect(sendMailMock).toHaveBeenCalledWith(
         expect.objectContaining({
-          to: 'admin@chioma.app',
+          to: 'admin@huston-housing.app',
           subject: 'High CPU Alert',
         }),
       );
     });
 
     it('includes the alert message in the body', async () => {
-      await service.sendAlertEmail('admin@chioma.app', 'Alert', {
+      await service.sendAlertEmail('admin@huston-housing.app', 'Alert', {
         message: 'Something went wrong',
       });
       const mailOptions = sendMailMock.mock.calls[0][0];
@@ -241,7 +241,7 @@ describe('EmailService', () => {
     });
 
     it('includes serialised details when provided', async () => {
-      await service.sendAlertEmail('admin@chioma.app', 'Alert', {
+      await service.sendAlertEmail('admin@huston-housing.app', 'Alert', {
         message: 'Error',
         details: { code: 500, path: '/api/health' },
       });
@@ -250,7 +250,7 @@ describe('EmailService', () => {
     });
 
     it('omits details block when details is absent', async () => {
-      await service.sendAlertEmail('admin@chioma.app', 'Alert', {
+      await service.sendAlertEmail('admin@huston-housing.app', 'Alert', {
         message: 'msg',
       });
       const mailOptions = sendMailMock.mock.calls[0][0];
@@ -258,7 +258,7 @@ describe('EmailService', () => {
     });
 
     it('uses default message when data.message is absent', async () => {
-      await service.sendAlertEmail('admin@chioma.app', 'Alert', {});
+      await service.sendAlertEmail('admin@huston-housing.app', 'Alert', {});
       const mailOptions = sendMailMock.mock.calls[0][0];
       expect(mailOptions.html).toContain('An alert has been triggered');
     });
@@ -266,7 +266,7 @@ describe('EmailService', () => {
     it('throws when transporter fails', async () => {
       sendMailMock.mockRejectedValue(new Error('relay error'));
       await expect(
-        service.sendAlertEmail('admin@chioma.app', 'Alert', { message: 'x' }),
+        service.sendAlertEmail('admin@huston-housing.app', 'Alert', { message: 'x' }),
       ).rejects.toThrow('Failed to send alert email');
     });
   });
@@ -279,7 +279,7 @@ describe('EmailService', () => {
         expect.objectContaining({
           service: 'gmail',
           auth: expect.objectContaining({
-            user: 'test@chioma.app',
+            user: 'test@huston-housing.app',
             pass: 'test-password',
           }),
         }),

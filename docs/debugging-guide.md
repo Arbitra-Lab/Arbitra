@@ -1,6 +1,6 @@
 # Debugging Guide
 
-A practical, step-by-step debugging reference for Chioma developers covering tools, techniques, common issues, and procedures for both local and production environments.
+A practical, step-by-step debugging reference for Arbitra developers covering tools, techniques, common issues, and procedures for both local and production environments.
 
 ---
 
@@ -146,7 +146,7 @@ DEBUG=* npm run dev
 
 ### 3.1 Structured Logging
 
-Chioma uses Winston for structured logs. Add contextual logging using the injected logger:
+Arbitra uses Winston for structured logs. Add contextual logging using the injected logger:
 
 ```typescript
 import { Logger } from '@nestjs/common';
@@ -192,7 +192,7 @@ Or use `curl` for scripted testing:
 # Authenticate
 TOKEN=$(curl -s -X POST http://localhost:3000/api/v1/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"admin@chioma.local","password":"your-password"}' \
+  -d '{"email":"admin@huston-housing.local","password":"your-password"}' \
   | jq -r '.accessToken')
 
 # Make authenticated request
@@ -391,13 +391,13 @@ Then attach VS Code to `localhost:9229` locally.
 
 ```bash
 # Get pod name
-kubectl get pods -n chioma
+kubectl get pods -n huston-housing
 
 # Exec into pod
-kubectl exec -it <pod-name> -n chioma -- /bin/sh
+kubectl exec -it <pod-name> -n huston-housing -- /bin/sh
 
 # Port-forward inspector
-kubectl port-forward <pod-name> 9229:9229 -n chioma
+kubectl port-forward <pod-name> 9229:9229 -n huston-housing
 ```
 
 ---
@@ -413,7 +413,7 @@ log_min_duration_statement = 500   # Log queries slower than 500ms
 log_statement = 'all'              # Log all queries (dev only)
 ```
 
-Chioma's backend also logs slow requests above `LOG_SLOW_REQUEST_THRESHOLD` (default 500ms).
+Arbitra's backend also logs slow requests above `LOG_SLOW_REQUEST_THRESHOLD` (default 500ms).
 
 ### 6.2 Analyze a Slow Query
 
@@ -533,7 +533,7 @@ Common causes in NestJS:
 
 ### 8.1 Log Format
 
-Chioma uses Winston with structured JSON logging in production and simple text in development (controlled by `LOG_FORMAT`).
+Arbitra uses Winston with structured JSON logging in production and simple text in development (controlled by `LOG_FORMAT`).
 
 **JSON Log Example:**
 

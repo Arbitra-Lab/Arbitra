@@ -1,4 +1,4 @@
-# Chioma Frontend CI/CD Pipeline Makefile
+# Houston Housing Frontend CI/CD Pipeline Makefile
 # Mirrors the frontend-ci-cd.yml GitHub Actions workflow
 # Use this to run all frontend pipeline checks locally before creating a PR
 
@@ -17,7 +17,7 @@ NC := \033[0m # No Color
 ##@ Help
 
 help:
-	@echo "$(BLUE)Chioma Frontend CI/CD Pipeline$(NC)"
+	@echo "$(BLUE)Houston Housing Frontend CI/CD Pipeline$(NC)"
 	@echo "$(BLUE)================================$(NC)"
 	@echo ""
 	@echo "$(YELLOW)Main Targets (matches frontend-ci-cd.yml):$(NC)"

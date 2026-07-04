@@ -22,7 +22,7 @@ import {
 } from './notifications.types';
 
 const queryKey = ['landlord-notifications'];
-const archivedStorageKey = 'chioma_landlord_archived_notifications';
+const archivedStorageKey = 'arbitra_landlord_archived_notifications';
 const PAGE_SIZE = 6;
 
 type NotificationsListProps = {
@@ -250,7 +250,7 @@ export default function NotificationsList({ userId }: NotificationsListProps) {
               <h2 className="text-xl font-semibold text-white">
                 Notification Inbox
               </h2>
-              <span className="inline-flex rounded-full bg-blue-500/15 px-3 py-1 text-xs font-semibold text-blue-100">
+              <span className="inline-flex rounded-full bg-brand-accent/15 px-3 py-1 text-xs font-semibold text-brand-accent">
                 {unreadCount} unread
               </span>
             </div>
@@ -407,7 +407,7 @@ export default function NotificationsList({ userId }: NotificationsListProps) {
 
           <aside className="rounded-3xl border border-white/10 bg-slate-900/50 p-6 shadow-xl">
             <div className="flex items-center gap-3">
-              <div className="rounded-2xl bg-white/10 p-3 text-blue-200">
+              <div className="rounded-2xl bg-white/10 p-3 text-brand-accent">
                 <SlidersHorizontal className="h-5 w-5" />
               </div>
               <div>
@@ -423,7 +423,7 @@ export default function NotificationsList({ userId }: NotificationsListProps) {
             {selectedNotification ? (
               <div className="mt-6 space-y-4">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="rounded-full bg-blue-500/15 px-3 py-1 text-xs font-semibold text-blue-100">
+                  <span className="rounded-full bg-brand-accent/15 px-3 py-1 text-xs font-semibold text-brand-accent">
                     {NOTIFICATION_TYPE_LABELS[selectedNotification.type]}
                   </span>
                   <span className="rounded-full bg-white/5 px-3 py-1 text-xs font-medium text-slate-300">

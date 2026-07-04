@@ -5,14 +5,14 @@ import { ConfigModule } from '@nestjs/config';
 import { CacheModule } from '@nestjs/cache-manager';
 import { AgreementsModule } from '../src/modules/agreements/agreements.module';
 import { AgreementsService } from '../src/modules/agreements/agreements.service';
-import { ChiomaContractService } from '../src/modules/stellar/services/chioma-contract.service';
+import { Houston HousingContractService } from '../src/modules/stellar/services/huston-housing-contract.service';
 import * as StellarSdk from '@stellar/stellar-sdk';
 import { getTestDatabaseConfig as _getTestDatabaseConfig } from './test-helpers';
 
 describe('Blockchain Integration (e2e)', () => {
   let app: INestApplication | undefined;
   let _agreementsService: AgreementsService;
-  let _chiomaContract: ChiomaContractService;
+  let _huston-housingContract: Houston HousingContractService;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -32,7 +32,7 @@ describe('Blockchain Integration (e2e)', () => {
           port: parseInt(process.env.DB_PORT || '5432'),
           username: process.env.DB_USERNAME || 'postgres',
           password: process.env.DB_PASSWORD || 'password',
-          database: process.env.DB_NAME || 'chioma_test',
+          database: process.env.DB_NAME || 'huston-housing_test',
           entities: [__dirname + '/../src/**/*.entity{.ts,.js}'],
           synchronize: true,
         }),
@@ -45,8 +45,8 @@ describe('Blockchain Integration (e2e)', () => {
 
     _agreementsService =
       moduleFixture.get<AgreementsService>(AgreementsService);
-    _chiomaContract = moduleFixture.get<ChiomaContractService>(
-      ChiomaContractService,
+    _huston-housingContract = moduleFixture.get<Houston HousingContractService>(
+      Houston HousingContractService,
     );
   });
 

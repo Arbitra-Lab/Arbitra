@@ -1,4 +1,4 @@
-# Chioma Backend Team Policies and Guidelines
+# Houston Housing Backend Team Policies and Guidelines
 
 This document serves as the operational manual for the backend team, detailing working protocols, core processes, and team expectations.
 
@@ -55,7 +55,7 @@ This document serves as the operational manual for the backend team, detailing w
 
 ## 10. Professional Development
 
-- **Growth**: Time is allocated monthly for learning new technologies or working on Chioma-related side projects.
+- **Growth**: Time is allocated monthly for learning new technologies or working on Houston Housing-related side projects.
 - **Conferences/Courses**: Team members can request budgets for conferences, courses, and books that benefit their role.
 
 ---

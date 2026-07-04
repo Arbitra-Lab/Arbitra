@@ -27,7 +27,7 @@ echo ""
 # Seed Admin
 echo "Creating Admin user..."
 NODE_ENV=production ts-node src/commands/index.ts admin \
-  --email "admin@chioma.demo" \
+  --email "admin@huston-housing.demo" \
   --password "Admin@Demo2024!" \
   --first-name "System" \
   --last-name "Administrator" \
@@ -38,7 +38,7 @@ echo ""
 # Seed Agent
 echo "Creating Agent user..."
 NODE_ENV=production ts-node src/commands/index.ts agent \
-  --email "agent@chioma.demo" \
+  --email "agent@huston-housing.demo" \
   --password "Agent@Demo2024!" \
   --first-name "Demo" \
   --last-name "Agent" \
@@ -49,7 +49,7 @@ echo ""
 # Seed Landlord
 echo "Creating Landlord user..."
 NODE_ENV=production ts-node src/commands/index.ts landlord \
-  --email "landlord@chioma.demo" \
+  --email "landlord@huston-housing.demo" \
   --password "Landlord@Demo2024!" \
   --first-name "Demo" \
   --last-name "Landlord" \
@@ -60,7 +60,7 @@ echo ""
 # Seed Tenant
 echo "Creating Tenant user..."
 NODE_ENV=production ts-node src/commands/index.ts tenant \
-  --email "tenant@chioma.demo" \
+  --email "tenant@huston-housing.demo" \
   --password "Tenant@Demo2024!" \
   --first-name "Demo" \
   --last-name "Tenant" \
@@ -73,8 +73,8 @@ echo "=========================================="
 echo ""
 echo "Demo Credentials:"
 echo "----------------"
-echo "Admin:    admin@chioma.demo / Admin@Demo2024!"
-echo "Agent:    agent@chioma.demo / Agent@Demo2024!"
-echo "Landlord: landlord@chioma.demo / Landlord@Demo2024!"
-echo "Tenant:   tenant@chioma.demo / Tenant@Demo2024!"
+echo "Admin:    admin@huston-housing.demo / Admin@Demo2024!"
+echo "Agent:    agent@huston-housing.demo / Agent@Demo2024!"
+echo "Landlord: landlord@huston-housing.demo / Landlord@Demo2024!"
+echo "Tenant:   tenant@huston-housing.demo / Tenant@Demo2024!"
 echo ""

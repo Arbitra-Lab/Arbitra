@@ -27,7 +27,7 @@ import type { DisputeStatus } from '@/lib/dashboard-data';
 
 const STATUS_STYLES: Record<DisputeStatus, string> = {
   OPEN: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
-  UNDER_REVIEW: 'bg-sky-500/15 text-sky-300 border-sky-500/30',
+  UNDER_REVIEW: 'bg-brand-accent/15 text-brand-accent border-brand-accent/30',
   RESOLVED: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
   REJECTED: 'bg-red-500/15 text-red-300 border-red-500/30',
   WITHDRAWN: 'bg-slate-500/15 text-slate-300 border-slate-500/30',
@@ -43,7 +43,7 @@ const TIMELINE_DOT: Record<'info' | 'success' | 'warning' | 'neutral', string> =
   {
     success: 'bg-emerald-400',
     warning: 'bg-amber-400',
-    info: 'bg-sky-400',
+    info: 'bg-brand-accent',
     neutral: 'bg-slate-500',
   };
 
@@ -137,17 +137,17 @@ export function DisputeDetail({
                 {dispute.priority} priority
               </span>
             </div>
-            <p className="text-blue-200/70 text-sm">
+            <p className="text-neutral-200/70 text-sm">
               {typeLabel(dispute.disputeType)} · {dispute.agreementReference} ·{' '}
               {dispute.propertyName}
             </p>
           </div>
         </div>
         <a
-          href="https://t.me/chiomagroup"
+          href="https://t.me/huston-housinggroup"
           target="_blank"
           rel="noopener noreferrer"
-          className="text-sm text-sky-300/90 hover:text-sky-200 underline underline-offset-4 shrink-0"
+          className="text-sm text-brand-accent/90 hover:text-brand-accent underline underline-offset-4 shrink-0"
         >
           Community: Telegram support
         </a>
@@ -195,7 +195,7 @@ export function DisputeDetail({
 
           <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
             <div className="flex items-center gap-2 text-white font-semibold">
-              <Building2 className="text-blue-400" size={20} />
+              <Building2 className="text-brand-accent" size={20} />
               Parties
             </div>
             <div className="rounded-2xl bg-white/5 border border-white/10 p-4 space-y-3">
@@ -286,7 +286,7 @@ export function DisputeDetail({
                         href={ev.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-block text-xs font-semibold text-sky-400 hover:text-sky-300"
+                        className="inline-block text-xs font-semibold text-brand-accent hover:text-brand-accent/80"
                       >
                         Open file
                       </a>
@@ -299,7 +299,7 @@ export function DisputeDetail({
 
           <section className="bg-slate-900/80 border border-slate-800 rounded-3xl p-6 shadow-xl">
             <div className="flex items-center gap-2 mb-6 text-white font-semibold">
-              <Clock className="text-sky-400" size={20} />
+              <Clock className="text-brand-accent" size={20} />
               Timeline
             </div>
             <ol className="relative border-l border-slate-700 ml-3 space-y-6 pl-8">
@@ -364,9 +364,9 @@ export function DisputeDetail({
           )}
 
           {canResolve && onSubmitResolution && (
-            <section className="bg-gradient-to-br from-slate-900 to-blue-950/40 border border-sky-500/20 rounded-3xl p-6 shadow-xl">
+            <section className="bg-gradient-to-br from-slate-900 to-brand-blue-dark/40 border border-brand-accent/20 rounded-3xl p-6 shadow-xl">
               <div className="flex items-center gap-2 mb-4 text-white font-semibold">
-                <MessageSquare className="text-sky-400" size={20} />
+                <MessageSquare className="text-brand-accent" size={20} />
                 Record decision
               </div>
               <p className="text-sm text-slate-400 mb-4">
@@ -379,7 +379,7 @@ export function DisputeDetail({
                 rows={5}
                 maxLength={2000}
                 placeholder="Resolution notes (required)…"
-                className="w-full px-4 py-3 bg-slate-950/60 border border-white/10 rounded-xl text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-sky-500/50 resize-none text-sm"
+                className="w-full px-4 py-3 bg-slate-950/60 border border-white/10 rounded-xl text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-brand-accent/50 resize-none text-sm"
               />
               <div className="flex justify-between items-center mt-2 mb-4">
                 <span className="text-xs text-slate-500">

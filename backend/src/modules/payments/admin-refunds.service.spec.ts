@@ -44,7 +44,7 @@ function makePayment(overrides: Partial<Payment> = {}): Payment {
 function makeUser(overrides: Partial<User> = {}): User {
   return {
     id: 'user-1',
-    email: 'tenant@chioma.local',
+    email: 'tenant@huston-housing.local',
     firstName: 'Jane',
     lastName: 'Doe',
     ...overrides,
@@ -102,7 +102,7 @@ describe('AdminRefundsService', () => {
 
       expect(result).toHaveLength(1);
       expect(result[0].id).toBe('pay-1');
-      expect(result[0].requesterEmail).toBe('tenant@chioma.local');
+      expect(result[0].requesterEmail).toBe('tenant@huston-housing.local');
     });
 
     it('returns empty array when no refunds exist', async () => {
@@ -133,7 +133,7 @@ describe('AdminRefundsService', () => {
       const result = await service.listRefunds();
 
       expect(result[0].requesterName).toBe('Unknown User');
-      expect(result[0].requesterEmail).toBe('unknown@chioma.local');
+      expect(result[0].requesterEmail).toBe('unknown@huston-housing.local');
     });
 
     it('maps refundStatus to correct AdminRefundStatus', async () => {

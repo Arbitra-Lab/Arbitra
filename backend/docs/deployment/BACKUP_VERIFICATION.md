@@ -13,13 +13,13 @@ Automated verification for PostgreSQL backups used in production readiness (#994
 
 ### Metadata-only checks
 
-- Latest `backup_*.sql.gz` exists under `BACKUP_DIR` (default `/var/backups/chioma`)
+- Latest `backup_*.sql.gz` exists under `BACKUP_DIR` (default `/var/backups/huston-housing`)
 - File is readable and passes `gunzip -t`
 - File size is at least 1 KB
 
 ### Full verification
 
-1. Creates temporary database `chioma_verify_<timestamp>`
+1. Creates temporary database `huston-housing_verify_<timestamp>`
 2. Restores the latest gzip SQL dump
 3. Queries `SELECT COUNT(*) FROM "user"`
 4. Drops the temporary database on exit
@@ -28,7 +28,7 @@ Automated verification for PostgreSQL backups used in production readiness (#994
 
 | Variable                      | Default               | Description                       |
 | ----------------------------- | --------------------- | --------------------------------- |
-| `BACKUP_DIR`                  | `/var/backups/chioma` | Directory containing backup files |
+| `BACKUP_DIR`                  | `/var/backups/huston-housing` | Directory containing backup files |
 | `BACKUP_VERIFY_METADATA_ONLY` | `false`               | Skip restore when `true`          |
 | `DB_HOST`                     | `localhost`           | PostgreSQL host                   |
 | `DB_PORT`                     | `5432`                | PostgreSQL port                   |

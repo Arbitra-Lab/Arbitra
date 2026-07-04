@@ -30,7 +30,7 @@ export function ProgressBar({
         className={`h-2 w-full overflow-hidden rounded-full bg-neutral-200 ${className}`}
       >
         <div
-          className={`h-full w-full animate-pulse rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 ${barClassName}`}
+          className={`h-full w-full animate-pulse rounded-full bg-gradient-to-r from-brand-blue to-brand-blue-dark ${barClassName}`}
         />
       </div>
     );
@@ -46,7 +46,7 @@ export function ProgressBar({
       className={`h-2 w-full overflow-hidden rounded-full bg-neutral-200 ${className}`}
     >
       <div
-        className={`h-full rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 transition-[width] duration-300 ease-out ${barClassName}`}
+        className={`h-full rounded-full bg-gradient-to-r from-brand-blue to-brand-blue-dark transition-[width] duration-300 ease-out ${barClassName}`}
         style={{ width: `${clamped}%` }}
       />
     </div>

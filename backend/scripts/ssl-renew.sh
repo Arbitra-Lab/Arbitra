@@ -6,7 +6,7 @@
 
 set -euo pipefail
 
-DOMAIN="${DOMAIN:-api.chioma.app}"
+DOMAIN="${DOMAIN:-api.huston-housing.app}"
 CERT_DIR="/etc/letsencrypt/live/${DOMAIN}"
 FORCE="${1:-}"
 
@@ -60,15 +60,15 @@ certbot renew ${RENEW_FLAGS} --quiet --cert-name "${DOMAIN}"
 
 # Copy renewed certs to nginx paths
 log_info "Updating nginx certificate files..."
-cp "${CERT_DIR}/fullchain.pem" /etc/ssl/certs/chioma.crt
-cp "${CERT_DIR}/privkey.pem"   /etc/ssl/private/chioma.key
-chmod 644 /etc/ssl/certs/chioma.crt
-chmod 600 /etc/ssl/private/chioma.key
+cp "${CERT_DIR}/fullchain.pem" /etc/ssl/certs/huston-housing.crt
+cp "${CERT_DIR}/privkey.pem"   /etc/ssl/private/huston-housing.key
+chmod 644 /etc/ssl/certs/huston-housing.crt
+chmod 600 /etc/ssl/private/huston-housing.key
 
 # Reload nginx (works both bare-metal and Docker)
-if docker ps --format '{{.Names}}' 2>/dev/null | grep -q "chioma-nginx"; then
+if docker ps --format '{{.Names}}' 2>/dev/null | grep -q "huston-housing-nginx"; then
   log_info "Reloading nginx in Docker container..."
-  docker exec chioma-nginx nginx -s reload
+  docker exec huston-housing-nginx nginx -s reload
 elif command -v nginx &>/dev/null; then
   log_info "Reloading nginx..."
   nginx -s reload

@@ -4,15 +4,15 @@
 
 ### High-Level Design
 
-The Chioma smart contract system is built on Soroban (Stellar's smart contract platform) and implements a modular architecture with 8 specialized contracts that work together to enable secure rental agreements, payments, and dispute resolution on the blockchain.
+The Houston Housing smart contract system is built on Soroban (Stellar's smart contract platform) and implements a modular architecture with 8 specialized contracts that work together to enable secure rental agreements, payments, and dispute resolution on the blockchain.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    Chioma Smart Contracts                    │
+│                    Houston Housing Smart Contracts                    │
 ├─────────────────────────────────────────────────────────────┤
 │                                                               │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐       │
-│  │   Chioma     │  │   Payment    │  │   Escrow     │       │
+│  │   Houston Housing     │  │   Payment    │  │   Escrow     │       │
 │  │   (Main)     │  │              │  │              │       │
 │  └──────────────┘  └──────────────┘  └──────────────┘       │
 │         │                 │                  │               │
@@ -31,7 +31,7 @@ The Chioma smart contract system is built on Soroban (Stellar's smart contract p
 
 ### Contract Modules
 
-#### 1. Chioma (Main Contract)
+#### 1. Houston Housing (Main Contract)
 
 **Purpose**: Central contract managing system state and emergency controls
 
@@ -961,8 +961,8 @@ pub fn get_payment_status(env: Env, payment_id: String) -> Result<PaymentStatus,
 1. Check contract logs
 2. Review this documentation
 3. Check recent contract deployments
-4. Contact blockchain team: blockchain@chioma.io
+4. Contact blockchain team: blockchain@huston-housing.io
 5. Escalate to platform lead if critical
 
-**Blockchain Team Contact**: blockchain@chioma.io
+**Blockchain Team Contact**: blockchain@huston-housing.io
 **Emergency Hotline**: [contact info]

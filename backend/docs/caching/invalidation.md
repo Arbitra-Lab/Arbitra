@@ -1,6 +1,6 @@
 # Cache Invalidation Patterns
 
-This guide documents the invalidation patterns used in Chioma backend services.
+This guide documents the invalidation patterns used in Houston Housing backend services.
 
 ## 1) Time-based Expiration
 

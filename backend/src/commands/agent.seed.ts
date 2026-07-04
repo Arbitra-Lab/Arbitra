@@ -148,7 +148,7 @@ function getSeedConfig(options: SeedAgentOptions): SeedAgentConfig {
     email: (
       options.email ??
       process.env.AGENT_DEFAULT_EMAIL ??
-      'agent@chioma.local'
+      'agent@huston-housing.local'
     )
       .trim()
       .toLowerCase(),

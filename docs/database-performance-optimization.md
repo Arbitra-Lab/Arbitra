@@ -1,6 +1,6 @@
 # Database Performance Optimization
 
-Indexing strategies, query optimization, execution plan analysis, caching, connection pooling, monitoring, benchmarking, and troubleshooting for Chioma's PostgreSQL database.
+Indexing strategies, query optimization, execution plan analysis, caching, connection pooling, monitoring, benchmarking, and troubleshooting for Arbitra's PostgreSQL database.
 
 ---
 
@@ -49,7 +49,7 @@ Do **not** add an index when:
 | Composite | Multiple column filters | `WHERE city = 'Lagos' AND status = 'published'` |
 | Expression | Computed values | `LOWER(email)` for case-insensitive lookup |
 
-### 1.3 Key Indexes in Chioma
+### 1.3 Key Indexes in Arbitra
 
 ```sql
 -- Properties: most common listing query
@@ -270,7 +270,7 @@ open report.html
 
 ### 4.1 Application-Level Caching (Redis)
 
-Chioma uses Redis (or Upstash) via `NestJS CacheManager`. Cache queries that are:
+Arbitra uses Redis (or Upstash) via `NestJS CacheManager`. Cache queries that are:
 
 - Expensive to compute
 - Read frequently
@@ -378,7 +378,7 @@ For applications with many short-lived connections (serverless, many pods), add 
 ```ini
 # pgbouncer.ini
 [databases]
-chioma = host=postgres port=5432 dbname=chioma_db
+huston-housing = host=postgres port=5432 dbname=huston-housing_db
 
 [pgbouncer]
 pool_mode = transaction
@@ -478,13 +478,13 @@ Target: index hit rate > 95% for frequently queried tables.
 
 ```bash
 # Initialize with scale factor 10 (~1.4M rows)
-pgbench -i -s 10 chioma_db
+pgbench -i -s 10 huston-housing_db
 
 # Run 60-second benchmark with 10 concurrent clients
-pgbench -c 10 -T 60 chioma_db
+pgbench -c 10 -T 60 huston-housing_db
 
 # Custom query benchmark
-pgbench -c 10 -T 60 -f benchmark.sql chioma_db
+pgbench -c 10 -T 60 -f benchmark.sql huston-housing_db
 ```
 
 **benchmark.sql example:**

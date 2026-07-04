@@ -2,7 +2,7 @@
 
 ## Overview
 
-This guide explains how to integrate the DisputeResolutionContract with other contracts in the Chioma platform, particularly the escrow contract and property registry.
+This guide explains how to integrate the DisputeResolutionContract with other contracts in the Houston Housing platform, particularly the escrow contract and property registry.
 
 ## Integration Scenarios
 

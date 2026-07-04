@@ -43,7 +43,7 @@ export function OfflineIndicator() {
               {isOnline ? 'Online' : 'Offline Mode'}
             </div>
             {queueSize > 0 && (
-              <div className="text-xs text-blue-200/60">
+              <div className="text-xs text-neutral-200/60">
                 {queueSize} pending {queueSize === 1 ? 'action' : 'actions'}
               </div>
             )}
@@ -58,7 +58,7 @@ export function OfflineIndicator() {
             <div className="space-y-2 text-sm">
               {queueSize > 0 && (
                 <div className="flex items-center justify-between">
-                  <span className="text-blue-200/60">Sync queue:</span>
+                  <span className="text-neutral-200/60">Sync queue:</span>
                   <span className="font-medium text-white">{queueSize}</span>
                 </div>
               )}
@@ -71,7 +71,7 @@ export function OfflineIndicator() {
               )}
 
               {lastSyncResult && (
-                <div className="text-xs text-blue-200/40">
+                <div className="text-xs text-neutral-200/40">
                   Last sync: {lastSyncResult.processed} processed,{' '}
                   {lastSyncResult.failed} failed
                 </div>
@@ -81,7 +81,7 @@ export function OfflineIndicator() {
                 <button
                   onClick={() => sync()}
                   disabled={isSyncing}
-                  className="mt-2 flex w-full items-center justify-center gap-2 rounded-md bg-gradient-to-r from-blue-500 to-indigo-600 px-3 py-2 text-white hover:from-blue-600 hover:to-indigo-700 disabled:opacity-50 transition-all"
+                  className="mt-2 flex w-full items-center justify-center gap-2 rounded-md bg-gradient-to-r from-brand-blue to-brand-blue-dark px-3 py-2 text-white hover:from-brand-blue-dark hover:to-brand-blue-dark disabled:opacity-50 transition-all"
                 >
                   <FiRefreshCw
                     className={`h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`}

@@ -1,6 +1,6 @@
 # Deployment Runbook
 
-**Project:** Chioma Platform  
+**Project:** Houston Housing Platform  
 **Version:** 1.0  
 **Last Updated:** April 2026  
 **Owner:** DevOps / On-Call Engineer  
@@ -10,7 +10,7 @@
 
 ## Purpose
 
-This runbook provides step-by-step operational procedures for deploying the Chioma backend to staging and production environments. Use this when performing a deployment — not as a reference document.
+This runbook provides step-by-step operational procedures for deploying the Houston Housing backend to staging and production environments. Use this when performing a deployment — not as a reference document.
 
 For detailed reference, see [DEPLOYMENT.md](../DEPLOYMENT.md).  
 For the pre-flight checklist, see [DEPLOYMENT_CHECKLIST.md](../DEPLOYMENT_CHECKLIST.md).
@@ -27,7 +27,7 @@ docker compose -f backend/docker-compose.yml up -d
 cd backend && pnpm install && pnpm run migration:run && pnpm run start:dev
 
 # Build production image
-docker build -f backend/Dockerfile.production -t ghcr.io/<org>/chioma/backend:<sha> backend
+docker build -f backend/Dockerfile.production -t ghcr.io/<org>/huston-housing/backend:<sha> backend
 
 # Run migrations
 cd backend && pnpm run migration:run:safe
@@ -63,7 +63,7 @@ echo "Target: staging"
 echo "Branch: develop"
 
 # 2. Verify CI is green
-# Check: https://github.com/<org>/chioma/actions
+# Check: https://github.com/<org>/huston-housing/actions
 
 # 3. Review pending migrations
 cd backend
@@ -73,8 +73,8 @@ pnpm run migration:show
 # Check GitHub Secrets for: DATABASE_URL, REDIS_URL, JWT_SECRET, STELLAR_NETWORK, etc.
 
 # 5. Confirm monitoring dashboards are accessible
-# Grafana: https://grafana.staging.chioma.io
-# Sentry: https://sentry.io/organizations/chioma
+# Grafana: https://grafana.staging.huston-housing.io
+# Sentry: https://sentry.io/organizations/huston-housing
 ```
 
 ### Step 2: Build and Push Image (if not done by CI)
@@ -87,12 +87,12 @@ git push origin develop
 COMMIT_SHA=$(git rev-parse --short HEAD)
 docker build \
   -f backend/Dockerfile.production \
-  -t ghcr.io/<org>/chioma/backend:develop-${COMMIT_SHA} \
-  -t ghcr.io/<org>/chioma/backend:staging-latest \
+  -t ghcr.io/<org>/huston-housing/backend:develop-${COMMIT_SHA} \
+  -t ghcr.io/<org>/huston-housing/backend:staging-latest \
   backend/
 
-docker push ghcr.io/<org>/chioma/backend:develop-${COMMIT_SHA}
-docker push ghcr.io/<org>/chioma/backend:staging-latest
+docker push ghcr.io/<org>/huston-housing/backend:develop-${COMMIT_SHA}
+docker push ghcr.io/<org>/huston-housing/backend:staging-latest
 ```
 
 ### Step 3: Run Migrations
@@ -113,13 +113,13 @@ pnpm run migration:show
 
 ```bash
 # Option A: Docker Compose
-DOCKER_IMAGE=ghcr.io/<org>/chioma/backend:staging-latest \
+DOCKER_IMAGE=ghcr.io/<org>/huston-housing/backend:staging-latest \
 docker compose -f docker-compose.production.yml up -d
 
 # Option B: Kubernetes
-kubectl set image deployment/chioma-backend \
-  chioma-backend=ghcr.io/<org>/chioma/backend:staging-latest
-kubectl rollout status deployment/chioma-backend
+kubectl set image deployment/huston-housing-backend \
+  huston-housing-backend=ghcr.io/<org>/huston-housing/backend:staging-latest
+kubectl rollout status deployment/huston-housing-backend
 ```
 
 ### Step 5: Post-Deploy Verification
@@ -138,7 +138,7 @@ curl -f http://localhost:5000/api/docs
 bash scripts/smoke-tests.sh
 
 # 5. Check logs for errors
-docker logs chioma-backend-staging --tail 50 | grep ERROR
+docker logs huston-housing-backend-staging --tail 50 | grep ERROR
 
 # 6. Monitor for 15 minutes
 # Watch Grafana dashboard for:
@@ -176,7 +176,7 @@ bash scripts/backup-db.sh
 bash scripts/verify-backup.sh
 
 # 6. Confirm CI is green on main branch
-# Check: https://github.com/<org>/chioma/actions
+# Check: https://github.com/<org>/huston-housing/actions
 ```
 
 ### Step 2: Promote Image and Deploy
@@ -186,24 +186,24 @@ bash scripts/verify-backup.sh
 echo "Production deployment started at $(date)"
 
 # 2. Tag the staging image for production
-docker tag ghcr.io/<org>/chioma/backend:staging-latest \
-  ghcr.io/<org>/chioma/backend:production-$(git rev-parse --short HEAD)
-docker tag ghcr.io/<org>/chioma/backend:staging-latest \
-  ghcr.io/<org>/chioma/backend:production-latest
+docker tag ghcr.io/<org>/huston-housing/backend:staging-latest \
+  ghcr.io/<org>/huston-housing/backend:production-$(git rev-parse --short HEAD)
+docker tag ghcr.io/<org>/huston-housing/backend:staging-latest \
+  ghcr.io/<org>/huston-housing/backend:production-latest
 
-docker push ghcr.io/<org>/chioma/backend:production-$(git rev-parse --short HEAD)
-docker push ghcr.io/<org>/chioma/backend:production-latest
+docker push ghcr.io/<org>/huston-housing/backend:production-$(git rev-parse --short HEAD)
+docker push ghcr.io/<org>/huston-housing/backend:production-latest
 
 # 3. Run database migrations (with rollback prepared)
 cd backend
 pnpm run migration:run:safe
 
 # 4. Deploy application
-DOCKER_IMAGE=ghcr.io/<org>/chioma/backend:production-latest \
+DOCKER_IMAGE=ghcr.io/<org>/huston-housing/backend:production-latest \
 docker compose -f docker-compose.production.yml up -d
 
 # Or using blue-green:
-# docker compose -f docker-compose.production.yml -p chioma-green up -d
+# docker compose -f docker-compose.production.yml -p huston-housing-green up -d
 ```
 
 ### Step 3: Verify Deployment
@@ -211,7 +211,7 @@ docker compose -f docker-compose.production.yml up -d
 ```bash
 # 1. Wait for health checks
 for i in $(seq 1 12); do
-  STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://api.chioma.io/health)
+  STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://api.huston-housing.io/health)
   if [ "$STATUS" = "200" ]; then
     echo "Health check passed"
     break
@@ -224,18 +224,18 @@ done
 bash scripts/smoke-tests.sh production
 
 # 3. Check Sentry for new errors
-# Visit: https://sentry.io/organizations/chioma
+# Visit: https://sentry.io/organizations/huston-housing
 
 # 4. Verify database connectivity
-curl -s https://api.chioma.io/health/detailed | jq '.database'
+curl -s https://api.huston-housing.io/health/detailed | jq '.database'
 
 # 5. Verify Redis connectivity
-curl -s https://api.chioma.io/health/detailed | jq '.redis'
+curl -s https://api.huston-housing.io/health/detailed | jq '.redis'
 
 # 6. Test authentication flow
-curl -s -X POST https://api.chioma.io/auth/login \
+curl -s -X POST https://api.huston-housing.io/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"test@chioma.io","password":"***"}' | jq '.'
+  -d '{"email":"test@huston-housing.io","password":"***"}' | jq '.'
 ```
 
 ### Step 4: Monitor
@@ -249,7 +249,7 @@ curl -s -X POST https://api.chioma.io/auth/login \
 #   - Queue backlog: should be draining
 
 # Watch logs
-docker logs chioma-backend-production --tail 100 -f
+docker logs huston-housing-backend-production --tail 100 -f
 ```
 
 ### Step 5: Announce
@@ -259,7 +259,7 @@ docker logs chioma-backend-production --tail 100 -f
 
 Deployed at: $(date)
 Duration: X minutes
-Image: ghcr.io/<org>/chioma/backend:production-<SHA>
+Image: ghcr.io/<org>/huston-housing/backend:production-<SHA>
 
 Verification:
 - Health check: ✅
@@ -278,14 +278,14 @@ Monitoring window: Next 30 minutes
 
 ```bash
 # Revert to previous image
-DOCKER_IMAGE=ghcr.io/<org>/chioma/backend:<previous-tag> \
+DOCKER_IMAGE=ghcr.io/<org>/huston-housing/backend:<previous-tag> \
 docker compose -f docker-compose.production.yml up -d
 
 # Or via Kubernetes:
-kubectl rollout undo deployment/chioma-backend
+kubectl rollout undo deployment/huston-housing-backend
 
 # Verify rollback
-curl -f https://api.chioma.io/health
+curl -f https://api.huston-housing.io/health
 bash scripts/smoke-tests.sh
 ```
 
@@ -309,13 +309,13 @@ bash scripts/db-restore.sh /path/to/latest/backup.sql.gz
 
 ```bash
 # 1. Revert application
-kubectl rollout undo deployment/chioma-backend
+kubectl rollout undo deployment/huston-housing-backend
 
 # 2. Revert database
 pnpm run migration:revert:safe
 
 # 3. Verify system health
-curl -f https://api.chioma.io/health
+curl -f https://api.huston-housing.io/health
 
 # 4. Announce rollback
 echo "Rollback to <previous-version> complete. Reason: <reason>"
@@ -329,16 +329,16 @@ echo "Rollback to <previous-version> complete. Reason: <reason>"
 
 ```bash
 # Check logs
-docker logs chioma-backend --tail 50
+docker logs huston-housing-backend --tail 50
 
 # Verify environment variables
-docker inspect chioma-backend | jq '.[0].Config.Env'
+docker inspect huston-housing-backend | jq '.[0].Config.Env'
 
 # Check for missing secrets
 # Compare with .env.example
 
 # Verify database connectivity from within container
-docker exec chioma-backend nc -zv $DB_HOST $DB_PORT
+docker exec huston-housing-backend nc -zv $DB_HOST $DB_PORT
 ```
 
 ### "Health check fails"
@@ -348,10 +348,10 @@ docker exec chioma-backend nc -zv $DB_HOST $DB_PORT
 curl -s http://localhost:5000/health/detailed | jq '.'
 
 # Check database
-docker exec chioma-backend npx typeorm query "SELECT 1"
+docker exec huston-housing-backend npx typeorm query "SELECT 1"
 
 # Check Redis
-docker exec chioma-backend redis-cli ping
+docker exec huston-housing-backend redis-cli ping
 
 # Check disk space
 df -h
@@ -368,23 +368,23 @@ cd backend
 pnpm run migration:show
 
 # Check database logs
-docker logs chioma-db --tail 50 | grep ERROR
+docker logs huston-housing-db --tail 50 | grep ERROR
 
 # Check for active locks
-docker exec chioma-db psql -U chioma -c "SELECT * FROM pg_locks WHERE NOT granted;"
+docker exec huston-housing-db psql -U huston-housing -c "SELECT * FROM pg_locks WHERE NOT granted;"
 
 # Kill blocking queries if needed
-# docker exec chioma-db psql -U chioma -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE state = 'idle in transaction';"
+# docker exec huston-housing-db psql -U huston-housing -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE state = 'idle in transaction';"
 ```
 
 ### "High error rate after deploy"
 
 ```bash
 # Check Sentry for error grouping
-# https://sentry.io/organizations/chioma
+# https://sentry.io/organizations/huston-housing
 
 # Check recent logs
-docker logs chioma-backend --tail 200 | grep ERROR
+docker logs huston-housing-backend --tail 200 | grep ERROR
 
 # Check if a specific endpoint is failing
 # Query Prometheus: rate(http_requests_total{status=~"5.."}[5m])

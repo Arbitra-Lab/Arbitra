@@ -1,6 +1,6 @@
 # Incident Response Procedures
 
-**Project:** Chioma Platform
+**Project:** Houston Housing Platform
 **Version:** 1.0
 **Last Updated:** April 2026
 **Owner:** Platform Engineering
@@ -27,7 +27,7 @@
 
 ## Overview
 
-This document defines the end-to-end incident response procedures for the Chioma platform. It covers how incidents are classified, detected, escalated, communicated, tracked, resolved, and reviewed — plus runbooks for common incidents and strategies for prevention.
+This document defines the end-to-end incident response procedures for the Houston Housing platform. It covers how incidents are classified, detected, escalated, communicated, tracked, resolved, and reviewed — plus runbooks for common incidents and strategies for prevention.
 
 **Related documentation:**
 
@@ -94,7 +94,7 @@ Is the platform completely unreachable OR is data at risk?
 
 ### Automated Detection
 
-The Chioma platform uses automated monitoring to detect incidents before users report them.
+The Houston Housing platform uses automated monitoring to detect incidents before users report them.
 
 | Source                | What It Detects                        | Tool                           |
 | --------------------- | -------------------------------------- | ------------------------------ |
@@ -122,7 +122,7 @@ Incidents may also be reported through:
 
 | Channel                    | Audience         | Target Response     |
 | -------------------------- | ---------------- | ------------------- |
-| Email (support@chioma.dev) | External users   | 4 hours (per SLA)   |
+| Email (support@huston-housing.dev) | External users   | 4 hours (per SLA)   |
 | Discord (#support)         | Community users  | 4 hours             |
 | Slack (#backend-support)   | Internal team    | 2 hours             |
 | Slack (#frontend-support)  | Internal team    | 2 hours             |
@@ -227,8 +227,8 @@ For incidents involving third-party dependencies:
 
 | Channel                         | Purpose                                  | Audience        |
 | ------------------------------- | ---------------------------------------- | --------------- |
-| Status page (status.chioma.dev) | Service availability updates             | All users       |
-| Email (noreply@chioma.dev)      | Incident notifications to affected users | Affected users  |
+| Status page (status.huston-housing.dev) | Service availability updates             | All users       |
+| Email (noreply@huston-housing.dev)      | Incident notifications to affected users | Affected users  |
 | Discord (#announcements)        | Community updates                        | Community users |
 | Social media                    | Public-facing updates for major outages  | Public          |
 
@@ -352,8 +352,8 @@ These actions can be taken immediately by the on-call engineer without further a
 
 | Action                         | When to Use                                      | How                                                                                             |
 | ------------------------------ | ------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
-| **Rollback deployment**        | Recent deploy caused the incident                | `kubectl rollout undo deployment/chioma-backend` or redeploy previous image                     |
-| **Scale up instances**         | Traffic spike or resource exhaustion             | `kubectl scale deployment chioma-backend --replicas=N`                                          |
+| **Rollback deployment**        | Recent deploy caused the incident                | `kubectl rollout undo deployment/huston-housing-backend` or redeploy previous image                     |
+| **Scale up instances**         | Traffic spike or resource exhaustion             | `kubectl scale deployment huston-housing-backend --replicas=N`                                          |
 | **Enable maintenance mode**    | Need to block traffic to prevent data corruption | Set `MAINTENANCE_MODE=true` env var; nginx returns 503                                          |
 | **Kill stuck processes**       | Process consuming excessive resources            | `kubectl delete pod <pod-name>` (pod will restart)                                              |
 | **Rotate compromised secrets** | Credential leak confirmed                        | See [Security Incident Runbook](#runbook-security-incident)                                     |
@@ -369,7 +369,7 @@ Every incident receives a unique identifier: `INC-YYYY-NNN` (e.g., `INC-2026-001
 
 ### Incident Record
 
-All incidents are tracked in the Chioma incident tracker. Each record must contain:
+All incidents are tracked in the Houston Housing incident tracker. Each record must contain:
 
 | Field                    | Description                                                        | Example                                |
 | ------------------------ | ------------------------------------------------------------------ | -------------------------------------- |
@@ -396,7 +396,7 @@ All incidents are tracked in the Chioma incident tracker. Each record must conta
 During an active incident, the scribe maintains a real-time timeline:
 
 ```
-10:30:00 — Alert fired: HighErrorRate on chioma-backend
+10:30:00 — Alert fired: HighErrorRate on huston-housing-backend
 10:30:15 — @on-call acknowledged
 10:32:00 — SEV2 declared; incident commander: @jane-doe
 10:33:00 — Status page updated: Investigating
@@ -587,13 +587,13 @@ If the resolution involved a rollback:
 
 ```bash
 # 1. Check if the service process is running
-kubectl get pods -l app=chioma-backend
+kubectl get pods -l app=huston-housing-backend
 
 # 2. Check pod logs for crash reasons
-kubectl logs -l app=chioma-backend --tail=100
+kubectl logs -l app=huston-housing-backend --tail=100
 
 # 3. Check recent deployments
-kubectl rollout history deployment/chioma-backend
+kubectl rollout history deployment/huston-housing-backend
 
 # 4. Verify database connectivity
 kubectl exec -it <pod-name> -- nc -zv <db-host> 5432
@@ -603,19 +603,19 @@ kubectl exec -it <pod-name> -- nc -zv <redis-host> 6379
 
 # 6. Check node resources
 kubectl top nodes
-kubectl top pods -l app=chioma-backend
+kubectl top pods -l app=huston-housing-backend
 ```
 
 #### Mitigation
 
 1. If a recent deployment caused the crash:
    ```bash
-   kubectl rollout undo deployment/chioma-backend
-   kubectl rollout status deployment/chioma-backend
+   kubectl rollout undo deployment/huston-housing-backend
+   kubectl rollout status deployment/huston-housing-backend
    ```
 2. If OOMKilled, increase memory limits:
    ```bash
-   kubectl set resources deployment/chioma-backend -c=app \
+   kubectl set resources deployment/huston-housing-backend -c=app \
      --limits=memory=1Gi
    ```
 3. If CrashLoopBackOff, check logs for the crash reason and apply targeted fix
@@ -636,16 +636,16 @@ kubectl top pods -l app=chioma-backend
 # Grafana: filter http_requests_total by status=~"5.."
 
 # 2. Check error logs in Loki
-# LogQL: {service="chioma-backend"} | json | level="error" | __error__=""
+# LogQL: {service="huston-housing-backend"} | json | level="error" | __error__=""
 
 # 3. Check Sentry for new error groups
-# https://sentry.io/organizations/chioma/issues/
+# https://sentry.io/organizations/huston-housing/issues/
 
 # 4. Check if a specific endpoint is causing the spike
 # Look at error breakdown by route in Grafana
 
 # 5. Check for recent deployments
-kubectl rollout history deployment/chioma-backend
+kubectl rollout history deployment/huston-housing-backend
 ```
 
 #### Mitigation
@@ -654,7 +654,7 @@ kubectl rollout history deployment/chioma-backend
 2. If a specific endpoint, consider disabling it temporarily:
    ```bash
    # Set feature flag or env var to disable the problematic endpoint
-   kubectl set env deployment/chioma-backend DISABLE_ENDPOINT_<NAME>=true
+   kubectl set env deployment/huston-housing-backend DISABLE_ENDPOINT_<NAME>=true
    ```
 3. If database-related, check [Database Connection Pool runbook](#runbook-database-connection-pool-exhaustion)
 4. If third-party API, check [Dependency Failure runbook](#runbook-dependency-failure)
@@ -680,7 +680,7 @@ kubectl rollout history deployment/chioma-backend
 # Grafana: redis_cache_hits_total / (redis_cache_hits_total + redis_cache_misses_total)
 
 # 4. Check CPU and memory usage
-kubectl top pods -l app=chioma-backend
+kubectl top pods -l app=huston-housing-backend
 
 # 5. Check for slow queries in PostgreSQL
 # psql: SELECT query, mean_exec_time, calls FROM pg_stat_statements ORDER BY mean_exec_time DESC LIMIT 10;
@@ -695,11 +695,11 @@ kubectl top pods -l app=chioma-backend
 2. If slow database queries, add missing indexes or optimize query
 3. If high CPU, scale up:
    ```bash
-   kubectl scale deployment chioma-backend --replicas=4
+   kubectl scale deployment huston-housing-backend --replicas=4
    ```
 4. If queue backlog, add more workers:
    ```bash
-   kubectl scale deployment chioma-workers --replicas=3
+   kubectl scale deployment huston-housing-workers --replicas=3
    ```
 
 ---
@@ -724,7 +724,7 @@ kubectl top pods -l app=chioma-backend
 # Look at TypeORM connection config: max pool size, idle timeout
 
 # 4. Check for connection leaks in application logs
-# LogQL: {service="chioma-backend"} | json | level="warn" | "connection"
+# LogQL: {service="huston-housing-backend"} | json | level="warn" | "connection"
 ```
 
 #### Mitigation
@@ -736,11 +736,11 @@ kubectl top pods -l app=chioma-backend
    ```
 2. Restart the application to reset connection pool:
    ```bash
-   kubectl rollout restart deployment/chioma-backend
+   kubectl rollout restart deployment/huston-housing-backend
    ```
 3. Increase pool size if needed (temporary):
    ```bash
-   kubectl set env deployment/chioma-backend DB_POOL_SIZE=20
+   kubectl set env deployment/huston-housing-backend DB_POOL_SIZE=20
    ```
 4. Identify and fix the root cause (missing transaction cleanup, unclosed connections)
 
@@ -755,14 +755,14 @@ kubectl top pods -l app=chioma-backend
 
 ```bash
 # 1. Check deployment history
-kubectl rollout history deployment/chioma-backend
+kubectl rollout history deployment/huston-housing-backend
 
 # 2. Rollback to previous revision
-kubectl rollout undo deployment/chioma-backend
+kubectl rollout undo deployment/huston-housing-backend
 
 # 3. Verify rollback
-kubectl rollout status deployment/chioma-backend
-kubectl get pods -l app=chioma-backend
+kubectl rollout status deployment/huston-housing-backend
+kubectl get pods -l app=huston-housing-backend
 
 # 4. Check health endpoint
 curl -f http://localhost:5000/api/health
@@ -778,7 +778,7 @@ curl -f http://localhost:5000/api/health
 vercel rollback --token=$VERCEL_TOKEN
 
 # Or: redeploy previous image
-kubectl rollout undo deployment/chioma-frontend
+kubectl rollout undo deployment/huston-housing-frontend
 ```
 
 ---
@@ -794,7 +794,7 @@ kubectl rollout undo deployment/chioma-frontend
 
    ```bash
    # Rotate JWT signing secret
-   kubectl set env deployment/chioma-backend JWT_SECRET=<new-secret>
+   kubectl set env deployment/huston-housing-backend JWT_SECRET=<new-secret>
 
    # Rotate API keys if compromised
    # Use admin API: POST /api/v1/admin/api-keys/{id}/rotate
@@ -883,7 +883,7 @@ redis-cli -h <redis-host> config get maxmemory-policy
 # Test with a direct curl to the service
 
 # 4. Check for rate limiting from the provider
-# LogQL: {service="chioma-backend"} | json | "429" | "rate_limit"
+# LogQL: {service="huston-housing-backend"} | json | "429" | "rate_limit"
 ```
 
 #### Mitigation
@@ -909,7 +909,7 @@ redis-cli -h <redis-host> config get maxmemory-policy
 
 ```bash
 # 1. Check queue status in Bull Board
-# https://admin.chioma.io/queues (or local http://localhost:5000/queues)
+# https://admin.huston-housing.io/queues (or local http://localhost:5000/queues)
 
 # 2. Identify which queue is affected
 # Grafana: queue_jobs_waiting by queue
@@ -918,7 +918,7 @@ redis-cli -h <redis-host> config get maxmemory-policy
 # Bull Board: click on failed tab for the affected queue
 
 # 4. Check worker logs
-kubectl logs -l app=chioma-workers --tail=200 | grep -i "error"
+kubectl logs -l app=huston-housing-workers --tail=200 | grep -i "error"
 
 # 5. Check if a downstream dependency is failing
 # (e.g., email provider, blockchain RPC)
@@ -933,11 +933,11 @@ kubectl logs -l app=chioma-workers --tail=200 | grep -i "error"
    ```
 2. If a specific job type is causing failures, pause it:
    ```bash
-   kubectl set env deployment/chioma-workers PAUSE_QUEUE_<NAME>=true
+   kubectl set env deployment/huston-housing-workers PAUSE_QUEUE_<NAME>=true
    ```
 3. Scale up workers to clear backlog:
    ```bash
-   kubectl scale deployment chioma-workers --replicas=5
+   kubectl scale deployment huston-housing-workers --replicas=5
    ```
 4. If jobs are stuck due to invalid data, investigate and fix the data, then retry
 

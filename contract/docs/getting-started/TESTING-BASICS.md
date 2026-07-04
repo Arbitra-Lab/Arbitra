@@ -1,9 +1,9 @@
 # Testing Basics
 
-> **Chioma Housing Protocol** — Developer Onboarding  
-> Related Issues: [#01](https://github.com/Listoncrypt/chioma/issues/1), [#04](https://github.com/Listoncrypt/chioma/issues/4)
+> **Houston Housing Housing Protocol** — Developer Onboarding  
+> Related Issues: [#01](https://github.com/Listoncrypt/huston-housing/issues/1), [#04](https://github.com/Listoncrypt/huston-housing/issues/4)
 
-Testing is a **non-negotiable** part of Chioma contract development. Every new function must ship with corresponding tests. 
+Testing is a **non-negotiable** part of Houston Housing contract development. Every new function must ship with corresponding tests. 
 
 ## Intro
 
@@ -94,4 +94,4 @@ cargo test -- --nocapture
 
 ---
 
-> For advanced users and comprehensive details on testing patterns (like manipulating time, testing auth, and complex state setup), please link back to **[Issue #12: Testing Strategy](https://github.com/Listoncrypt/chioma/issues/12)** and refer to the project's `CONTRIBUTING.md`.
+> For advanced users and comprehensive details on testing patterns (like manipulating time, testing auth, and complex state setup), please link back to **[Issue #12: Testing Strategy](https://github.com/Listoncrypt/huston-housing/issues/12)** and refer to the project's `CONTRIBUTING.md`.

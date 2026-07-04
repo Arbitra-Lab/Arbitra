@@ -55,7 +55,7 @@ export function PullToRefresh({
         >
           <RefreshCw
             size={20}
-            className={`text-blue-400 ${refreshing ? 'animate-spin' : ''}`}
+            className={`text-brand-accent ${refreshing ? 'animate-spin' : ''}`}
           />
         </motion.div>
       </motion.div>

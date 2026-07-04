@@ -1,5 +1,5 @@
 /**
- * Centralized error handling exports for the Chioma platform.
+ * Centralized error handling exports for the Houston Housing platform.
  * Import errors from this file to ensure consistency across the application.
  */
 

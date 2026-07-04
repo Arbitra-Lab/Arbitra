@@ -97,7 +97,7 @@ export const AgreementSigningModal: React.FC<AgreementSigningModalProps> = ({
             type="button"
             onClick={handleSign}
             disabled={isSubmitting}
-            className="rounded-xl bg-brand-blue px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+            className="rounded-xl bg-brand-blue px-4 py-2 text-sm font-semibold text-white hover:bg-brand-blue-dark disabled:opacity-60"
           >
             {isSubmitting ? 'Signing...' : 'Sign Agreement'}
           </button>

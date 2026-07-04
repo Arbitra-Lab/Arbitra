@@ -4,7 +4,7 @@
 **Last Updated:** April 2026  
 **Classification:** Internal — Confidential
 
-Step-by-step recovery procedures for disaster scenarios affecting the Chioma platform.
+Step-by-step recovery procedures for disaster scenarios affecting the Houston Housing platform.
 
 **Related documents:**
 - [Disaster Recovery Plan](../DISASTER_RECOVERY_PLAN.md) — overview, objectives, team roles
@@ -78,7 +78,7 @@ psql "$DATABASE_URL" -c "
 docker compose stop api
 
 # (Kubernetes)
-kubectl scale deployment chioma-backend --replicas=0
+kubectl scale deployment huston-housing-backend --replicas=0
 
 # Redirect traffic to a maintenance page
 ```
@@ -101,21 +101,21 @@ Option B — Full Restore from Latest Clean Backup:
 
 ```bash
 # 1. Identify the latest known-good backup
-aws s3 ls s3://chioma-backups/db/ --human-readable
+aws s3 ls s3://huston-housing-backups/db/ --human-readable
 
 # 2. Download it
-aws s3 cp s3://chioma-backups/db/latest.dump ./restore.dump
+aws s3 cp s3://huston-housing-backups/db/latest.dump ./restore.dump
 
 # 3. Verify the backup file integrity
 pg_restore --list ./restore.dump | head -20
 # (If this fails, try the previous backup)
 
 # 4. Create a new database (or use a new Neon branch)
-createdb chioma_restored
+createdb huston-housing_restored
 
 # 5. Restore
 pg_restore --clean --no-acl --no-owner \
-  -d postgresql://user:pass@host:5432/chioma_restored \
+  -d postgresql://user:pass@host:5432/huston-housing_restored \
   ./restore.dump
 
 # 6. Run any pending migrations
@@ -150,7 +150,7 @@ pnpm run test:e2e -- --grep "@smoke"
 # Re-enable the API
 docker compose start api
 # or
-kubectl scale deployment chioma-backend --replicas=3
+kubectl scale deployment huston-housing-backend --replicas=3
 ```
 
 ---
@@ -175,17 +175,17 @@ kubectl scale deployment chioma-backend --replicas=3
 # 1. Check container/pod status
 docker compose ps
 # or
-kubectl get pods -l app=chioma-backend
+kubectl get pods -l app=huston-housing-backend
 
 # 2. Check logs for crash reason
 docker compose logs api --tail 100
 # or
-kubectl logs -l app=chioma-backend --tail=100 --previous
+kubectl logs -l app=huston-housing-backend --tail=100 --previous
 
 # 3. Check resource usage
 docker stats --no-stream
 # or
-kubectl top pods -l app=chioma-backend
+kubectl top pods -l app=huston-housing-backend
 ```
 
 #### Step 2: Attempt Restart
@@ -194,7 +194,7 @@ kubectl top pods -l app=chioma-backend
 # 1. Simple restart
 docker compose restart api
 # or
-kubectl rollout restart deployment/chioma-backend
+kubectl rollout restart deployment/huston-housing-backend
 
 # 2. Wait for the service to become healthy
 sleep 15
@@ -207,13 +207,13 @@ If the restart succeeds, monitor for 15 minutes and proceed to [Post-Recovery Va
 
 ```bash
 # 1. Check recent deployments
-kubectl rollout history deployment/chioma-backend
+kubectl rollout history deployment/huston-housing-backend
 
 # 2. Rollback to the previous revision
-kubectl rollout undo deployment/chioma-backend
+kubectl rollout undo deployment/huston-housing-backend
 
 # 3. Verify rollback
-kubectl rollout status deployment/chioma-backend
+kubectl rollout status deployment/huston-housing-backend
 
 # 4. Check health
 curl -f http://localhost:5000/api/health
@@ -233,7 +233,7 @@ docker compose -f docker-compose.production.yml build api
 docker compose -f docker-compose.production.yml up -d api
 
 # 4. Verify
-curl -f https://api.chioma.io/health
+curl -f https://api.huston-housing.io/health
 ```
 
 ---
@@ -261,7 +261,7 @@ curl -f https://api.chioma.io/health
 
 # 2. Verify it is not a local issue
 ping <db-host>
-curl -f https://api.chioma.io/health
+curl -f https://api.huston-housing.io/health
 
 # 3. Check if other services in the same region are affected
 # (Check monitoring dashboards for multi-service failure patterns)
@@ -292,7 +292,7 @@ docker compose -f docker-compose.production.yml up -d
 
 ```bash
 # 1. Check health endpoint
-curl -f https://api.chioma.io/health
+curl -f https://api.huston-housing.io/health
 
 # 2. Verify database connectivity and data
 psql "$DATABASE_URL" -c "SELECT count(*) FROM users;"
@@ -307,12 +307,12 @@ If the secondary region has reduced capacity:
 
 ```bash
 # 1. Scale down non-critical workers
-kubectl scale deployment chioma-workers-email --replicas=1
-kubectl scale deployment chioma-workers-documents --replicas=0
+kubectl scale deployment huston-housing-workers-email --replicas=1
+kubectl scale deployment huston-housing-workers-documents --replicas=0
 
 # 2. Disable non-critical features via feature flags
-kubectl set env deployment/chioma-backend FEATURE_ANALYTICS_ENABLED=false
-kubectl set env deployment/chioma-backend FEATURE_SCREENING_ENABLED=false
+kubectl set env deployment/huston-housing-backend FEATURE_ANALYTICS_ENABLED=false
+kubectl set env deployment/huston-housing-backend FEATURE_SCREENING_ENABLED=false
 
 # 3. Communicate degraded status to users via status page
 ```
@@ -354,16 +354,16 @@ kubectl set env deployment/chioma-backend FEATURE_SCREENING_ENABLED=false
 
 ```bash
 # 1. Rotate ALL secrets in AWS Secrets Manager
-aws secretsmanager rotate-secret --secret-id chioma/production
+aws secretsmanager rotate-secret --secret-id huston-housing/production
 
 # 2. Generate and deploy a new JWT secret
 # (This invalidates all existing tokens — all users must re-authenticate)
-kubectl set env deployment/chioma-backend \
+kubectl set env deployment/huston-housing-backend \
   JWT_SECRET=$(node -e "console.log(require('crypto').randomBytes(32).toString('hex'))")
 
 # 3. Lock down ingress
 # (Temporarily restrict API access to trusted IP ranges only)
-kubectl scale deployment chioma-backend --replicas=0  # if needed
+kubectl scale deployment huston-housing-backend --replicas=0  # if needed
 
 # 4. Disable compromised user accounts
 # Admin API: POST /api/v1/admin/users/{id}/disable
@@ -418,7 +418,7 @@ git diff HEAD~1 --name-only
 # (See Procedure 1: Database Corruption or Data Loss)
 
 # 2. Re-enable services after security review
-kubectl scale deployment chioma-backend --replicas=3
+kubectl scale deployment huston-housing-backend --replicas=3
 
 # 3. Force password reset for all affected users
 # Admin API: POST /api/v1/admin/users/force-reset-all
@@ -458,11 +458,11 @@ kubectl scale deployment chioma-backend --replicas=3
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/chioma/chioma.git
-cd chioma/backend
+git clone https://github.com/huston-housing/huston-housing.git
+cd huston-housing/backend
 
 # 2. Restore environment variables from Secrets Manager
-aws secretsmanager get-secret-value --secret-id chioma/production \
+aws secretsmanager get-secret-value --secret-id huston-housing/production \
   | jq -r '.SecretString' > .env.production
 
 # 3. Pull the latest Docker images
@@ -473,14 +473,14 @@ docker compose -f docker-compose.production.yml up -d postgres redis
 
 # 5. Wait for the database to be healthy
 sleep 15
-docker compose exec postgres pg_isready -U chioma
+docker compose exec postgres pg_isready -U huston-housing
 ```
 
 #### Phase 2: Restore Data
 
 ```bash
 # 1. Download the latest verified backup
-aws s3 cp s3://chioma-backups/db/latest.dump ./restore.dump
+aws s3 cp s3://huston-housing-backups/db/latest.dump ./restore.dump
 
 # 2. Verify backup integrity
 pg_restore --list ./restore.dump > /dev/null 2>&1 && echo "Backup valid" || echo "Backup corrupt"
@@ -508,10 +508,10 @@ sleep 30
 docker compose ps
 
 # 3. Verify the API health endpoint
-curl -f https://api.chioma.io/health
+curl -f https://api.huston-housing.io/health
 
 # 4. Verify the frontend loads
-curl -f https://app.chioma.io
+curl -f https://app.huston-housing.io
 
 # 5. Run smoke tests
 pnpm run test:e2e -- --grep "@smoke"
@@ -524,7 +524,7 @@ pnpm run test:e2e -- --grep "@smoke"
 curl -f "$STELLAR_HORIZON_URL"
 
 # 2. Test S3 access
-aws s3 ls s3://chioma-files/
+aws s3 ls s3://huston-housing-files/
 
 # 3. Test Redis connectivity
 docker compose exec redis redis-cli ping
@@ -636,18 +636,18 @@ docker compose logs api --tail 100 | grep -iE "stellar|horizon|soroban"
 
 # 4. Check queue backlog for blockchain jobs
 # (Bull Board at /queues or admin API)
-curl https://admin.chioma.io/api/v1/admin/queues/blockchain
+curl https://admin.huston-housing.io/api/v1/admin/queues/blockchain
 ```
 
 #### Step 2: Mitigate
 
 ```bash
 # 1. If Horizon is down, switch to a backup endpoint
-kubectl set env deployment/chioma-backend \
+kubectl set env deployment/huston-housing-backend \
   STELLAR_HORIZON_URL=https://horizon-futurenet.stellar.org
 
 # 2. If Soroban RPC is down, switch to a backup
-kubectl set env deployment/chioma-backend \
+kubectl set env deployment/huston-housing-backend \
   SOROBAN_RPC_URL=https://soroban-futurenet.stellar.org
 
 # 3. Queue all blockchain operations
@@ -693,11 +693,11 @@ kubectl set env deployment/chioma-backend \
 curl https://status.aws.amazon.com
 
 # 2. Check bucket accessibility
-aws s3 ls s3://chioma-files/
+aws s3 ls s3://huston-housing-files/
 
 # 3. Check bucket configuration
-aws s3api get-bucket-versioning --bucket chioma-files
-aws s3api get-bucket-location --bucket chioma-files
+aws s3api get-bucket-versioning --bucket huston-housing-files
+aws s3api get-bucket-location --bucket huston-housing-files
 ```
 
 #### Step 2: Mitigate
@@ -706,23 +706,23 @@ Option A — Primary Region Outage:
 
 ```bash
 # 1. Update bucket region to replica region
-kubectl set env deployment/chioma-backend AWS_S3_BUCKET_REGION=eu-west-1
+kubectl set env deployment/huston-housing-backend AWS_S3_BUCKET_REGION=eu-west-1
 
 # 2. Update CloudFront origin to point to replica bucket
 # (AWS Console → CloudFront → Distributions → Edit Origin)
 
 # 3. Restart the API
-kubectl rollout restart deployment/chioma-backend
+kubectl rollout restart deployment/huston-housing-backend
 ```
 
 Option B — Bucket Deletion / Data Loss:
 
 ```bash
 # 1. Restore from cross-region replica
-aws s3 sync s3://chioma-files-replica s3://chioma-files --source-region eu-west-1
+aws s3 sync s3://huston-housing-files-replica s3://huston-housing-files --source-region eu-west-1
 
 # 2. Verify restoration
-aws s3 ls s3://chioma-files/ --recursive --summarize
+aws s3 ls s3://huston-housing-files/ --recursive --summarize
 ```
 
 Option C — Permission / Configuration Issue:
@@ -732,7 +732,7 @@ Option C — Permission / Configuration Issue:
 aws sts get-caller-identity
 
 # 2. Check bucket policy
-aws s3api get-bucket-policy --bucket chioma-files
+aws s3api get-bucket-policy --bucket huston-housing-files
 
 # 3. Apply the correct policy if needed
 # (See deployment/terraform/s3-bucket-policy.json)
@@ -742,13 +742,13 @@ aws s3api get-bucket-policy --bucket chioma-files
 
 ```bash
 # 1. Try uploading a test file
-curl -X POST -F "file=@test.png" https://api.chioma.io/api/v1/files/upload
+curl -X POST -F "file=@test.png" https://api.huston-housing.io/api/v1/files/upload
 
 # 2. Verify the uploaded file is accessible
-curl -I https://cdn.chioma.io/uploads/test.png
+curl -I https://cdn.huston-housing.io/uploads/test.png
 
 # 3. Check existing file URLs return 200
-curl -I https://cdn.chioma.io/properties/sample-image.jpg
+curl -I https://cdn.huston-housing.io/properties/sample-image.jpg
 ```
 
 ---
@@ -761,28 +761,28 @@ After any recovery procedure, run the following validation checks.
 
 ```bash
 # API health
-curl -f https://api.chioma.io/health
+curl -f https://api.huston-housing.io/health
 
 # Database connectivity (returns JSON with db status)
-curl -f https://api.chioma.io/health/db
+curl -f https://api.huston-housing.io/health/db
 
 # Redis connectivity (if applicable)
-curl -f https://api.chioma.io/health/cache
+curl -f https://api.huston-housing.io/health/cache
 ```
 
 ### Core Functionality Smoke Tests
 
 ```bash
 # Authentication
-curl -f -X POST https://api.chioma.io/api/v1/auth/login \
+curl -f -X POST https://api.huston-housing.io/api/v1/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"test@chioma.dev","password":"test123"}'
+  -d '{"email":"test@huston-housing.dev","password":"test123"}'
 
 # Property listing loads
-curl -f https://api.chioma.io/api/v1/properties?limit=1
+curl -f https://api.huston-housing.io/api/v1/properties?limit=1
 
 # A core entity can be read
-curl -f https://api.chioma.io/api/v1/users/me \
+curl -f https://api.huston-housing.io/api/v1/users/me \
   -H "Authorization: Bearer $TOKEN"
 ```
 
@@ -810,7 +810,7 @@ psql "$DATABASE_URL" -c "
 
 ```bash
 # Grafana dashboards are receiving data
-curl -f https://grafana.chioma.io/api/health
+curl -f https://grafana.huston-housing.io/api/health
 
 # Prometheus targets are up
 curl -f http://localhost:9090/api/v1/targets | jq '.data.activeTargets | length'

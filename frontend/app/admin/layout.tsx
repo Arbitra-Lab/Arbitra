@@ -20,15 +20,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   // Centralized base title
   let pageTitle = getAdminPageTitle(pathname);
 
-  // Dynamic routes (merged from feature branches)
-  if (/^\/admin\/refunds\/.+/.test(pathname) && pathname !== '/admin/refunds') {
-    pageTitle = 'Refund Detail';
-  }
-
-  if (/^\/admin\/users\/.+/.test(pathname) && pathname !== '/admin/users') {
-    pageTitle = 'User Detail';
-  }
-
+  // Dynamic routes
   if (
     /^\/admin\/disputes\/.+/.test(pathname) &&
     pathname !== '/admin/disputes'
@@ -46,7 +38,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 
   return (
     // <ProtectedRoute>
-    <div className="flex h-screen overflow-x-hidden bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white">
+    <div className="flex h-screen overflow-x-hidden bg-gradient-to-br from-slate-900 via-brand-blue-dark to-slate-900 text-white">
       <AdminSidebar />
 
       <div className="flex flex-1 flex-col">
@@ -60,10 +52,10 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         >
           <main className="flex-1 overflow-auto p-4 sm:p-6">
             {loading ? (
-              <div className="flex items-center justify-center min-h-[40vh] text-blue-200/80">
+              <div className="flex items-center justify-center min-h-[40vh] text-neutral-200/80">
                 <div className="flex flex-col items-center space-y-4">
-                  <div className="w-10 h-10 border-4 border-blue-400 border-t-transparent rounded-full animate-spin" />
-                  <p className="text-sm text-blue-200/60 font-medium">
+                  <div className="w-10 h-10 border-4 border-brand-accent border-t-transparent rounded-full animate-spin" />
+                  <p className="text-sm text-neutral-200/60 font-medium">
                     Loading admin panel…
                   </p>
                 </div>

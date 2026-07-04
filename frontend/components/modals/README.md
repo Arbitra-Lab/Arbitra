@@ -1,6 +1,6 @@
 # Modal Components System
 
-A comprehensive, centralized modal management system for the Chioma rental platform with context-based state management.
+A comprehensive, centralized modal management system for the Houston Housing rental platform with context-based state management.
 
 ## Features
 
@@ -454,7 +454,7 @@ openModal('myCustomModal', {
 
 ## Styling
 
-All modals use Tailwind CSS and follow the Chioma design system:
+All modals use Tailwind CSS and follow the Houston Housing design system:
 
 - **Colors**: Brand blue (#2563eb), neutral grays
 - **Typography**: Inter font, consistent sizing
@@ -548,4 +548,4 @@ When adding new modals:
 
 ## License
 
-Part of the Chioma project - Open Source
+Part of the Houston Housing project - Open Source

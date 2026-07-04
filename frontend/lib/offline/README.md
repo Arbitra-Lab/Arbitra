@@ -1,6 +1,6 @@
 # Offline Mode Implementation
 
-This module provides comprehensive offline support for the Chioma application, enabling users to continue working without an internet connection.
+This module provides comprehensive offline support for the Houston Housing application, enabling users to continue working without an internet connection.
 
 ## Features
 
@@ -156,7 +156,7 @@ function CreatePropertyForm() {
 ### Storage Structure
 
 ```
-IndexedDB: chioma_offline
+IndexedDB: huston-housing_offline
 ├── properties (cached property data)
 ├── agreements (cached agreement data)
 ├── payments (cached payment data)

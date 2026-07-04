@@ -9,7 +9,6 @@
 
 import type { AuthStore } from './authStore';
 import type { NotificationStore } from './notificationStore';
-import type { PropertyStore } from './property-store';
 import type { UIStore } from './ui-store';
 import type { LoadingStore } from './loading-store';
 
@@ -32,23 +31,6 @@ export const selectNotificationsByType = (type: string) => {
   return (state: NotificationStore) =>
     state.notifications.filter((n) => n.type === type);
 };
-
-// ─── Property Selectors ──────────────────────────────────────────────────────
-
-export const selectPropertyFilters = (state: PropertyStore) => state.filters;
-export const selectPropertySort = (state: PropertyStore) => ({
-  field: state.sortField,
-  direction: state.sortDirection,
-});
-export const selectPropertyViewMode = (state: PropertyStore) => state.viewMode;
-export const selectSelectedPropertyId = (state: PropertyStore) =>
-  state.selectedPropertyId;
-export const selectPropertySearchQuery = (state: PropertyStore) =>
-  state.searchQuery;
-export const selectHasActiveFilters = (state: PropertyStore) =>
-  Object.values(state.filters).some(
-    (v) => v !== undefined && v !== '' && v !== null,
-  ) || state.searchQuery.length > 0;
 
 // ─── UI Selectors ────────────────────────────────────────────────────────────
 

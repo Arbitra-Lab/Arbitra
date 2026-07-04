@@ -17,7 +17,7 @@
 
 ## Contract Overview
 
-The **Payment** contract handles rent payment processing for the Chioma housing protocol. It supports one-time rent payments with automatic commission splitting (90/10 landlord/platform), recurring payment schedules with multiple frequencies, late fee management, and failed payment tracking with retry capabilities.
+The **Payment** contract handles rent payment processing for the Houston Housing housing protocol. It supports one-time rent payments with automatic commission splitting (90/10 landlord/platform), recurring payment schedules with multiple frequencies, late fee management, and failed payment tracking with retry capabilities.
 
 ### Purpose
 

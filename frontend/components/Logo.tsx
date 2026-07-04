@@ -27,32 +27,32 @@ export default function Logo({
 
   if (!href) {
     return (
-      <div className={`flex items-center ${className}`}>
+      <div className={`flex items-center gap-3 ${className}`}>
         <Image
-          src="/logo_256.png"
-          alt="Chioma logo"
+          src="/logo_512.png"
+          alt="Arbitra logo"
           width={px}
           height={px}
           className="rounded-lg object-contain flex-shrink-0"
           style={{ width: px, height: px }}
           priority
         />
-        {showText && <span className={resolvedText}>Chioma</span>}
+        {showText && <span className={resolvedText}>Arbitra</span>}
       </div>
     );
   }
 
   return (
-    <Link href={href} className={`flex items-center ${className}`}>
+    <Link href={href} className={`flex items-center gap-3 ${className}`}>
       <Image
-        src="/logo_256.png"
-        alt="Chioma logo"
+        src="/logo_512.png"
+        alt="Arbitra logo"
         width={px}
         height={px}
         className="rounded-lg"
         priority
       />
-      {showText && <span className={resolvedText}>Chioma</span>}
+      {showText && <span className={resolvedText}>Arbitra</span>}
     </Link>
   );
 }

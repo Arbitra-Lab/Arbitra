@@ -1,6 +1,6 @@
 # Blockchain Integration Guide
 
-This document describes how Chioma integrates with the Stellar blockchain, including SDK usage, account and wallet management, transaction handling, smart contract interaction, security considerations, error handling, testing, monitoring, troubleshooting, and a checklist.
+This document describes how Houston Housing integrates with the Stellar blockchain, including SDK usage, account and wallet management, transaction handling, smart contract interaction, security considerations, error handling, testing, monitoring, troubleshooting, and a checklist.
 
 ---
 
@@ -8,7 +8,7 @@ This document describes how Chioma integrates with the Stellar blockchain, inclu
 
 ### Purpose
 
-Chioma uses the Stellar SDK to:
+Houston Housing uses the Stellar SDK to:
 
 - build and sign transactions
 - submit transactions to Horizon
@@ -112,7 +112,7 @@ Prefer writing and reusing small helpers for these operations instead of duplica
 
 ### Scope
 
-If Chioma interacts with Stellar smart contracts (Soroban), apply the same principles:
+If Houston Housing interacts with Stellar smart contracts (Soroban), apply the same principles:
 
 - keep contract invocation behind a dedicated service
 - validate and sanitize all inputs to contract calls
@@ -135,7 +135,7 @@ If Chioma interacts with Stellar smart contracts (Soroban), apply the same princ
 
 ### Wallet ownership verification
 
-Chioma must verify a user controls a wallet address before linking it.
+Houston Housing must verify a user controls a wallet address before linking it.
 
 Use SEP-0010 (see `backend/docs/blockchain/stellar-auth.md`) and enforce:
 

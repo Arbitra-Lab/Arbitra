@@ -17,7 +17,7 @@
 
 ## Contract Overview
 
-The **Escrow** contract manages security deposit escrows for the Chioma housing protocol. It implements a **2-of-3 multi-signature** release mechanism with dispute resolution and timeout-based recovery, ensuring secure fund holding between tenants (depositors), landlords (beneficiaries), and platform administrators (arbiters).
+The **Escrow** contract manages security deposit escrows for the Houston Housing housing protocol. It implements a **2-of-3 multi-signature** release mechanism with dispute resolution and timeout-based recovery, ensuring secure fund holding between tenants (depositors), landlords (beneficiaries), and platform administrators (arbiters).
 
 ### Purpose
 

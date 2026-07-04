@@ -50,7 +50,7 @@ export default async function AgreementDetailsPage({ params }: PageProps) {
     <div className="space-y-6">
       <Link
         href="/user"
-        className="inline-flex items-center gap-2 text-sm font-bold text-blue-300 hover:text-white transition-colors"
+        className="inline-flex items-center gap-2 text-sm font-bold text-brand-accent hover:text-white transition-colors"
       >
         <ArrowLeft size={16} />
         Back to dashboard
@@ -70,20 +70,20 @@ export default async function AgreementDetailsPage({ params }: PageProps) {
           />
           <div className="absolute inset-0 bg-slate-950/65" />
           <div className="relative z-10 flex min-h-[300px] flex-col justify-end p-6 sm:p-8">
-            <p className="text-xs font-bold uppercase tracking-widest text-blue-200/60">
+            <p className="text-xs font-bold uppercase tracking-widest text-neutral-200/60">
               Agreement Details
             </p>
             <h1 className="mt-2 text-3xl font-bold tracking-tight text-white">
               {id}
             </h1>
-            <p className="mt-1 text-sm text-blue-200/70">
+            <p className="mt-1 text-sm text-neutral-200/70">
               {agreement.property}
             </p>
           </div>
         </div>
         <div className="grid gap-4 p-6 sm:grid-cols-3 sm:p-8">
           <div className="rounded-2xl border border-white/10 bg-slate-950/40 p-4">
-            <div className="mb-2 flex items-center gap-2 text-blue-200/60">
+            <div className="mb-2 flex items-center gap-2 text-neutral-200/60">
               <FileText size={16} />
               <span className="text-[10px] font-bold uppercase tracking-widest">
                 Rent
@@ -94,7 +94,7 @@ export default async function AgreementDetailsPage({ params }: PageProps) {
             </p>
           </div>
           <div className="rounded-2xl border border-white/10 bg-slate-950/40 p-4">
-            <div className="mb-2 flex items-center gap-2 text-blue-200/60">
+            <div className="mb-2 flex items-center gap-2 text-neutral-200/60">
               <Calendar size={16} />
               <span className="text-[10px] font-bold uppercase tracking-widest">
                 Next Due
@@ -103,7 +103,7 @@ export default async function AgreementDetailsPage({ params }: PageProps) {
             <p className="text-xl font-bold text-white">{agreement.dueDate}</p>
           </div>
           <div className="rounded-2xl border border-white/10 bg-slate-950/40 p-4">
-            <div className="mb-2 flex items-center gap-2 text-blue-200/60">
+            <div className="mb-2 flex items-center gap-2 text-neutral-200/60">
               <Home size={16} />
               <span className="text-[10px] font-bold uppercase tracking-widest">
                 Status

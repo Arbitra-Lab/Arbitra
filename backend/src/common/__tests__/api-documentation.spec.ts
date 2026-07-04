@@ -49,7 +49,7 @@ describe('API documentation files', () => {
     const html = fs.readFileSync(portalPath, 'utf8');
     expect(html).toContain('/api/docs');
     expect(html).toContain('/api/docs-json');
-    expect(html).toContain('Chioma Developer Portal');
+    expect(html).toContain('Houston Housing Developer Portal');
     expect(html).toContain('Documentation');
   });
 

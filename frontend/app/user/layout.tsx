@@ -23,7 +23,7 @@ export default function UserDashboardLayout({
   const { walletAddress, loading } = useAuth();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 font-sans text-white flex flex-col lg:flex-row">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-brand-blue-dark to-slate-900 font-sans text-white flex flex-col lg:flex-row">
       {/* Sidebar Component */}
       <Sidebar
         isOpen={isSidebarOpen}
@@ -40,7 +40,7 @@ export default function UserDashboardLayout({
             <div className="flex items-center space-x-4">
               <button
                 onClick={() => setIsSidebarOpen(true)}
-                className="lg:hidden min-h-[44px] min-w-[44px] flex items-center justify-center p-2 -ml-2 text-blue-200 hover:bg-white/10 rounded-xl transition-colors"
+                className="lg:hidden min-h-[44px] min-w-[44px] flex items-center justify-center p-2 -ml-2 text-brand-accent hover:bg-white/10 rounded-xl transition-colors"
                 aria-label="Open sidebar"
               >
                 <Menu size={24} />
@@ -57,29 +57,23 @@ export default function UserDashboardLayout({
             <div className="flex items-center space-x-3 sm:space-x-4">
               <div className="hidden md:flex relative w-64">
                 <Search
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-300/60"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-brand-accent/60"
                   size={18}
                 />
                 <input
                   type="text"
                   placeholder="Search..."
-                  className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-full text-sm text-white placeholder:text-blue-300/40 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
+                  className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-full text-sm text-white placeholder:text-brand-accent/40 focus:outline-none focus:ring-2 focus:ring-brand-accent/50 transition-all"
                 />
               </div>
-              <button className="md:hidden p-2 text-blue-200 hover:bg-white/10 rounded-full transition-colors">
+              <button className="md:hidden p-2 text-brand-accent hover:bg-white/10 rounded-full transition-colors">
                 <Search size={20} />
               </button>
 
-              <a
-                href="/user/properties/wizard"
-                className="hidden sm:flex items-center justify-center px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-lg transition-colors"
-              >
-                Add new listing
-              </a>
               <NotificationBell
                 viewAllHref="/user/notifications"
                 size={20}
-                className="text-blue-200"
+                className="text-brand-accent"
               />
               {walletAddress ? (
                 <div className="px-4 py-2.5 rounded-lg bg-green-500/20 border border-green-500/50 backdrop-blur-sm">
@@ -94,7 +88,7 @@ export default function UserDashboardLayout({
                 />
               )}
 
-              <button className="flex items-center justify-center w-10 h-10 bg-white/10 text-blue-300 rounded-full hover:bg-white/20 transition-all border border-white/20">
+              <button className="flex items-center justify-center w-10 h-10 bg-white/10 text-brand-accent rounded-full hover:bg-white/20 transition-all border border-white/20">
                 <User size={18} />
               </button>
             </div>
@@ -108,10 +102,10 @@ export default function UserDashboardLayout({
         >
           <main className="flex-1 p-4 sm:p-6 lg:p-8 w-full max-w-7xl mx-auto overflow-x-hidden">
             {loading ? (
-              <div className="flex items-center justify-center min-h-[40vh] text-blue-200/80">
+              <div className="flex items-center justify-center min-h-[40vh] text-neutral-200/80">
                 <div className="flex flex-col items-center space-y-4">
-                  <div className="w-10 h-10 border-4 border-blue-400 border-t-transparent rounded-full animate-spin" />
-                  <p className="text-sm text-blue-200/60 font-medium">
+                  <div className="w-10 h-10 border-4 border-brand-accent border-t-transparent rounded-full animate-spin" />
+                  <p className="text-sm text-neutral-200/60 font-medium">
                     Loading dashboard…
                   </p>
                 </div>

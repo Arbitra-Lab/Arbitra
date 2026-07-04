@@ -41,7 +41,7 @@ export const useI18nStore = create<I18nStore>()(
       locale: 'en',
       setLocale: (locale) => set({ locale }),
     }),
-    { name: 'chioma-locale' },
+    { name: 'arbitra-locale' },
   ),
 );
 

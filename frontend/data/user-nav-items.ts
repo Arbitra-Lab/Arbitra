@@ -1,16 +1,13 @@
 import { navItems } from '@/types/sidebar-items';
 import {
   Home,
-  HousePlus,
-  MessageSquareQuote,
-  Receipt,
-  Settings,
   Wallet,
-  PieChart,
   FileText,
-  Users,
+  Receipt,
   Flag,
-  MessageSquare,
+  ShieldCheck,
+  Bell,
+  User,
 } from 'lucide-react';
 
 export const userNavItems: navItems[] = [
@@ -25,33 +22,13 @@ export const userNavItems: navItems[] = [
     icon: Wallet,
   },
   {
-    name: 'Analytics',
-    href: '/user/analytics',
-    icon: PieChart,
-  },
-  {
-    name: 'My Rentals',
-    href: '/user/my-rentals',
-    icon: HousePlus,
-  },
-  {
-    name: 'My Bookings',
-    href: '/user/tenants', // mapping to the old tenants folder temporarily
-    icon: Users,
-  },
-  {
-    name: 'Messages',
-    href: '/user/messages',
-    icon: MessageSquare,
-  },
-  {
-    name: 'Contracts',
+    name: 'Agreements',
     href: '/user/contracts',
     icon: FileText,
   },
   {
-    name: 'Payments',
-    href: '/user/payments',
+    name: 'Transactions',
+    href: '/user/transactions',
     icon: Receipt,
   },
   {
@@ -60,13 +37,18 @@ export const userNavItems: navItems[] = [
     icon: Flag,
   },
   {
-    name: 'Reviews',
-    href: '/user/reviews',
-    icon: MessageSquareQuote,
+    name: 'Notifications',
+    href: '/user/notifications',
+    icon: Bell,
   },
   {
-    name: 'Settings',
-    href: '/user/settings',
-    icon: Settings,
+    name: 'Security',
+    href: '/user/security',
+    icon: ShieldCheck,
+  },
+  {
+    name: 'Profile',
+    href: '/user/profile',
+    icon: User,
   },
 ];

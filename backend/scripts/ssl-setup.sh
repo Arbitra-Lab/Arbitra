@@ -4,7 +4,7 @@
 
 set -euo pipefail
 
-DOMAIN="${1:-api.chioma.app}"
+DOMAIN="${1:-api.huston-housing.app}"
 EMAIL="${2:-}"
 WEBROOT="/var/www/certbot"
 CERT_DIR="/etc/letsencrypt/live/${DOMAIN}"
@@ -24,7 +24,7 @@ log_error() { echo -e "${RED}[ERROR]${NC} $*"; }
 # Validate inputs
 if [[ -z "$EMAIL" ]]; then
   log_error "Usage: $0 <domain> <email>"
-  log_error "Example: $0 api.chioma.app admin@chioma.app"
+  log_error "Example: $0 api.huston-housing.app admin@huston-housing.app"
   exit 1
 fi
 
@@ -70,16 +70,16 @@ log_ok "Certificate obtained at ${CERT_DIR}"
 log_info "Installing certificates to nginx paths..."
 mkdir -p /etc/ssl/certs /etc/ssl/private
 
-cp "${CERT_DIR}/fullchain.pem" /etc/ssl/certs/chioma.crt
-cp "${CERT_DIR}/privkey.pem"   /etc/ssl/private/chioma.key
-chmod 644 /etc/ssl/certs/chioma.crt
-chmod 600 /etc/ssl/private/chioma.key
+cp "${CERT_DIR}/fullchain.pem" /etc/ssl/certs/huston-housing.crt
+cp "${CERT_DIR}/privkey.pem"   /etc/ssl/private/huston-housing.key
+chmod 644 /etc/ssl/certs/huston-housing.crt
+chmod 600 /etc/ssl/private/huston-housing.key
 
 log_ok "Certificates installed"
 
 # Install renewal cron job
-CRON_JOB="0 3 * * * root certbot renew --quiet --deploy-hook 'cp ${CERT_DIR}/fullchain.pem /etc/ssl/certs/chioma.crt && cp ${CERT_DIR}/privkey.pem /etc/ssl/private/chioma.key && nginx -s reload'"
-CRON_FILE="/etc/cron.d/chioma-ssl-renew"
+CRON_JOB="0 3 * * * root certbot renew --quiet --deploy-hook 'cp ${CERT_DIR}/fullchain.pem /etc/ssl/certs/huston-housing.crt && cp ${CERT_DIR}/privkey.pem /etc/ssl/private/huston-housing.key && nginx -s reload'"
+CRON_FILE="/etc/cron.d/huston-housing-ssl-renew"
 
 if [[ ! -f "${CRON_FILE}" ]]; then
   echo "${CRON_JOB}" > "${CRON_FILE}"
@@ -91,8 +91,8 @@ fi
 
 log_ok "SSL/TLS setup complete for ${DOMAIN}"
 echo ""
-echo "  Certificate: /etc/ssl/certs/chioma.crt"
-echo "  Private key: /etc/ssl/private/chioma.key"
+echo "  Certificate: /etc/ssl/certs/huston-housing.crt"
+echo "  Private key: /etc/ssl/private/huston-housing.key"
 echo "  Auto-renew:  ${CRON_FILE} (daily at 03:00)"
 echo ""
 log_info "Reload nginx to apply: nginx -s reload"

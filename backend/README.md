@@ -1,6 +1,6 @@
-# Chioma Backend
+# Houston Housing Backend
 
-NestJS REST API for the Chioma rental payment platform. Handles authentication, property listings, rent agreements, payments, Stellar blockchain integration, disputes, and KYC.
+NestJS REST API for the Houston Housing rental payment platform. Handles authentication, property listings, rent agreements, payments, Stellar blockchain integration, disputes, and KYC.
 
 ## Quick start
 

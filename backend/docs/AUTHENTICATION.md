@@ -1,6 +1,6 @@
 # Authentication Documentation
 
-Comprehensive documentation of the Chioma authentication system, covering architecture, JWT and Stellar auth flows, MFA, password policies, guards, decorators, rate limiting, metrics, and security considerations.
+Comprehensive documentation of the Houston Housing authentication system, covering architecture, JWT and Stellar auth flows, MFA, password policies, guards, decorators, rate limiting, metrics, and security considerations.
 
 > For a quick API reference with request/response examples, see [API Authentication Guide](./api/AUTHENTICATION.md).
 
@@ -273,7 +273,7 @@ The `JwtStrategy` validates that `type === "access"` and that the user exists an
 
 ## Multi-Factor Authentication (MFA)
 
-Chioma supports TOTP-based MFA using authenticator apps (Google Authenticator, Authy, etc.).
+Houston Housing supports TOTP-based MFA using authenticator apps (Google Authenticator, Authy, etc.).
 
 ### TOTP Setup
 

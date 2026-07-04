@@ -8,9 +8,9 @@
 
 ## 1. Getting Started
 
-### What is Chioma?
+### What is Houston Housing?
 
-Chioma is a housing protocol built on the Stellar blockchain (Soroban) that facilitates secure and automated rental agreements, escrows, and interest-bearing deposits.
+Houston Housing is a housing protocol built on the Stellar blockchain (Soroban) that facilitates secure and automated rental agreements, escrows, and interest-bearing deposits.
 
 ### How do I set up the development environment?
 
@@ -25,9 +25,9 @@ All smart contracts are located in the `contract/contracts/` directory.
 
 ## 2. Development
 
-### Which Soroban version does Chioma use?
+### Which Soroban version does Houston Housing use?
 
-Chioma uses Soroban SDK **v23**.
+Houston Housing uses Soroban SDK **v23**.
 
 ### How do I create a new contract?
 
@@ -35,7 +35,7 @@ Navigate to the `contract` folder and run: `cargo new --lib contracts/your-contr
 
 ### How do I handle contract state?
 
-Chioma uses an `instance` storage pattern for core configurations and `persistent` storage for user/agreement data. See `storage.rs` in individual contracts for key definitions.
+Houston Housing uses an `instance` storage pattern for core configurations and `persistent` storage for user/agreement data. See `storage.rs` in individual contracts for key definitions.
 
 ## 3. Testing
 
@@ -57,14 +57,14 @@ We use the built-in Rust test framework along with `soroban-sdk` test utilities.
 
 ```bash
 soroban contract deploy \
-  --wasm target/wasm32-unknown-unknown/release/chioma.wasm \
+  --wasm target/wasm32-unknown-unknown/release/huston-housing.wasm \
   --source <YOUR_SECRET> \
   --network testnet
 ```
 
 ### What is the contract versioning system?
 
-Chioma implements a custom versioning system. Use `record_version` to track deployments and `update_version_status` to manage the lifecycle (Active, Deprecated, Revoked) of contract instances.
+Houston Housing implements a custom versioning system. Use `record_version` to track deployments and `update_version_status` to manage the lifecycle (Active, Deprecated, Revoked) of contract instances.
 
 ## 5. Integration
 
@@ -170,6 +170,6 @@ Please do NOT open a public issue. Use the contact details in `SECURITY.md` for 
 
 ### Where can I get help?
 
-- Join our [Discord community](https://discord.gg/chioma).
+- Join our [Discord community](https://discord.gg/huston-housing).
 - Open a GitHub Issue for feature requests or non-security bugs.
 - Consult the [official Soroban documentation](https://soroban.stellar.org/docs).

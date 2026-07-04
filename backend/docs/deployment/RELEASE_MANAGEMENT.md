@@ -1,6 +1,6 @@
 # Release Management
 
-This document defines release management procedures for the Chioma backend, covering release planning, versioning strategy, release notes creation, deployment, rollback, and communication.
+This document defines release management procedures for the Houston Housing backend, covering release planning, versioning strategy, release notes creation, deployment, rollback, and communication.
 
 Use this together with:
 
@@ -87,7 +87,7 @@ All releases must meet:
 
 ### 3.1 Semantic Versioning
 
-Chioma follows Semantic Versioning (SemVer): `MAJOR.MINOR.PATCH`
+Houston Housing follows Semantic Versioning (SemVer): `MAJOR.MINOR.PATCH`
 
 - MAJOR: Breaking changes, incompatible API changes
 - MINOR: New features, backward-compatible
@@ -269,7 +269,7 @@ Thanks to @user1, @user2, @user3 for their contributions!
 
 ## Full Changelog
 
-https://github.com/org/chioma/compare/v1.2.2...v1.2.3
+https://github.com/org/huston-housing/compare/v1.2.2...v1.2.3
 ```
 
 ### 4.2 Changelog Maintenance
@@ -410,13 +410,13 @@ git checkout "v${VERSION}"
 # 3. Build production image
 docker build \
   -f backend/Dockerfile.production \
-  -t ghcr.io/chioma/backend:${VERSION} \
-  -t ghcr.io/chioma/backend:latest \
+  -t ghcr.io/huston-housing/backend:${VERSION} \
+  -t ghcr.io/huston-housing/backend:latest \
   backend/
 
 # 4. Push image to registry
-docker push ghcr.io/chioma/backend:${VERSION}
-docker push ghcr.io/chioma/backend:latest
+docker push ghcr.io/huston-housing/backend:${VERSION}
+docker push ghcr.io/huston-housing/backend:latest
 
 # 5. Create pre-deployment backup
 ./scripts/backup-pre-deploy.sh "${VERSION}"
@@ -425,17 +425,17 @@ docker push ghcr.io/chioma/backend:latest
 ./scripts/run-migrations.sh "${ENVIRONMENT}"
 
 # 7. Deploy application
-kubectl set image deployment/chioma-backend \
-  chioma-backend=ghcr.io/chioma/backend:${VERSION}
+kubectl set image deployment/huston-housing-backend \
+  huston-housing-backend=ghcr.io/huston-housing/backend:${VERSION}
 
 # 8. Wait for rollout
-kubectl rollout status deployment/chioma-backend
+kubectl rollout status deployment/huston-housing-backend
 
 # 9. Run smoke tests
 ./scripts/smoke-tests.sh "${ENVIRONMENT}"
 
 # 10. Verify health
-curl -f https://api.chioma.io/health || exit 1
+curl -f https://api.huston-housing.io/health || exit 1
 
 echo "Deployment completed successfully"
 ```
@@ -450,7 +450,7 @@ Post-deployment checks:
 
 set -euo pipefail
 
-API_URL="${1:-https://api.chioma.io}"
+API_URL="${1:-https://api.huston-housing.io}"
 
 echo "Verifying deployment at ${API_URL}"
 
@@ -500,22 +500,22 @@ For zero-downtime deployments:
 kubectl apply -f k8s/deployment-green.yaml
 
 # Wait for green to be ready
-kubectl wait --for=condition=available deployment/chioma-backend-green
+kubectl wait --for=condition=available deployment/huston-housing-backend-green
 
 # Run smoke tests on green
 ./scripts/smoke-tests.sh green
 
 # Switch traffic to green
-kubectl patch service chioma-backend -p '{"spec":{"selector":{"version":"green"}}}'
+kubectl patch service huston-housing-backend -p '{"spec":{"selector":{"version":"green"}}}'
 
 # Monitor for issues
 sleep 300
 
 # If successful, scale down blue
-kubectl scale deployment/chioma-backend-blue --replicas=0
+kubectl scale deployment/huston-housing-backend-blue --replicas=0
 
 # If issues, rollback to blue
-# kubectl patch service chioma-backend -p '{"spec":{"selector":{"version":"blue"}}}'
+# kubectl patch service huston-housing-backend -p '{"spec":{"selector":{"version":"blue"}}}'
 ```
 
 ---
@@ -551,11 +551,11 @@ echo "Reason: ${REASON}"
 ./scripts/notify-team.sh "ROLLBACK: Reverting to v${PREVIOUS_VERSION}. Reason: ${REASON}"
 
 # 2. Deploy previous version
-kubectl set image deployment/chioma-backend \
-  chioma-backend=ghcr.io/chioma/backend:${PREVIOUS_VERSION}
+kubectl set image deployment/huston-housing-backend \
+  huston-housing-backend=ghcr.io/huston-housing/backend:${PREVIOUS_VERSION}
 
 # 3. Wait for rollout
-kubectl rollout status deployment/chioma-backend
+kubectl rollout status deployment/huston-housing-backend
 
 # 4. Rollback database migration if needed
 read -p "Rollback database migration? (y/n) " -n 1 -r
@@ -565,14 +565,14 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
 fi
 
 # 5. Verify health
-curl -f https://api.chioma.io/health || exit 1
+curl -f https://api.huston-housing.io/health || exit 1
 
 # 6. Run smoke tests
 ./scripts/smoke-tests.sh production
 
 # 7. Monitor metrics
 echo "Monitor dashboards for 15 minutes"
-echo "Grafana: https://grafana.chioma.io"
+echo "Grafana: https://grafana.huston-housing.io"
 
 # 8. Document rollback
 cat > "rollback-$(date +%Y%m%d-%H%M%S).md" <<EOF
@@ -644,7 +644,7 @@ For feature-specific issues, use feature flags:
 await this.featureFlagService.disable('new-feature');
 
 // Or via API
-curl -X POST https://api.chioma.io/admin/feature-flags/new-feature/disable \
+curl -X POST https://api.huston-housing.io/admin/feature-flags/new-feature/disable \
   -H "Authorization: Bearer ${ADMIN_TOKEN}"
 ```
 
@@ -698,7 +698,7 @@ Template for deployment start:
 
 **Status:** In Progress
 **Started:** 10:00 AM UTC
-**Dashboard:** https://grafana.chioma.io/deployment
+**Dashboard:** https://grafana.huston-housing.io/deployment
 
 **Progress:**
 ✅ Pre-deployment backup completed
@@ -768,7 +768,7 @@ Subject: New Features and Improvements - March 2024
 
 Hi [Name],
 
-We're excited to announce new features and improvements to Chioma!
+We're excited to announce new features and improvements to Houston Housing!
 
 **What's New**
 
@@ -789,11 +789,11 @@ The new features are available now. Simply log in to your account to start using
 
 **Need Help?**
 
-Our support team is here to help. Contact us at support@chioma.io or visit our help center.
+Our support team is here to help. Contact us at support@huston-housing.io or visit our help center.
 
-Thank you for using Chioma!
+Thank you for using Houston Housing!
 
-The Chioma Team
+The Houston Housing Team
 ```
 
 ---
@@ -882,10 +882,10 @@ Diagnostics:
 
 ```bash
 # Check deployment status
-kubectl rollout status deployment/chioma-backend
+kubectl rollout status deployment/huston-housing-backend
 
 # Check pod logs
-kubectl logs -l app=chioma-backend --tail=100
+kubectl logs -l app=huston-housing-backend --tail=100
 
 # Check events
 kubectl get events --sort-by='.lastTimestamp'
@@ -946,7 +946,7 @@ Diagnostics:
 curl http://localhost:9090/api/v1/query?query='rate(http_requests_total{status=~"5.."}[5m])'
 
 # Check recent errors
-kubectl logs -l app=chioma-backend --tail=100 | grep ERROR
+kubectl logs -l app=huston-housing-backend --tail=100 | grep ERROR
 
 # Check Sentry
 # Visit Sentry dashboard
@@ -1107,15 +1107,15 @@ jobs:
       - name: Build Docker image
         run: |
           docker build -f backend/Dockerfile.production \
-            -t ghcr.io/chioma/backend:${{ github.ref_name }} \
-            -t ghcr.io/chioma/backend:latest \
+            -t ghcr.io/huston-housing/backend:${{ github.ref_name }} \
+            -t ghcr.io/huston-housing/backend:latest \
             backend/
 
       - name: Push Docker image
         run: |
           echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-          docker push ghcr.io/chioma/backend:${{ github.ref_name }}
-          docker push ghcr.io/chioma/backend:latest
+          docker push ghcr.io/huston-housing/backend:${{ github.ref_name }}
+          docker push ghcr.io/huston-housing/backend:latest
 
       - name: Create release notes
         run: |
@@ -1167,8 +1167,8 @@ for i in {1..30}; do
         echo "Initiating automatic rollback"
 
         # Rollback
-        kubectl set image deployment/chioma-backend \
-          chioma-backend=ghcr.io/chioma/backend:${PREVIOUS_VERSION}
+        kubectl set image deployment/huston-housing-backend \
+          huston-housing-backend=ghcr.io/huston-housing/backend:${PREVIOUS_VERSION}
 
         # Notify team
         curl -X POST ${SLACK_WEBHOOK} \

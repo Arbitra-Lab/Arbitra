@@ -2,13 +2,13 @@
 
 ## Support Procedures
 
-- **User Support**: Users contact via email (support@chioma.dev) or Discord (#support channel).
+- **User Support**: Users contact via email (support@huston-housing.dev) or Discord (#support channel).
 - **Internal Support**: Team uses Slack channels (#backend-support, #frontend-support).
 - **Triage**: Support Lead reviews and assigns to relevant team member within 4 hours.
 
 ## Support Channels
 
-- Email: support@chioma.dev
+- Email: support@huston-housing.dev
 - Discord: #support channel
 - GitHub Issues: For bug reports and feature requests
 - Internal: Slack for team communication
@@ -55,7 +55,7 @@
 
 ## Status Page
 
-- **URL**: status.chioma.dev
+- **URL**: status.huston-housing.dev
 - **Updates**: Automated via incident response process.
 - **Components**: API, Database, Frontend, Blockchain.
 

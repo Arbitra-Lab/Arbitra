@@ -278,7 +278,7 @@ REINDEX INDEX IDX_users_wallet_address;
 REINDEX TABLE users;
 
 -- Reindex entire database (during maintenance window)
-REINDEX DATABASE chioma_db;
+REINDEX DATABASE huston-housing_db;
 ```
 
 ## Performance Testing

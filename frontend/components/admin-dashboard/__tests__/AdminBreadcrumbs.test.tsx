@@ -4,7 +4,7 @@ import AdminBreadcrumbs from '../AdminBreadcrumbs';
 
 describe('AdminBreadcrumbs', () => {
   it('renders breadcrumbs for a known admin path', () => {
-    render(<AdminBreadcrumbs pathname="/admin/audit-logs" />);
+    render(<AdminBreadcrumbs pathname="/admin/disputes" />);
 
     const homeLink = screen.getByTitle('Admin Home');
     expect(homeLink).toBeInTheDocument();
@@ -12,21 +12,14 @@ describe('AdminBreadcrumbs', () => {
 
     expect(screen.getByText('Admin')).toBeInTheDocument();
 
-    expect(screen.getByText('Audit Logs')).toBeInTheDocument();
+    expect(screen.getByText('Disputes Dashboard')).toBeInTheDocument();
   });
 
-  it('renders breadcrumbs for analytics path', () => {
-    render(<AdminBreadcrumbs pathname="/admin/analytics" />);
+  it('renders breadcrumbs for arbiters path', () => {
+    render(<AdminBreadcrumbs pathname="/admin/arbiters" />);
 
     expect(screen.getByText('Admin')).toBeInTheDocument();
-    expect(screen.getByText('System Analytics')).toBeInTheDocument();
-  });
-
-  it('renders breadcrumbs for security path', () => {
-    render(<AdminBreadcrumbs pathname="/admin/security" />);
-
-    expect(screen.getByText('Admin')).toBeInTheDocument();
-    expect(screen.getByText('Security Dashboard')).toBeInTheDocument();
+    expect(screen.getByText('Arbiters Management')).toBeInTheDocument();
   });
 
   it('renders admin-only breadcrumbs when pathname is /admin', () => {
@@ -42,14 +35,14 @@ describe('AdminBreadcrumbs', () => {
   });
 
   it('has correct aria-label on nav element', () => {
-    render(<AdminBreadcrumbs pathname="/admin/roles" />);
+    render(<AdminBreadcrumbs pathname="/admin/disputes" />);
 
     const nav = screen.getByLabelText('Breadcrumb');
     expect(nav).toBeInTheDocument();
   });
 
   it('renders the Home icon link', () => {
-    render(<AdminBreadcrumbs pathname="/admin/kyc" />);
+    render(<AdminBreadcrumbs pathname="/admin/arbiters" />);
 
     const homeLink = screen.getByTitle('Admin Home');
     expect(homeLink).toHaveAttribute('href', '/admin');

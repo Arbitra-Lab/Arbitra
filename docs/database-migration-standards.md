@@ -1,6 +1,6 @@
 # Database Migration Standards
 
-Standards, procedures, and best practices for creating, testing, deploying, and rolling back database migrations in the Chioma platform.
+Standards, procedures, and best practices for creating, testing, deploying, and rolling back database migrations in the Arbitra platform.
 
 ---
 
@@ -30,7 +30,7 @@ Database migrations are versioned, incremental scripts that evolve the database 
 - Safe, reversible updates via rollback
 - Coordination across team members without manual SQL execution
 
-Chioma uses **TypeORM migrations** backed by raw SQL files in `backend/src/database/migrations/`. The TypeORM CLI generates and runs migration files; raw SQL files are provided for DBA review and manual recovery.
+Arbitra uses **TypeORM migrations** backed by raw SQL files in `backend/src/database/migrations/`. The TypeORM CLI generates and runs migration files; raw SQL files are provided for DBA review and manual recovery.
 
 **Migration flow:**
 
@@ -292,11 +292,11 @@ npm run migration:show     # Confirm state
 npm run migration:run
 
 # Verify the schema
-psql -d chioma_db -c "\d properties"   # Inspect table structure
+psql -d huston-housing_db -c "\d properties"   # Inspect table structure
 
 # Test the down migration
 npm run migration:revert
-psql -d chioma_db -c "\d properties"   # Confirm rollback
+psql -d huston-housing_db -c "\d properties"   # Confirm rollback
 
 # Re-apply
 npm run migration:run
@@ -359,7 +359,7 @@ npm run migration:show
 
 ```bash
 # 1. Create a backup snapshot
-pg_dump -Fc chioma_production > backup_$(date +%Y%m%d_%H%M%S).dump
+pg_dump -Fc huston-housing_production > backup_$(date +%Y%m%d_%H%M%S).dump
 
 # 2. Revert the migration
 DATABASE_URL=$PROD_DATABASE_URL npm run migration:revert
@@ -368,7 +368,7 @@ DATABASE_URL=$PROD_DATABASE_URL npm run migration:revert
 # (via your deployment tooling — Kubernetes rollout, ECS task revision, etc.)
 
 # 4. Verify application health
-curl https://api.chioma.app/health
+curl https://api.huston-housing.app/health
 ```
 
 ### 6.4 Emergency Manual Rollback
@@ -425,7 +425,7 @@ ssh prod-server "cd /app/backend && npm run migration:run"
 npm run migration:show
 
 # Run health check
-curl https://api.chioma.app/health/detailed
+curl https://api.huston-housing.app/health/detailed
 
 # Monitor error rates in Sentry for 10 minutes post-deploy
 ```

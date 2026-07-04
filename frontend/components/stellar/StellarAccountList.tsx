@@ -12,7 +12,7 @@ interface StellarAccountListProps {
 }
 
 const TYPE_COLORS: Record<string, string> = {
-  USER: 'bg-blue-500/10 text-blue-400',
+  USER: 'bg-brand-accent/10 text-brand-accent',
   ESCROW: 'bg-purple-500/10 text-purple-400',
   FEE: 'bg-amber-500/10 text-amber-400',
   PLATFORM: 'bg-emerald-500/10 text-emerald-400',
@@ -61,7 +61,7 @@ export function StellarAccountList({
               aria-current={isSelected ? 'true' : undefined}
               className={`w-full text-left px-4 py-3.5 rounded-xl border transition-all ${
                 isSelected
-                  ? 'bg-blue-600/20 border-blue-500/40'
+                  ? 'bg-brand-accent/20 border-brand-accent/40'
                   : 'bg-white/5 border-white/10 hover:bg-white/10'
               }`}
             >

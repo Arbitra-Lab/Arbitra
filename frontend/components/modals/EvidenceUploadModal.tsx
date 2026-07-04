@@ -118,7 +118,7 @@ export const EvidenceUploadModal: React.FC<EvidenceUploadModalProps> = ({
             type="submit"
             form="evidence-upload-form"
             disabled={isSubmitting || files.length === 0}
-            className="px-6 py-2.5 rounded-xl font-bold text-white bg-brand-blue hover:bg-blue-700 shadow-md transition-colors disabled:opacity-50 flex items-center gap-2"
+            className="px-6 py-2.5 rounded-xl font-bold text-white bg-brand-blue hover:bg-brand-blue-dark shadow-md transition-colors disabled:opacity-50 flex items-center gap-2"
           >
             {isSubmitting ? (
               <>
@@ -142,9 +142,9 @@ export const EvidenceUploadModal: React.FC<EvidenceUploadModalProps> = ({
         className="space-y-6"
       >
         {/* Info Banner */}
-        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/30 rounded-2xl p-4 flex items-start gap-3">
-          <Info className="text-blue-600 shrink-0 mt-0.5" size={18} />
-          <p className="text-sm text-blue-900 dark:text-blue-100">
+        <div className="bg-brand-accent/10 dark:bg-brand-accent/20 border border-brand-accent/20 dark:border-brand-accent/30 rounded-2xl p-4 flex items-start gap-3">
+          <Info className="text-brand-accent shrink-0 mt-0.5" size={18} />
+          <p className="text-sm text-neutral-900 dark:text-neutral-100">
             Upload photos, receipts, or documents that support your case. All
             parties will be able to view submitted evidence.
           </p>

@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Chioma backend uses PostgreSQL with TypeORM and the `SnakeNamingStrategy`.
+The Houston Housing backend uses PostgreSQL with TypeORM and the `SnakeNamingStrategy`.
 Runtime entity discovery comes from `backend/src/modules/**/*.entity.ts`, while
 CLI migrations are loaded from both `backend/src/migrations/` and
 `backend/migrations/` through `backend/src/database/data-source.ts`.

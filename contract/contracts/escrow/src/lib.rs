@@ -7,6 +7,7 @@
 //! Supports dispute resolution with arbiter involvement.
 
 pub mod access;
+pub mod case;
 pub mod dispute;
 pub mod errors;
 pub mod escrow_impl;
@@ -27,6 +28,7 @@ mod tests_rbac;
 
 // Re-export public APIs
 pub use access::AccessControl;
+pub use case::{Case, CaseStatus};
 pub use dispute::DisputeHandler;
 pub use errors::EscrowError;
 pub use escrow_impl::EscrowContract;

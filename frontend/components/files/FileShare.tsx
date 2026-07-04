@@ -79,7 +79,7 @@ export const FileShare: React.FC<Props> = ({ file, onClose }) => {
                   </div>
                   <button
                     onClick={copyToClipboard}
-                    className="p-3 bg-brand-blue hover:bg-blue-700 text-white rounded-2xl transition-all shadow-lg shadow-blue-500/20 active:scale-95 flex items-center justify-center shrink-0"
+                    className="p-3 bg-brand-blue hover:bg-brand-blue-dark text-white rounded-2xl transition-all shadow-lg shadow-brand-blue/20 active:scale-95 flex items-center justify-center shrink-0"
                   >
                     {copied ? <Check size={20} /> : <Copy size={20} />}
                   </button>
@@ -88,7 +88,7 @@ export const FileShare: React.FC<Props> = ({ file, onClose }) => {
                 <button
                   onClick={generateLink}
                   disabled={loading}
-                  className="w-full py-4 bg-brand-blue hover:bg-blue-700 text-white font-black rounded-2xl transition-all shadow-xl shadow-blue-500/20 active:scale-95 flex items-center justify-center gap-2"
+                  className="w-full py-4 bg-brand-blue hover:bg-brand-blue-dark text-white font-black rounded-2xl transition-all shadow-xl shadow-brand-blue/20 active:scale-95 flex items-center justify-center gap-2"
                 >
                   {loading ? 'Generating...' : 'Generate Share Link'}
                 </button>

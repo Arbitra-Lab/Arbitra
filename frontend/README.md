@@ -69,7 +69,7 @@ The frontend now includes a centralized, typed error handling system with route 
 To connect a real monitoring provider (Sentry, Datadog, etc.), set a browser reporter function:
 
 ```ts
-window.__CHIOMA_ERROR_REPORTER__ = (payload) => {
+window.__HUSTON_HOUSING_ERROR_REPORTER__ = (payload) => {
   // Forward payload to your monitoring endpoint
 };
 ```

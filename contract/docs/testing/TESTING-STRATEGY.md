@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Chioma contracts protect housing payments, escrow decisions, property records, and user profile data. The test strategy focuses on correctness first, then regression protection, gas-conscious design, and reproducible release checks.
+Houston Housing contracts protect housing payments, escrow decisions, property records, and user profile data. The test strategy focuses on correctness first, then regression protection, gas-conscious design, and reproducible release checks.
 
 ## Test Pyramid
 

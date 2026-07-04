@@ -90,7 +90,7 @@ export class DeveloperController {
     return {
       id: key.id,
       name: key.name,
-      prefix: key.keyPrefix ?? 'chioma_sk_...',
+      prefix: key.keyPrefix ?? 'huston-housing_sk_...',
       lastUsedAt: key.lastUsedAt,
       createdAt: key.createdAt,
       expiresAt: key.expiresAt,

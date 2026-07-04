@@ -1,6 +1,6 @@
 # API Integration Procedures
 
-This document defines procedures for integrating third-party APIs and webhooks into the Chioma backend, covering integration patterns, testing, error handling, retry logic, and monitoring.
+This document defines procedures for integrating third-party APIs and webhooks into the Houston Housing backend, covering integration patterns, testing, error handling, retry logic, and monitoring.
 
 Use this together with:
 
@@ -63,7 +63,7 @@ export class ThirdPartyApiClient {
       timeout: 30000,
       headers: {
         'Content-Type': 'application/json',
-        'User-Agent': 'Chioma/1.0',
+        'User-Agent': 'Houston Housing/1.0',
       },
     });
 
@@ -726,7 +726,7 @@ import { Pact } from '@pact-foundation/pact';
 
 describe('ThirdParty API Contract', () => {
   const provider = new Pact({
-    consumer: 'Chioma',
+    consumer: 'Houston Housing',
     provider: 'ThirdPartyAPI',
   });
 
@@ -1090,7 +1090,7 @@ Diagnostics:
 curl http://localhost:9090/api/v1/query?query='rate(api_integration_requests_total[1m])'
 
 # Check Retry-After headers in logs
-grep "Retry-After" /var/log/chioma/integration.log
+grep "Retry-After" /var/log/huston-housing/integration.log
 ```
 
 Solutions:
@@ -1140,7 +1140,7 @@ Diagnostics:
 curl http://localhost:5000/admin/queues
 
 # Check webhook logs
-docker logs chioma-backend | grep "webhook"
+docker logs huston-housing-backend | grep "webhook"
 
 # Check failed jobs
 # Visit Bull Board UI

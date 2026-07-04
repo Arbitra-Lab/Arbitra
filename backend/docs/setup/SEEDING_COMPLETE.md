@@ -31,10 +31,10 @@ All 4 demo users have been successfully created:
 
 | Role     | Email                | Password           | Status |
 | -------- | -------------------- | ------------------ | ------ |
-| Admin    | admin@chioma.demo    | Admin@Demo2024!    | ✅     |
-| Agent    | agent@chioma.demo    | Agent@Demo2024!    | ✅     |
-| Landlord | landlord@chioma.demo | Landlord@Demo2024! | ✅     |
-| Tenant   | tenant@chioma.demo   | Tenant@Demo2024!   | ✅     |
+| Admin    | admin@huston-housing.demo    | Admin@Demo2024!    | ✅     |
+| Agent    | agent@huston-housing.demo    | Agent@Demo2024!    | ✅     |
+| Landlord | landlord@huston-housing.demo | Landlord@Demo2024! | ✅     |
+| Tenant   | tenant@huston-housing.demo   | Tenant@Demo2024!   | ✅     |
 
 ## User Details
 

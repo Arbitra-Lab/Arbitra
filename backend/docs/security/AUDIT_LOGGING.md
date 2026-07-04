@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document defines audit logging standards for Chioma — what events to log,
+This document defines audit logging standards for Houston Housing — what events to log,
 the required log format, retention policies, access controls, security
 requirements, and how to analyze and troubleshoot audit logs.
 
@@ -33,7 +33,7 @@ Use this document alongside:
 
 ## Audit Standards
 
-Chioma's audit logging follows these principles:
+Houston Housing's audit logging follows these principles:
 
 - **Completeness** — every privileged action and sensitive data access is logged
 - **Integrity** — audit logs must not be modifiable by the actors they record
@@ -235,7 +235,7 @@ filter as the starting point for all audit log queries.
 Example Loki query:
 
 ```logql
-{app="chioma-backend"} | json | level="audit" | event=~"auth\\.login.*"
+{app="huston-housing-backend"} | json | level="audit" | event=~"auth\\.login.*"
 ```
 
 ---

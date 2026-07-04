@@ -55,7 +55,7 @@ describe('KYC (e2e)', () => {
     });
 
     const config = new DocumentBuilder()
-      .setTitle('Chioma API')
+      .setTitle('Houston Housing API')
       .setVersion('1.0')
       .addBearerAuth(
         { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },

@@ -111,7 +111,7 @@ export const FileDetail: React.FC<Props> = ({
           <div className="grid grid-cols-2 gap-4 mt-8">
             <button
               onClick={() => onDownload(file)}
-              className="flex items-center justify-center gap-2 py-3 bg-brand-blue hover:bg-blue-700 text-white font-bold rounded-2xl transition-all shadow-lg shadow-blue-500/20 active:scale-95"
+              className="flex items-center justify-center gap-2 py-3 bg-brand-blue hover:bg-brand-blue-dark text-white font-bold rounded-2xl transition-all shadow-lg shadow-brand-blue/20 active:scale-95"
             >
               <Download size={18} />
               Download

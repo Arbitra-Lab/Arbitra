@@ -27,9 +27,9 @@ describe('ErrorNotificationService', () => {
 
   const config: Record<string, string> = {
     ERROR_NOTIFICATION_ENABLED: 'true',
-    ALERT_ONCALL_EMAIL: 'oncall@chioma.app',
-    ALERT_ESCALATION_EMAIL: 'platform@chioma.app',
-    ALERT_MANAGEMENT_EMAIL: 'leads@chioma.app',
+    ALERT_ONCALL_EMAIL: 'oncall@huston-housing.app',
+    ALERT_ESCALATION_EMAIL: 'platform@huston-housing.app',
+    ALERT_MANAGEMENT_EMAIL: 'leads@huston-housing.app',
     SLACK_ALERT_WEBHOOK_URL: 'https://hooks.slack.com/services/test',
   };
 
@@ -64,7 +64,7 @@ describe('ErrorNotificationService', () => {
     await service.notifyAlert(baseAlert, EscalationTier.ONCALL);
 
     expect(emailService.sendAlertEmail).toHaveBeenCalledWith(
-      'oncall@chioma.app',
+      'oncall@huston-housing.app',
       expect.stringContaining('HighErrorRate'),
       expect.objectContaining({ message: expect.any(String) }),
     );
@@ -75,7 +75,7 @@ describe('ErrorNotificationService', () => {
     await service.notifyAlert(baseAlert, EscalationTier.TEAM);
 
     expect(emailService.sendAlertEmail).toHaveBeenCalledWith(
-      'platform@chioma.app',
+      'platform@huston-housing.app',
       expect.stringContaining('Escalated'),
       expect.any(Object),
     );
@@ -109,7 +109,7 @@ describe('ErrorNotificationService', () => {
     });
 
     expect(emailService.sendAlertEmail).toHaveBeenCalledWith(
-      'oncall@chioma.app',
+      'oncall@huston-housing.app',
       expect.stringContaining('ERROR'),
       expect.any(Object),
     );

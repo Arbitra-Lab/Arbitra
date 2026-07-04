@@ -1,6 +1,6 @@
-# Chioma Contract Error Codes Reference
+# Houston Housing Contract Error Codes Reference
 
-This document provides a comprehensive reference of error codes used across the Chioma housing protocol smart contracts.
+This document provides a comprehensive reference of error codes used across the Houston Housing housing protocol smart contracts.
 
 ## Overview
 
@@ -155,9 +155,9 @@ _Location: `contract/contracts/dispute_resolution/src/errors.rs`_
 
 ---
 
-## 8. Chioma Main Contract Errors (`RentalError`)
+## 8. Houston Housing Main Contract Errors (`RentalError`)
 
-_Location: `contract/contracts/chioma/src/errors.rs`_
+_Location: `contract/contracts/huston-housing/src/errors.rs`_
 
 | Code | Name                         | Meaning                                    | Potential Solution                 |
 | ---- | ---------------------------- | ------------------------------------------ | ---------------------------------- |

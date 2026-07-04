@@ -172,9 +172,9 @@ export class DisputeBlockchainService {
 
       dispute.status = DisputeStatus.RESOLVED;
       dispute.blockchainOutcome =
-        outcome === DisputeOutcome.FAVOR_LANDLORD
-          ? 'FavorLandlord'
-          : 'FavorTenant';
+        outcome === DisputeOutcome.FAVOR_CLAIMANT
+          ? 'FavorClaimant'
+          : 'FavorRespondent';
       dispute.blockchainResolvedAt = Date.now();
       dispute.resolvedAt = new Date();
       dispute.transactionHash = txHash;
@@ -216,8 +216,8 @@ export class DisputeBlockchainService {
       throw new Error('Dispute not found on-chain');
     }
 
-    dispute.votesFavorLandlord = chainDispute.votesFavorLandlord;
-    dispute.votesFavorTenant = chainDispute.votesFavorTenant;
+    dispute.votesFavorLandlord = chainDispute.votesFavorClaimant;
+    dispute.votesFavorTenant = chainDispute.votesFavorRespondent;
     dispute.blockchainResolvedAt = chainDispute.resolvedAt || undefined;
     dispute.blockchainSyncedAt = new Date();
 
@@ -228,9 +228,9 @@ export class DisputeBlockchainService {
     ) {
       dispute.status = DisputeStatus.RESOLVED;
       dispute.blockchainOutcome =
-        chainDispute.outcome === DisputeOutcome.FAVOR_LANDLORD
-          ? 'FavorLandlord'
-          : 'FavorTenant';
+        chainDispute.outcome === DisputeOutcome.FAVOR_CLAIMANT
+          ? 'FavorClaimant'
+          : 'FavorRespondent';
       dispute.resolvedAt = new Date(chainDispute.resolvedAt * 1000);
     }
 

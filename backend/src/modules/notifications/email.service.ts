@@ -37,7 +37,7 @@ export class EmailService {
     const mailOptions = {
       from: this.configService.get<string>('EMAIL_FROM'),
       to: email,
-      subject: 'Verify your Chioma App Email',
+      subject: 'Verify your Houston Housing App Email',
       html: `
         <h1>Email Verification</h1>
         <p>Thank you for registering. Please verify your email by clicking the link below:</p>

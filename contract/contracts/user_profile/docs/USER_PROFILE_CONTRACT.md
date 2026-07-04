@@ -5,7 +5,7 @@ The `UserProfileContract` is a Soroban-based smart contract for managing user pr
 ## Contract Overview
 
 ### Purpose
-The contract serves as a decentralized identity and profile registry for the Chioma ecosystem. It maintains a mapping of Stellar addresses to profile metadata, including account types (Tenant, Landlord, Agent) and verification status.
+The contract serves as a decentralized identity and profile registry for the Houston Housing ecosystem. It maintains a mapping of Stellar addresses to profile metadata, including account types (Tenant, Landlord, Agent) and verification status.
 
 ### Key Features
 - **SEP-29 Compliance**: Follows the Stellar Ecosystem Proposal for on-chain profiles.

@@ -207,14 +207,14 @@ export const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
           )}
 
           {/* Info Banner */}
-          <div className="flex items-start gap-3 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30 rounded-xl">
+          <div className="flex items-start gap-3 p-4 bg-brand-accent/10 dark:bg-brand-accent/20 border border-brand-accent/20 dark:border-brand-accent/30 rounded-xl">
             <AlertCircle
               size={20}
-              className="text-blue-600 dark:text-blue-400 shrink-0 mt-0.5"
+              className="text-brand-accent dark:text-brand-accent shrink-0 mt-0.5"
             />
-            <div className="text-sm text-blue-900 dark:text-blue-100">
+            <div className="text-sm text-brand-accent dark:text-brand-accent">
               <p className="font-semibold mb-1">Supported file types:</p>
-              <p className="text-blue-700 dark:text-blue-300">
+              <p className="text-brand-accent dark:text-brand-accent">
                 Images (JPG, PNG, GIF), PDF, Word documents, Excel spreadsheets,
                 and text files. Maximum file size: 50MB per file.
               </p>
@@ -246,7 +246,7 @@ export const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
             <button
               onClick={handleUpload}
               disabled={selectedFiles.length === 0 || isUploading}
-              className="px-6 py-2.5 rounded-xl font-bold text-white bg-brand-blue hover:bg-blue-700 shadow-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className="px-6 py-2.5 rounded-xl font-bold text-white bg-brand-blue hover:bg-brand-blue-dark shadow-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               {isUploading ? (
                 <>

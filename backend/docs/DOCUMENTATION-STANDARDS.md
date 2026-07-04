@@ -1,6 +1,6 @@
 # Documentation Standards
 
-This document defines practical documentation standards for the Chioma backend repository, covering READMEs, code comments, API documentation, and architecture documentation. It also provides templates, recommended tools, and a checklist.
+This document defines practical documentation standards for the Houston Housing backend repository, covering READMEs, code comments, API documentation, and architecture documentation. It also provides templates, recommended tools, and a checklist.
 
 ---
 

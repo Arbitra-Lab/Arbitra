@@ -1,6 +1,6 @@
 # Agent Registry Contract Documentation
 
-The Agent Registry contract is a Soroban smart contract designed to manage and verify agents within the Chioma ecosystem. It provides a decentralized way to track agent reputation, verify their identity, and link them to property transactions.
+The Agent Registry contract is a Soroban smart contract designed to manage and verify agents within the Houston Housing ecosystem. It provides a decentralized way to track agent reputation, verify their identity, and link them to property transactions.
 
 ## Purpose
 
@@ -99,7 +99,7 @@ Returns the total number of registered agents.
 ### Transaction & Rating
 
 #### `register_transaction(env: Env, transaction_id: String, agent: Address, parties: Vec<Address>) -> Result<(), AgentError>`
-Registers a transaction involving an agent. This is typically called by other Chioma contracts (e.g., Rent Agreement).
+Registers a transaction involving an agent. This is typically called by other Houston Housing contracts (e.g., Rent Agreement).
 - **Errors**: `NotInitialized`, `AgentNotFound`.
 
 #### `complete_transaction(env: Env, transaction_id: String, agent: Address) -> Result<(), AgentError>`

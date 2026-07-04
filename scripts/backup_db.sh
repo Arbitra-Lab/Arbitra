@@ -1,25 +1,25 @@
 #!/bin/bash
 
 # ==============================================================================
-# Database Backup Script for Chioma (PostgreSQL)
+# Database Backup Script for Houston Housing (PostgreSQL)
 # ==============================================================================
-# This script creates a compressed backup of the chioma_db database running
-# inside the 'chioma_db' Docker container. It automatically manages retention
+# This script creates a compressed backup of the huston-housing_db database running
+# inside the 'huston-housing_db' Docker container. It automatically manages retention
 # by deleting backups older than 7 days.
 #
 # CRON JOB SETUP:
 # To run this script automatically every day at 2:00 AM, add the following
 # line to your crontab (edit with `crontab -e`):
 #
-# 0 2 * * * /absolute/path/to/chioma/scripts/backup_db.sh > /absolute/path/to/chioma/backups/backup.log 2>&1
+# 0 2 * * * /absolute/path/to/huston-housing/scripts/backup_db.sh > /absolute/path/to/huston-housing/backups/backup.log 2>&1
 # ==============================================================================
 
 set -e # Exit immediately if a command exits with a non-zero status
 
 # Configuration
-CONTAINER_NAME="chioma_db"
+CONTAINER_NAME="huston-housing_db"
 DB_USER="postgres_cax"
-DB_NAME="chioma_db"
+DB_NAME="huston-housing_db"
 DAYS_TO_KEEP=7
 
 # Paths
@@ -29,7 +29,7 @@ BACKUP_DIR="${PROJECT_ROOT}/backups"
 
 # Timestamp for the backup file (YYYY-MM-DD_HHMMSS)
 TIMESTAMP=$(date +"%Y-%m-%d_%H%M%S")
-BACKUP_FILE="${BACKUP_DIR}/chioma_db_${TIMESTAMP}.sql.gz"
+BACKUP_FILE="${BACKUP_DIR}/huston-housing_db_${TIMESTAMP}.sql.gz"
 
 echo "========================================"
 echo "Starting Database Backup: $(date)"
@@ -63,7 +63,7 @@ fi
 # 4. Clean up old backups
 echo "Cleaning up backups older than ${DAYS_TO_KEEP} days..."
 # Find files matching the backup pattern in the backup dir, older than X days, and delete them
-cleanup_count=$(find "$BACKUP_DIR" -maxdepth 1 -name "chioma_db_*.sql.gz" -type f -mtime +${DAYS_TO_KEEP} -delete -print | wc -l)
+cleanup_count=$(find "$BACKUP_DIR" -maxdepth 1 -name "huston-housing_db_*.sql.gz" -type f -mtime +${DAYS_TO_KEEP} -delete -print | wc -l)
 echo "Deleted ${cleanup_count} old backup file(s)."
 
 echo "========================================"

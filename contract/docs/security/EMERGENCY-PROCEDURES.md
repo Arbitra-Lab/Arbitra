@@ -8,11 +8,11 @@
 
 ## Introduction
 
-This document outlines the emergency procedures for the Chioma Housing Protocol. It provides clear, actionable steps for managing incidents, pausing contracts, and recovering from failures.
+This document outlines the emergency procedures for the Houston Housing Housing Protocol. It provides clear, actionable steps for managing incidents, pausing contracts, and recovering from failures.
 
 ## 1. Pause Mechanism
 
-The Chioma protocol includes a global pause mechanism to halt sensitive operations during an emergency.
+The Houston Housing protocol includes a global pause mechanism to halt sensitive operations during an emergency.
 
 ### 1.1 How to Pause
 The contract administrator can pause the contract using the `pause` function.
@@ -62,7 +62,7 @@ When the contract is paused, the following operations are blocked:
 
 ## 2. Circuit Breaker Implementation
 
-Chioma implements a rate-limiting system that acts as a circuit breaker to prevent spam and Denial of Service (DoS) attacks.
+Houston Housing implements a rate-limiting system that acts as a circuit breaker to prevent spam and Denial of Service (DoS) attacks.
 
 ### 2.1 Rate Limiting Parameters
 - **Per-Block limit:** Maximum calls allowed per ledger.
@@ -85,7 +85,7 @@ If contract state becomes inconsistent:
 4. **Deploy** a fix if necessary using the versioning system.
 
 ### 3.2 Upgrade/Migration
-Chioma supports contract versioning. In case of a critical bug:
+Houston Housing supports contract versioning. In case of a critical bug:
 1. Implement the fix in a new contract version.
 2. Record the new version using `record_version`.
 3. Update the status of the old version to `Deprecated` or `Revoked` using `update_version_status`.

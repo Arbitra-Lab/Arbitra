@@ -29,7 +29,7 @@ export default function RoleSelectionModal({
       label: 'User',
       description: 'I rent properties and pay rent',
       icon: Home,
-      color: 'from-blue-500 to-cyan-500',
+      color: 'from-brand-accent to-cyan-500',
     },
     {
       id: 'landlord',
@@ -83,9 +83,9 @@ export default function RoleSelectionModal({
       <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl p-8 max-w-2xl w-full border border-white/10 shadow-2xl">
         <div className="text-center mb-8">
           <h2 className="text-3xl font-bold text-white mb-2">
-            Welcome to Chioma
+            Welcome to Arbitra
           </h2>
-          <p className="text-blue-200/60">Select your role to get started</p>
+          <p className="text-neutral-200/60">Select your role to get started</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -100,7 +100,7 @@ export default function RoleSelectionModal({
                 disabled={isLoading}
                 className={`relative p-6 rounded-xl border-2 transition-all duration-300 group ${
                   isSelected
-                    ? 'border-blue-500 bg-blue-500/10'
+                    ? 'border-brand-accent bg-brand-accent/10'
                     : 'border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10'
                 } ${isLoading && !isSelected ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
@@ -115,7 +115,7 @@ export default function RoleSelectionModal({
                     className={`w-12 h-12 rounded-lg flex items-center justify-center mb-4 transition-all ${
                       isSelected
                         ? `bg-gradient-to-br ${role.color} text-white`
-                        : 'bg-white/10 text-blue-300 group-hover:bg-white/20'
+                        : 'bg-white/10 text-brand-accent group-hover:bg-white/20'
                     }`}
                   >
                     <Icon size={24} />
@@ -124,14 +124,14 @@ export default function RoleSelectionModal({
                   <h3 className="font-semibold text-white mb-1 text-lg">
                     {role.label}
                   </h3>
-                  <p className="text-sm text-blue-200/60 leading-relaxed">
+                  <p className="text-sm text-neutral-200/60 leading-relaxed">
                     {role.description}
                   </p>
 
                   {isSelected && isLoading && (
                     <div className="mt-4 flex items-center justify-center gap-2">
-                      <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
-                      <span className="text-xs text-blue-300">
+                      <div className="w-2 h-2 bg-brand-accent rounded-full animate-pulse" />
+                      <span className="text-xs text-brand-accent">
                         Redirecting...
                       </span>
                     </div>
@@ -142,7 +142,7 @@ export default function RoleSelectionModal({
           })}
         </div>
 
-        <p className="text-center text-xs text-blue-200/40 mt-8">
+        <p className="text-center text-xs text-neutral-200/40 mt-8">
           You can change your role later in settings
         </p>
       </div>

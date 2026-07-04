@@ -68,7 +68,7 @@ export function MfaDeviceForm({
         <button
           type="button"
           onClick={onCancel}
-          className="p-2 text-blue-200/60 hover:text-white transition-colors"
+          className="p-2 text-neutral-200/60 hover:text-white transition-colors"
         >
           <X size={20} />
         </button>
@@ -83,7 +83,7 @@ export function MfaDeviceForm({
             {...register('name', { required: 'Device name is required' })}
             type="text"
             placeholder="e.g., My iPhone, Work Phone"
-            className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-blue-200/40 focus:outline-none focus:bg-white/10 focus:border-blue-500 transition-all"
+            className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-neutral-200/40 focus:outline-none focus:bg-white/10 focus:border-brand-accent transition-all"
             disabled={isLoading}
           />
           {errors.name && (
@@ -116,7 +116,7 @@ export function MfaDeviceForm({
                     <span>{type.icon}</span>
                     {type.label}
                   </p>
-                  <p className="text-xs text-blue-200/60 mt-1">
+                  <p className="text-xs text-neutral-200/60 mt-1">
                     {type.description}
                   </p>
                 </div>
@@ -126,8 +126,8 @@ export function MfaDeviceForm({
         </div>
 
         {selectedType === 'totp' && (
-          <div className="rounded-xl bg-blue-500/10 border border-blue-500/20 p-4">
-            <p className="text-sm text-blue-200">
+          <div className="rounded-xl bg-brand-accent/10 border border-brand-accent/20 p-4">
+            <p className="text-sm text-brand-accent">
               Download an authenticator app like Google Authenticator, Microsoft
               Authenticator, or Authy. You&apos;ll scan a QR code to set up your
               device.
@@ -136,8 +136,8 @@ export function MfaDeviceForm({
         )}
 
         {selectedType === 'sms' && (
-          <div className="rounded-xl bg-blue-500/10 border border-blue-500/20 p-4">
-            <p className="text-sm text-blue-200">
+          <div className="rounded-xl bg-brand-accent/10 border border-brand-accent/20 p-4">
+            <p className="text-sm text-brand-accent">
               You&apos;ll receive verification codes via SMS to your registered
               phone number.
             </p>
@@ -145,8 +145,8 @@ export function MfaDeviceForm({
         )}
 
         {selectedType === 'email' && (
-          <div className="rounded-xl bg-blue-500/10 border border-blue-500/20 p-4">
-            <p className="text-sm text-blue-200">
+          <div className="rounded-xl bg-brand-accent/10 border border-brand-accent/20 p-4">
+            <p className="text-sm text-brand-accent">
               You&apos;ll receive verification codes via email to your
               registered email address.
             </p>
@@ -154,8 +154,8 @@ export function MfaDeviceForm({
         )}
 
         {selectedType === 'webauthn' && (
-          <div className="rounded-xl bg-blue-500/10 border border-blue-500/20 p-4">
-            <p className="text-sm text-blue-200">
+          <div className="rounded-xl bg-brand-accent/10 border border-brand-accent/20 p-4">
+            <p className="text-sm text-brand-accent">
               Use a hardware security key like YubiKey, Titan, or Windows Hello.
             </p>
           </div>

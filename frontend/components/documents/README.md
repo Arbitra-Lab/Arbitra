@@ -1,6 +1,6 @@
 # Document Management Components
 
-A complete document management system for the Chioma rental platform with upload, viewing, and management capabilities.
+A complete document management system for the Houston Housing rental platform with upload, viewing, and management capabilities.
 
 ## Features
 
@@ -259,7 +259,7 @@ export default function DocumentsPage() {
 
 ## Styling
 
-All components use Tailwind CSS and follow the Chioma design system:
+All components use Tailwind CSS and follow the Houston Housing design system:
 
 - Brand blue: `#2563eb`
 - Rounded corners: `rounded-2xl`, `rounded-3xl`
@@ -371,4 +371,4 @@ When adding new features:
 
 ## License
 
-Part of the Chioma project - Open Source
+Part of the Houston Housing project - Open Source

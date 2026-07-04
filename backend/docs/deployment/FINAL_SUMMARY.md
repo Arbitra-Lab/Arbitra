@@ -444,7 +444,7 @@ Recovery Procedures:
 
 | Detail             | Value                        |
 | ------------------ | ---------------------------- |
-| **Project**        | Chioma Platform              |
+| **Project**        | Houston Housing Platform              |
 | **Subject**        | Database Backup and Recovery |
 | **Created**        | April 24, 2026               |
 | **Status**         | ✅ COMPLETE                  |

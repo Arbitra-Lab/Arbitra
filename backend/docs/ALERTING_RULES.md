@@ -1,6 +1,6 @@
 # Alerting Rules for Critical Errors and Performance
 
-This document describes the comprehensive alerting rules configured for the Chioma backend, covering critical errors, performance issues, and business logic failures.
+This document describes the comprehensive alerting rules configured for the Houston Housing backend, covering critical errors, performance issues, and business logic failures.
 
 ## Overview
 
@@ -60,7 +60,7 @@ The alerting system is built on:
 
 ```bash
 # Check error logs
-kubectl logs -n production -l app=chioma-backend | grep ERROR
+kubectl logs -n production -l app=huston-housing-backend | grep ERROR
 
 # Check error rate by endpoint
 curl http://prometheus:9090/api/v1/query?query='rate(http_requests_total{status=~"5.."}[5m]) by (path)'
@@ -98,13 +98,13 @@ sum(rate(exceptions_total{severity="critical"}[5m])) > 0.1
 
 ```bash
 # Check exception logs
-kubectl logs -n production -l app=chioma-backend | grep "CRITICAL"
+kubectl logs -n production -l app=huston-housing-backend | grep "CRITICAL"
 
 # Check exception rate by type
 curl http://prometheus:9090/api/v1/query?query='rate(exceptions_total{severity="critical"}[5m]) by (type)'
 
 # Check exception stack traces
-kubectl logs -n production -l app=chioma-backend | grep -A 5 "Exception"
+kubectl logs -n production -l app=huston-housing-backend | grep -A 5 "Exception"
 ```
 
 **Resolution**:
@@ -175,7 +175,7 @@ sum(rate(db_query_timeout_total[5m])) > 0.5
 
 ```bash
 # Check query timeout logs
-kubectl logs -n production -l app=chioma-backend | grep "timeout"
+kubectl logs -n production -l app=huston-housing-backend | grep "timeout"
 
 # Check slow queries
 curl http://prometheus:9090/api/v1/query?query='histogram_quantile(0.95, rate(db_query_duration_seconds_bucket[5m]))'
@@ -219,7 +219,7 @@ kubectl exec -it <pod-name> -n production -- redis-cli ping
 kubectl logs -n production -l app=redis
 
 # Check connection errors
-kubectl logs -n production -l app=chioma-backend | grep "redis"
+kubectl logs -n production -l app=huston-housing-backend | grep "redis"
 ```
 
 **Resolution**:
@@ -291,7 +291,7 @@ sum(rate(payment_processing_errors_total[5m])) > 0.1
 
 ```bash
 # Check payment error logs
-kubectl logs -n production -l app=chioma-backend | grep "payment"
+kubectl logs -n production -l app=huston-housing-backend | grep "payment"
 
 # Check payment error rate by type
 curl http://prometheus:9090/api/v1/query?query='rate(payment_processing_errors_total[5m]) by (error_type)'
@@ -329,7 +329,7 @@ stellar_api_errors_total > 10
 
 ```bash
 # Check Stellar API errors
-kubectl logs -n production -l app=chioma-backend | grep "stellar"
+kubectl logs -n production -l app=huston-housing-backend | grep "stellar"
 
 # Check Stellar network status
 curl https://status.stellar.org
@@ -353,7 +353,7 @@ curl http://prometheus:9090/api/v1/query?query='stellar_api_rate_limit_remaining
 **Metrics**:
 
 ```promql
-up{job="chioma-backend"} == 0
+up{job="huston-housing-backend"} == 0
 ```
 
 **Causes**:
@@ -367,7 +367,7 @@ up{job="chioma-backend"} == 0
 
 ```bash
 # Check pod status
-kubectl get pods -n production -l app=chioma-backend
+kubectl get pods -n production -l app=huston-housing-backend
 
 # Check pod events
 kubectl describe pod <pod-name> -n production
@@ -414,7 +414,7 @@ curl http://localhost:3000/health
 curl http://localhost:3000/health/detailed
 
 # Check health logs
-kubectl logs -n production -l app=chioma-backend | grep "health"
+kubectl logs -n production -l app=huston-housing-backend | grep "health"
 ```
 
 **Resolution**:
@@ -452,7 +452,7 @@ kubectl exec -it <pod-name> -n production -- nc -zv $DB_HOST $DB_PORT
 kubectl logs -n production -l app=postgres
 
 # Check connection errors
-kubectl logs -n production -l app=chioma-backend | grep "connection"
+kubectl logs -n production -l app=huston-housing-backend | grep "connection"
 ```
 
 **Resolution**:
@@ -484,7 +484,7 @@ sum(rate(escrow_transaction_failures_total[5m])) > 0.05
 
 ```bash
 # Check escrow error logs
-kubectl logs -n production -l app=chioma-backend | grep "escrow"
+kubectl logs -n production -l app=huston-housing-backend | grep "escrow"
 
 # Check escrow error rate by type
 curl http://prometheus:9090/api/v1/query?query='rate(escrow_transaction_failures_total[5m]) by (error_type)'
@@ -685,7 +685,7 @@ sum(rate(auth_failures_total[5m])) > 1.0
 
 ```bash
 # Check auth error logs
-kubectl logs -n production -l app=chioma-backend | grep "auth"
+kubectl logs -n production -l app=huston-housing-backend | grep "auth"
 
 # Check auth failure rate by type
 curl http://prometheus:9090/api/v1/query?query='rate(auth_failures_total[5m]) by (error_type)'
@@ -739,7 +739,7 @@ sum(rate(webhook_delivery_failures_total[5m])) > 0.1
 
 ```bash
 # Check webhook error logs
-kubectl logs -n production -l app=chioma-backend | grep "webhook"
+kubectl logs -n production -l app=huston-housing-backend | grep "webhook"
 
 # Check webhook failure rate by endpoint
 curl http://prometheus:9090/api/v1/query?query='rate(webhook_delivery_failures_total[5m]) by (endpoint)'
@@ -878,7 +878,7 @@ Alerts are defined in `backend/monitoring/prometheus/alerts.yml`:
 
 ```yaml
 groups:
-  - name: chioma_backend_alerts
+  - name: huston-housing_backend_alerts
     interval: 15s
     rules:
       - alert: HighErrorRate

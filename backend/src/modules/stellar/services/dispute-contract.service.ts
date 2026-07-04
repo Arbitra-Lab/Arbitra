@@ -3,18 +3,18 @@ import { ConfigService } from '@nestjs/config';
 import * as StellarSdk from '@stellar/stellar-sdk';
 
 export enum DisputeOutcome {
-  FAVOR_LANDLORD = 'FavorLandlord',
-  FAVOR_TENANT = 'FavorTenant',
+  FAVOR_CLAIMANT = 'FavorClaimant',
+  FAVOR_RESPONDENT = 'FavorRespondent',
 }
 
 export interface DisputeInfo {
-  agreementId: string;
+  caseId: string;
   detailsHash: string;
   raisedAt: number;
   resolved: boolean;
   resolvedAt?: number;
-  votesFavorLandlord: number;
-  votesFavorTenant: number;
+  votesFavorClaimant: number;
+  votesFavorRespondent: number;
   outcome?: DisputeOutcome;
 }
 
@@ -26,8 +26,8 @@ export interface ArbiterInfo {
 
 export interface VoteInfo {
   arbiter: string;
-  agreementId: string;
-  favorLandlord: boolean;
+  caseId: string;
+  favorClaimant: boolean;
   votedAt: number;
 }
 
@@ -93,10 +93,10 @@ export class DisputeContractService {
 
   async raiseDispute(
     raiserAddress: string,
-    agreementId: string,
+    caseId: string,
     detailsHash: string,
   ): Promise<string> {
-    this.logger.log(`Raising dispute for agreement: ${agreementId}`);
+    this.logger.log(`Raising dispute for case: ${caseId}`);
 
     const server = new StellarSdk.SorobanRpc.Server(this.rpcUrl);
     const contract = new StellarSdk.Contract(this.contractId);
@@ -114,7 +114,7 @@ export class DisputeContractService {
         contract.call(
           'raise_dispute',
           StellarSdk.Address.fromString(raiserKeypair.publicKey()).toScVal(),
-          StellarSdk.nativeToScVal(agreementId, { type: 'string' }),
+          StellarSdk.nativeToScVal(caseId, { type: 'string' }),
           StellarSdk.nativeToScVal(detailsHash, { type: 'string' }),
         ),
       )
@@ -130,10 +130,10 @@ export class DisputeContractService {
 
   async voteOnDispute(
     arbiterAddress: string,
-    agreementId: string,
-    favorLandlord: boolean,
+    caseId: string,
+    favorClaimant: boolean,
   ): Promise<string> {
-    this.logger.log(`Arbiter voting on dispute: ${agreementId}`);
+    this.logger.log(`Arbiter voting on dispute: ${caseId}`);
 
     const server = new StellarSdk.SorobanRpc.Server(this.rpcUrl);
     const contract = new StellarSdk.Contract(this.contractId);
@@ -151,8 +151,8 @@ export class DisputeContractService {
         contract.call(
           'vote_on_dispute',
           StellarSdk.Address.fromString(arbiterKeypair.publicKey()).toScVal(),
-          StellarSdk.nativeToScVal(agreementId, { type: 'string' }),
-          StellarSdk.nativeToScVal(favorLandlord, { type: 'bool' }),
+          StellarSdk.nativeToScVal(caseId, { type: 'string' }),
+          StellarSdk.nativeToScVal(favorClaimant, { type: 'bool' }),
         ),
       )
       .setTimeout(30)
@@ -166,13 +166,13 @@ export class DisputeContractService {
   }
 
   async resolveDispute(
-    agreementId: string,
+    caseId: string,
   ): Promise<{ outcome: DisputeOutcome; txHash: string }> {
     if (!this.adminKeypair) {
       throw new Error('Admin keypair not configured');
     }
 
-    this.logger.log(`Resolving dispute: ${agreementId}`);
+    this.logger.log(`Resolving dispute: ${caseId}`);
 
     const server = new StellarSdk.SorobanRpc.Server(this.rpcUrl);
     const contract = new StellarSdk.Contract(this.contractId);
@@ -187,7 +187,7 @@ export class DisputeContractService {
       .addOperation(
         contract.call(
           'resolve_dispute',
-          StellarSdk.nativeToScVal(agreementId, { type: 'string' }),
+          StellarSdk.nativeToScVal(caseId, { type: 'string' }),
         ),
       )
       .setTimeout(30)
@@ -198,11 +198,11 @@ export class DisputeContractService {
 
     const result = await server.sendTransaction(prepared);
 
-    const outcome = await this.getDisputeOutcome(agreementId);
+    const outcome = await this.getDisputeOutcome(caseId);
     return { outcome, txHash: result.hash };
   }
 
-  async getDispute(agreementId: string): Promise<DisputeInfo | null> {
+  async getDispute(caseId: string): Promise<DisputeInfo | null> {
     if (!this.adminKeypair) {
       return null;
     }
@@ -220,7 +220,7 @@ export class DisputeContractService {
       .addOperation(
         contract.call(
           'get_dispute',
-          StellarSdk.nativeToScVal(agreementId, { type: 'string' }),
+          StellarSdk.nativeToScVal(caseId, { type: 'string' }),
         ),
       )
       .setTimeout(30)
@@ -309,7 +309,7 @@ export class DisputeContractService {
   }
 
   async getVote(
-    agreementId: string,
+    caseId: string,
     arbiterAddress: string,
   ): Promise<VoteInfo | null> {
     if (!this.adminKeypair) {
@@ -329,7 +329,7 @@ export class DisputeContractService {
       .addOperation(
         contract.call(
           'get_vote',
-          StellarSdk.nativeToScVal(agreementId, { type: 'string' }),
+          StellarSdk.nativeToScVal(caseId, { type: 'string' }),
           StellarSdk.Address.fromString(arbiterAddress).toScVal(),
         ),
       )
@@ -350,9 +350,9 @@ export class DisputeContractService {
   }
 
   private async getDisputeOutcome(
-    agreementId: string,
+    caseId: string,
   ): Promise<DisputeOutcome> {
-    const dispute = await this.getDispute(agreementId);
+    const dispute = await this.getDispute(caseId);
     if (!dispute || !dispute.outcome) {
       throw new Error('Dispute not resolved');
     }
@@ -362,17 +362,17 @@ export class DisputeContractService {
   private parseDisputeInfo(result: any): DisputeInfo {
     const native = StellarSdk.scValToNative(result.retval);
     return {
-      agreementId: native.agreement_id,
+      caseId: native.case_id,
       detailsHash: native.details_hash,
       raisedAt: native.raised_at,
       resolved: native.resolved,
       resolvedAt: native.resolved_at,
-      votesFavorLandlord: native.votes_favor_landlord,
-      votesFavorTenant: native.votes_favor_tenant,
+      votesFavorClaimant: native.votes_favor_claimant,
+      votesFavorRespondent: native.votes_favor_respondent,
       outcome:
-        native.votes_favor_landlord > native.votes_favor_tenant
-          ? DisputeOutcome.FAVOR_LANDLORD
-          : DisputeOutcome.FAVOR_TENANT,
+        native.votes_favor_claimant > native.votes_favor_respondent
+          ? DisputeOutcome.FAVOR_CLAIMANT
+          : DisputeOutcome.FAVOR_RESPONDENT,
     };
   }
 
@@ -389,8 +389,8 @@ export class DisputeContractService {
     const native = StellarSdk.scValToNative(result.retval);
     return {
       arbiter: native.arbiter,
-      agreementId: native.agreement_id,
-      favorLandlord: native.favor_landlord,
+      caseId: native.case_id,
+      favorClaimant: native.favor_claimant,
       votedAt: native.voted_at,
     };
   }

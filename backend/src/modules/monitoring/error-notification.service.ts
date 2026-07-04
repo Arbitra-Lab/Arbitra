@@ -133,7 +133,7 @@ export class ErrorNotificationService {
 
     const tier =
       payload.status === 'error' ? EscalationTier.ONCALL : EscalationTier.TEAM;
-    const subject = `[${payload.status.toUpperCase()}] Chioma health check degraded`;
+    const subject = `[${payload.status.toUpperCase()}] Houston Housing health check degraded`;
     const message = `${payload.summary}\n\nServices:\n${JSON.stringify(payload.services, null, 2)}`;
 
     const recipients = this.getRecipientsForTier(tier);

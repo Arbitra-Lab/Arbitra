@@ -1,5 +1,5 @@
 /**
- * Standardized error codes for the Chioma platform.
+ * Standardized error codes for the Houston Housing platform.
  * These codes provide machine-readable identifiers for all error types.
  */
 export enum ErrorCode {

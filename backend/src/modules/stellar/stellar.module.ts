@@ -28,7 +28,7 @@ import { StellarService } from './services/stellar.service';
 import { EncryptionService } from './services/encryption.service';
 import { AnchorService } from './services/anchor.service';
 import { IndexedTransactionsService } from './services/indexed-transactions.service';
-import { ChiomaContractService } from './services/chioma-contract.service';
+import { Houston HousingContractService } from './services/huston-housing-contract.service';
 import { BlockchainEventService } from './services/blockchain-event.service';
 import { EscrowContractService } from './services/escrow-contract.service';
 import { DisputeContractService } from './services/dispute-contract.service';
@@ -86,7 +86,7 @@ import { PropertyRegistryService } from './services/property-registry.service';
     EncryptionService,
     AnchorService,
     IndexedTransactionsService,
-    ChiomaContractService,
+    Houston HousingContractService,
     BlockchainEventService,
     EscrowContractService,
     DisputeContractService,
@@ -102,7 +102,7 @@ import { PropertyRegistryService } from './services/property-registry.service';
     EncryptionService,
     AnchorService,
     IndexedTransactionsService,
-    ChiomaContractService,
+    Houston HousingContractService,
     BlockchainEventService,
     EscrowContractService,
     DisputeContractService,

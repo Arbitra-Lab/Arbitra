@@ -1,13 +1,13 @@
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
-  name: chioma-backend-pdb
+  name: huston-housing-backend-pdb
   namespace: production
   labels:
-    app: chioma-backend
+    app: huston-housing-backend
 spec:
   minAvailable: 2
   selector:
     matchLabels:
-      app: chioma-backend
+      app: huston-housing-backend
   unhealthyPodEvictionPolicy: AlwaysAllow

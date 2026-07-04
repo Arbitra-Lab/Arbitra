@@ -94,17 +94,17 @@ export default function TenantTransactionsPage() {
     <div className="space-y-8">
       {/* Header */}
       <div className="relative group">
-        <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-3xl blur opacity-20 group-hover:opacity-30 transition duration-1000"></div>
+        <div className="absolute -inset-1 bg-gradient-to-r from-brand-blue to-brand-blue-dark rounded-3xl blur opacity-20 group-hover:opacity-30 transition duration-1000"></div>
         <div className="relative bg-white/5 backdrop-blur-sm border border-white/10 rounded-3xl p-8 flex flex-col md:flex-row items-center justify-between gap-6 overflow-hidden">
           <div className="flex items-center gap-6 z-10">
-            <div className="w-16 h-16 bg-blue-500/10 rounded-2xl flex items-center justify-center border border-blue-500/20">
-              <Activity size={32} className="text-blue-400 animate-pulse" />
+            <div className="w-16 h-16 bg-brand-accent/10 rounded-2xl flex items-center justify-center border border-brand-accent/20">
+              <Activity size={32} className="text-brand-accent animate-pulse" />
             </div>
             <div>
               <h1 className="text-3xl font-black tracking-tight text-white mb-1">
                 Stellar Ledger
               </h1>
-              <p className="text-blue-200/50 font-medium">
+              <p className="text-neutral-200/50 font-medium">
                 Immutable transaction history powered by Stellar Network.
               </p>
             </div>
@@ -114,12 +114,12 @@ export default function TenantTransactionsPage() {
               <Download size={16} />
               Export CSV
             </button>
-            <button className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-bold shadow-lg transition-all text-sm">
+            <button className="flex items-center gap-2 px-5 py-2.5 bg-brand-blue hover:bg-brand-blue-dark text-white rounded-2xl font-bold shadow-lg transition-all text-sm">
               <Layers size={16} />
               Network Status
             </button>
           </div>
-          <div className="absolute top-0 right-0 -mr-10 -mt-10 w-48 h-48 bg-blue-600/10 rounded-full blur-3xl"></div>
+          <div className="absolute top-0 right-0 -mr-10 -mt-10 w-48 h-48 bg-brand-blue/10 rounded-full blur-3xl"></div>
         </div>
       </div>
 
@@ -156,7 +156,7 @@ export default function TenantTransactionsPage() {
       <div className="flex flex-col lg:flex-row gap-4">
         <div className="relative flex-1">
           <Search
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-300/40"
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-200/40"
             size={18}
           />
           <input
@@ -164,14 +164,14 @@ export default function TenantTransactionsPage() {
             placeholder="Search by hash or address..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-white/5 border border-white/10 text-white rounded-2xl pl-12 pr-4 py-3.5 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/40 transition-all placeholder:text-blue-300/30"
+            className="w-full bg-white/5 border border-white/10 text-white rounded-2xl pl-12 pr-4 py-3.5 focus:outline-none focus:ring-2 focus:ring-brand-accent/30 focus:border-brand-accent/40 transition-all placeholder:text-brand-accent/30"
           />
         </div>
         <div className="flex gap-3">
           <select
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
-            className="bg-white/5 border border-white/10 text-white rounded-2xl px-5 py-3.5 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all font-semibold appearance-none cursor-pointer hover:bg-white/10"
+            className="bg-white/5 border border-white/10 text-white rounded-2xl px-5 py-3.5 focus:outline-none focus:ring-2 focus:ring-brand-accent/30 transition-all font-semibold appearance-none cursor-pointer hover:bg-white/10"
           >
             <option value="all" className="bg-slate-900">
               All Operations
@@ -198,19 +198,19 @@ export default function TenantTransactionsPage() {
           <table className="w-full text-left">
             <thead>
               <tr className="bg-white/5 border-b border-white/5">
-                <th className="px-6 py-5 text-xs font-black text-blue-300/40 uppercase tracking-widest">
+                <th className="px-6 py-5 text-xs font-black text-neutral-200/40 uppercase tracking-widest">
                   Transaction
                 </th>
-                <th className="px-6 py-5 text-xs font-black text-blue-300/40 uppercase tracking-widest">
+                <th className="px-6 py-5 text-xs font-black text-neutral-200/40 uppercase tracking-widest">
                   Asset / Amount
                 </th>
-                <th className="px-6 py-5 text-xs font-black text-blue-300/40 uppercase tracking-widest">
+                <th className="px-6 py-5 text-xs font-black text-neutral-200/40 uppercase tracking-widest">
                   From / To
                 </th>
-                <th className="px-6 py-5 text-xs font-black text-blue-300/40 uppercase tracking-widest">
+                <th className="px-6 py-5 text-xs font-black text-neutral-200/40 uppercase tracking-widest">
                   Status
                 </th>
-                <th className="px-6 py-5 text-xs font-black text-blue-300/40 uppercase tracking-widest text-right">
+                <th className="px-6 py-5 text-xs font-black text-neutral-200/40 uppercase tracking-widest text-right">
                   Date
                 </th>
               </tr>
@@ -236,7 +236,7 @@ export default function TenantTransactionsPage() {
                               tx.type === 'payment'
                                 ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
                                 : tx.type === 'create_account'
-                                  ? 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                                  ? 'bg-brand-accent/10 text-brand-accent border-brand-accent/20'
                                   : 'bg-purple-500/10 text-purple-400 border-purple-500/20'
                             }`}
                           >
@@ -247,10 +247,10 @@ export default function TenantTransactionsPage() {
                             )}
                           </div>
                           <div>
-                            <div className="font-bold text-white text-sm uppercase tracking-wide group-hover:text-blue-400 transition-colors">
+                            <div className="font-bold text-white text-sm uppercase tracking-wide group-hover:text-brand-accent transition-colors">
                               {tx.type.replace('_', ' ')}
                             </div>
-                            <div className="text-xs font-mono text-blue-300/30 mt-0.5">
+                            <div className="text-xs font-mono text-neutral-200/30 mt-0.5">
                               {tx.hash.slice(0, 8)}...{tx.hash.slice(-8)}
                             </div>
                           </div>
@@ -261,16 +261,16 @@ export default function TenantTransactionsPage() {
                           <>
                             <div className="text-lg font-black text-white">
                               {tx.amount}{' '}
-                              <span className="text-blue-400 text-xs font-bold tracking-widest">
+                              <span className="text-brand-accent text-xs font-bold tracking-widest">
                                 {tx.assetCode}
                               </span>
                             </div>
-                            <div className="text-xs text-blue-300/30 font-medium mt-0.5">
+                            <div className="text-xs text-neutral-200/30 font-medium mt-0.5">
                               Fee: {tx.fee}
                             </div>
                           </>
                         ) : (
-                          <span className="text-blue-300/30 font-bold text-xs uppercase">
+                          <span className="text-neutral-200/30 font-bold text-xs uppercase">
                             N/A
                           </span>
                         )}
@@ -278,10 +278,10 @@ export default function TenantTransactionsPage() {
                       <td className="px-6 py-5">
                         <div className="space-y-1.5">
                           <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-black bg-white/5 text-blue-300/50 px-1.5 py-0.5 rounded">
+                            <span className="text-[10px] font-black bg-white/5 text-neutral-200/50 px-1.5 py-0.5 rounded">
                               FR
                             </span>
-                            <span className="text-xs font-mono text-blue-200/50">
+                            <span className="text-xs font-mono text-neutral-200/50">
                               {tx.from.slice(0, 6)}...{tx.from.slice(-6)}
                             </span>
                           </div>
@@ -290,7 +290,7 @@ export default function TenantTransactionsPage() {
                               <span className="text-[10px] font-black bg-white/5 text-emerald-400/50 px-1.5 py-0.5 rounded">
                                 TO
                               </span>
-                              <span className="text-xs font-mono text-blue-200/50">
+                              <span className="text-xs font-mono text-neutral-200/50">
                                 {tx.to.slice(0, 6)}...{tx.to.slice(-6)}
                               </span>
                             </div>
@@ -327,7 +327,7 @@ export default function TenantTransactionsPage() {
                             year: 'numeric',
                           })}
                         </div>
-                        <div className="text-blue-300/30 text-xs mt-0.5">
+                        <div className="text-neutral-200/30 text-xs mt-0.5">
                           {new Date(tx.createdAt).toLocaleTimeString([], {
                             hour: '2-digit',
                             minute: '2-digit',
@@ -343,7 +343,7 @@ export default function TenantTransactionsPage() {
 
       {/* Pagination */}
       <div className="flex items-center justify-between">
-        <p className="text-blue-300/40 font-semibold text-sm">
+        <p className="text-neutral-200/40 font-semibold text-sm">
           Showing 1–25 of 1,240 results
         </p>
         <div className="flex gap-2">
@@ -353,7 +353,7 @@ export default function TenantTransactionsPage() {
           {[1, 2, 3].map((n) => (
             <button
               key={n}
-              className={`w-10 h-10 rounded-xl font-bold text-sm transition-all ${n === 1 ? 'bg-blue-600 text-white' : 'text-blue-300/40 hover:text-white'}`}
+              className={`w-10 h-10 rounded-xl font-bold text-sm transition-all ${n === 1 ? 'bg-brand-blue text-white' : 'text-neutral-200/40 hover:text-white'}`}
             >
               {n}
             </button>
@@ -377,7 +377,7 @@ interface StatItemProps {
 
 function StatItem({ title, value, icon: Icon, color, unit }: StatItemProps) {
   const colors: Record<string, string> = {
-    blue: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
+    blue: 'bg-brand-accent/10 text-brand-accent border-brand-accent/20',
     emerald: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
     amber: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
     purple: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
@@ -389,13 +389,13 @@ function StatItem({ title, value, icon: Icon, color, unit }: StatItemProps) {
       >
         <Icon size={20} />
       </div>
-      <p className="text-blue-300/40 font-bold text-xs uppercase tracking-widest mb-1">
+      <p className="text-neutral-200/40 font-bold text-xs uppercase tracking-widest mb-1">
         {title}
       </p>
       <div className="flex items-baseline gap-1">
         <span className="text-2xl font-black text-white">{value}</span>
         {unit && (
-          <span className="text-xs font-black text-blue-400 uppercase">
+          <span className="text-xs font-black text-brand-accent uppercase">
             {unit}
           </span>
         )}

@@ -165,7 +165,7 @@ export default function AdminArbitersPage() {
 
   if (authLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[40vh] text-blue-200/80">
+      <div className="flex items-center justify-center min-h-[40vh] text-neutral-200/80">
         Loading...
       </div>
     );
@@ -184,7 +184,7 @@ export default function AdminArbitersPage() {
             <h1 className="text-3xl font-bold text-white">
               Arbiters Management
             </h1>
-            <p className="text-sm text-blue-200/60">
+            <p className="text-sm text-neutral-200/60">
               Manage dispute arbiters and their reputation scores.
             </p>
           </div>
@@ -238,7 +238,7 @@ export default function AdminArbitersPage() {
           placeholder="Search by address or qualifications..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="flex-1 rounded-xl bg-slate-900 px-3 py-2 text-white placeholder-blue-200/40"
+          className="flex-1 rounded-xl bg-slate-900 px-3 py-2 text-white placeholder-neutral-200/40"
         />
       </div>
 
@@ -266,7 +266,7 @@ export default function AdminArbitersPage() {
           <tbody>
             {filteredArbiters.length === 0 ? (
               <tr>
-                <td colSpan={6} className="p-4 text-center text-blue-200/60">
+                <td colSpan={6} className="p-4 text-center text-neutral-200/60">
                   No arbiters found
                 </td>
               </tr>
@@ -311,7 +311,7 @@ export default function AdminArbitersPage() {
                     <div className="flex justify-end gap-2">
                       <button
                         onClick={() => setSelected(arbiter)}
-                        className="p-2 rounded-lg bg-blue-500/20 text-blue-300 hover:bg-blue-500/30 transition-colors"
+                        className="p-2 rounded-lg bg-brand-accent/20 text-brand-accent hover:bg-brand-accent/30 transition-colors"
                         title="View details"
                       >
                         <Eye className="h-4 w-4" />
@@ -345,7 +345,7 @@ export default function AdminArbitersPage() {
               <h2 className="text-xl font-bold text-white mb-2">
                 Arbiter Details
               </h2>
-              <p className="text-sm text-blue-200/60 font-mono">
+              <p className="text-sm text-neutral-200/60 font-mono">
                 {selected.stellarAddress}
               </p>
             </div>
@@ -359,7 +359,7 @@ export default function AdminArbitersPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <p className="text-xs text-blue-200/60 uppercase tracking-wide">
+              <p className="text-xs text-neutral-200/60 uppercase tracking-wide">
                 Status
               </p>
               <p className="text-white font-semibold mt-1">
@@ -368,7 +368,7 @@ export default function AdminArbitersPage() {
             </div>
 
             <div>
-              <p className="text-xs text-blue-200/60 uppercase tracking-wide">
+              <p className="text-xs text-neutral-200/60 uppercase tracking-wide">
                 Reputation Score
               </p>
               <p className="text-white font-semibold mt-1">
@@ -377,7 +377,7 @@ export default function AdminArbitersPage() {
             </div>
 
             <div>
-              <p className="text-xs text-blue-200/60 uppercase tracking-wide">
+              <p className="text-xs text-neutral-200/60 uppercase tracking-wide">
                 Total Votes
               </p>
               <p className="text-white font-semibold mt-1">
@@ -386,7 +386,7 @@ export default function AdminArbitersPage() {
             </div>
 
             <div>
-              <p className="text-xs text-blue-200/60 uppercase tracking-wide">
+              <p className="text-xs text-neutral-200/60 uppercase tracking-wide">
                 Disputes Resolved
               </p>
               <p className="text-white font-semibold mt-1">
@@ -395,7 +395,7 @@ export default function AdminArbitersPage() {
             </div>
 
             <div>
-              <p className="text-xs text-blue-200/60 uppercase tracking-wide">
+              <p className="text-xs text-neutral-200/60 uppercase tracking-wide">
                 Successful Resolutions
               </p>
               <p className="text-white font-semibold mt-1">
@@ -405,7 +405,7 @@ export default function AdminArbitersPage() {
 
             {selected.metadata?.qualifications && (
               <div>
-                <p className="text-xs text-blue-200/60 uppercase tracking-wide">
+                <p className="text-xs text-neutral-200/60 uppercase tracking-wide">
                   Qualifications
                 </p>
                 <p className="text-white font-semibold mt-1">
@@ -416,7 +416,7 @@ export default function AdminArbitersPage() {
 
             {selected.metadata?.specialization && (
               <div>
-                <p className="text-xs text-blue-200/60 uppercase tracking-wide">
+                <p className="text-xs text-neutral-200/60 uppercase tracking-wide">
                   Specialization
                 </p>
                 <p className="text-white font-semibold mt-1">
@@ -426,7 +426,7 @@ export default function AdminArbitersPage() {
             )}
 
             <div>
-              <p className="text-xs text-blue-200/60 uppercase tracking-wide">
+              <p className="text-xs text-neutral-200/60 uppercase tracking-wide">
                 Joined
               </p>
               <p className="text-white font-semibold mt-1">
@@ -456,26 +456,26 @@ export default function AdminArbitersPage() {
             {selected.user ? (
               <div className="space-y-2">
                 <div>
-                  <p className="text-xs text-blue-200/60">Name</p>
+                  <p className="text-xs text-neutral-200/60">Name</p>
                   <p className="text-white font-medium">
                     {selected.user.name || 'N/A'}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs text-blue-200/60">Email</p>
+                  <p className="text-xs text-neutral-200/60">Email</p>
                   <p className="text-white font-medium">
                     {selected.user.email}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs text-blue-200/60">Role</p>
+                  <p className="text-xs text-neutral-200/60">Role</p>
                   <p className="text-white font-medium">{selected.user.role}</p>
                 </div>
               </div>
             ) : (
               <button
                 onClick={() => setShowUserModal(true)}
-                className="w-full flex items-center justify-center gap-2 py-2 rounded-lg bg-blue-500/20 border border-blue-500/30 text-blue-300 hover:bg-blue-500/30 transition-colors"
+                className="w-full flex items-center justify-center gap-2 py-2 rounded-lg bg-brand-accent/20 border border-brand-accent/30 text-brand-accent hover:bg-brand-accent/30 transition-colors"
               >
                 <LinkIcon className="h-4 w-4" />
                 Link User
@@ -490,13 +490,13 @@ export default function AdminArbitersPage() {
               </h3>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-xs text-blue-200/60">Score</p>
+                  <p className="text-xs text-neutral-200/60">Score</p>
                   <p className="text-white font-semibold">
                     {reputationQuery.data.reputationScore.toFixed(2)}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs text-blue-200/60">Total Votes</p>
+                  <p className="text-xs text-neutral-200/60">Total Votes</p>
                   <p className="text-white font-semibold">
                     {reputationQuery.data.totalVotes}
                   </p>
@@ -523,7 +523,7 @@ export default function AdminArbitersPage() {
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm text-blue-200/80 mb-2">
+                <label className="block text-sm text-neutral-200/80 mb-2">
                   Stellar Address *
                 </label>
                 <input
@@ -536,12 +536,12 @@ export default function AdminArbitersPage() {
                       arbiterAddress: e.target.value,
                     })
                   }
-                  className="w-full rounded-lg bg-slate-800 border border-white/10 px-3 py-2 text-white placeholder-blue-200/40 focus:outline-none focus:border-amber-500/50"
+                  className="w-full rounded-lg bg-slate-800 border border-white/10 px-3 py-2 text-white placeholder-neutral-200/40 focus:outline-none focus:border-amber-500/50"
                 />
               </div>
 
               <div>
-                <label className="block text-sm text-blue-200/80 mb-2">
+                <label className="block text-sm text-neutral-200/80 mb-2">
                   Qualifications *
                 </label>
                 <textarea
@@ -553,12 +553,12 @@ export default function AdminArbitersPage() {
                       qualifications: e.target.value,
                     })
                   }
-                  className="w-full rounded-lg bg-slate-800 border border-white/10 px-3 py-2 text-white placeholder-blue-200/40 focus:outline-none focus:border-amber-500/50 resize-none h-24"
+                  className="w-full rounded-lg bg-slate-800 border border-white/10 px-3 py-2 text-white placeholder-neutral-200/40 focus:outline-none focus:border-amber-500/50 resize-none h-24"
                 />
               </div>
 
               <div>
-                <label className="block text-sm text-blue-200/80 mb-2">
+                <label className="block text-sm text-neutral-200/80 mb-2">
                   Stake Amount *
                 </label>
                 <input
@@ -571,12 +571,12 @@ export default function AdminArbitersPage() {
                       stakeAmount: e.target.value,
                     })
                   }
-                  className="w-full rounded-lg bg-slate-800 border border-white/10 px-3 py-2 text-white placeholder-blue-200/40 focus:outline-none focus:border-amber-500/50"
+                  className="w-full rounded-lg bg-slate-800 border border-white/10 px-3 py-2 text-white placeholder-neutral-200/40 focus:outline-none focus:border-amber-500/50"
                 />
               </div>
 
               <div>
-                <label className="block text-sm text-blue-200/80 mb-2">
+                <label className="block text-sm text-neutral-200/80 mb-2">
                   Specialization
                 </label>
                 <input
@@ -589,7 +589,7 @@ export default function AdminArbitersPage() {
                       specialization: e.target.value,
                     })
                   }
-                  className="w-full rounded-lg bg-slate-800 border border-white/10 px-3 py-2 text-white placeholder-blue-200/40 focus:outline-none focus:border-amber-500/50"
+                  className="w-full rounded-lg bg-slate-800 border border-white/10 px-3 py-2 text-white placeholder-neutral-200/40 focus:outline-none focus:border-amber-500/50"
                 />
               </div>
 
@@ -640,7 +640,7 @@ function MetricCard({
   return (
     <div className="p-4 rounded-xl bg-white/5 border border-white/10">
       <div className="flex items-center gap-2 mb-2 text-amber-300">{icon}</div>
-      <p className="text-xs text-blue-200/60 uppercase tracking-wide">
+      <p className="text-xs text-neutral-200/60 uppercase tracking-wide">
         {label}
       </p>
       <h3 className="text-2xl font-bold text-white mt-1">{value}</h3>

@@ -88,7 +88,7 @@ It covers event names/topics, parameters, meanings, usage patterns, examples, an
 | `WeightedVoteCast` | `["weighted_vote_cast"]`, `dispute_id`, `arbiter` | Weighted arbiter vote submitted. |
 | `DisputeResolvedByWeight` | `["dispute_resolved_by_weight"]`, `dispute_id` | Weighted resolution reached. |
 
-### `chioma`
+### `huston-housing`
 
 | Event | Topics | Purpose |
 | --- | --- | --- |
@@ -158,7 +158,7 @@ It covers event names/topics, parameters, meanings, usage patterns, examples, an
 | Parameter | Meaning |
 | --- | --- |
 | `agreement_id` | Core lease agreement identifier shared across payment, dispute, and agreement events. |
-| `escrow_id` | Escrow lifecycle identifier (`BytesN<32>` in `escrow`, `String` in tokenized chioma escrow events). |
+| `escrow_id` | Escrow lifecycle identifier (`BytesN<32>` in `escrow`, `String` in tokenized huston-housing escrow events). |
 | `proposal_id` / `action_id` / `extension_id` | Governance and lifecycle IDs for multisig/timelock/upgrade/extension flows. |
 | `amount`, `monthly_rent`, `security_deposit`, `user_share`, `admin_share`, `beneficiary_share` | Monetary values emitted as `i128`. |
 | `details_hash`, `metadata_hash`, `data_hash` | Off-chain payload references for auditability and privacy. |
@@ -266,7 +266,7 @@ Use this as a tuple-topic event with data payload ordering:
 ## Integration
 
 - Build indexers to decode Soroban contract events into typed application records.
-- Normalize event names into `contract.event` convention (for example `chioma.agreement_created`).
+- Normalize event names into `contract.event` convention (for example `huston-housing.agreement_created`).
 - Store both raw event payloads and normalized projections for replay and migration safety.
 - Use idempotent upserts keyed by `(ledger, tx_hash, event_index)` to avoid duplication.
 - Keep consumer versions tied to schema snapshots; update this document when event contracts evolve.

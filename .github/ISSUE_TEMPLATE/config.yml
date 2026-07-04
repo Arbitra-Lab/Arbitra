@@ -1,11 +1,11 @@
 blank_issues_enabled: false
 contact_links:
   - name: 💬 Discussions
-    url: https://github.com/chioma/discussions
+    url: https://github.com/huston-housing/discussions
     about: Ask questions and share ideas
   - name: 📧 Security Report
-    url: mailto:security@chioma.dev
+    url: mailto:security@huston-housing.dev
     about: Report security vulnerabilities responsibly
   - name: 📚 Documentation
-    url: https://chioma.dev/docs
+    url: https://huston-housing.dev/docs
     about: Read the documentation

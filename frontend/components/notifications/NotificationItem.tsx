@@ -17,8 +17,8 @@ const typeConfig: Record<
 > = {
   message: {
     icon: MessageSquare,
-    bg: 'bg-blue-500/15',
-    text: 'text-blue-300',
+    bg: 'bg-brand-accent/15',
+    text: 'text-brand-accent',
   },
   maintenance: {
     icon: Wrench,
@@ -35,7 +35,7 @@ const typeConfig: Record<
 const fallbackConfig = {
   icon: Bell,
   bg: 'bg-white/10',
-  text: 'text-blue-200/60',
+  text: 'text-neutral-200/60',
 };
 
 interface NotificationItemProps {
@@ -62,7 +62,7 @@ export default function NotificationItem({
     <div
       className={`flex items-start gap-3 px-4 transition-colors
         ${variant === 'compact' ? 'py-2.5' : 'py-4'}
-        ${notification.read ? 'bg-transparent' : 'bg-blue-500/5'}
+        ${notification.read ? 'bg-transparent' : 'bg-brand-accent/5'}
         hover:bg-white/5
       `}
     >
@@ -79,7 +79,7 @@ export default function NotificationItem({
           <p
             className={`text-sm ${
               notification.read
-                ? 'font-normal text-blue-200/50'
+                ? 'font-normal text-neutral-200/50'
                 : 'font-semibold text-white'
             }`}
           >
@@ -87,23 +87,23 @@ export default function NotificationItem({
           </p>
 
           {!notification.read && (
-            <span className="shrink-0 w-2 h-2 rounded-full bg-blue-400" />
+            <span className="shrink-0 w-2 h-2 rounded-full bg-brand-accent" />
           )}
         </div>
 
         {variant === 'full' && (
-          <p className="text-sm text-blue-200/50 mt-0.5 line-clamp-2">
+          <p className="text-sm text-neutral-200/50 mt-0.5 line-clamp-2">
             {notification.body}
           </p>
         )}
 
-        <p className="text-xs text-blue-200/30 mt-1">{timeAgo}</p>
+        <p className="text-xs text-neutral-200/30 mt-1">{timeAgo}</p>
       </div>
 
       {/* Mark read button */}
       {variant === 'full' &&
         (notification.read ? (
-          <span className="shrink-0 flex items-center gap-1 text-xs text-blue-400/50 mt-0.5">
+          <span className="shrink-0 flex items-center gap-1 text-xs text-brand-accent/50 mt-0.5">
             <CheckCheck size={16} />
           </span>
         ) : (
@@ -113,7 +113,7 @@ export default function NotificationItem({
               e.stopPropagation();
               onToggleRead(notification.id);
             }}
-            className="shrink-0 text-xs text-blue-300 hover:text-white hover:underline mt-0.5 cursor-pointer transition-colors"
+            className="shrink-0 text-xs text-brand-accent hover:text-white hover:underline mt-0.5 cursor-pointer transition-colors"
           >
             Mark read
           </button>

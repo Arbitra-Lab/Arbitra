@@ -114,7 +114,7 @@ client.burn_nft(&agreement_id, &String::from_str(&env, "LeaseCompleted"));
 ## Usage Examples
 
 ### Integration with other contracts
-Other contracts in the Chioma ecosystem can integrate via the client:
+Other contracts in the Houston Housing ecosystem can integrate via the client:
 ```rust
 let nft_client = TokenizedRentObligationContractClient::new(&env, &nft_contract_id);
 if nft_client.has_obligation(&agreement_id) {

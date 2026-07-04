@@ -22,7 +22,7 @@ export default function AdminSidebar() {
         size="lg"
         href="/"
         className="justify-center lg:justify-start"
-        textClassName="hidden bg-gradient-to-r from-blue-300 to-indigo-300 bg-clip-text text-2xl font-bold text-transparent lg:block lg:text-3xl"
+        textClassName="hidden bg-gradient-to-r from-brand-accent to-brand-blue bg-clip-text text-2xl font-bold text-transparent lg:block lg:text-3xl"
       />
 
       <nav className="flex-1">
@@ -35,8 +35,8 @@ export default function AdminSidebar() {
               href={item.href}
               className={`flex cursor-pointer items-center gap-3 px-6 py-3 transition-all duration-200 md:flex-col md:py-4 lg:flex-row lg:items-center lg:px-6 ${
                 isActive
-                  ? 'bg-white/10 text-white shadow-lg lg:border-l-4 lg:border-blue-500'
-                  : 'text-blue-200/60 hover:bg-white/5 hover:text-white'
+                  ? 'bg-white/10 text-white shadow-lg lg:border-l-4 lg:border-brand-accent'
+                  : 'text-neutral-200/60 hover:bg-white/5 hover:text-white'
               }`}
             >
               <item.icon className="mx-auto h-5 w-5 md:mx-0 md:h-6 md:w-6" />
@@ -46,7 +46,7 @@ export default function AdminSidebar() {
         })}
 
         {navItems.length === 0 && (
-          <p className="px-6 py-4 text-xs text-blue-200/60">
+          <p className="px-6 py-4 text-xs text-neutral-200/60">
             No admin pages are available for your role.
           </p>
         )}
@@ -73,12 +73,12 @@ export default function AdminSidebar() {
             <span className="w-full truncate text-sm font-semibold text-white">
               {fullName || user?.email || 'Admin User'}
             </span>
-            <span className="text-xs capitalize text-blue-300/60">
+            <span className="text-xs capitalize text-neutral-200/60">
               {user?.role || 'admin'}
             </span>
           </div>
 
-          <FaArrowRightFromBracket className="ml-auto h-5 w-5 text-blue-300/40 transition-colors group-hover:text-blue-300" />
+          <FaArrowRightFromBracket className="ml-auto h-5 w-5 text-brand-accent/40 transition-colors group-hover:text-brand-accent" />
         </button>
       </div>
     </aside>

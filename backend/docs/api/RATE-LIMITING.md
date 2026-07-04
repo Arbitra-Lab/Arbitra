@@ -1,6 +1,6 @@
 # Rate Limiting and Throttling
 
-Chioma uses NestJS Throttler to protect API resources from abuse, smooth traffic spikes, and preserve predictable latency for normal users.
+Houston Housing uses NestJS Throttler to protect API resources from abuse, smooth traffic spikes, and preserve predictable latency for normal users.
 
 ---
 

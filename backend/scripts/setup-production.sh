@@ -1,13 +1,13 @@
 #!/bin/bash
 
-# Chioma Production Setup - One Command Setup
+# Houston Housing Production Setup - One Command Setup
 # This script sets up the entire production database
 
 set -e
 
 echo "╔════════════════════════════════════════════════════════╗"
 echo "║                                                        ║"
-echo "║        Chioma Production Database Setup                ║"
+echo "║        Houston Housing Production Database Setup                ║"
 echo "║                                                        ║"
 echo "╚════════════════════════════════════════════════════════╝"
 echo ""
@@ -46,10 +46,10 @@ echo "╚═══════════════════════�
 echo ""
 echo "📋 Demo Credentials:"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "👨‍💼 Admin:    admin@chioma.demo    / Admin@Demo2024!"
-echo "🏢 Agent:    agent@chioma.demo    / Agent@Demo2024!"
-echo "🏠 Landlord: landlord@chioma.demo / Landlord@Demo2024!"
-echo "👤 Tenant:   tenant@chioma.demo   / Tenant@Demo2024!"
+echo "👨‍💼 Admin:    admin@huston-housing.demo    / Admin@Demo2024!"
+echo "🏢 Agent:    agent@huston-housing.demo    / Agent@Demo2024!"
+echo "🏠 Landlord: landlord@huston-housing.demo / Landlord@Demo2024!"
+echo "👤 Tenant:   tenant@huston-housing.demo   / Tenant@Demo2024!"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 echo "📖 Next Steps:"

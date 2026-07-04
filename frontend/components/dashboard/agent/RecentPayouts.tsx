@@ -46,7 +46,7 @@ const defaultPayouts: PayoutTransaction[] = [
 const RecentPayouts = ({ payouts = defaultPayouts }: RecentPayoutsProps) => {
   return (
     <div className="bg-white/5 backdrop-blur-sm rounded-3xl p-6 shadow-xl border border-white/10">
-      <h3 className="text-[10px] font-bold text-blue-300/40 uppercase tracking-widest mb-6">
+      <h3 className="text-[10px] font-bold text-neutral-200/40 uppercase tracking-widest mb-6">
         Recent Payouts
       </h3>
 
@@ -66,10 +66,10 @@ const RecentPayouts = ({ payouts = defaultPayouts }: RecentPayoutsProps) => {
                 )}
               </div>
               <div className="min-w-0">
-                <p className="text-sm font-bold text-white transition-colors group-hover:text-blue-400 leading-tight">
+                <p className="text-sm font-bold text-white transition-colors group-hover:text-brand-accent leading-tight">
                   {payout.title}
                 </p>
-                <p className="text-[10px] font-bold text-blue-300/40 uppercase tracking-widest mt-1">
+                <p className="text-[10px] font-bold text-neutral-200/40 uppercase tracking-widest mt-1">
                   {payout.time}
                 </p>
               </div>

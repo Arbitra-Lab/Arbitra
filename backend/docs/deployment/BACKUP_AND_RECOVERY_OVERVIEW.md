@@ -1,6 +1,6 @@
 # Database Backup and Recovery - Quick Reference
 
-**Project:** Chioma Platform
+**Project:** Houston Housing Platform
 **Version:** 1.0
 **Last Updated:** April 2026
 **Owner:** Database Administrator
@@ -32,57 +32,57 @@ This document provides a quick reference for database backup and recovery proced
 
 ```bash
 # Create full backup
-/opt/chioma/scripts/backup-full.sh
+/opt/huston-housing/scripts/backup-full.sh
 
 # Create incremental backup
-/opt/chioma/scripts/backup-incremental.sh
+/opt/huston-housing/scripts/backup-incremental.sh
 
 # Create pre-deployment backup
-/opt/chioma/scripts/backup-pre-deploy.sh <deployment_id>
+/opt/huston-housing/scripts/backup-pre-deploy.sh <deployment_id>
 
 # Create snapshot backup
-/opt/chioma/scripts/backup-snapshot.sh
+/opt/huston-housing/scripts/backup-snapshot.sh
 
 # Verify backup integrity
-/opt/chioma/scripts/verify-backup.sh <backup_file>
+/opt/huston-housing/scripts/verify-backup.sh <backup_file>
 
 # Test backup restore
-/opt/chioma/scripts/test-restore.sh <backup_file>
+/opt/huston-housing/scripts/test-restore.sh <backup_file>
 ```
 
 ### Recovery Operations
 
 ```bash
 # Point-in-time recovery (PITR)
-/opt/chioma/scripts/recover-pitr.sh "<YYYY-MM-DD HH:MM:SS>" <base_backup_file>
+/opt/huston-housing/scripts/recover-pitr.sh "<YYYY-MM-DD HH:MM:SS>" <base_backup_file>
 
 # Full restore from backup
-/opt/chioma/scripts/recover-full.sh <backup_file> [target_db]
+/opt/huston-housing/scripts/recover-full.sh <backup_file> [target_db]
 
 # Incremental restore
-/opt/chioma/scripts/recover-incremental.sh <backup_file> [target_db]
+/opt/huston-housing/scripts/recover-incremental.sh <backup_file> [target_db]
 
 # Disaster recovery (complete)
-/opt/chioma/scripts/disaster-recovery.sh
+/opt/huston-housing/scripts/disaster-recovery.sh
 
 # Partial table recovery
-/opt/chioma/scripts/recover-partial.sh <backup_file> <table_name> [target_db]
+/opt/huston-housing/scripts/recover-partial.sh <backup_file> <table_name> [target_db]
 ```
 
 ### Monitoring & Cleanup
 
 ```bash
 # Check WAL archiving status
-psql -U chioma -c "SELECT archived_count, failed_count FROM pg_stat_archiver;"
+psql -U huston-housing -c "SELECT archived_count, failed_count FROM pg_stat_archiver;"
 
 # List recent backups
-aws s3 ls s3://chioma-backups-prod/full/ --recursive | tail -20
+aws s3 ls s3://huston-housing-backups-prod/full/ --recursive | tail -20
 
 # Clean up old backups
-/opt/chioma/scripts/cleanup-old-backups.sh
+/opt/huston-housing/scripts/cleanup-old-backups.sh
 
 # View backup logs
-tail -100 /var/log/chioma/backup-full.log
+tail -100 /var/log/huston-housing/backup-full.log
 ```
 
 ---
@@ -109,14 +109,14 @@ tail -100 /var/log/chioma/backup-full.log
 
 ```bash
 # 1. Identify the backup needed
-BACKUP_FILE=$(aws s3 ls s3://chioma-backups-prod/full/ | tail -1 | awk '{print $4}')
+BACKUP_FILE=$(aws s3 ls s3://huston-housing-backups-prod/full/ | tail -1 | awk '{print $4}')
 
 # 2. Recover to point-in-time (5 minutes ago)
 RECOVERY_TIME=$(date -u -d '5 minutes ago' '+%Y-%m-%d %H:%M:%S')
-/opt/chioma/scripts/recover-pitr.sh "$RECOVERY_TIME" "$BACKUP_FILE"
+/opt/huston-housing/scripts/recover-pitr.sh "$RECOVERY_TIME" "$BACKUP_FILE"
 
 # 3. Verify recovery in test database
-psql -U postgres -d chioma_restore_test -c "SELECT COUNT(*) FROM <deleted_table>;"
+psql -U postgres -d huston-housing_restore_test -c "SELECT COUNT(*) FROM <deleted_table>;"
 ```
 
 ### Scenario 2: Database Corruption
@@ -125,19 +125,19 @@ psql -U postgres -d chioma_restore_test -c "SELECT COUNT(*) FROM <deleted_table>
 
 ```bash
 # 1. Stop application
-systemctl stop chioma-backend
+systemctl stop huston-housing-backend
 
 # 2. Get latest clean backup
-BACKUP_FILE=$(aws s3 ls s3://chioma-backups-prod/full/ | grep -v '$(date +%Y%m%d)' | tail -1 | awk '{print $4}')
+BACKUP_FILE=$(aws s3 ls s3://huston-housing-backups-prod/full/ | grep -v '$(date +%Y%m%d)' | tail -1 | awk '{print $4}')
 
 # 3. Restore full backup
-/opt/chioma/scripts/recover-full.sh "s3://chioma-backups-prod/full/$BACKUP_FILE" chioma
+/opt/huston-housing/scripts/recover-full.sh "s3://huston-housing-backups-prod/full/$BACKUP_FILE" huston-housing
 
 # 4. Verify integrity
-psql -U chioma -c "SELECT COUNT(*) FROM users; SELECT COUNT(*) FROM properties;"
+psql -U huston-housing -c "SELECT COUNT(*) FROM users; SELECT COUNT(*) FROM properties;"
 
 # 5. Restart application
-systemctl start chioma-backend
+systemctl start huston-housing-backend
 ```
 
 ### Scenario 3: Complete Infrastructure Loss (Disaster)
@@ -146,10 +146,10 @@ systemctl start chioma-backend
 
 ```bash
 # 1. Run disaster recovery script
-/opt/chioma/scripts/disaster-recovery.sh
+/opt/huston-housing/scripts/disaster-recovery.sh
 
 # 2. Deploy application to new infrastructure
-cd /opt/chioma && git pull && ./deploy.sh
+cd /opt/huston-housing && git pull && ./deploy.sh
 
 # 3. Update DNS/routing
 aws route53 change-resource-record-sets ...
@@ -158,7 +158,7 @@ aws route53 change-resource-record-sets ...
 # Login, create agreement, process payment, view properties
 
 # 5. Monitor for issues
-tail -f /var/log/chioma/application.log
+tail -f /var/log/huston-housing/application.log
 ```
 
 ---
@@ -181,7 +181,7 @@ Monitor these metrics daily:
 
 | Problem                   | Diagnosis                                                 | Solution                              |
 | ------------------------- | --------------------------------------------------------- | ------------------------------------- |
-| Backup fails              | Check logs: `tail /var/log/chioma/backup-full.log`        | Free disk space, verify DB connection |
+| Backup fails              | Check logs: `tail /var/log/huston-housing/backup-full.log`        | Free disk space, verify DB connection |
 | Restore fails             | Check version compatibility: `psql --version`             | Use matching PostgreSQL version       |
 | WAL archiving fails       | Check status: `psql -c "SELECT * FROM pg_stat_archiver;"` | Verify S3 credentials, check network  |
 | Backup verification fails | Verify file: `gzip -t backup.tar.gz`                      | Retry backup, check disk health       |

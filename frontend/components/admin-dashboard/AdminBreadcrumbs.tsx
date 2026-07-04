@@ -11,7 +11,7 @@ export default function AdminBreadcrumbs({ pathname }: { pathname: string }) {
 
   return (
     <nav aria-label="Breadcrumb" className="px-4 sm:px-6 pt-3">
-      <ol className="flex items-center gap-2 text-xs sm:text-sm text-blue-200/75">
+      <ol className="flex items-center gap-2 text-xs sm:text-sm text-neutral-200/75">
         <li>
           <Link
             href="/admin"
@@ -29,7 +29,7 @@ export default function AdminBreadcrumbs({ pathname }: { pathname: string }) {
               key={`${item.label}-${index}`}
               className="inline-flex items-center gap-2"
             >
-              <ChevronRight size={14} className="text-blue-300/40" />
+              <ChevronRight size={14} className="text-neutral-200/40" />
               {isLast || !item.href ? (
                 <span className="text-white font-medium">{item.label}</span>
               ) : (

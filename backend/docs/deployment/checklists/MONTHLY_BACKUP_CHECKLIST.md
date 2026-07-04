@@ -1,6 +1,6 @@
 # Monthly Backup Checklist
 
-**Project:** Chioma Platform  
+**Project:** Houston Housing Platform  
 **Frequency:** Monthly (First week of month)  
 **Owner:** Backup Manager / Database Administrator  
 **Time Commitment:** 4-6 hours
@@ -22,7 +22,7 @@ Analyze backup metrics from the past month:
 - [ ] **Monthly Backup Success Rate**
   - Calculate: (Successful backups / Total backups scheduled) × 100
   - Target: > 99.5%
-  - Command: Count daily logs: `ls -1 /var/log/chioma/backup-full.log.* | wc -l`
+  - Command: Count daily logs: `ls -1 /var/log/huston-housing/backup-full.log.* | wc -l`
   - Action if < 99.5%: Document issues and create improvement plan
 
 - [ ] **Monthly Restore Test Success Rate**
@@ -33,11 +33,11 @@ Analyze backup metrics from the past month:
 - [ ] **Average Backup Duration Trend**
   - Calculate: Average of all daily full backup durations
   - Target: < 4 hours
-  - Command: `grep 'completed' /var/log/chioma/backup-full.log | grep -oP 'Duration: \K[^s]*' | awk '{sum+=$1; count++} END {print sum/count}'`
+  - Command: `grep 'completed' /var/log/huston-housing/backup-full.log | grep -oP 'Duration: \K[^s]*' | awk '{sum+=$1; count++} END {print sum/count}'`
   - Action if > 4h: Investigate database growth or resource constraints
 
 - [ ] **WAL Archiving Reliability**
-  - Check: `psql -U chioma -c "SELECT archived_count, failed_count FROM pg_stat_archiver;"`
+  - Check: `psql -U huston-housing -c "SELECT archived_count, failed_count FROM pg_stat_archiver;"`
   - Target: Zero failures (failed_count = 0)
   - Action if failures: Document root cause and fix
 
@@ -93,40 +93,40 @@ This is a comprehensive test of complete recovery capability.
 
 - [ ] **Final Environment Checks**
   - Verify test hardware ready: `lsblk -h`
-  - Verify S3 access: `aws s3 ls s3://chioma-backups-prod/`
+  - Verify S3 access: `aws s3 ls s3://huston-housing-backups-prod/`
   - Verify PostgreSQL available: `psql --version`
-  - Verify scripts accessible: `ls -la /opt/chioma/scripts/recover-*.sh`
+  - Verify scripts accessible: `ls -la /opt/huston-housing/scripts/recover-*.sh`
 
 - [ ] **Select Backup for Recovery**
-  - Choose backup from 2+ weeks ago: `aws s3 ls s3://chioma-backups-prod/full/ | grep -v $(date +%Y%m01) | head -1`
+  - Choose backup from 2+ weeks ago: `aws s3 ls s3://huston-housing-backups-prod/full/ | grep -v $(date +%Y%m01) | head -1`
   - Document backup name and date
-  - Download backup: `aws s3 cp s3://chioma-backups-prod/full/[backup_date]/ /backups/drill/ --recursive`
+  - Download backup: `aws s3 cp s3://huston-housing-backups-prod/full/[backup_date]/ /backups/drill/ --recursive`
   - Verify download completed
 
 - [ ] **Initialize Test Database**
   - Create test database user: `psql -U postgres -c "CREATE USER drill_user WITH PASSWORD 'secure_password';"`
-  - Create test database: `psql -U postgres -c "CREATE DATABASE chioma_monthly_drill;"`
-  - Grant permissions: `psql -U postgres -c "GRANT ALL PRIVILEGES ON DATABASE chioma_monthly_drill TO drill_user;"`
+  - Create test database: `psql -U postgres -c "CREATE DATABASE huston-housing_monthly_drill;"`
+  - Grant permissions: `psql -U postgres -c "GRANT ALL PRIVILEGES ON DATABASE huston-housing_monthly_drill TO drill_user;"`
 
 #### Phase 2: Full Restoration (2-3 hours)
 
 - [ ] **Execute Full Restore**
-  - Command: `/opt/chioma/scripts/recover-full.sh /backups/drill/chioma_[date].sql.gz chioma_monthly_drill`
-  - Monitor: `tail -f /var/log/chioma/recovery.log`
+  - Command: `/opt/huston-housing/scripts/recover-full.sh /backups/drill/huston-housing_[date].sql.gz huston-housing_monthly_drill`
+  - Monitor: `tail -f /var/log/huston-housing/recovery.log`
   - Expected: Restore completes with no errors
   - Duration: 1-2 hours typically
   - Action if fails: Stop, investigate, document issue
 
 - [ ] **Verify Restore Completion**
-  - Check table count: `psql -U drill_user -d chioma_monthly_drill -c "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public';"`
+  - Check table count: `psql -U drill_user -d huston-housing_monthly_drill -c "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public';"`
   - Expected: 30+ tables
-  - Check data: `psql -U drill_user -d chioma_monthly_drill -c "SELECT COUNT(*) FROM users; SELECT COUNT(*) FROM properties;"`
+  - Check data: `psql -U drill_user -d huston-housing_monthly_drill -c "SELECT COUNT(*) FROM users; SELECT COUNT(*) FROM properties;"`
   - Expected: Significant row counts matching production
 
 - [ ] **Verify Schema Integrity**
-  - Check indices: `psql -U drill_user -d chioma_monthly_drill -c "SELECT COUNT(*) FROM pg_indexes WHERE schemaname = 'public';"`
-  - Check constraints: `psql -U drill_user -d chioma_monthly_drill -c "SELECT COUNT(*) FROM information_schema.table_constraints;"`
-  - Check sequences: `psql -U drill_user -d chioma_monthly_drill -c "SELECT COUNT(*) FROM information_schema.sequences;"`
+  - Check indices: `psql -U drill_user -d huston-housing_monthly_drill -c "SELECT COUNT(*) FROM pg_indexes WHERE schemaname = 'public';"`
+  - Check constraints: `psql -U drill_user -d huston-housing_monthly_drill -c "SELECT COUNT(*) FROM information_schema.table_constraints;"`
+  - Check sequences: `psql -U drill_user -d huston-housing_monthly_drill -c "SELECT COUNT(*) FROM information_schema.sequences;"`
   - All should match production schema
 
 #### Phase 3: Data Integrity Validation (1-2 hours)
@@ -136,7 +136,7 @@ Test all critical tables and data relationships:
 - [ ] **Users and Accounts**
 
   ```bash
-  psql -U drill_user -d chioma_monthly_drill -c \
+  psql -U drill_user -d huston-housing_monthly_drill -c \
     "SELECT COUNT(*) as total_users,
             COUNT(CASE WHEN deleted_at IS NULL THEN 1 END) as active_users,
             COUNT(DISTINCT role) as unique_roles
@@ -148,7 +148,7 @@ Test all critical tables and data relationships:
 - [ ] **Properties**
 
   ```bash
-  psql -U drill_user -d chioma_monthly_drill -c \
+  psql -U drill_user -d huston-housing_monthly_drill -c \
     "SELECT COUNT(*) as total_properties,
             COUNT(DISTINCT city) as cities_covered,
             COUNT(CASE WHEN verification_status = 'verified' THEN 1 END) as verified
@@ -160,7 +160,7 @@ Test all critical tables and data relationships:
 - [ ] **Rental Agreements**
 
   ```bash
-  psql -U drill_user -d chioma_monthly_drill -c \
+  psql -U drill_user -d huston-housing_monthly_drill -c \
     "SELECT COUNT(*) as total_agreements,
             COUNT(CASE WHEN status = 'active' THEN 1 END) as active,
             COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed,
@@ -173,7 +173,7 @@ Test all critical tables and data relationships:
 - [ ] **Escrow Accounts**
 
   ```bash
-  psql -U drill_user -d chioma_monthly_drill -c \
+  psql -U drill_user -d huston-housing_monthly_drill -c \
     "SELECT COUNT(*) as total_escrows,
             SUM(amount) as total_escrow_value,
             COUNT(CASE WHEN status = 'locked' THEN 1 END) as locked,
@@ -186,7 +186,7 @@ Test all critical tables and data relationships:
 - [ ] **Disputes**
 
   ```bash
-  psql -U drill_user -d chioma_monthly_drill -c \
+  psql -U drill_user -d huston-housing_monthly_drill -c \
     "SELECT COUNT(*) as total_disputes,
             COUNT(CASE WHEN resolution_status IS NULL THEN 1 END) as open,
             COUNT(CASE WHEN resolution_status = 'resolved' THEN 1 END) as resolved
@@ -198,7 +198,7 @@ Test all critical tables and data relationships:
 - [ ] **Audit Logs**
 
   ```bash
-  psql -U drill_user -d chioma_monthly_drill -c \
+  psql -U drill_user -d huston-housing_monthly_drill -c \
     "SELECT COUNT(*) as audit_log_entries,
             COUNT(DISTINCT entity_type) as entity_types_tracked,
             MIN(created_at) as oldest_log,
@@ -216,7 +216,7 @@ Test key application scenarios:
   - Verify user credentials in restored database
   - Test password hashes retrievable
   - Check role-based access control data
-  - Command: `psql -U drill_user -d chioma_monthly_drill -c "SELECT id, email, role FROM users LIMIT 10;"`
+  - Command: `psql -U drill_user -d huston-housing_monthly_drill -c "SELECT id, email, role FROM users LIMIT 10;"`
 
 - [ ] **Property Listing Data**
   - Verify all property images references intact
@@ -228,13 +228,13 @@ Test key application scenarios:
   - Verify payment transaction records
   - Check payment method information
   - Validate transaction amounts and dates
-  - Command: `psql -U drill_user -d chioma_monthly_drill -c "SELECT COUNT(*) FROM payments WHERE status = 'completed';"`
+  - Command: `psql -U drill_user -d huston-housing_monthly_drill -c "SELECT COUNT(*) FROM payments WHERE status = 'completed';"`
 
 - [ ] **Blockchain/Smart Contract Data**
   - If applicable, verify blockchain transaction references
   - Check smart contract addresses stored
   - Verify transaction hashes
-  - Command: `psql -U drill_user -d chioma_monthly_drill -c "SELECT COUNT(*) FROM blockchain_transactions;"`
+  - Command: `psql -U drill_user -d huston-housing_monthly_drill -c "SELECT COUNT(*) FROM blockchain_transactions;"`
 
 #### Phase 5: Foreign Key and Relationship Validation (30 minutes)
 
@@ -243,7 +243,7 @@ Verify data relationships intact:
 - [ ] **Run Foreign Key Check**
 
   ```bash
-  psql -U drill_user -d chioma_monthly_drill << EOF
+  psql -U drill_user -d huston-housing_monthly_drill << EOF
   -- Check all foreign key relationships
   SELECT DISTINCT
     kcu1.constraint_name,
@@ -274,7 +274,7 @@ Test query performance on restored database:
 - [ ] **Index Usage Statistics**
 
   ```bash
-  psql -U drill_user -d chioma_monthly_drill -c \
+  psql -U drill_user -d huston-housing_monthly_drill -c \
     "SELECT schemaname, tablename, indexname, idx_scan, idx_tup_read, idx_tup_fetch
      FROM pg_stat_user_indexes
      ORDER BY idx_scan DESC LIMIT 20;"
@@ -286,7 +286,7 @@ Test query performance on restored database:
 
   ```bash
   # Time critical query
-  time psql -U drill_user -d chioma_monthly_drill -c \
+  time psql -U drill_user -d huston-housing_monthly_drill -c \
     "SELECT COUNT(*) FROM properties WHERE city = 'Lagos' AND status = 'active';"
   ```
 
@@ -295,7 +295,7 @@ Test query performance on restored database:
 - [ ] **Full Table Scan Check**
 
   ```bash
-  psql -U drill_user -d chioma_monthly_drill -c \
+  psql -U drill_user -d huston-housing_monthly_drill -c \
     "SELECT schemaname, tablename, seq_scan, seq_tup_read
      FROM pg_stat_user_tables
      WHERE seq_scan > 100
@@ -513,7 +513,7 @@ Track these metrics monthly:
 ### Final Tasks
 
 - [ ] **Clean Up Test Databases**
-  - Drop test database: `psql -U postgres -c "DROP DATABASE chioma_monthly_drill;"`
+  - Drop test database: `psql -U postgres -c "DROP DATABASE huston-housing_monthly_drill;"`
   - Drop test user: `psql -U postgres -c "DROP USER drill_user;"`
   - Remove downloaded backups: `rm -rf /backups/drill/`
   - Verify cleanup: `psql -U postgres -l | grep drill`

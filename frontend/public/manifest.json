@@ -1,7 +1,7 @@
 {
-  "name": "Chioma - Blockchain-Powered Rentals",
-  "short_name": "Chioma",
-  "description": "Automated commissions, zero disputes. Connect with landlords and tenants on the Stellar network.",
+  "name": "Arbitra - On-Chain Escrow & Arbitration",
+  "short_name": "Arbitra",
+  "description": "Trustless escrow and arbitration for any two-party agreement, built on Stellar.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
@@ -61,10 +61,10 @@
   "screenshots": [],
   "shortcuts": [
     {
-      "name": "Properties",
-      "short_name": "Properties",
-      "description": "Browse available properties",
-      "url": "/properties",
+      "name": "Agreements",
+      "short_name": "Agreements",
+      "description": "View your escrow agreements",
+      "url": "/user/contracts",
       "icons": [
         {
           "src": "/icon-96x96.png",
@@ -73,10 +73,10 @@
       ]
     },
     {
-      "name": "Payments",
-      "short_name": "Payments",
-      "description": "View payment history",
-      "url": "/payments",
+      "name": "Wallet",
+      "short_name": "Wallet",
+      "description": "View wallet and transactions",
+      "url": "/user/wallet",
       "icons": [
         {
           "src": "/icon-96x96.png",

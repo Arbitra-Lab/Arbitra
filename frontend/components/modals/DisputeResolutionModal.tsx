@@ -76,7 +76,7 @@ export const DisputeResolutionModal: React.FC<DisputeResolutionModalProps> = ({
 
   const getStatusBadge = () => {
     const colors = {
-      open: 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400',
+      open: 'bg-brand-accent/10 text-brand-accent dark:bg-brand-accent/20 dark:text-brand-accent',
       under_review:
         'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400',
       resolved:
@@ -218,7 +218,7 @@ export const DisputeResolutionModal: React.FC<DisputeResolutionModalProps> = ({
         {canResolve && (
           <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-2xl p-6">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/20 rounded-xl flex items-center justify-center">
+              <div className="w-10 h-10 bg-brand-blue/10 dark:bg-brand-blue/20 rounded-xl flex items-center justify-center">
                 <MessageSquare className="text-brand-blue" size={20} />
               </div>
               <h3 className="text-lg font-bold text-neutral-900 dark:text-white">
@@ -238,8 +238,8 @@ export const DisputeResolutionModal: React.FC<DisputeResolutionModalProps> = ({
               {resolution.length}/1000
             </p>
 
-            <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30 rounded-xl">
-              <p className="text-sm text-blue-900 dark:text-blue-100">
+            <div className="mt-4 p-4 bg-brand-accent/10 dark:bg-brand-accent/20 border border-brand-accent/20 dark:border-brand-accent/30 rounded-xl">
+              <p className="text-sm text-neutral-900 dark:text-neutral-100">
                 <span className="font-semibold">Note:</span> Your resolution
                 will be recorded and all parties will be notified. This action
                 cannot be undone.

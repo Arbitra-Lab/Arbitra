@@ -1,10 +1,10 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: chioma-backend
+  name: huston-housing-backend
   namespace: production
   labels:
-    app: chioma-backend
+    app: huston-housing-backend
     version: v1
 spec:
   replicas: 3
@@ -15,11 +15,11 @@ spec:
       maxUnavailable: 0
   selector:
     matchLabels:
-      app: chioma-backend
+      app: huston-housing-backend
   template:
     metadata:
       labels:
-        app: chioma-backend
+        app: huston-housing-backend
         version: v1
       annotations:
         prometheus.io/scrape: 'true'
@@ -37,11 +37,11 @@ spec:
                     - key: app
                       operator: In
                       values:
-                        - chioma-backend
+                        - huston-housing-backend
                 topologyKey: kubernetes.io/hostname
 
       # Service account for RBAC
-      serviceAccountName: chioma-backend
+      serviceAccountName: huston-housing-backend
 
       # Security context
       securityContext:
@@ -65,16 +65,16 @@ spec:
             - name: DB_HOST
               valueFrom:
                 configMapKeyRef:
-                  name: chioma-backend-config
+                  name: huston-housing-backend-config
                   key: db_host
             - name: DB_PORT
               valueFrom:
                 configMapKeyRef:
-                  name: chioma-backend-config
+                  name: huston-housing-backend-config
                   key: db_port
 
         - name: run-migrations
-          image: chioma-backend:latest
+          image: huston-housing-backend:latest
           imagePullPolicy: IfNotPresent
           command:
             - sh
@@ -91,7 +91,7 @@ spec:
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:
-                  name: chioma-backend-secrets
+                  name: huston-housing-backend-secrets
                   key: database_url
           resources:
             requests:
@@ -104,7 +104,7 @@ spec:
       # Main containers
       containers:
         - name: backend
-          image: chioma-backend:latest
+          image: huston-housing-backend:latest
           imagePullPolicy: IfNotPresent
 
           # Port configuration
@@ -133,51 +133,51 @@ spec:
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:
-                  name: chioma-backend-secrets
+                  name: huston-housing-backend-secrets
                   key: database_url
             - name: DB_HOST
               valueFrom:
                 configMapKeyRef:
-                  name: chioma-backend-config
+                  name: huston-housing-backend-config
                   key: db_host
             - name: DB_PORT
               valueFrom:
                 configMapKeyRef:
-                  name: chioma-backend-config
+                  name: huston-housing-backend-config
                   key: db_port
             - name: DB_USERNAME
               valueFrom:
                 secretKeyRef:
-                  name: chioma-backend-secrets
+                  name: huston-housing-backend-secrets
                   key: db_username
             - name: DB_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: chioma-backend-secrets
+                  name: huston-housing-backend-secrets
                   key: db_password
             - name: DB_NAME
               valueFrom:
                 configMapKeyRef:
-                  name: chioma-backend-config
+                  name: huston-housing-backend-config
                   key: db_name
 
             # Redis configuration
             - name: REDIS_URL
               valueFrom:
                 secretKeyRef:
-                  name: chioma-backend-secrets
+                  name: huston-housing-backend-secrets
                   key: redis_url
 
             # JWT configuration
             - name: JWT_SECRET
               valueFrom:
                 secretKeyRef:
-                  name: chioma-backend-secrets
+                  name: huston-housing-backend-secrets
                   key: jwt_secret
             - name: JWT_REFRESH_SECRET
               valueFrom:
                 secretKeyRef:
-                  name: chioma-backend-secrets
+                  name: huston-housing-backend-secrets
                   key: jwt_refresh_secret
 
             # Stellar configuration
@@ -190,14 +190,14 @@ spec:
             - name: STELLAR_ADMIN_SECRET_KEY
               valueFrom:
                 secretKeyRef:
-                  name: chioma-backend-secrets
+                  name: huston-housing-backend-secrets
                   key: stellar_admin_secret_key
 
             # Sentry configuration
             - name: SENTRY_DSN
               valueFrom:
                 secretKeyRef:
-                  name: chioma-backend-secrets
+                  name: huston-housing-backend-secrets
                   key: sentry_dsn
             - name: SENTRY_ENVIRONMENT
               value: 'production'
@@ -206,22 +206,22 @@ spec:
             - name: AWS_ACCESS_KEY_ID
               valueFrom:
                 secretKeyRef:
-                  name: chioma-backend-secrets
+                  name: huston-housing-backend-secrets
                   key: aws_access_key_id
             - name: AWS_SECRET_ACCESS_KEY
               valueFrom:
                 secretKeyRef:
-                  name: chioma-backend-secrets
+                  name: huston-housing-backend-secrets
                   key: aws_secret_access_key
             - name: AWS_REGION
               valueFrom:
                 configMapKeyRef:
-                  name: chioma-backend-config
+                  name: huston-housing-backend-config
                   key: aws_region
             - name: AWS_S3_BUCKET
               valueFrom:
                 configMapKeyRef:
-                  name: chioma-backend-config
+                  name: huston-housing-backend-config
                   key: aws_s3_bucket
 
           # Resource requests and limits

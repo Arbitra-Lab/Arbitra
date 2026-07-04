@@ -206,7 +206,7 @@ export const DocumentListModal: React.FC<DocumentListModalProps> = ({
               {onUploadClick && (
                 <button
                   onClick={onUploadClick}
-                  className="px-4 py-2 bg-brand-blue hover:bg-blue-700 text-white text-sm font-bold rounded-xl transition-colors flex items-center gap-2"
+                  className="px-4 py-2 bg-brand-blue hover:bg-brand-blue-dark text-white text-sm font-bold rounded-xl transition-colors flex items-center gap-2"
                 >
                   <Upload size={16} />
                   Upload
@@ -277,7 +277,7 @@ export const DocumentListModal: React.FC<DocumentListModalProps> = ({
 
           {/* Bulk Actions */}
           {selectedDocuments.size > 0 && (
-            <div className="mt-3 flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30 rounded-xl">
+            <div className="mt-3 flex items-center justify-between p-3 bg-brand-blue/10 dark:bg-brand-blue/20 border border-brand-blue/20 dark:border-brand-blue/30 rounded-xl">
               <div className="flex items-center gap-3">
                 <input
                   type="checkbox"
@@ -285,7 +285,7 @@ export const DocumentListModal: React.FC<DocumentListModalProps> = ({
                   onChange={handleSelectAll}
                   className="w-4 h-4 rounded border-neutral-300 text-brand-blue focus:ring-brand-blue cursor-pointer"
                 />
-                <span className="text-sm font-semibold text-blue-900 dark:text-blue-100">
+                <span className="text-sm font-semibold text-brand-blue dark:text-brand-blue">
                   {selectedDocuments.size} selected
                 </span>
               </div>

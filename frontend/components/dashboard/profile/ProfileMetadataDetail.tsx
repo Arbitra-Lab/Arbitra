@@ -49,14 +49,14 @@ export function ProfileMetadataDetail({
       <div className="flex items-start justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-white">{field.label}</h2>
-          <p className="text-blue-200/60 mt-1 font-mono text-sm">{field.key}</p>
+          <p className="text-neutral-200/60 mt-1 font-mono text-sm">{field.key}</p>
         </div>
         <button
           onClick={handleTogglePublic}
           className={`px-3 py-1.5 rounded-lg border text-xs font-semibold flex items-center gap-1 transition-all ${
             field.isPublic
               ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
-              : 'bg-white/5 border-white/10 text-blue-200/60'
+              : 'bg-white/5 border-white/10 text-neutral-200/60'
           }`}
           title={field.isPublic ? 'Make Private' : 'Make Public'}
         >
@@ -81,7 +81,7 @@ export function ProfileMetadataDetail({
               value={editValue}
               onChange={(e) => setEditValue(e.target.value)}
               rows={4}
-              className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:bg-white/10 focus:border-blue-500 resize-none"
+              className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:bg-white/10 focus:border-brand-accent resize-none"
             />
             <div className="flex gap-2">
               <button
@@ -129,10 +129,10 @@ export function ProfileMetadataDetail({
       </div>
 
       <div className="border-t border-white/10 pt-4">
-        <p className="text-xs text-blue-200/60">
+        <p className="text-xs text-neutral-200/60">
           Last updated: {updatedDate.toLocaleString()}
         </p>
-        <p className="text-xs text-blue-200/60 mt-1">
+        <p className="text-xs text-neutral-200/60 mt-1">
           Type: <span className="font-mono">{field.type}</span>
         </p>
       </div>

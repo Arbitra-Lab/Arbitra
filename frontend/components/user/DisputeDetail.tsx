@@ -28,7 +28,7 @@ const statusConfig = {
     icon: Clock,
   },
   UNDER_REVIEW: {
-    badge: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
+    badge: 'bg-brand-accent/10 text-brand-accent border-brand-accent/20',
     icon: Clock,
   },
   RESOLVED: {
@@ -40,7 +40,7 @@ const statusConfig = {
     icon: XCircle,
   },
   WITHDRAWN: {
-    badge: 'bg-white/5 text-blue-300/40 border-white/10',
+    badge: 'bg-white/5 text-neutral-500/40 border-white/10',
     icon: XCircle,
   },
 } as const;
@@ -68,8 +68,8 @@ export function DisputeDetail({
       <div
         className={`bg-white/5 backdrop-blur-sm border border-white/10 rounded-3xl p-10 flex items-center justify-center gap-3 ${className}`}
       >
-        <Loader2 className="w-6 h-6 animate-spin text-blue-400" />
-        <span className="text-blue-200/50">Loading dispute details...</span>
+        <Loader2 className="w-6 h-6 animate-spin text-brand-accent" />
+        <span className="text-neutral-200/50">Loading dispute details...</span>
       </div>
     );
   }
@@ -79,11 +79,11 @@ export function DisputeDetail({
       <div
         className={`bg-white/5 backdrop-blur-sm border border-white/10 rounded-3xl p-12 text-center ${className}`}
       >
-        <FileText className="w-12 h-12 text-blue-300/20 mx-auto mb-4" />
+        <FileText className="w-12 h-12 text-neutral-500/20 mx-auto mb-4" />
         <h3 className="text-base font-bold text-white mb-1">
           Dispute not found
         </h3>
-        <p className="text-blue-200/40 text-sm">
+        <p className="text-neutral-200/40 text-sm">
           The dispute details could not be loaded.
         </p>
       </div>
@@ -101,7 +101,7 @@ export function DisputeDetail({
           <div className="flex-1">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-11 h-11 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
-                <StatusIcon size={20} className="text-blue-400" />
+                <StatusIcon size={20} className="text-brand-accent" />
               </div>
               <div>
                 <span
@@ -109,7 +109,7 @@ export function DisputeDetail({
                 >
                   {dispute.status.replace('_', ' ')}
                 </span>
-                <div className="flex items-center gap-1.5 text-xs text-blue-200/40 mt-1">
+                <div className="flex items-center gap-1.5 text-xs text-neutral-200/40 mt-1">
                   <Calendar size={12} />
                   Started{' '}
                   {formatDistanceToNow(new Date(dispute.createdAt), {
@@ -121,7 +121,7 @@ export function DisputeDetail({
             <h1 className="text-2xl font-black text-white tracking-tight mb-2">
               {dispute.disputeId} — {dispute.disputeType.replace('_', ' ')}
             </h1>
-            <p className="text-blue-200/60 leading-relaxed max-w-3xl">
+            <p className="text-neutral-200/60 leading-relaxed max-w-3xl">
               {dispute.description}
             </p>
             {dispute.requestedAmount && (
@@ -137,13 +137,13 @@ export function DisputeDetail({
           </div>
           <div className="flex flex-col gap-3 text-sm shrink-0">
             <div>
-              <p className="text-blue-200/40 text-xs uppercase tracking-wider mb-0.5">
+              <p className="text-neutral-200/40 text-xs uppercase tracking-wider mb-0.5">
                 Agreement
               </p>
               <p className="font-semibold text-white">{dispute.agreementId}</p>
             </div>
             <div>
-              <p className="text-blue-200/40 text-xs uppercase tracking-wider mb-0.5">
+              <p className="text-neutral-200/40 text-xs uppercase tracking-wider mb-0.5">
                 Property
               </p>
               <p className="font-semibold text-white">{dispute.propertyName}</p>
@@ -155,17 +155,17 @@ export function DisputeDetail({
       {/* Timeline */}
       <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-3xl p-6">
         <h2 className="text-base font-bold text-white mb-4 flex items-center gap-2">
-          <Clock size={18} className="text-blue-400" /> Timeline
+          <Clock size={18} className="text-brand-accent" /> Timeline
         </h2>
         <div className="space-y-3">
-          <div className="flex items-start gap-4 p-4 bg-blue-500/5 border border-blue-500/10 rounded-2xl">
-            <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 shrink-0" />
+          <div className="flex items-start gap-4 p-4 bg-brand-accent/5 border border-brand-accent/10 rounded-2xl">
+            <div className="w-2 h-2 bg-brand-accent rounded-full mt-2 shrink-0" />
             <div>
               <div className="flex items-center gap-2 mb-0.5">
-                <span className="text-xs font-bold text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded-full">
+                <span className="text-xs font-bold text-brand-accent bg-brand-accent/10 px-2 py-0.5 rounded-full">
                   Filed Dispute
                 </span>
-                <span className="text-xs text-blue-200/40">
+                <span className="text-xs text-neutral-200/40">
                   {format(new Date(dispute.createdAt), 'MMM d, yyyy · h:mm a')}
                 </span>
               </div>
@@ -182,7 +182,7 @@ export function DisputeDetail({
                   <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
                     Status Updated
                   </span>
-                  <span className="text-xs text-blue-200/40">
+                  <span className="text-xs text-neutral-200/40">
                     {format(
                       new Date(dispute.updatedAt),
                       'MMM d, yyyy · h:mm a',
@@ -215,20 +215,20 @@ export function DisputeDetail({
                 <div className="flex items-start gap-3 mb-3">
                   <FileText
                     size={16}
-                    className="text-blue-300/40 mt-0.5 shrink-0"
+                    className="text-neutral-500/40 mt-0.5 shrink-0"
                   />
                   <div className="min-w-0">
                     <p className="font-medium text-white truncate text-sm">
                       {ev.filename}
                     </p>
-                    <p className="text-xs text-blue-200/40 mt-0.5">
+                    <p className="text-xs text-neutral-200/40 mt-0.5">
                       {formatDistanceToNow(new Date(ev.uploadedAt), {
                         addSuffix: true,
                       })}
                     </p>
                   </div>
                 </div>
-                <button className="w-full text-xs font-semibold text-blue-400 hover:text-blue-300 transition-colors text-left">
+                <button className="w-full text-xs font-semibold text-brand-accent hover:text-brand-accent/80 transition-colors text-left">
                   Download
                 </button>
               </div>
@@ -240,7 +240,7 @@ export function DisputeDetail({
       {/* Comments */}
       <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-3xl p-6">
         <h2 className="text-base font-bold text-white mb-4 flex items-center gap-2">
-          <MessageCircle size={18} className="text-blue-400" /> Comments (
+          <MessageCircle size={18} className="text-brand-accent" /> Comments (
           {dispute.comments.length})
         </h2>
 
@@ -250,7 +250,7 @@ export function DisputeDetail({
               key={comment.id}
               className="flex gap-3 p-4 bg-white/5 border border-white/5 rounded-xl"
             >
-              <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shrink-0">
+              <div className="w-9 h-9 bg-gradient-to-br from-brand-blue to-brand-blue-dark rounded-xl flex items-center justify-center shrink-0">
                 <span className="font-bold text-white text-xs">
                   {(comment.author?.role || 'U').charAt(0)}
                 </span>
@@ -260,20 +260,20 @@ export function DisputeDetail({
                   <span className="font-semibold text-white text-sm">
                     {comment.author?.name || 'Anonymous'}
                   </span>
-                  <span className="text-xs text-blue-200/30">
+                  <span className="text-xs text-neutral-200/30">
                     {formatDistanceToNow(new Date(comment.createdAt), {
                       addSuffix: true,
                     })}
                   </span>
                 </div>
-                <p className="text-blue-200/70 text-sm leading-relaxed whitespace-pre-wrap">
+                <p className="text-neutral-200/70 text-sm leading-relaxed whitespace-pre-wrap">
                   {comment.content}
                 </p>
               </div>
             </div>
           ))}
           {dispute.comments.length === 0 && (
-            <p className="text-center text-blue-200/30 text-sm py-4">
+            <p className="text-center text-neutral-200/30 text-sm py-4">
               No comments yet. Be the first to comment.
             </p>
           )}
@@ -285,7 +285,7 @@ export function DisputeDetail({
             className="border border-white/10 rounded-2xl p-4 bg-white/5"
           >
             <div className="flex gap-3">
-              <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shrink-0">
+              <div className="w-9 h-9 bg-gradient-to-br from-brand-blue to-brand-blue-dark rounded-xl flex items-center justify-center shrink-0">
                 <span className="font-bold text-white text-xs">
                   {user?.firstName?.[0] || 'U'}
                 </span>
@@ -297,14 +297,14 @@ export function DisputeDetail({
                   onChange={(e) => setNewComment(e.target.value)}
                   rows={3}
                   disabled={addCommentMutation.isPending}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder:text-blue-300/30 focus:outline-none focus:ring-2 focus:ring-blue-500/30 resize-none transition-all"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder:text-neutral-500/30 focus:outline-none focus:ring-2 focus:ring-brand-accent/30 resize-none transition-all"
                 />
                 <div className="flex justify-end gap-2">
                   <button
                     type="button"
                     onClick={() => setNewComment('')}
                     disabled={addCommentMutation.isPending}
-                    className="px-4 py-2 text-blue-200/50 hover:text-white text-sm font-medium transition-colors"
+                    className="px-4 py-2 text-neutral-200/50 hover:text-white text-sm font-medium transition-colors"
                   >
                     Cancel
                   </button>
@@ -313,7 +313,7 @@ export function DisputeDetail({
                     disabled={
                       !newComment.trim() || addCommentMutation.isPending
                     }
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold disabled:opacity-50 transition-colors flex items-center gap-2"
+                    className="px-4 py-2 bg-brand-blue hover:bg-brand-blue-dark text-white rounded-xl text-sm font-semibold disabled:opacity-50 transition-colors flex items-center gap-2"
                   >
                     {addCommentMutation.isPending && (
                       <Loader2 className="w-3.5 h-3.5 animate-spin" />

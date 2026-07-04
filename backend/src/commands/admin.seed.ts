@@ -148,7 +148,7 @@ function getSeedConfig(options: SeedAdminOptions): SeedAdminConfig {
     email: (
       options.email ??
       process.env.ADMIN_DEFAULT_EMAIL ??
-      'admin@chioma.local'
+      'admin@huston-housing.local'
     )
       .trim()
       .toLowerCase(),

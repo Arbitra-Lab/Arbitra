@@ -379,7 +379,7 @@ export class PaymentWebhookController {
   @ApiOperation({ summary: 'Handle payment gateway webhook events' })
   async handleGatewayWebhook(
     @Body() dto: PaymentGatewayWebhookDto,
-    @Headers('x-chioma-payment-secret') secret?: string,
+    @Headers('x-huston-housing-payment-secret') secret?: string,
   ) {
     return this.paymentService.handlePaymentGatewayWebhook(dto, secret);
   }

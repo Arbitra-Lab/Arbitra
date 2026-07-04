@@ -148,7 +148,7 @@ function getSeedConfig(options: SeedUserOptions): SeedUserConfig {
     email: (
       options.email ??
       process.env.USER_DEFAULT_EMAIL ??
-      'user@chioma.local'
+      'user@huston-housing.local'
     )
       .trim()
       .toLowerCase(),

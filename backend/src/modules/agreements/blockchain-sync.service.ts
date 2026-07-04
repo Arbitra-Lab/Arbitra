@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { RentAgreement } from '../rent/entities/rent-contract.entity';
-import { ChiomaContractService } from '../stellar/services/chioma-contract.service';
+import { Houston HousingContractService } from '../stellar/services/huston-housing-contract.service';
 
 @Injectable()
 export class BlockchainSyncService {
@@ -11,7 +11,7 @@ export class BlockchainSyncService {
   constructor(
     @InjectRepository(RentAgreement)
     private readonly agreementRepository: Repository<RentAgreement>,
-    private readonly chiomaContract: ChiomaContractService,
+    private readonly huston-housingContract: Houston HousingContractService,
     private readonly dataSource: DataSource,
   ) {}
 
@@ -29,7 +29,7 @@ export class BlockchainSyncService {
         throw new Error(`Agreement ${agreementId} not found`);
       }
 
-      const onChainData = await this.chiomaContract.getAgreement(
+      const onChainData = await this.huston-housingContract.getAgreement(
         agreement.agreementNumber || '',
       );
 
@@ -63,7 +63,7 @@ export class BlockchainSyncService {
 
       if (!agreement || !agreement.agreementNumber) return false;
 
-      const exists = await this.chiomaContract.hasAgreement(
+      const exists = await this.huston-housingContract.hasAgreement(
         agreement.agreementNumber,
       );
       return exists;

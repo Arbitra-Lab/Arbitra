@@ -1,7 +1,7 @@
 # Data Protection and Privacy Policy
 
 ## 1. Overview
-This document defines the data protection and privacy practices for the Chioma platform. It outlines how user data is collected, processed, stored, protected, and deleted in alignment with industry standards and regulatory expectations.
+This document defines the data protection and privacy practices for the Arbitra platform. It outlines how user data is collected, processed, stored, protected, and deleted in alignment with industry standards and regulatory expectations.
 
 The platform may process personal data related to housing services, including user identification, communication, and property-related information.
 

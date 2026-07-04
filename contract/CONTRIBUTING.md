@@ -1,6 +1,6 @@
 # Smart Contract Contributing Guide
 
-This document provides comprehensive guidelines for contributing to the Chioma smart contracts. It covers Soroban contract architecture, development standards, security considerations, testing requirements, and CI/CD pipeline expectations.
+This document provides comprehensive guidelines for contributing to the Houston Housing smart contracts. It covers Soroban contract architecture, development standards, security considerations, testing requirements, and CI/CD pipeline expectations.
 
 ## Table of Contents
 
@@ -18,7 +18,7 @@ This document provides comprehensive guidelines for contributing to the Chioma s
 
 ## Project Overview
 
-**Chioma Smart Contracts** are Soroban contracts built on the Stellar blockchain for property rental transactions.
+**Houston Housing Smart Contracts** are Soroban contracts built on the Stellar blockchain for property rental transactions.
 
 ### Tech Stack
 
@@ -32,7 +32,7 @@ Code Quality: Clippy, Rustfmt
 
 ### Key Contracts
 
-1. **Chioma Contract** - Main contract for property listings and bookings
+1. **Houston Housing Contract** - Main contract for property listings and bookings
 2. **Escrow Contract** - Secure fund holding for transactions
 3. **Dispute Resolution** - Dispute handling and resolution
 4. **Payment Contract** - Payment processing
@@ -107,7 +107,7 @@ use soroban_sdk::token::Interface as TokenInterface;
 ```
 contract/
 ├── contracts/                        # Smart contracts
-│   ├── chioma/                       # Main contract
+│   ├── huston-housing/                       # Main contract
 │   │   ├── src/
 │   │   │   ├── lib.rs               # Contract definition
 │   │   │   ├── test.rs              # Tests
@@ -760,7 +760,7 @@ rustup target add wasm32-unknown-unknown
 
 # 3. Clone the repository
 git clone <repo-url>
-cd chioma/contract
+cd huston-housing/contract
 
 # 4. Build contracts
 cargo build --release
@@ -983,4 +983,4 @@ For questions or assistance:
 - Participate in team discussions and code reviews
 - Submit detailed issue reports for bugs or feature requests
 
-We appreciate your contributions to the Chioma platform.
+We appreciate your contributions to the Houston Housing platform.

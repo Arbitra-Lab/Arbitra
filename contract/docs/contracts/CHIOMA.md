@@ -1,4 +1,4 @@
-# Chioma Contract Documentation
+# Houston Housing Contract Documentation
 
 ## Table of Contents
 
@@ -17,7 +17,7 @@
 
 ## Contract Overview
 
-The `chioma` contract is the protocol's primary rental-agreement orchestration contract. It manages agreement lifecycle, multi-token payments, escrow release hooks, metadata, extension flows, rate limiting, royalty support, deposit-interest accounting, multi-signature governance, timelock actions, and upgrade/version tracking.
+The `huston-housing` contract is the protocol's primary rental-agreement orchestration contract. It manages agreement lifecycle, multi-token payments, escrow release hooks, metadata, extension flows, rate limiting, royalty support, deposit-interest accounting, multi-signature governance, timelock actions, and upgrade/version tracking.
 
 ### Core capabilities
 
@@ -31,7 +31,7 @@ The `chioma` contract is the protocol's primary rental-agreement orchestration c
 ### Source layout
 
 ```text
-contract/contracts/chioma/src/
+contract/contracts/huston-housing/src/
 |- lib.rs               # Public contract entry points
 |- agreement.rs         # Agreement lifecycle and payment helpers
 |- storage.rs           # Storage keys
@@ -472,7 +472,7 @@ const events = await server.getEvents({
   filters: [
     {
       type: "contract",
-      contractIds: [chiomaContractId],
+      contractIds: [huston-housingContractId],
     },
   ],
 });

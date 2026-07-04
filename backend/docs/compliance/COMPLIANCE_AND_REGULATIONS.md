@@ -3,7 +3,7 @@
 ## Overview
 
 This document covers the regulatory and compliance obligations that apply to
-Chioma as a financial infrastructure platform handling personal data, rental
+Houston Housing as a financial infrastructure platform handling personal data, rental
 payments, and blockchain transactions. It describes requirements, current
 controls, and the procedures teams must follow to maintain compliance.
 
@@ -98,7 +98,7 @@ their personal information.
 ## SOC 2
 
 SOC 2 defines trust service criteria across security, availability,
-processing integrity, confidentiality, and privacy. Chioma targets the
+processing integrity, confidentiality, and privacy. Houston Housing targets the
 Security and Confidentiality criteria as a baseline.
 
 ### Security Criteria (CC Series)
@@ -149,7 +149,7 @@ As a platform facilitating rental payments on the Stellar blockchain:
 
 ### Blockchain / Virtual Assets
 
-- depending on jurisdiction, Chioma may be subject to AML/KYC obligations
+- depending on jurisdiction, Houston Housing may be subject to AML/KYC obligations
 - Stellar anchor partners are responsible for their own money transmission licensing
 - transaction monitoring should flag unusual payment patterns for review
 

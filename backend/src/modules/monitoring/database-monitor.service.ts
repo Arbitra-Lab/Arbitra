@@ -269,7 +269,7 @@ export class DatabaseMonitorService {
             labels: {
               alertname: 'database_pool_exhaustion',
               severity: 'critical',
-              service: 'chioma-backend',
+              service: 'huston-housing-backend',
             },
             annotations: {
               summary: `Database connection pool near exhaustion: ${usage}% used`,
@@ -284,7 +284,7 @@ export class DatabaseMonitorService {
             labels: {
               alertname: 'database_pool_warning',
               severity: 'warning',
-              service: 'chioma-backend',
+              service: 'huston-housing-backend',
             },
             annotations: {
               summary: `Database connection pool usage elevated: ${usage}%`,
@@ -305,7 +305,7 @@ export class DatabaseMonitorService {
             labels: {
               alertname: 'database_slow_queries',
               severity: 'critical',
-              service: 'chioma-backend',
+              service: 'huston-housing-backend',
             },
             annotations: {
               summary: `Database query performance degraded: avg ${avgTime}ms`,
@@ -320,7 +320,7 @@ export class DatabaseMonitorService {
             labels: {
               alertname: 'database_slow_queries_warning',
               severity: 'warning',
-              service: 'chioma-backend',
+              service: 'huston-housing-backend',
             },
             annotations: {
               summary: `Database query time elevated: avg ${avgTime}ms`,
@@ -339,7 +339,7 @@ export class DatabaseMonitorService {
             labels: {
               alertname: 'database_cache_hit_ratio_low',
               severity: cacheRatio < 90 ? 'critical' : 'warning',
-              service: 'chioma-backend',
+              service: 'huston-housing-backend',
             },
             annotations: {
               summary: `Database cache hit ratio low: ${cacheRatio}%`,
@@ -361,7 +361,7 @@ export class DatabaseMonitorService {
           labels: {
             alertname: 'database_size_large',
             severity: 'warning',
-            service: 'chioma-backend',
+            service: 'huston-housing-backend',
           },
           annotations: {
             summary: `Database size is large: ${snapshot.size.databaseSizeHuman}`,

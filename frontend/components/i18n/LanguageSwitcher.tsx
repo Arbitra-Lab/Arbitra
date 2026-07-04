@@ -75,7 +75,7 @@ export function LanguageSwitcher({ className = '' }: LanguageSwitcherProps) {
                 onClick={() => handleSelect(option.code)}
                 className={`w-full flex items-center justify-between px-4 py-2.5 text-sm transition-colors ${
                   locale === option.code
-                    ? 'bg-blue-600/20 text-blue-300'
+                    ? 'bg-brand-accent/20 text-brand-accent'
                     : 'text-slate-300 hover:bg-white/5'
                 }`}
               >

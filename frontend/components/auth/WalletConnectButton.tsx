@@ -206,7 +206,7 @@ export default function WalletConnectButton({
   if (!isMounted) {
     return (
       <div
-        className={`${className} px-6 py-2.5 text-sm rounded-lg bg-blue-600 text-white font-medium`}
+        className={`${className} px-6 py-2.5 text-sm rounded-lg bg-brand-blue text-white font-medium`}
         suppressHydrationWarning
       >
         Connect Wallet

@@ -38,9 +38,9 @@ describe('ErrorEscalationService', () => {
       isActionableSeverity: jest.fn().mockReturnValue(true),
       getRecipientsForTier: jest.fn().mockImplementation((tier) => {
         if (tier === EscalationTier.MANAGEMENT) {
-          return ['leads@chioma.app'];
+          return ['leads@huston-housing.app'];
         }
-        return ['oncall@chioma.app'];
+        return ['oncall@huston-housing.app'];
       }),
     };
 

@@ -31,7 +31,7 @@ if (!process.env.DB_HOST) process.env.DB_HOST = 'localhost';
 if (!process.env.DB_PORT) process.env.DB_PORT = '5433';
 if (!process.env.DB_USERNAME) process.env.DB_USERNAME = 'postgres_cax';
 if (!process.env.DB_PASSWORD) process.env.DB_PASSWORD = 'password';
-if (!process.env.DB_NAME) process.env.DB_NAME = 'chioma_test';
+if (!process.env.DB_NAME) process.env.DB_NAME = 'huston-housing_test';
 
 // Stellar configuration
 process.env.STELLAR_NETWORK = 'testnet';
@@ -69,8 +69,8 @@ if (!process.env.SECURITY_ENCRYPTION_KEY) {
 // Stellar/Soroban: valid 56-char contract ID so contract services (and Contract ctor) don't throw in E2E
 const E2E_CONTRACT_ID =
   'CA3D5KRYM6CB7OWQ6TWYRR3Z4T7GNZLKERYNZGGA5SOAOPIFY6YQGAXE';
-if (!process.env.CHIOMA_CONTRACT_ID)
-  process.env.CHIOMA_CONTRACT_ID = E2E_CONTRACT_ID;
+if (!process.env.HUSTON_HOUSING_CONTRACT_ID)
+  process.env.HUSTON_HOUSING_CONTRACT_ID = E2E_CONTRACT_ID;
 if (!process.env.ESCROW_CONTRACT_ID)
   process.env.ESCROW_CONTRACT_ID = E2E_CONTRACT_ID;
 if (!process.env.RENT_OBLIGATION_CONTRACT_ID)

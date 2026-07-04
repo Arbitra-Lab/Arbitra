@@ -12,7 +12,7 @@ export const dynamic = 'force-dynamic';
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
+    <main className="min-h-screen bg-brand-gradient">
       <Navbar />
       <Hero />
       <Stats />

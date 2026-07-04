@@ -40,7 +40,7 @@ export default function NewDisputePage() {
   if (loading) {
     return (
       <div className="min-h-[40vh] flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500" />
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-accent" />
       </div>
     );
   }
@@ -49,7 +49,7 @@ export default function NewDisputePage() {
     return (
       <div className="min-h-[40vh] flex flex-col items-center justify-center text-center p-8">
         <h1 className="text-3xl font-bold text-white mb-4">Access Denied</h1>
-        <p className="text-xl mb-8 text-blue-200/80">
+        <p className="text-xl mb-8 text-neutral-200/80">
           Only tenants can file disputes.
         </p>
         <Link href="/">

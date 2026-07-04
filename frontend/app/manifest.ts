@@ -2,17 +2,17 @@ import type { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Chioma',
-    short_name: 'Chioma',
+    name: 'Arbitra',
+    short_name: 'Arbitra',
     description:
-      'Blockchain-powered housing rentals with transparent leases, payments, and offline-ready access.',
+      'On-chain arbitration and escrow protocol built on Stellar - trustless dispute resolution for rentals, freelance work, trade finance, and insurance claims.',
     start_url: '/',
     scope: '/',
     display: 'standalone',
     orientation: 'portrait',
-    background_color: '#020617',
-    theme_color: '#1d4ed8',
-    categories: ['housing', 'finance', 'productivity'],
+    background_color: '#0b1f1d',
+    theme_color: '#ff6b5e',
+    categories: ['finance', 'productivity', 'business'],
     icons: [
       {
         src: '/android_192.png',
@@ -43,7 +43,7 @@ export default function manifest(): MetadataRoute.Manifest {
         sizes: '1200x630',
         type: 'image/png',
         form_factor: 'wide',
-        label: 'Chioma landing page preview',
+        label: 'Arbitra landing page preview',
       },
     ],
   };

@@ -6,15 +6,15 @@ version: '3.8'
 services:
   db:
     image: postgres:15-alpine
-    container_name: chioma_docs_db
+    container_name: huston-housing_docs_db
     environment:
       POSTGRES_USER: postgres_cax
       POSTGRES_PASSWORD: password
-      POSTGRES_DB: chioma_db
+      POSTGRES_DB: huston-housing_db
     ports:
       - '5432:5432'
     volumes:
-      - chioma_docs_pg_data:/var/lib/postgresql/data
+      - huston-housing_docs_pg_data:/var/lib/postgresql/data
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U postgres_cax']
       interval: 5s
@@ -23,7 +23,7 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: chioma_docs_redis
+    container_name: huston-housing_docs_redis
     ports:
       - '6379:6379'
     healthcheck:
@@ -36,7 +36,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: chioma_docs_api
+    container_name: huston-housing_docs_api
     ports:
       - '5000:5000'
     environment:
@@ -46,7 +46,7 @@ services:
       DB_PORT: '5432'
       DB_USERNAME: postgres_cax
       DB_PASSWORD: password
-      DB_NAME: chioma_db
+      DB_NAME: huston-housing_db
       REDIS_HOST: redis
       REDIS_PORT: '6379'
       RATE_LIMIT_TTL: '60000'
@@ -61,4 +61,4 @@ services:
       redis: { condition: service_healthy }
 
 volumes:
-  chioma_docs_pg_data:
+  huston-housing_docs_pg_data:

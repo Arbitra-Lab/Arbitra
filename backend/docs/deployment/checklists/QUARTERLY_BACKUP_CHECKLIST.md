@@ -1,6 +1,6 @@
 # Quarterly Backup Checklist
 
-**Project:** Chioma Platform  
+**Project:** Houston Housing Platform  
 **Frequency:** Quarterly (Jan, Apr, Jul, Oct)  
 **Owner:** Director of Infrastructure / CTO  
 **Time Commitment:** 1-2 days
@@ -114,7 +114,7 @@ Full simulation of disaster recovery procedure:
 
 - [ ] **Secure Backup Access**
   - Verify S3 access credentials available
-  - Test AWS CLI: `aws s3 ls s3://chioma-backups-prod/`
+  - Test AWS CLI: `aws s3 ls s3://huston-housing-backups-prod/`
   - Confirm backup file location known
   - Prepare recovery scripts
   - Test backup download speed
@@ -123,13 +123,13 @@ Full simulation of disaster recovery procedure:
 
 - [ ] **Retrieve Latest Backup**
   - Identify latest clean backup
-  - Download snapshot backup: `aws s3 cp s3://chioma-backups-prod/snapshot/$(aws s3 ls s3://chioma-backups-prod/snapshot/ | tail -1 | awk '{print $4}') /backups/dr/`
+  - Download snapshot backup: `aws s3 cp s3://huston-housing-backups-prod/snapshot/$(aws s3 ls s3://huston-housing-backups-prod/snapshot/ | tail -1 | awk '{print $4}') /backups/dr/`
   - Verify download integrity: `gzip -t /backups/dr/backup.sql.gz`
   - Document backup metadata
   - Estimate recovery time based on size
 
 - [ ] **Restore Complete Database**
-  - Execute restore: `/opt/chioma/scripts/disaster-recovery.sh`
+  - Execute restore: `/opt/huston-housing/scripts/disaster-recovery.sh`
   - Monitor progress: `tail -f /var/log/postgresql/postgresql.log`
   - Track time from start to completion
   - Record any errors or warnings
@@ -166,7 +166,7 @@ Full simulation of disaster recovery procedure:
 - [ ] **Update DNS/Routing**
   - Update DNS records to point to new infrastructure
   - Allow time for DNS propagation (5-30 minutes)
-  - Verify DNS resolution: `nslookup api.chioma.dev`
+  - Verify DNS resolution: `nslookup api.huston-housing.dev`
   - Update load balancer if applicable
   - Monitor for traffic arrival
 
@@ -236,7 +236,7 @@ Comprehensive data integrity checks:
 - [ ] **Critical Data Counts**
 
   ```bash
-  psql -U chioma -c \
+  psql -U huston-housing -c \
     "SELECT
       (SELECT COUNT(*) FROM users) as users,
       (SELECT COUNT(*) FROM properties) as properties,

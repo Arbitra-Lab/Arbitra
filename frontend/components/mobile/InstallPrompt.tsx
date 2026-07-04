@@ -54,10 +54,10 @@ export default function InstallPrompt() {
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="text-sm font-semibold text-white">
-              Install Chioma App
+              Install Arbitra App
             </p>
-            <p className="text-xs text-blue-200/70 mt-1">
-              Add Chioma to your home screen for faster access and better
+            <p className="text-xs text-neutral-200/70 mt-1">
+              Add Arbitra to your home screen for faster access and better
               offline support.
             </p>
           </div>
@@ -74,7 +74,7 @@ export default function InstallPrompt() {
           <button
             type="button"
             onClick={onInstall}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-500/30 hover:bg-blue-500/40 border border-blue-400/30 text-blue-100 text-sm font-semibold"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-blue/30 hover:bg-brand-blue/40 border border-brand-blue/30 text-neutral-100 text-sm font-semibold"
           >
             <Download size={14} />
             Install

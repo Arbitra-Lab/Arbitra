@@ -10,7 +10,7 @@ We welcome bug reports, feature requests, and general feedback.
 
 ## Support channels
 
-- **GitHub**: [Open an issue](https://github.com/chioma/chioma/issues) for bugs or feature requests.
+- **GitHub**: [Open an issue](https://github.com/huston-housing/huston-housing/issues) for bugs or feature requests.
 - **Documentation**: [API docs](/api/docs), [API Changelog](./API-CHANGELOG.md), [SDK generation](./SDK-GENERATION.md).
 - **Security**: See [security.txt](/.well-known/security.txt) and the repo’s security policy.
 

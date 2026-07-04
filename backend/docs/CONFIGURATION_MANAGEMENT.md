@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document covers configuration management for the Chioma backend across all environments. It defines environment variable standards, configuration file structure, validation procedures, environment-specific setups, secrets handling, versioning, deployment, and troubleshooting.
+This document covers configuration management for the Houston Housing backend across all environments. It defines environment variable standards, configuration file structure, validation procedures, environment-specific setups, secrets handling, versioning, deployment, and troubleshooting.
 
 Use this document alongside:
 
@@ -139,7 +139,7 @@ DB_HOST=localhost
 DB_PORT=5432
 DB_USERNAME=postgres
 DB_PASSWORD=password
-DB_NAME=chioma_db
+DB_NAME=huston-housing_db
 
 # Redis Configuration
 REDIS_HOST=localhost
@@ -253,9 +253,9 @@ app.useGlobalPipes(
 
    DB_HOST=localhost
    DB_PORT=5433
-   DB_USERNAME=chioma_dev
+   DB_USERNAME=huston-housing_dev
    DB_PASSWORD=dev_password
-   DB_NAME=chioma_dev
+   DB_NAME=huston-housing_dev
 
    JWT_SECRET=dev-jwt-secret-key-minimum-32-characters
    JWT_REFRESH_SECRET=dev-refresh-secret-key-minimum-32-characters
@@ -326,7 +326,7 @@ DB_HOST=${DB_HOST}
 DB_PORT=5432
 DB_USERNAME=${DB_USERNAME}
 DB_PASSWORD=${DB_PASSWORD}
-DB_NAME=chioma_staging
+DB_NAME=huston-housing_staging
 
 JWT_SECRET=${JWT_SECRET}
 JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
@@ -363,7 +363,7 @@ SECURITY_ENCRYPTION_KEY=${SECURITY_ENCRYPTION_KEY}
 - `LOG_LEVEL=debug` — verbose logging retained for easier issue diagnosis.
 - `LOG_FORMAT=json` — structured JSON logs for log aggregation tools.
 - `METRICS_ENABLED=true` — metrics collection active for performance baseline.
-- Database name is `chioma_staging` — isolated from development and production.
+- Database name is `huston-housing_staging` — isolated from development and production.
 - Secrets are never stored in the file; they are injected at runtime.
 
 ---

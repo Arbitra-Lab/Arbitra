@@ -1,9 +1,9 @@
 # Environment Setup Guide
 
-> **Chioma Housing Protocol** — Developer Onboarding  
-> Related Issues: [#01](https://github.com/Listoncrypt/chioma/issues/1), [#04](https://github.com/Listoncrypt/chioma/issues/4), [#12](https://github.com/Listoncrypt/chioma/issues/12)
+> **Houston Housing Housing Protocol** — Developer Onboarding  
+> Related Issues: [#01](https://github.com/Listoncrypt/huston-housing/issues/1), [#04](https://github.com/Listoncrypt/huston-housing/issues/4), [#12](https://github.com/Listoncrypt/huston-housing/issues/12)
 
-Welcome to the Chioma Housing Protocol! This guide will walk you through setting up your local development environment so you can build, test, and deploy **Soroban smart contracts** on the Stellar blockchain.
+Welcome to the Houston Housing Housing Protocol! This guide will walk you through setting up your local development environment so you can build, test, and deploy **Soroban smart contracts** on the Stellar blockchain.
 
 By the end of this guide you will have:
 
@@ -152,11 +152,11 @@ cargo install --locked stellar-cli --version 22.0.0
 
 ## Step 4 — Clone the Repository
 
-If you haven't already, clone the Chioma repository:
+If you haven't already, clone the Houston Housing repository:
 
 ```bash
-git clone https://github.com/Listoncrypt/chioma.git
-cd chioma/contract
+git clone https://github.com/Listoncrypt/huston-housing.git
+cd huston-housing/contract
 ```
 
 ### Verify the Workspace Builds
@@ -219,7 +219,7 @@ cargo expand -p property_registry
 
 ### `cargo-fmt` and `cargo-clippy` — Code Quality
 
-These ship with the default Rust installation. The Chioma project enforces:
+These ship with the default Rust installation. The Houston Housing project enforces:
 
 - **`cargo fmt --all`** — Consistent code formatting
 - **`cargo clippy --all-targets --all-features -- -D warnings`** — Zero-warning linting policy
@@ -412,7 +412,7 @@ Some Rust/Cargo dependency trees can exceed the Windows 260-character path limit
 | 1    | `curl ... \| sh` or `rustup-init.exe`           | Install Rust via `rustup`        |
 | 2    | `rustup target add wasm32-unknown-unknown`      | Add WASM compilation target      |
 | 3    | `cargo install --locked stellar-cli`            | Install Soroban CLI              |
-| 4    | `git clone ... && cd chioma/contract`           | Clone the repository             |
+| 4    | `git clone ... && cd huston-housing/contract`           | Clone the repository             |
 | 5    | `cargo build --release && cargo test`           | Verify the environment           |
 
 ---
@@ -425,4 +425,4 @@ Your environment is ready! Continue to the next guide:
 
 ---
 
-*Last updated: April 2026 · Chioma Housing Protocol · [CONTRIBUTING.md](../../CONTRIBUTING.md)*
+*Last updated: April 2026 · Houston Housing Housing Protocol · [CONTRIBUTING.md](../../CONTRIBUTING.md)*

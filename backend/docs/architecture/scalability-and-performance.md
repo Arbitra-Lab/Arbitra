@@ -1,6 +1,6 @@
 # Scalability and Performance
 
-This document outlines the scalability strategies, performance optimization techniques, capacity planning, and load testing procedures for the Chioma backend.
+This document outlines the scalability strategies, performance optimization techniques, capacity planning, and load testing procedures for the Houston Housing backend.
 
 > **Operational tuning:** For day-to-day knobs (env vars, checklists, troubleshooting), see [Performance Tuning Guidelines](./PERFORMANCE_TUNING_GUIDELINES.md).
 

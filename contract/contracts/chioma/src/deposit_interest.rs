@@ -1,4 +1,4 @@
-//! Security Deposit Interest Accrual logic for the Chioma rental contract.
+//! Security Deposit Interest Accrual logic for the Houston Housing rental contract.
 
 use soroban_sdk::{Env, String, Vec};
 

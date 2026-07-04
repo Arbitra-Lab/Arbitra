@@ -29,8 +29,8 @@ export function ThemeSelector({
             onClick={() => onChange(theme.value)}
             className={`rounded-xl border px-4 py-3 text-sm font-medium transition-colors ${
               isActive
-                ? 'border-blue-500 bg-blue-500 text-white'
-                : 'border-white/10 bg-white/5 text-blue-200/70 hover:bg-white/10 hover:text-white'
+                ? 'border-brand-accent bg-brand-accent text-white'
+                : 'border-white/10 bg-white/5 text-neutral-200/70 hover:bg-white/10 hover:text-white'
             } ${disabled ? 'cursor-not-allowed opacity-60' : ''}`}
           >
             {theme.label}

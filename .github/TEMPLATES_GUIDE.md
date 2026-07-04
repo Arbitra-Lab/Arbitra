@@ -1,6 +1,6 @@
 # GitHub Templates & Workflows Guide
 
-This document explains all the GitHub templates and workflows set up for the Chioma project.
+This document explains all the GitHub templates and workflows set up for the Houston Housing project.
 
 ## 📋 What's Included
 
@@ -159,7 +159,7 @@ Disables blank issues and provides quick links to:
 
 **Options**:
 
-1. Email: security@chioma.dev
+1. Email: security@huston-housing.dev
 2. GitHub private vulnerability reporting
 3. See SECURITY.md for details
 
@@ -316,7 +316,7 @@ Track these metrics to improve:
 
 ### Reporting Process
 
-1. **Email**: security@chioma.dev
+1. **Email**: security@huston-housing.dev
 2. **Include**:
    - Description of vulnerability
    - Affected component
@@ -372,7 +372,7 @@ When contributing:
 ## 📞 Contact
 
 - **Questions**: GitHub Discussions
-- **Security**: security@chioma.dev
+- **Security**: security@huston-housing.dev
 - **General**: GitHub Issues
 
 ---

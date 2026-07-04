@@ -1,10 +1,10 @@
 # Integration Guide: Property Registry with Rental Contract
 
-This guide demonstrates how to integrate the Property Registry Contract with the Chioma Rental Contract to ensure rental agreements are tied to verified properties.
+This guide demonstrates how to integrate the Property Registry Contract with the Houston Housing Rental Contract to ensure rental agreements are tied to verified properties.
 
 ## Overview
 
-The Property Registry Contract provides an on-chain verification layer for properties. Before creating a rental agreement, the Chioma contract can query the registry to ensure:
+The Property Registry Contract provides an on-chain verification layer for properties. Before creating a rental agreement, the Houston Housing contract can query the registry to ensure:
 
 1. The property exists in the registry
 2. The property has been verified by an admin
@@ -14,7 +14,7 @@ The Property Registry Contract provides an on-chain verification layer for prope
 
 ### 1. Add Property Registry Client Dependency
 
-In the Chioma contract's `Cargo.toml`, add the property registry as a dependency (if building as separate contracts):
+In the Houston Housing contract's `Cargo.toml`, add the property registry as a dependency (if building as separate contracts):
 
 ```toml
 [dependencies]
@@ -25,7 +25,7 @@ Or, if deploying as separate contracts, use the Soroban SDK's contract client ge
 
 ### 2. Update Rental Contract Errors
 
-Add property-related errors to `contracts/chioma/src/errors.rs`:
+Add property-related errors to `contracts/huston-housing/src/errors.rs`:
 
 ```rust
 #[contracterror]
@@ -41,7 +41,7 @@ pub enum RentalError {
 
 ### 3. Store Property Registry Address in Contract State
 
-Update `contracts/chioma/src/types.rs` to include the property registry address:
+Update `contracts/huston-housing/src/types.rs` to include the property registry address:
 
 ```rust
 #[contracttype]
@@ -56,7 +56,7 @@ pub struct ContractState {
 
 ### 4. Add Method to Set Property Registry Address
 
-In `contracts/chioma/src/lib.rs`, add a method to configure the property registry:
+In `contracts/huston-housing/src/lib.rs`, add a method to configure the property registry:
 
 ```rust
 /// Set the property registry contract address.
@@ -82,7 +82,7 @@ pub fn set_property_registry(
 
 ### 5. Update Create Agreement to Verify Property
 
-Modify the `create_agreement` function in `contracts/chioma/src/agreement.rs`:
+Modify the `create_agreement` function in `contracts/huston-housing/src/agreement.rs`:
 
 ```rust
 use property_registry::{PropertyRegistryContractClient, PropertyDetails};
@@ -133,7 +133,7 @@ pub fn create_agreement(
 
 ### 6. Update RentAgreement Struct
 
-Add the property_id field to the RentAgreement struct in `contracts/chioma/src/types.rs`:
+Add the property_id field to the RentAgreement struct in `contracts/huston-housing/src/types.rs`:
 
 ```rust
 #[contracttype]
@@ -161,7 +161,7 @@ let property_registry = PropertyRegistryContractClient::new(&env, &property_regi
 property_registry.initialize(&admin);
 
 // Deploy rental contract
-let rental_contract = ChiomaContractClient::new(&env, &rental_contract_id);
+let rental_contract = Houston HousingContractClient::new(&env, &rental_contract_id);
 rental_contract.initialize(&admin, &config);
 
 // Configure rental contract to use property registry

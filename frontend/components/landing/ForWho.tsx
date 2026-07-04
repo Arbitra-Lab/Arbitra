@@ -2,44 +2,44 @@
 
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { Users, Building2, Briefcase, ArrowRight } from 'lucide-react';
+import { HandCoins, Gavel, Briefcase, ArrowRight } from 'lucide-react';
 
 const audiences = [
   {
-    icon: Users,
-    title: 'Find Your Home',
+    icon: HandCoins,
+    title: 'Two-Party Agreements',
     description:
-      'Find your perfect home with transparent pricing, instant approvals, and secure payments.',
+      'Lock funds neutrally until both sides agree they got what they paid for — no middleman required.',
     features: [
-      'Instant background checks',
-      'Flexible payment options',
-      'Transparent lease terms',
-      'Earn rewards for on-time payments',
+      'Any Stellar asset, any amount',
+      'Mutual-approval or timeout release',
+      'Optional platform/referral fee splits',
+      'Full on-chain audit trail',
     ],
-    cta: 'Start Searching',
-    href: '/properties',
-    gradient: 'from-blue-500 to-cyan-500',
+    cta: 'View Agreements',
+    href: '/user/contracts',
+    gradient: 'from-brand-accent to-teal-700',
   },
   {
-    icon: Building2,
-    title: 'List a Property',
+    icon: Gavel,
+    title: 'Arbiters',
     description:
-      'Maximize your rental income with automated management and guaranteed payments.',
+      'Vote on disputes routed through the arbitration engine and get compensated for fair rulings.',
     features: [
-      'Automated rent collection',
-      'Smart contract leases',
-      'Real-time analytics',
-      'Reduced vacancy periods',
+      'Case-agnostic dispute queue',
+      'Weighted voting by reputation',
+      'Built-in appeals process',
+      'Timeout-based auto-resolution',
     ],
-    cta: 'Add New Listing',
-    href: '/user/properties/wizard',
-    gradient: 'from-indigo-500 to-purple-500',
+    cta: 'Manage Disputes',
+    href: '/admin/disputes',
+    gradient: 'from-brand-blue to-brand-blue-dark',
   },
   {
     icon: Briefcase,
-    title: 'Manage Your Bookings',
+    title: 'Manage Your Agreements',
     description:
-      'Keep track of your leases, documents, and payments all in one unified dashboard.',
+      'Keep track of your escrows, evidence, and payouts all in one unified dashboard.',
     features: [
       'Automated dispute resolution',
       'Instant settlement',
@@ -48,7 +48,7 @@ const audiences = [
     ],
     cta: 'Go to Dashboard',
     href: '/user',
-    gradient: 'from-purple-500 to-pink-500',
+    gradient: 'from-brand-accent to-brand-blue',
   },
 ];
 
@@ -66,9 +66,9 @@ export default function ForWho() {
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
             Built for Everyone
           </h2>
-          <p className="text-xl text-blue-200/80 max-w-2xl mx-auto">
-            Whether you&apos;re renting, managing, or facilitating, we&apos;ve
-            got you covered
+          <p className="text-xl text-neutral-200/80 max-w-2xl mx-auto">
+            Whether you&apos;re depositing, arbitrating, or managing
+            agreements, we&apos;ve got you covered
           </p>
         </motion.div>
 
@@ -96,7 +96,7 @@ export default function ForWho() {
                 </h3>
 
                 {/* Description */}
-                <p className="text-blue-200/70 mb-6 leading-relaxed">
+                <p className="text-neutral-200/70 mb-6 leading-relaxed">
                   {audience.description.replace(/'/g, '\u2019')}
                 </p>
 
@@ -105,9 +105,9 @@ export default function ForWho() {
                   {audience.features.map((feature, idx) => (
                     <li
                       key={idx}
-                      className="flex items-start gap-2 text-blue-200/80 text-sm"
+                      className="flex items-start gap-2 text-neutral-200/80 text-sm"
                     >
-                      <div className="w-1.5 h-1.5 bg-blue-400 rounded-full mt-2 flex-shrink-0" />
+                      <div className="w-1.5 h-1.5 bg-brand-accent rounded-full mt-2 flex-shrink-0" />
                       <span>{feature}</span>
                     </li>
                   ))}

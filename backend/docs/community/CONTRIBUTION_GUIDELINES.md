@@ -1,6 +1,6 @@
-# Chioma Backend Contribution Guidelines
+# Houston Housing Backend Contribution Guidelines
 
-Welcome! This guide outlines the specific standards and workflows for contributing to the Chioma Backend.
+Welcome! This guide outlines the specific standards and workflows for contributing to the Houston Housing Backend.
 
 ## 1. Getting Started
 
@@ -37,7 +37,7 @@ We follow the [Conventional Commits](https://www.conventionalcommits.org/) speci
 
 ## 5. Code Review
 
-- **Reviewers**: Request reviews from the specific module owner or the `@chioma-housing-protocol/backend-reviewers` team.
+- **Reviewers**: Request reviews from the specific module owner or the `@huston-housing-housing-protocol/backend-reviewers` team.
 - **Approval**: All PRs require at least one approval from a core maintainer before merging.
 - **Feedback**: Address all review comments. Explicitly state when you have resolved a comment, or ask for clarification if needed. Avoid dismissing feedback outright.
 

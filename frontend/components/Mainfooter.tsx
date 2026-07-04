@@ -17,14 +17,14 @@ const Mainfooter = () => {
           {/* Company Info Column */}
           <div className="space-y-6">
             <div>
-              <h3 className="text-2xl font-bold mb-4">Chioma</h3>
+              <h3 className="text-2xl font-bold mb-4">Arbitra</h3>
               <p className="text-slate-400 leading-relaxed text-sm max-w-xs">
                 Reimagining the rental experience with transparency, speed, and
                 trust. Powered by next-generation blockchain technology.
               </p>
             </div>
             <p className="text-slate-500 text-xs">
-              © 2026 Chioma. All rights reserved.
+              © 2026 Arbitra. All rights reserved.
             </p>
           </div>
 

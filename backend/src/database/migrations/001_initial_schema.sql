@@ -548,7 +548,7 @@ CREATE TABLE indexed_transactions (
     memo TEXT,
     memo_type VARCHAR(10) CHECK (memo_type IN ('text', 'id', 'hash')),
     
-    -- Chioma-specific references
+    -- Houston Housing-specific references
     agreement_id UUID REFERENCES rent_agreements(id) ON DELETE SET NULL,
     property_id UUID REFERENCES properties(id) ON DELETE SET NULL,
     payment_id UUID, -- References rent_payments(id) - can't set FK due to circular dependency

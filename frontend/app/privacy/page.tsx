@@ -5,11 +5,11 @@ import Footer from '@/components/Footer';
 export default function PrivacyPage() {
   return (
     <>
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 selection:bg-blue-200 selection:text-slate-900 pb-40">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-neutral-100 selection:bg-brand-accent/30 selection:text-slate-900 pb-40">
         <div className="max-w-4xl mx-auto px-4 sm:px-6">
           {/* Header */}
           <div className="text-center mb-8 sm:mb-12  pt-12 sm:pt-20">
-            <h1 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-slate-900 to-blue-900 bg-clip-text text-transparent mb-4">
+            <h1 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-slate-900 to-brand-blue-dark bg-clip-text text-transparent mb-4">
               Privacy Policy
             </h1>
           </div>
@@ -25,11 +25,11 @@ export default function PrivacyPage() {
                   1. Introduction
                 </h2>
                 <p className="mb-4 text-sm sm:text-base leading-relaxed">
-                  At Chioma Properties, we take your privacy seriously. This
-                  Privacy Policy describes how we collect, use, disclose, and
-                  safeguard your information when you visit our website, use our
-                  mobile application, or engage with our property listing and
-                  leasing services.
+                  At Arbitra, we take your privacy seriously. This Privacy
+                  Policy describes how we collect, use, disclose, and safeguard
+                  your information when you visit our website, use our mobile
+                  application, or engage with our property listing and leasing
+                  services.
                 </p>
                 <p className="text-sm sm:text-base leading-relaxed">
                   Please read this privacy policy carefully. If you do not agree
@@ -99,7 +99,7 @@ export default function PrivacyPage() {
                   <li>Respond to your comments, questions, and requests</li>
                   <li>
                     Communicate with you about products, services, offers,
-                    promotions, rewards, and events offered by Chioma Properties
+                    promotions, rewards, and events offered by Arbitra
                   </li>
                   <li>Monitor and analyze trends, usage, and activities</li>
                   <li>
@@ -264,8 +264,8 @@ export default function PrivacyPage() {
                 </ul>
                 <p className="text-sm sm:text-base leading-relaxed">
                   To exercise any of these rights, please contact us at
-                  privacy@chiomaproperties.com. We will respond to your request
-                  within 30 days.
+                  privacy@arbitra.io. We will respond to your request within 30
+                  days.
                 </p>
               </section>
 
@@ -394,11 +394,11 @@ export default function PrivacyPage() {
                 </h2>
                 <p className="mb-4 text-sm sm:text-base leading-relaxed">
                   If you have questions or comments about this policy, you may
-                  email us at privacy@chiomaproperties.com, call our customer
-                  service line at +234 800 CHIOMA (244662), or mail us at:
+                  email us at privacy@arbitra.io, call our customer service line
+                  at +234 800 ARBITRA (244662), or mail us at:
                 </p>
                 <p className="text-sm sm:text-base leading-relaxed">
-                  Chioma Properties
+                  Arbitra
                   <br />
                   Data Protection Officer
                   <br />

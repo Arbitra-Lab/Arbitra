@@ -2,7 +2,7 @@ import type { AppError, ErrorContext } from './types';
 
 declare global {
   interface Window {
-    __CHIOMA_ERROR_REPORTER__?: (payload: {
+    __ARBITRA_ERROR_REPORTER__?: (payload: {
       name: string;
       message: string;
       stack?: string;
@@ -21,9 +21,9 @@ export function logError(error: Error | AppError, context?: ErrorContext) {
     timestamp: new Date().toISOString(),
   };
 
-  console.error('[Chioma Error]', payload);
+  console.error('[Arbitra Error]', payload);
 
-  if (typeof window !== 'undefined' && window.__CHIOMA_ERROR_REPORTER__) {
-    window.__CHIOMA_ERROR_REPORTER__(payload);
+  if (typeof window !== 'undefined' && window.__ARBITRA_ERROR_REPORTER__) {
+    window.__ARBITRA_ERROR_REPORTER__(payload);
   }
 }

@@ -1,6 +1,6 @@
 # Testnet Deployment Guide
 
-This guide walks through deploying the Chioma smart contracts to Stellar's testnet.
+This guide walks through deploying the Houston Housing smart contracts to Stellar's testnet.
 
 ## Prerequisites
 
@@ -12,7 +12,7 @@ This guide walks through deploying the Chioma smart contracts to Stellar's testn
 
 | Contract           | Size | Purpose                              |
 | ------------------ | ---- | ------------------------------------ |
-| chioma             | 132K | Main rental agreement lifecycle      |
+| huston-housing             | 132K | Main rental agreement lifecycle      |
 | dispute_resolution | 64K  | Dispute handling & arbitration       |
 | escrow             | 43K  | Security deposit management          |
 | payment            | 60K  | Rent payment processing              |
@@ -127,11 +127,11 @@ soroban contract deploy \
   --network testnet
 ```
 
-#### Step 3h: Deploy Chioma (Main Contract)
+#### Step 3h: Deploy Houston Housing (Main Contract)
 
 ```bash
 soroban contract deploy \
-  --wasm contract/target/wasm32-unknown-unknown/release/chioma.wasm \
+  --wasm contract/target/wasm32-unknown-unknown/release/huston-housing.wasm \
   --source testnet-deployer \
   --network testnet
 ```
@@ -215,14 +215,14 @@ soroban contract invoke \
   -- initialize \
   --admin <YOUR_PUBLIC_KEY> \
   --min_votes_required 3 \
-  --chioma_contract <CHIOMA_CONTRACT_ID>
+  --huston-housing_contract <HUSTON_HOUSING_CONTRACT_ID>
 ```
 
-#### Initialize Chioma (Main Contract)
+#### Initialize Houston Housing (Main Contract)
 
 ```bash
 soroban contract invoke \
-  --id <CHIOMA_CONTRACT_ID> \
+  --id <HUSTON_HOUSING_CONTRACT_ID> \
   --source testnet-deployer \
   --network testnet \
   -- initialize \
@@ -259,7 +259,7 @@ Create a `.env.testnet` file to store deployed contract IDs:
 
 ```bash
 # .env.testnet
-CHIOMA_CONTRACT_ID=C...
+HUSTON_HOUSING_CONTRACT_ID=C...
 DISPUTE_RESOLUTION_CONTRACT_ID=C...
 ESCROW_CONTRACT_ID=C...
 PAYMENT_CONTRACT_ID=C...

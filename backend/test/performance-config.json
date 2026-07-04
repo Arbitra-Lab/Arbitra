@@ -125,12 +125,12 @@
       "duration": 5
     },
     "staging": {
-      "baseUrl": "https://staging-api.chioma.com",
+      "baseUrl": "https://staging-api.huston-housing.com",
       "connections": 20,
       "duration": 10
     },
     "production": {
-      "baseUrl": "https://api.chioma.com",
+      "baseUrl": "https://api.huston-housing.com",
       "connections": 50,
       "duration": 30
     }

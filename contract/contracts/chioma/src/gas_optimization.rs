@@ -1,9 +1,9 @@
-//! Gas optimization utilities for the Chioma contract.
+//! Gas optimization utilities for the Houston Housing contract.
 //!
 //! Provides benchmarking structs and helper functions to estimate, track, and
 //! reduce the computational cost of on-chain operations.
 //!
-//! Resolves: https://github.com/chioma-housing-protocol-I/chioma/issues/478
+//! Resolves: https://github.com/huston-housing-housing-protocol-I/huston-housing/issues/478
 
 use soroban_sdk::{contracttype, Env, String, Vec};
 

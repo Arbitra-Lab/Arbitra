@@ -4,9 +4,6 @@
  */
 
 export { BaseModal } from './BaseModal';
-export { PropertyDetailModal } from './PropertyDetailModal';
-export { PropertyInquiryModal } from './PropertyInquiryModal';
-export { PropertyAgreementModal } from './PropertyAgreementModal';
 export { AgreementViewModal } from './AgreementViewModal';
 export { AgreementSigningModal } from './AgreementSigningModal';
 export { DisputeModal } from './DisputeModal';

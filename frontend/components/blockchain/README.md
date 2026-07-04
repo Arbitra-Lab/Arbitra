@@ -2,7 +2,7 @@
 
 Reusable UI for **Freighter** wallet connection, **XDR signing**, **payment steps**, **Horizon balances**, and **Explorer** links. Works with `NEXT_PUBLIC_STELLAR_NETWORK` (`TESTNET` default, `PUBLIC` for mainnet).
 
-**Community:** [Telegram — Chioma group](https://t.me/chiomagroup)
+**Community:** [Telegram — Houston Housing group](https://t.me/huston-housinggroup)
 
 ## Dependencies
 

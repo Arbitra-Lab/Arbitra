@@ -7,7 +7,7 @@
 
 ## 1. Purpose
 
-This guide defines how Chioma manages third-party dependencies across the backend, frontend, and Soroban contract workspaces. It covers package manager usage, version pinning, security updates, auditing, compatibility checks, breaking-change handling, documentation expectations, and troubleshooting.
+This guide defines how Houston Housing manages third-party dependencies across the backend, frontend, and Soroban contract workspaces. It covers package manager usage, version pinning, security updates, auditing, compatibility checks, breaking-change handling, documentation expectations, and troubleshooting.
 
 The goals are:
 
@@ -18,7 +18,7 @@ The goals are:
 
 ## 2. Package Management Strategy
 
-Chioma currently uses a mixed dependency model:
+Houston Housing currently uses a mixed dependency model:
 
 | Workspace       | Manifest                                                    | Lock / resolver                                         | Primary tooling |
 | --------------- | ----------------------------------------------------------- | ------------------------------------------------------- | --------------- |
@@ -55,12 +55,12 @@ pnpm --dir backend add -D <package>
 
 # Contracts
 cd contract
-cargo add <crate> --package chioma
+cargo add <crate> --package huston-housing
 ```
 
 ## 3. Version Pinning Approach
 
-Chioma uses lockfiles for reproducibility and semver ranges in manifests for controlled patch/minor adoption.
+Houston Housing uses lockfiles for reproducibility and semver ranges in manifests for controlled patch/minor adoption.
 
 ### JavaScript / TypeScript
 
@@ -133,7 +133,7 @@ Security updates should be handled with urgency and minimal unrelated change.
   - production runtime
   - development tooling only
   - a transitive dependency only
-- Confirm exploitability in Chioma's actual usage path.
+- Confirm exploitability in Houston Housing's actual usage path.
 - Check whether mitigation is available through `overrides`, config, or feature disablement while a full upgrade is prepared.
 
 ### Response steps
@@ -321,4 +321,4 @@ service classifies findings as:
 
 High and critical findings should be patched in a dedicated security update PR.
 Moderate and low findings can be grouped into the next scheduled maintenance
-window unless an advisory is exploitable in Chioma's runtime path.
+window unless an advisory is exploitable in Houston Housing's runtime path.

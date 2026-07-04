@@ -20,26 +20,26 @@ pub struct ArbiterAdded {
 #[contractevent(topics = ["dispute_raised"])]
 pub struct DisputeRaised {
     #[topic]
-    pub agreement_id: String,
+    pub case_id: String,
     pub details_hash: String,
 }
 
 #[contractevent(topics = ["vote_cast"])]
 pub struct VoteCast {
     #[topic]
-    pub agreement_id: String,
+    pub case_id: String,
     #[topic]
     pub arbiter: Address,
-    pub favor_landlord: bool,
+    pub favor_claimant: bool,
 }
 
 #[contractevent(topics = ["dispute_resolved"])]
 pub struct DisputeResolved {
     #[topic]
-    pub agreement_id: String,
+    pub case_id: String,
     pub outcome: DisputeOutcome,
-    pub votes_favor_landlord: u32,
-    pub votes_favor_tenant: u32,
+    pub votes_favor_claimant: u32,
+    pub votes_favor_respondent: u32,
 }
 
 #[contractevent(topics = ["appeal_created"])]
@@ -74,7 +74,7 @@ pub struct AppealCancelled {
 #[contractevent(topics = ["dispute_timeout"])]
 pub struct DisputeTimeout {
     #[topic]
-    pub agreement_id: String,
+    pub case_id: String,
 }
 
 pub(crate) fn contract_initialized(env: &Env, admin: Address, min_votes_required: u32) {
@@ -89,35 +89,35 @@ pub(crate) fn arbiter_added(env: &Env, admin: Address, arbiter: Address) {
     ArbiterAdded { admin, arbiter }.publish(env);
 }
 
-pub(crate) fn dispute_raised(env: &Env, agreement_id: String, details_hash: String) {
+pub(crate) fn dispute_raised(env: &Env, case_id: String, details_hash: String) {
     DisputeRaised {
-        agreement_id,
+        case_id,
         details_hash,
     }
     .publish(env);
 }
 
-pub(crate) fn vote_cast(env: &Env, agreement_id: String, arbiter: Address, favor_landlord: bool) {
+pub(crate) fn vote_cast(env: &Env, case_id: String, arbiter: Address, favor_claimant: bool) {
     VoteCast {
-        agreement_id,
+        case_id,
         arbiter,
-        favor_landlord,
+        favor_claimant,
     }
     .publish(env);
 }
 
 pub(crate) fn dispute_resolved(
     env: &Env,
-    agreement_id: String,
+    case_id: String,
     outcome: DisputeOutcome,
-    votes_favor_landlord: u32,
-    votes_favor_tenant: u32,
+    votes_favor_claimant: u32,
+    votes_favor_respondent: u32,
 ) {
     DisputeResolved {
-        agreement_id,
+        case_id,
         outcome,
-        votes_favor_landlord,
-        votes_favor_tenant,
+        votes_favor_claimant,
+        votes_favor_respondent,
     }
     .publish(env);
 }
@@ -142,8 +142,8 @@ pub(crate) fn appeal_cancelled(env: &Env, appeal_id: String) {
     AppealCancelled { appeal_id }.publish(env);
 }
 
-pub(crate) fn dispute_timeout(env: &Env, agreement_id: String) {
-    DisputeTimeout { agreement_id }.publish(env);
+pub(crate) fn dispute_timeout(env: &Env, case_id: String) {
+    DisputeTimeout { case_id }.publish(env);
 }
 
 // ── Weighted Voting Events ─────────────────────────────────────────────────

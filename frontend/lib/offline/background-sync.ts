@@ -8,7 +8,7 @@ import { setMetadata, getMetadata } from './db';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
-const SYNC_TAG = 'chioma-offline-sync';
+const SYNC_TAG = 'arbitra-offline-sync';
 const LAST_SYNC_KEY = 'last_sync_timestamp';
 const SYNC_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
 

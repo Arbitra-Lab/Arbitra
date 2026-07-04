@@ -1,4 +1,4 @@
-# Chioma Demo Credentials
+# Houston Housing Demo Credentials
 
 This document contains demo user credentials for development and testing purposes.
 
@@ -65,28 +65,28 @@ These credentials are used in production for demo purposes:
 
 #### Admin User
 
-- **Email:** `admin@chioma.demo`
+- **Email:** `admin@huston-housing.demo`
 - **Password:** `Admin@Demo2024!`
 - **Role:** Admin
 - **Access:** Full system administration
 
 #### Agent User
 
-- **Email:** `agent@chioma.demo`
+- **Email:** `agent@huston-housing.demo`
 - **Password:** `Agent@Demo2024!`
 - **Role:** Agent
 - **Access:** Property management, client relations
 
 #### Landlord User
 
-- **Email:** `landlord@chioma.demo`
+- **Email:** `landlord@huston-housing.demo`
 - **Password:** `Landlord@Demo2024!`
 - **Role:** Landlord
 - **Access:** Property listings, tenant management
 
 #### Tenant User
 
-- **Email:** `tenant@chioma.demo`
+- **Email:** `tenant@huston-housing.demo`
 - **Password:** `Tenant@Demo2024!`
 - **Role:** Tenant
 - **Access:** Property browsing, rent payments
@@ -97,28 +97,28 @@ For local development (auto-generated passwords):
 
 #### Admin User
 
-- **Email:** `admin@chioma.local`
+- **Email:** `admin@huston-housing.local`
 - **Password:** `QwW??H<EauRx6EyB>wm_`
 - **Role:** Admin
 - **Access:** Full system administration
 
 #### Agent User
 
-- **Email:** `agent@chioma.local`
+- **Email:** `agent@huston-housing.local`
 - **Password:** `nWkW~HWN6S*-6o!??kHg`
 - **Role:** Agent
 - **Access:** Property management, client relations
 
 #### Landlord User
 
-- **Email:** `landlord@chioma.local`
+- **Email:** `landlord@huston-housing.local`
 - **Password:** (auto-generated on seed)
 - **Role:** Landlord
 - **Access:** Property listings, tenant management
 
 #### Tenant User
 
-- **Email:** `tenant@chioma.local`
+- **Email:** `tenant@huston-housing.local`
 - **Password:** `8T<}2QXRm(?rwyJ4Pq3/`
 - **Role:** Tenant
 - **Access:** Property browsing, rent payments
@@ -167,7 +167,7 @@ DB_HOST=localhost
 DB_PORT=5432
 DB_USERNAME=postgres
 DB_PASSWORD=password
-DB_NAME=chioma_db
+DB_NAME=huston-housing_db
 ```
 
 Run migrations before seeding:

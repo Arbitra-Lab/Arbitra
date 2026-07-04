@@ -28,38 +28,38 @@ const SEED_PASSWORD = 'Seed@123456';
 
 const ADMIN_FIXTURES = [
   {
-    email: 'admin.alice@chioma.local',
+    email: 'admin.alice@huston-housing.local',
     firstName: 'Alice',
     lastName: 'Okafor',
   },
   {
-    email: 'admin.bob@chioma.local',
+    email: 'admin.bob@huston-housing.local',
     firstName: 'Bob',
     lastName: 'Mensah',
   },
   {
-    email: 'admin.carol@chioma.local',
+    email: 'admin.carol@huston-housing.local',
     firstName: 'Carol',
     lastName: 'Nwosu',
   },
   {
-    email: 'admin.david@chioma.local',
+    email: 'admin.david@huston-housing.local',
     firstName: 'David',
     lastName: 'Eze',
   },
   {
-    email: 'admin.eve@chioma.local',
+    email: 'admin.eve@huston-housing.local',
     firstName: 'Eve',
     lastName: 'Adeyemi',
   },
 ];
 
 const USER_FIXTURES = [
-  { email: 'user.frank@chioma.local', firstName: 'Frank', lastName: 'Bello' },
-  { email: 'user.grace@chioma.local', firstName: 'Grace', lastName: 'Dike' },
-  { email: 'user.henry@chioma.local', firstName: 'Henry', lastName: 'Olawale' },
-  { email: 'user.iris@chioma.local', firstName: 'Iris', lastName: 'Chukwu' },
-  { email: 'user.james@chioma.local', firstName: 'James', lastName: 'Abiodun' },
+  { email: 'user.frank@huston-housing.local', firstName: 'Frank', lastName: 'Bello' },
+  { email: 'user.grace@huston-housing.local', firstName: 'Grace', lastName: 'Dike' },
+  { email: 'user.henry@huston-housing.local', firstName: 'Henry', lastName: 'Olawale' },
+  { email: 'user.iris@huston-housing.local', firstName: 'Iris', lastName: 'Chukwu' },
+  { email: 'user.james@huston-housing.local', firstName: 'James', lastName: 'Abiodun' },
 ];
 
 // ─── Property fixtures (20 properties with Unsplash images) ─────────────────

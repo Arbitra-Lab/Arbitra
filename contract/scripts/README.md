@@ -1,6 +1,6 @@
 # Deployment Scripts
 
-Deploy Chioma Soroban contracts to [Stellar testnet](https://developers.stellar.org/docs/build/smart-contracts/getting-started/deploy-to-testnet).
+Deploy Houston Housing Soroban contracts to [Stellar testnet](https://developers.stellar.org/docs/build/smart-contracts/getting-started/deploy-to-testnet).
 
 ## Prerequisites
 
@@ -46,14 +46,14 @@ stellar keys fund testnet-deployer --network testnet
 |----------|---------|-------------|
 | `DEPLOYER_KEY` | `testnet-deployer` | CLI identity that signs txs |
 | `NETWORK` | `testnet` | Network name in CLI config |
-| `PLATFORM_FEE_BPS` | `500` | Chioma `fee_bps` (5%) |
+| `PLATFORM_FEE_BPS` | `500` | Houston Housing `fee_bps` (5%) |
 | `MIN_DISPUTE_VOTES` | `3` | Dispute resolution quorum |
 | `WASM_DIR` | `target/wasm32v1-none/release` | Built WASM location |
 | `ENV_FILE` | `.env.testnet` | Output contract IDs |
 
-**Deploy order:** `user_profile` → `property_registry` → `agent_registry` → `rent_obligation` → `escrow` → `payment` → `dispute_resolution` → `chioma`
+**Deploy order:** `user_profile` → `property_registry` → `agent_registry` → `rent_obligation` → `escrow` → `payment` → `dispute_resolution` → `huston-housing`
 
-**Init order:** same through `payment`, then `chioma`, then `dispute_resolution` (needs `CHIOMA_CONTRACT_ID`).
+**Init order:** same through `payment`, then `huston-housing`, then `dispute_resolution` (needs `HUSTON_HOUSING_CONTRACT_ID`).
 
 **Output:** `.env.testnet` with `*_CONTRACT_ID` variables for the frontend/backend.
 

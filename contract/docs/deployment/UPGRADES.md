@@ -161,7 +161,7 @@ cargo build --release --target wasm32-unknown-unknown
 WASM_HASH=$(soroban contract install \
   --network ${NETWORK} \
   --source ${ADMIN_KEY} \
-  target/wasm32-unknown-unknown/release/chioma_contract.wasm)
+  target/wasm32-unknown-unknown/release/huston-housing_contract.wasm)
 
 echo "New implementation WASM hash: ${WASM_HASH}"
 
@@ -247,7 +247,7 @@ cargo build --release --target wasm32-unknown-unknown
 NEW_CONTRACT=$(soroban contract deploy \
   --network ${NETWORK} \
   --source ${ADMIN_KEY} \
-  --wasm target/wasm32-unknown-unknown/release/chioma_contract.wasm)
+  --wasm target/wasm32-unknown-unknown/release/huston-housing_contract.wasm)
 
 echo "New contract address: ${NEW_CONTRACT}"
 
@@ -727,7 +727,7 @@ cargo build --release --target wasm32-unknown-unknown
 NEW_IMPL=$(soroban contract install \
   --network ${NETWORK} \
   --source ${ADMIN_KEY} \
-  target/wasm32-unknown-unknown/release/chioma_contract.wasm)
+  target/wasm32-unknown-unknown/release/huston-housing_contract.wasm)
 
 echo "New implementation: ${NEW_IMPL}"
 
