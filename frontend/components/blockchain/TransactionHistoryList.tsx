@@ -84,7 +84,7 @@ export function TransactionHistoryList({
               href={getStellarExpertTxUrl(tx.hash)}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-xs font-medium text-sky-400 hover:text-sky-300"
+              className="inline-flex items-center gap-1 text-xs font-medium text-brand-accent hover:text-brand-accent/80"
             >
               Explorer
               <ExternalLink size={12} />

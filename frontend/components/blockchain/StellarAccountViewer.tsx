@@ -44,7 +44,7 @@ export function StellarAccountViewer({
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="G…"
-            className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white font-mono placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+            className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white font-mono placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-brand-accent/40"
             spellCheck={false}
             autoComplete="off"
           />
@@ -56,7 +56,7 @@ export function StellarAccountViewer({
             if (!enabled) return;
             void refetch();
           }}
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-sky-600/90 hover:bg-sky-600 text-white px-4 py-2.5 text-sm font-semibold disabled:opacity-50 shrink-0"
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-blue/90 hover:bg-brand-blue text-white px-4 py-2.5 text-sm font-semibold disabled:opacity-50 shrink-0"
         >
           {isFetching ? <Loader2 className="animate-spin" size={18} /> : null}
           Load account
@@ -83,7 +83,7 @@ export function StellarAccountViewer({
           href={getStellarExpertAccountUrl(trimmed)}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 text-sm text-sky-400 hover:text-sky-300"
+          className="inline-flex items-center gap-1.5 text-sm text-brand-accent hover:text-brand-accent/80"
         >
           View on Stellar Expert
           <ExternalLink size={14} />

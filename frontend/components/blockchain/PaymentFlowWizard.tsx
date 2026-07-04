@@ -76,7 +76,7 @@ export function PaymentFlowWizard({
             {i > 0 && <ChevronRight size={14} className="shrink-0" />}
             <span
               className={
-                i <= stepIndex ? 'text-sky-400 font-medium' : 'text-slate-600'
+                i <= stepIndex ? 'text-brand-accent font-medium' : 'text-slate-600'
               }
             >
               {s === 'amount' ? 'Amount' : s === 'review' ? 'Review' : 'Sign'}
@@ -97,7 +97,7 @@ export function PaymentFlowWizard({
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               placeholder="0.00"
-              className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-white text-sm focus:ring-2 focus:ring-sky-500/40 focus:outline-none"
+              className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-white text-sm focus:ring-2 focus:ring-brand-accent/40 focus:outline-none"
             />
           </div>
           <div>
@@ -109,14 +109,14 @@ export function PaymentFlowWizard({
               value={memo}
               onChange={(e) => setMemo(e.target.value)}
               placeholder="Invoice #…"
-              className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-white text-sm focus:ring-2 focus:ring-sky-500/40 focus:outline-none"
+              className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-white text-sm focus:ring-2 focus:ring-brand-accent/40 focus:outline-none"
             />
           </div>
           <button
             type="button"
             onClick={goReview}
             disabled={!amount.trim()}
-            className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-semibold disabled:opacity-50"
+            className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-brand-blue hover:bg-brand-blue-dark text-white font-semibold disabled:opacity-50"
           >
             Continue
           </button>
@@ -177,7 +177,7 @@ export function PaymentFlowWizard({
           href="https://t.me/huston-housinggroup"
           target="_blank"
           rel="noopener noreferrer"
-          className="text-sky-400 hover:underline"
+          className="text-brand-accent hover:underline"
         >
           Telegram support
         </a>
