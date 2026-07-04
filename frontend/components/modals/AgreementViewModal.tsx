@@ -53,7 +53,7 @@ export const AgreementViewModal: React.FC<AgreementViewModalProps> = ({
               <button
                 type="button"
                 onClick={() => onSignClick(agreement)}
-                className="inline-flex items-center gap-2 rounded-xl bg-brand-blue px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+                className="inline-flex items-center gap-2 rounded-xl bg-brand-blue px-4 py-2 text-sm font-semibold text-white hover:bg-brand-blue-dark"
               >
                 <PenSquare size={16} />
                 Sign Agreement

@@ -152,9 +152,9 @@ export const RefundRequestModal: React.FC<RefundRequestModalProps> = ({
         className="space-y-6"
       >
         {/* Info Banner */}
-        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/30 rounded-2xl p-4 flex items-start gap-3">
-          <AlertCircle className="text-blue-600 shrink-0 mt-0.5" size={20} />
-          <p className="text-sm text-blue-900 dark:text-blue-100">
+        <div className="bg-brand-accent/10 dark:bg-brand-accent/20 border border-brand-accent/20 dark:border-brand-accent/30 rounded-2xl p-4 flex items-start gap-3">
+          <AlertCircle className="text-brand-accent shrink-0 mt-0.5" size={20} />
+          <p className="text-sm text-neutral-900 dark:text-neutral-100">
             Refund requests are reviewed within 3–5 business days. You will be
             notified by email once a decision is made.
           </p>

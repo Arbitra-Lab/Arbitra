@@ -216,7 +216,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
                 activeTab === tab.id
                   ? tab.id === 'danger'
                     ? 'bg-red-50 dark:bg-red-900/20 text-red-600'
-                    : 'bg-blue-50 dark:bg-blue-900/20 text-brand-blue'
+                    : 'bg-brand-blue/10 dark:bg-brand-blue/20 text-brand-blue'
                   : tab.id === 'danger'
                     ? 'text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10'
                     : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-white/5'
@@ -292,7 +292,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
                 <button
                   type="submit"
                   disabled={isPwSubmitting}
-                  className="px-6 py-2.5 rounded-xl font-bold text-white bg-brand-blue hover:bg-blue-700 shadow-md transition-colors disabled:opacity-50 flex items-center gap-2"
+                  className="px-6 py-2.5 rounded-xl font-bold text-white bg-brand-blue hover:bg-brand-blue-dark shadow-md transition-colors disabled:opacity-50 flex items-center gap-2"
                 >
                   {isPwSubmitting ? (
                     <>
@@ -353,7 +353,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
               <button
                 type="button"
                 onClick={handleSaveNotifications}
-                className="px-6 py-2.5 rounded-xl font-bold text-white bg-brand-blue hover:bg-blue-700 shadow-md transition-colors flex items-center gap-2"
+                className="px-6 py-2.5 rounded-xl font-bold text-white bg-brand-blue hover:bg-brand-blue-dark shadow-md transition-colors flex items-center gap-2"
               >
                 <CheckCircle2 size={18} />
                 Save Preferences
@@ -388,7 +388,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
               <button
                 type="button"
                 onClick={handleSavePrivacy}
-                className="px-6 py-2.5 rounded-xl font-bold text-white bg-brand-blue hover:bg-blue-700 shadow-md transition-colors flex items-center gap-2"
+                className="px-6 py-2.5 rounded-xl font-bold text-white bg-brand-blue hover:bg-brand-blue-dark shadow-md transition-colors flex items-center gap-2"
               >
                 <CheckCircle2 size={18} />
                 Save Settings

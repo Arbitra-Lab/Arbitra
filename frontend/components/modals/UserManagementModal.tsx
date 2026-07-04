@@ -137,7 +137,7 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
   };
 
   const roles = [
-    { value: 'user', label: 'User', color: 'bg-blue-100 text-blue-700' },
+    { value: 'user', label: 'User', color: 'bg-brand-accent/10 text-brand-accent' },
     { value: 'admin', label: 'Admin', color: 'bg-red-100 text-red-700' },
   ];
 
@@ -252,7 +252,7 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
                 {getRoleBadge()}
                 {getStatusBadge()}
                 {formData.isVerified && (
-                  <span className="text-xs font-semibold px-3 py-1 rounded-lg bg-blue-100 text-blue-700 flex items-center gap-1">
+                  <span className="text-xs font-semibold px-3 py-1 rounded-lg bg-brand-accent/10 text-brand-accent flex items-center gap-1">
                     <CheckCircle2 size={14} />
                     Verified
                   </span>
@@ -292,7 +292,7 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
               <button
                 onClick={handleSubmit}
                 disabled={isSubmitting}
-                className="px-6 py-2.5 rounded-xl font-bold text-white bg-brand-blue hover:bg-blue-700 shadow-md transition-colors disabled:opacity-50 flex items-center gap-2"
+                className="px-6 py-2.5 rounded-xl font-bold text-white bg-brand-blue hover:bg-brand-blue-dark shadow-md transition-colors disabled:opacity-50 flex items-center gap-2"
               >
                 {isSubmitting ? (
                   <>
@@ -313,7 +313,7 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
     >
       <div className="space-y-6">
         {/* Basic Information */}
-        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30 rounded-2xl p-6">
+        <div className="bg-brand-blue/10 dark:bg-brand-blue/20 border border-brand-blue/20 dark:border-brand-blue/30 rounded-2xl p-6">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 bg-brand-blue/10 rounded-xl flex items-center justify-center">
               <User className="text-brand-blue" size={20} />

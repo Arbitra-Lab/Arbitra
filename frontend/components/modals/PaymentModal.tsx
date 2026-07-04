@@ -119,7 +119,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             <button
               onClick={handleSubmit}
               disabled={isProcessing || formData.amount <= 0}
-              className="px-6 py-2.5 rounded-xl font-bold text-white bg-brand-blue hover:bg-blue-700 shadow-md transition-colors disabled:opacity-50 flex items-center gap-2"
+              className="px-6 py-2.5 rounded-xl font-bold text-white bg-brand-blue hover:bg-brand-blue-dark shadow-md transition-colors disabled:opacity-50 flex items-center gap-2"
             >
               {isProcessing ? (
                 <>
@@ -139,7 +139,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     >
       <div className="space-y-6">
         {/* Payment Amount */}
-        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30 rounded-2xl p-6">
+        <div className="bg-brand-blue/10 dark:bg-brand-blue/20 border border-brand-blue/20 dark:border-brand-blue/30 rounded-2xl p-6">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 bg-brand-blue/10 rounded-xl flex items-center justify-center">
               <DollarSign className="text-brand-blue" size={20} />
@@ -192,7 +192,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                   onClick={() => handleChange('paymentMethod', method.value)}
                   className={`w-full p-4 rounded-xl border-2 transition-all text-left ${
                     isSelected
-                      ? 'border-brand-blue bg-blue-50 dark:bg-blue-900/20'
+                      ? 'border-brand-blue bg-brand-blue/10 dark:bg-brand-blue/20'
                       : 'border-neutral-200 dark:border-neutral-700 hover:border-neutral-300 dark:hover:border-neutral-600'
                   }`}
                 >

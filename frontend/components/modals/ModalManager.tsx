@@ -2,9 +2,6 @@
 
 import React from 'react';
 import { useModal } from '@/contexts/ModalContext';
-import { PropertyDetailModal } from './PropertyDetailModal';
-import { PropertyInquiryModal } from './PropertyInquiryModal';
-import { PropertyAgreementModal } from './PropertyAgreementModal';
 import { AgreementViewModal } from './AgreementViewModal';
 import { AgreementSigningModal } from './AgreementSigningModal';
 import { DisputeModal } from './DisputeModal';
@@ -24,29 +21,9 @@ import { UserProfileEditModal } from './UserProfileEditModal';
 import type { UserProfileData } from './UserProfileEditModal';
 import { AccountSettingsModal } from './AccountSettingsModal';
 import type { AccountSettingsData } from './AccountSettingsModal';
-import { apiClient } from '@/lib/api-client';
 import dynamic from 'next/dynamic';
 import type { Document, DocumentMetadata } from '@/components/documents';
-import type {
-  PropertyDetailData,
-  PropertyInquiryData,
-  AgreementViewData,
-  AgreementSigningData,
-} from './types';
-
-interface PropertyAgreementData {
-  propertyId: string;
-  propertyTitle: string;
-  propertyAddress: string;
-  landlordName: string;
-  tenantName?: string;
-  monthlyRent: number;
-  securityDeposit: number;
-  startDate: string;
-  endDate: string;
-  terms?: string;
-  status?: 'draft' | 'pending' | 'active' | 'expired';
-}
+import type { AgreementViewData, AgreementSigningData } from './types';
 
 interface DisputeData {
   agreementId: string;
@@ -144,71 +121,11 @@ const DocumentListModal = dynamic(
 export const ModalManager: React.FC = () => {
   const { modalState, closeModal, openModal } = useModal();
 
-  const submitPropertyInquiry = async (data: PropertyInquiryData) => {
-    await apiClient.post('/inquiries', {
-      propertyId: data.propertyId,
-      message: data.message,
-      name: data.name,
-      email: data.email,
-      phone: data.phone,
-    });
-  };
-
   if (!modalState.isOpen || !modalState.type) {
     return null;
   }
 
   switch (modalState.type) {
-    case 'propertyDetail':
-      return (
-        <PropertyDetailModal
-          key={
-            (modalState.data?.property as PropertyDetailData | null)?.id ??
-            'property-detail'
-          }
-          isOpen={modalState.isOpen}
-          onClose={closeModal}
-          property={modalState.data?.property as PropertyDetailData | null}
-          onInquiryClick={(property) =>
-            openModal('propertyInquiry', {
-              propertyId: property.id,
-              propertyTitle: property.title,
-              onSubmit: modalState.data?.onInquirySubmit,
-            })
-          }
-        />
-      );
-
-    case 'propertyInquiry':
-      return (
-        <PropertyInquiryModal
-          isOpen={modalState.isOpen}
-          onClose={closeModal}
-          propertyId={modalState.data?.propertyId as string | undefined}
-          propertyTitle={modalState.data?.propertyTitle as string | undefined}
-          onSubmit={
-            (modalState.data?.onSubmit as
-              | ((data: PropertyInquiryData) => Promise<void>)
-              | undefined) ?? submitPropertyInquiry
-          }
-        />
-      );
-
-    case 'propertyAgreement':
-      return (
-        <PropertyAgreementModal
-          isOpen={modalState.isOpen}
-          onClose={closeModal}
-          data={modalState.data?.agreement as PropertyAgreementData | undefined}
-          mode={(modalState.data?.mode as 'view' | 'create' | 'edit') || 'view'}
-          onSubmit={
-            modalState.data?.onSubmit as
-              | ((data: PropertyAgreementData) => Promise<void>)
-              | undefined
-          }
-        />
-      );
-
     case 'agreementView':
       return (
         <AgreementViewModal

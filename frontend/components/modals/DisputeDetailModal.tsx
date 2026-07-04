@@ -42,7 +42,8 @@ const statusConfig: Record<
   },
   UNDER_REVIEW: {
     label: 'Under Review',
-    color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400',
+    color:
+      'bg-brand-accent/10 text-brand-accent dark:bg-brand-accent/20 dark:text-brand-accent',
     icon: <Clock size={14} />,
   },
   RESOLVED: {
@@ -70,7 +71,8 @@ function buildTimeline(dispute: DashboardDispute): TimelineEvent[] {
       label: 'Dispute filed',
       date: dispute.createdAt,
       icon: <Scale size={14} />,
-      color: 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400',
+      color:
+        'bg-brand-accent/10 text-brand-accent dark:bg-brand-accent/30 dark:text-brand-accent',
     },
   ];
 
@@ -141,7 +143,7 @@ export const DisputeDetailModal: React.FC<DisputeDetailModalProps> = ({
           {canUploadEvidence && onUploadEvidence ? (
             <button
               onClick={() => onUploadEvidence(dispute.id)}
-              className="px-5 py-2.5 rounded-xl font-bold text-brand-blue border border-brand-blue hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors flex items-center gap-2 text-sm"
+              className="px-5 py-2.5 rounded-xl font-bold text-brand-blue border border-brand-blue hover:bg-brand-blue/10 dark:hover:bg-brand-blue/20 transition-colors flex items-center gap-2 text-sm"
             >
               <FileUp size={16} />
               Add Evidence
@@ -233,10 +235,10 @@ export const DisputeDetailModal: React.FC<DisputeDetailModalProps> = ({
           </div>
 
           <div className="flex items-center gap-3 rounded-2xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 px-4 py-3">
-            <div className="w-9 h-9 rounded-xl bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
+            <div className="w-9 h-9 rounded-xl bg-brand-accent/10 dark:bg-brand-accent/20 flex items-center justify-center">
               <MessageSquareText
                 size={16}
-                className="text-blue-600 dark:text-blue-400"
+                className="text-brand-accent dark:text-brand-accent"
               />
             </div>
             <div>

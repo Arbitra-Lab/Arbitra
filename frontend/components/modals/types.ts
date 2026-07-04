@@ -1,36 +1,3 @@
-export interface PropertyDetailData {
-  id: string;
-  title: string;
-  address: string;
-  price: number;
-  bedrooms: number;
-  bathrooms: number;
-  areaSqft?: number;
-  description: string;
-  amenities?: string[];
-  images?: string[];
-  landlordName?: string;
-  viewCount?: number;
-  favoriteCount?: number;
-  lastViewedAt?: string | null;
-  verificationStatus?: string | null;
-  virtualTourUrl?: string | null;
-  videoUrl?: string | null;
-  floorPlanUrl?: string | null;
-  energyRating?: string | null;
-  petPolicy?: string | null;
-  parkingSpaces?: number | null;
-}
-
-export interface PropertyInquiryData {
-  propertyId: string;
-  propertyTitle: string;
-  name: string;
-  email: string;
-  phone?: string;
-  message: string;
-}
-
 export interface AgreementViewData {
   agreementId: string;
   propertyTitle: string;
