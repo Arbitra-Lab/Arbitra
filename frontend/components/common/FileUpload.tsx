@@ -37,7 +37,7 @@ export function FileUpload({
       return <FileText className="w-6 h-6 text-red-500" />;
     }
     if (type.includes('image')) {
-      return <ImageIcon className="w-6 h-6 text-blue-500" />;
+      return <ImageIcon className="w-6 h-6 text-brand-accent" />;
     }
     return <File className="w-6 h-6 text-neutral-500" />;
   };
@@ -125,7 +125,7 @@ export function FileUpload({
       <div
         className={`border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-colors ${
           isDragging
-            ? 'border-blue-400 bg-blue-50'
+            ? 'border-brand-accent bg-brand-accent/10'
             : selectedFiles.length > 0
               ? 'border-green-300 bg-green-50'
               : 'border-neutral-200 hover:border-neutral-300 hover:bg-neutral-50'
