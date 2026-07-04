@@ -263,14 +263,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "chioma"
-version = "0.0.0"
-dependencies = [
- "proptest",
- "soroban-sdk",
-]
-
-[[package]]
 name = "chrono"
 version = "0.4.43"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -513,6 +505,7 @@ dependencies = [
 name = "dispute_resolution"
 version = "0.0.0"
 dependencies = [
+ "escrow",
  "soroban-sdk",
 ]
 
@@ -798,6 +791,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6c49c37c09c17a53d937dfbb742eb3a961d65a994e6bcdcf37e7399d0cc8ab5e"
 dependencies = [
  "digest",
+]
+
+[[package]]
+name = "huston-housing"
+version = "0.0.0"
+dependencies = [
+ "proptest",
+ "soroban-sdk",
 ]
 
 [[package]]
