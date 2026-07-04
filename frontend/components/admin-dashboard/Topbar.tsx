@@ -36,18 +36,18 @@ export default function AdminTopbar({ pageTitle }: { pageTitle: string }) {
           </h1>
         </div>
 
-        <div className="hidden md:flex items-center px-4 py-2 bg-white/5 border border-white/10 rounded-full w-1/3 focus-within:ring-2 focus-within:ring-blue-500/50 transition-all">
-          <FaSearch className="text-blue-300/40" />
+        <div className="hidden md:flex items-center px-4 py-2 bg-white/5 border border-white/10 rounded-full w-1/3 focus-within:ring-2 focus-within:ring-brand-accent/50 transition-all">
+          <FaSearch className="text-neutral-200/40" />
           <input
             type="text"
             placeholder={`Search ${pageTitle.toLowerCase()}...`}
-            className="mx-3 w-full bg-transparent outline-none text-white text-sm placeholder:text-blue-300/30"
+            className="mx-3 w-full bg-transparent outline-none text-white text-sm placeholder:text-neutral-200/30"
           />
         </div>
 
         <div className="flex items-center gap-4 md:gap-6">
           <button
-            className="md:hidden min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg hover:bg-white/10 text-blue-200 transition-colors"
+            className="md:hidden min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg hover:bg-white/10 text-neutral-200 transition-colors"
             onClick={() => setSearchOpen(true)}
             aria-label="Open search"
           >
@@ -56,7 +56,7 @@ export default function AdminTopbar({ pageTitle }: { pageTitle: string }) {
 
           <Link
             href="/"
-            className="text-blue-200 hover:text-white transition-colors"
+            className="text-neutral-200 hover:text-white transition-colors"
             title="Go to Home Page"
           >
             <FaHome size={22} />
@@ -65,7 +65,7 @@ export default function AdminTopbar({ pageTitle }: { pageTitle: string }) {
           <NotificationBell
             viewAllHref="/settings"
             size={20}
-            className="text-blue-200"
+            className="text-neutral-200"
           />
         </div>
       </header>
@@ -88,16 +88,16 @@ export default function AdminTopbar({ pageTitle }: { pageTitle: string }) {
           `}
         >
           <div className="flex items-center gap-3">
-            <FaSearch className="text-blue-300/40" />
+            <FaSearch className="text-neutral-200/40" />
             <input
               autoFocus
               type="text"
               placeholder={`Search ${pageTitle.toLowerCase()}...`}
-              className="w-full outline-none bg-transparent text-white text-sm placeholder:text-blue-300/30"
+              className="w-full outline-none bg-transparent text-white text-sm placeholder:text-neutral-200/30"
             />
             <button
               onClick={() => setSearchOpen(false)}
-              className="text-blue-200 hover:text-white transition-colors"
+              className="text-neutral-200 hover:text-white transition-colors"
             >
               <FaTimes />
             </button>
@@ -128,11 +128,11 @@ export default function AdminTopbar({ pageTitle }: { pageTitle: string }) {
             <div className="flex items-center justify-between p-6 border-b border-white/10">
               <Logo
                 size="sm"
-                textClassName="text-xl font-bold bg-gradient-to-r from-blue-300 to-indigo-300 bg-clip-text text-transparent"
+                textClassName="text-xl font-bold bg-gradient-to-r from-brand-accent to-brand-blue bg-clip-text text-transparent"
               />
               <button
                 onClick={() => setMobileOpen(false)}
-                className="text-blue-200 hover:text-white transition-colors"
+                className="text-neutral-200 hover:text-white transition-colors"
               >
                 <FaTimes size={20} />
               </button>
@@ -151,19 +151,19 @@ export default function AdminTopbar({ pageTitle }: { pageTitle: string }) {
                       ${
                         isActive
                           ? 'bg-white/10 text-white font-semibold border border-white/10 shadow-lg'
-                          : 'hover:bg-white/5 text-blue-200/70 hover:text-white'
+                          : 'hover:bg-white/5 text-neutral-200/70 hover:text-white'
                       }
                     `}
                   >
                     <item.icon
-                      className={`w-5 h-5 ${isActive ? 'text-blue-400' : 'text-blue-300/60'}`}
+                      className={`w-5 h-5 ${isActive ? 'text-brand-accent' : 'text-neutral-200/60'}`}
                     />
                     <span>{item.label}</span>
                   </Link>
                 );
               })}
               {navItems.length === 0 && (
-                <p className="px-4 py-3 text-sm text-blue-200/60">
+                <p className="px-4 py-3 text-sm text-neutral-200/60">
                   No admin pages available for your role.
                 </p>
               )}
@@ -191,12 +191,12 @@ export default function AdminTopbar({ pageTitle }: { pageTitle: string }) {
                 <span className="text-sm font-semibold text-white truncate w-full">
                   {fullName || user?.email || 'Admin User'}
                 </span>
-                <span className="text-xs text-blue-300/60 capitalize">
+                <span className="text-xs text-neutral-200/60 capitalize">
                   {user?.role || 'admin'}
                 </span>
               </div>
 
-              <FaArrowRightFromBracket className="ml-auto h-5 w-5 text-blue-300/40 group-hover:text-blue-300" />
+              <FaArrowRightFromBracket className="ml-auto h-5 w-5 text-brand-accent/40 group-hover:text-brand-accent" />
             </button>
           </div>
         </aside>

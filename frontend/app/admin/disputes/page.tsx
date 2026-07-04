@@ -90,7 +90,7 @@ export default function AdminDisputesPage() {
 
   if (authLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[40vh] text-blue-200/80">
+      <div className="flex items-center justify-center min-h-[40vh] text-neutral-200/80">
         Loading...
       </div>
     );
@@ -109,7 +109,7 @@ export default function AdminDisputesPage() {
             <h1 className="text-3xl font-bold text-white">
               Disputes Dashboard
             </h1>
-            <p className="text-sm text-blue-200/60">
+            <p className="text-sm text-neutral-200/60">
               Review and resolve disputes efficiently.
             </p>
           </div>

@@ -1,17 +1,6 @@
 'use client';
 
-import {
-  Anchor,
-  Award,
-  BarChart3,
-  Blocks,
-  Gavel,
-  ShieldAlert,
-  ShieldCheck,
-  ShieldX,
-  UserCog,
-} from 'lucide-react';
-import { MdSecurity } from 'react-icons/md';
+import { Award, Gavel } from 'lucide-react';
 import type { ComponentType } from 'react';
 
 export type AdminAppRole = 'admin';
@@ -25,48 +14,6 @@ export type AdminNavItem = {
 
 const adminNavItems: AdminNavItem[] = [
   {
-    icon: MdSecurity,
-    label: 'Audit Logs',
-    href: '/admin/audit-logs',
-    visibleFor: ['admin'],
-  },
-  {
-    icon: ShieldAlert,
-    label: 'Security Dashboard',
-    href: '/admin/security',
-    visibleFor: ['admin'],
-  },
-  {
-    icon: Anchor,
-    label: 'Anchor Transactions',
-    href: '/admin/anchor-transactions',
-    visibleFor: ['admin'],
-  },
-  {
-    icon: Blocks,
-    label: 'Indexed Transactions',
-    href: '/admin/indexed-transactions',
-    visibleFor: ['admin'],
-  },
-  {
-    icon: BarChart3,
-    label: 'System Analytics',
-    href: '/admin/analytics',
-    visibleFor: ['admin'],
-  },
-  {
-    icon: UserCog,
-    label: 'Role Management',
-    href: '/admin/roles',
-    visibleFor: ['admin'],
-  },
-  {
-    icon: ShieldCheck,
-    label: 'Pending KYC',
-    href: '/admin/kyc',
-    visibleFor: ['admin'],
-  },
-  {
     icon: Gavel,
     label: 'Disputes Dashboard',
     href: '/admin/disputes',
@@ -76,12 +23,6 @@ const adminNavItems: AdminNavItem[] = [
     icon: Award,
     label: 'Arbiters Management',
     href: '/admin/arbiters',
-    visibleFor: ['admin'],
-  },
-  {
-    icon: ShieldX,
-    label: 'Rejected KYC',
-    href: '/admin/kyc/rejected',
     visibleFor: ['admin'],
   },
 ];
@@ -106,10 +47,6 @@ export function getAdminNavItems(
 }
 
 export function getAdminPageTitle(pathname: string): string {
-  if (/^\/admin\/kyc\/[^/]+$/.test(pathname)) {
-    return 'KYC Verification Detail';
-  }
-
   const matched = findBestNavMatch(pathname);
   if (matched) return matched.label;
   return pathname === '/admin' ? 'Admin' : 'Admin Panel';

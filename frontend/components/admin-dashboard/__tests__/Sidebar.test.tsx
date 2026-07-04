@@ -70,16 +70,8 @@ describe('Admin Sidebar', () => {
   it('renders navigation items for admin role', () => {
     render(<Sidebar />);
 
-    expect(screen.getByText('Audit Logs')).toBeInTheDocument();
-    expect(screen.getByText('Security Dashboard')).toBeInTheDocument();
-    expect(screen.getByText('Anchor Transactions')).toBeInTheDocument();
-    expect(screen.getByText('Indexed Transactions')).toBeInTheDocument();
-    expect(screen.getByText('System Analytics')).toBeInTheDocument();
-    expect(screen.getByText('Role Management')).toBeInTheDocument();
-    expect(screen.getByText('Pending KYC')).toBeInTheDocument();
     expect(screen.getByText('Disputes Dashboard')).toBeInTheDocument();
     expect(screen.getByText('Arbiters Management')).toBeInTheDocument();
-    expect(screen.getByText('Rejected KYC')).toBeInTheDocument();
   });
 
   it('renders user avatar and name', () => {
@@ -99,10 +91,10 @@ describe('Admin Sidebar', () => {
   it('renders navigation links with correct hrefs', () => {
     render(<Sidebar />);
 
-    const auditLogsLink = screen.getByText('Audit Logs').closest('a');
-    expect(auditLogsLink).toHaveAttribute('href', '/admin/audit-logs');
+    const disputesLink = screen.getByText('Disputes Dashboard').closest('a');
+    expect(disputesLink).toHaveAttribute('href', '/admin/disputes');
 
-    const securityLink = screen.getByText('Security Dashboard').closest('a');
-    expect(securityLink).toHaveAttribute('href', '/admin/security');
+    const arbitersLink = screen.getByText('Arbiters Management').closest('a');
+    expect(arbitersLink).toHaveAttribute('href', '/admin/arbiters');
   });
 });

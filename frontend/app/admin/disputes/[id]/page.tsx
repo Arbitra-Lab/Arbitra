@@ -115,7 +115,7 @@ export default function AdminDisputeDetailPage() {
 
   if (authLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[40vh] text-blue-200/80">
+      <div className="flex items-center justify-center min-h-[40vh] text-neutral-200/80">
         <Loader2 className="animate-spin" size={28} />
       </div>
     );
@@ -127,7 +127,7 @@ export default function AdminDisputeDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[40vh] text-blue-200/80">
+      <div className="flex items-center justify-center min-h-[40vh] text-neutral-200/80">
         <Loader2 className="animate-spin" size={28} />
       </div>
     );
@@ -143,7 +143,7 @@ export default function AdminDisputeDetailPage() {
         <button
           type="button"
           onClick={() => router.push('/admin/disputes')}
-          className="text-sky-400 hover:text-sky-300 font-medium"
+          className="text-brand-accent hover:text-brand-accent/80 font-medium"
         >
           Back to disputes
         </button>
