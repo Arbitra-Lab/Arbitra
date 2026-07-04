@@ -72,7 +72,7 @@ export const Uploader: React.FC<UploaderProps> = ({
 
   const getFileIcon = (file: File) => {
     if (file.type.startsWith('image/'))
-      return <ImageIcon size={20} className="text-blue-500" />;
+      return <ImageIcon size={20} className="text-brand-accent" />;
     return <FileText size={20} className="text-gray-500" />;
   };
 

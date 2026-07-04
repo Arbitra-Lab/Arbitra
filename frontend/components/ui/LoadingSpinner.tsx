@@ -13,7 +13,7 @@ const sizeClassMap: Record<SpinnerSize, string> = {
 };
 
 const variantClassMap: Record<SpinnerVariant, string> = {
-  primary: 'border-blue-200 border-t-blue-600',
+  primary: 'border-brand-blue/20 border-t-brand-blue',
   neutral: 'border-neutral-200 border-t-neutral-600',
   white: 'border-white/30 border-t-white',
 };
