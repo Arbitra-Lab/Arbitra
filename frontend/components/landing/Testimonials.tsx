@@ -7,9 +7,9 @@ import { Star } from 'lucide-react';
 const testimonials = [
   {
     name: 'Sarah Johnson',
-    role: 'Property Manager',
+    role: 'Marketplace Operator',
     content:
-      'Houston Housing has transformed how we manage our rental portfolio. Instant payments and automated commissions save us hours every week.',
+      'Arbitra let us drop our in-house escrow and dispute process entirely. Instant settlement and automated fee splits save us hours every week.',
     rating: 5,
   },
   {
@@ -21,9 +21,9 @@ const testimonials = [
   },
   {
     name: 'Emily Rodriguez',
-    role: 'User',
+    role: 'Arbiter',
     content:
-      'Finding and securing my apartment was seamless. The smart contract lease gave me peace of mind.',
+      'Voting on disputes is straightforward and the reputation-weighted system keeps rulings fair on both sides.',
     rating: 5,
   },
 ];
@@ -42,7 +42,7 @@ export default function Testimonials() {
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
             Trusted by Thousands
           </h2>
-          <p className="text-xl text-blue-200/80 max-w-2xl mx-auto">
+          <p className="text-xl text-neutral-200/80 max-w-2xl mx-auto">
             See what our users have to say about their experience
           </p>
         </motion.div>
@@ -68,13 +68,13 @@ export default function Testimonials() {
               </div>
 
               {/* Content */}
-              <p className="text-blue-100/90 mb-6 leading-relaxed">
+              <p className="text-neutral-100/90 mb-6 leading-relaxed">
                 &ldquo;{testimonial.content}&rdquo;
               </p>
 
               {/* Author */}
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-indigo-600 rounded-full flex items-center justify-center">
+                <div className="w-12 h-12 bg-gradient-to-br from-brand-accent to-teal-700 rounded-full flex items-center justify-center">
                   <span className="text-white font-bold text-lg">
                     {testimonial.name.charAt(0)}
                   </span>
@@ -83,7 +83,7 @@ export default function Testimonials() {
                   <div className="font-semibold text-white">
                     {testimonial.name}
                   </div>
-                  <div className="text-sm text-blue-200/70">
+                  <div className="text-sm text-neutral-200/70">
                     {testimonial.role}
                   </div>
                 </div>

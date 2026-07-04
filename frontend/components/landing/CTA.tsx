@@ -15,15 +15,15 @@ export default function CTA() {
           transition={{ duration: 0.5 }}
           className="relative max-w-5xl mx-auto"
         >
-          {/* Background glow */}
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-indigo-500/20 rounded-3xl blur-3xl" />
+          {/* Background glow — escrow teal resolving to verdict coral */}
+          <div className="absolute inset-0 bg-gradient-to-r from-brand-accent/20 to-brand-blue/20 rounded-3xl blur-3xl" />
 
           {/* Content */}
-          <div className="relative backdrop-blur-xl bg-gradient-to-br from-blue-500/10 to-indigo-500/10 border border-white/20 rounded-3xl p-12 md:p-16 text-center">
+          <div className="relative backdrop-blur-xl bg-gradient-to-br from-brand-accent/10 to-brand-blue/10 border border-white/20 rounded-3xl p-12 md:p-16 text-center">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 border border-white/20 backdrop-blur-sm mb-8">
-              <Sparkles className="w-4 h-4 text-blue-300" />
+              <Sparkles className="w-4 h-4 text-brand-accent" />
               <span className="text-sm font-semibold text-white">
-                Join the Future of Rentals
+                Trust Infrastructure for Any Agreement
               </span>
             </div>
 
@@ -31,19 +31,20 @@ export default function CTA() {
               Ready to Get Started?
             </h2>
 
-            <p className="text-xl text-blue-100/90 mb-10 max-w-2xl mx-auto">
-              Join thousands of landlords, tenants, and agents already using
-              Houston Housing to modernize their rental experience.
+            <p className="text-xl text-neutral-100/90 mb-10 max-w-2xl mx-auto">
+              Join the two-party agreements already settling instantly and
+              disputing fairly on Arbitra.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <p className="text-blue-200/60 text-sm">
+              <p className="text-neutral-200/60 text-sm">
                 Connect your wallet to get started
               </p>
             </div>
 
-            <p className="text-blue-200/60 text-sm mt-8">
-              No credit card required • Free forever • Cancel anytime
+            <p className="text-neutral-200/60 text-sm mt-8">
+              No signup forms • No custodian • Funds never leave escrow until
+              release
             </p>
           </div>
         </motion.div>

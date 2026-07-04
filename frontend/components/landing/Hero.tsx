@@ -1,41 +1,28 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { CheckCircle2, Search } from 'lucide-react';
-import Image from 'next/image';
+import { CheckCircle2 } from 'lucide-react';
 import { useAuth } from '@/store/authStore';
 import { useAuthRedirect } from '@/hooks/useAuthRedirect';
+import EscrowVault from './EscrowVault';
 
 export default function Hero() {
   // AUTH DISABLED - useAuthRedirect commented out for development
   // useAuthRedirect(); // Redirect authenticated users to their dashboard
   const { walletAddress } = useAuth();
-  const router = useRouter();
-  const [query, setQuery] = useState('');
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    const trimmed = query.trim();
-    if (trimmed) {
-      router.push(`/properties?q=${encodeURIComponent(trimmed)}`);
-    } else {
-      router.push('/properties');
-    }
-  };
 
   return (
     <section className="relative pt-20 pb-32 overflow-hidden">
-      {/* Animated background elements */}
+      {/* Ambient background — teal (escrow) and coral (verdict) duotone */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute -top-40 -right-40 w-96 h-96 bg-brand-accent/10 rounded-full blur-3xl animate-pulse"></div>
         <div
-          className="absolute -bottom-40 -left-40 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl animate-pulse"
+          className="absolute -bottom-40 -left-40 w-96 h-96 bg-brand-blue/10 rounded-full blur-3xl animate-pulse"
           style={{ animationDelay: '1s' }}
         ></div>
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-purple-500/5 rounded-full blur-3xl"></div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-brand-accent/5 rounded-full blur-3xl"></div>
       </div>
 
       <div className="container mx-auto px-4 sm:px-6 relative z-10">
@@ -47,11 +34,9 @@ export default function Hero() {
             transition={{ duration: 0.5, delay: 0.1 }}
             className="text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-tight"
           >
-            Automated Commissions.
+            Trustless Escrow.
             <br />
-            <span className="bg-gradient-to-r from-blue-300 to-indigo-300 bg-clip-text text-transparent">
-              Zero Disputes.
-            </span>
+            <span className="text-gradient-verdict">Fair Arbitration.</span>
           </motion.h1>
 
           {/* Subheadline */}
@@ -59,11 +44,11 @@ export default function Hero() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="text-xl md:text-2xl text-blue-100/90 max-w-3xl mx-auto leading-relaxed"
+            className="text-xl md:text-2xl text-neutral-100/90 max-w-3xl mx-auto leading-relaxed"
           >
-            Connect natively with users on the Stellar network. Experience
-            instant payouts and transparent contract tracking without the
-            paperwork.
+            Hold funds neutrally on the Stellar network and settle disputes
+            through credibly-neutral arbitration — no middleman, instant
+            settlement, ultra-low fees.
           </motion.p>
 
           {/* Display Wallet Address if Connected */}
@@ -72,9 +57,9 @@ export default function Hero() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.25 }}
-              className="inline-block px-4 py-2 rounded-lg bg-green-500/20 border border-green-500/50 backdrop-blur-sm"
+              className="inline-block px-4 py-2 rounded-lg bg-brand-accent/10 border border-brand-accent/40 backdrop-blur-sm"
             >
-              <p className="text-sm text-green-200">
+              <p className="text-sm text-brand-accent">
                 Connected Wallet:{' '}
                 <span className="font-mono font-semibold">
                   {walletAddress.slice(0, 6)}...{walletAddress.slice(-6)}
@@ -98,73 +83,36 @@ export default function Hero() {
             </Link>
           </motion.div>
 
-          {/* Search Bar */}
-          <motion.form
-            onSubmit={handleSearch}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.35 }}
-            className="flex items-center gap-2 max-w-xl mx-auto w-full mt-2"
-          >
-            <div className="relative flex-1">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-blue-300/60 pointer-events-none" />
-              <input
-                type="text"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search by location, property type..."
-                className="w-full pl-12 pr-4 py-3 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 text-white placeholder:text-blue-200/50 focus:outline-none focus:ring-2 focus:ring-blue-400/50 text-sm"
-              />
-            </div>
-            <button
-              type="submit"
-              className="px-6 py-3 rounded-xl bg-blue-500 hover:bg-blue-600 text-white font-semibold text-sm transition-colors whitespace-nowrap"
-            >
-              Browse Properties
-            </button>
-          </motion.form>
-
           {/* Trust Indicators */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5, delay: 0.4 }}
-            className="flex flex-wrap items-center justify-center gap-6 pt-8 text-blue-200/80 text-sm"
+            className="flex flex-wrap items-center justify-center gap-6 pt-8 text-neutral-200/80 text-sm"
           >
             <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-5 h-5 text-green-400" />
+              <CheckCircle2 className="w-5 h-5 text-brand-accent" />
               <span>Instant Settlement</span>
             </div>
             <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-5 h-5 text-green-400" />
+              <CheckCircle2 className="w-5 h-5 text-brand-accent" />
               <span>Ultra-Low Fees</span>
             </div>
             <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-5 h-5 text-green-400" />
+              <CheckCircle2 className="w-5 h-5 text-brand-accent" />
               <span>Transparent Contracts</span>
             </div>
           </motion.div>
         </div>
 
-        {/* Hero Visual */}
+        {/* Hero Visual — live escrow release mechanics, not a dashboard screenshot */}
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.5 }}
-          className="mt-20 max-w-6xl mx-auto"
+          className="mt-20 max-w-3xl mx-auto"
         >
-          <div className="relative rounded-2xl overflow-hidden border border-white/20 shadow-2xl">
-            <div className="aspect-video bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl overflow-hidden">
-              <Image
-                src="/dashboard-preview.png"
-                alt="Platform Dashboard Preview"
-                width={1200}
-                height={675}
-                className="w-full h-full object-fill"
-                priority
-              />
-            </div>
-          </div>
+          <EscrowVault />
         </motion.div>
       </div>
     </section>

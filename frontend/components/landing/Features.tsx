@@ -19,15 +19,15 @@ const features = [
   },
   {
     icon: Coins,
-    title: 'Automated Commissions',
+    title: 'Automated Fee Splits',
     description:
-      'Agent commissions are distributed automatically with every rent payment.',
+      'Platform and referral fees are distributed automatically with every settlement.',
   },
   {
     icon: FileCheck,
-    title: 'Smart Contracts',
+    title: 'Case-Agnostic Arbitration',
     description:
-      'Lease agreements are executed as smart contracts, eliminating disputes.',
+      'Any registry contract can route a dispute through the same generic arbitration engine.',
   },
   {
     icon: Globe,
@@ -39,7 +39,7 @@ const features = [
     icon: Lock,
     title: 'Secure Escrow',
     description:
-      'Security deposits are held in multi-sig escrow for maximum protection.',
+      'Funds are held in 2-of-3 multi-sig escrow, released only on mutual approval, arbiter ruling, or timeout.',
   },
 ];
 
@@ -55,10 +55,11 @@ export default function Features() {
           className="text-center mb-16"
         >
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
-            Built for Modern Rentals
+            Built for Trustless Agreements
           </h2>
-          <p className="text-xl text-blue-200/80 max-w-2xl mx-auto">
-            Everything you need to manage rentals efficiently and transparently
+          <p className="text-xl text-neutral-200/80 max-w-2xl mx-auto">
+            Everything you need to hold funds neutrally and settle disputes
+            fairly
           </p>
         </motion.div>
 
@@ -73,13 +74,13 @@ export default function Features() {
               className="group relative"
             >
               <div className="h-full backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-8 hover:bg-white/10 transition-all duration-300">
-                <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                <div className="w-14 h-14 bg-gradient-to-br from-brand-accent to-teal-700 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
                   <feature.icon className="w-7 h-7 text-white" />
                 </div>
                 <h3 className="text-xl font-bold text-white mb-3">
                   {feature.title}
                 </h3>
-                <p className="text-blue-200/70 leading-relaxed">
+                <p className="text-neutral-200/70 leading-relaxed">
                   {feature.description}
                 </p>
               </div>
