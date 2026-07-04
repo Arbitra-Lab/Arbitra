@@ -73,13 +73,13 @@ export function Sidebar({
                 className={`flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
                   active
                     ? 'bg-white/10 text-white shadow-lg border border-white/10'
-                    : 'text-blue-200/70 hover:bg-white/5 hover:text-white'
+                    : 'text-neutral-200/70 hover:bg-white/5 hover:text-white'
                 }`}
               >
                 <div className="flex items-center space-x-3">
                   <Icon
                     size={20}
-                    className={active ? 'text-blue-400' : 'text-blue-300/60'}
+                    className={active ? 'text-brand-accent' : 'text-neutral-200/60'}
                   />
                   <span>{item.name}</span>
                 </div>
@@ -97,7 +97,7 @@ export function Sidebar({
         <div className="p-4 border-t border-white/10">
           <button
             onClick={handleLogout}
-            className="flex items-center space-x-3 px-4 py-3 rounded-xl w-full text-left text-blue-200/70 hover:bg-red-500/10 hover:text-red-400 transition-all duration-200"
+            className="flex items-center space-x-3 px-4 py-3 rounded-xl w-full text-left text-neutral-200/70 hover:bg-red-500/10 hover:text-red-400 transition-all duration-200"
           >
             <LogOut size={20} />
             <span className="text-sm font-medium">Log out</span>

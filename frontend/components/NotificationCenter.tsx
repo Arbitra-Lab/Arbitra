@@ -96,7 +96,7 @@ export default function NotificationCenter() {
       case 'warning':
         return <Bell className={`${iconClass} text-yellow-600`} />;
       default:
-        return <Bell className={`${iconClass} text-blue-600`} />;
+        return <Bell className={`${iconClass} text-brand-accent`} />;
     }
   };
 
@@ -162,7 +162,7 @@ export default function NotificationCenter() {
                   onClick={() => setFilter('all')}
                   className={`px-3 py-1 text-sm rounded-full transition ${
                     filter === 'all'
-                      ? 'bg-blue-100 text-blue-700 font-medium'
+                      ? 'bg-brand-accent/10 text-brand-accent font-medium'
                       : 'text-gray-600 hover:bg-gray-100'
                   }`}
                 >
@@ -172,7 +172,7 @@ export default function NotificationCenter() {
                   onClick={() => setFilter('unread')}
                   className={`px-3 py-1 text-sm rounded-full transition ${
                     filter === 'unread'
-                      ? 'bg-blue-100 text-blue-700 font-medium'
+                      ? 'bg-brand-accent/10 text-brand-accent font-medium'
                       : 'text-gray-600 hover:bg-gray-100'
                   }`}
                 >
@@ -203,7 +203,7 @@ export default function NotificationCenter() {
                       <div
                         key={notification.id}
                         className={`p-4 hover:bg-gray-50 transition border-b border-gray-100 ${
-                          !notification.isRead ? 'bg-blue-50' : ''
+                          !notification.isRead ? 'bg-brand-accent/5' : ''
                         }`}
                       >
                         <div className="flex gap-3">
@@ -216,7 +216,7 @@ export default function NotificationCenter() {
                                 {notification.title}
                               </h4>
                               {!notification.isRead && (
-                                <div className="w-2 h-2 bg-blue-600 rounded-full shrink-0 mt-1" />
+                                <div className="w-2 h-2 bg-brand-accent rounded-full shrink-0 mt-1" />
                               )}
                             </div>
                             <p className="text-sm text-gray-600 mt-1 truncate">
@@ -231,7 +231,7 @@ export default function NotificationCenter() {
                                   onClick={() =>
                                     handleMarkAsRead(notification.id)
                                   }
-                                  className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+                                  className="text-xs text-brand-accent hover:text-brand-accent font-medium"
                                 >
                                   Mark as read
                                 </button>
@@ -258,7 +258,7 @@ export default function NotificationCenter() {
                 {unreadCount > 0 && (
                   <button
                     onClick={handleMarkAllAsRead}
-                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm text-brand-accent hover:bg-brand-accent/10 rounded-lg transition"
                   >
                     <CheckCheck className="w-4 h-4" />
                     Mark all as read
