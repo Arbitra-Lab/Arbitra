@@ -36,8 +36,8 @@ impl EscrowContract {
         depositor: Address,
         beneficiary: Address,
         arbiter: Address,
-        platform_governance: Address,
-        agent_referral: Address,
+        platform_governance: Option<Address>,
+        agent_referral: Option<Address>,
         amount: i128,
         token: Address,
     ) -> Result<BytesN<32>, EscrowError> {
@@ -319,6 +319,13 @@ impl EscrowContract {
     /// Read-only view function.
     pub fn get_escrow(env: Env, escrow_id: BytesN<32>) -> Result<Escrow, EscrowError> {
         EscrowStorage::get(&env, &escrow_id).ok_or(EscrowError::EscrowNotFound)
+    }
+
+    /// Generic arbitrable-case view of an escrow, for consumption by an external
+    /// arbitration engine (e.g. `dispute_resolution::raise_dispute`'s cross-contract
+    /// `get_case` lookup). `case_id` is the lowercase-hex encoding of `escrow_id`.
+    pub fn get_case(env: Env, case_id: String) -> Option<crate::case::Case> {
+        crate::case::get_case(&env, case_id)
     }
 
     /// Get approval count for a specific release target.
@@ -779,15 +786,21 @@ impl EscrowContract {
         Ok(escrow.is_frozen)
     }
 
-    /// Release rent with automatic 90/5/5 fee split.
+    /// Release funds with an automatic fee split.
     ///
     /// Distributes the full escrow balance:
-    ///   - beneficiary (landlord/admin): 90%
-    ///   - platform_governance: 5%
-    ///   - agent_referral: remainder (total - beneficiary_share - governance_share)
+    ///   - platform_governance (if set): 5%
+    ///   - agent_referral (if set): 5%
+    ///   - beneficiary: the remainder
+    ///
+    /// A plain 2-party escrow (both cuts unset, e.g. freelance/trade-finance/
+    /// insurance payouts) sends 100% to the beneficiary. Setting only one cut
+    /// takes just that 5%, with the beneficiary absorbing the rest. Setting both
+    /// reproduces the original 90/5/5 rent-release split.
     ///
     /// Integer arithmetic using scale multiplication avoids rounding loss: the
-    /// remainder is assigned to agent_referral so that all strokes sum to `amount`.
+    /// remainder is always assigned to the beneficiary so that all shares sum to
+    /// `amount`.
     ///
     /// CHECKS:
     /// - Escrow must exist and be in Funded state (not Disputed)
@@ -797,7 +810,7 @@ impl EscrowContract {
     /// - Escrow status → Released
     ///
     /// INTERACTIONS:
-    /// - Three token transfers after all state updates
+    /// - One token transfer per non-zero share, after all state updates
     pub fn release_rent(
         env: Env,
         escrow_id: BytesN<32>,
@@ -813,10 +826,29 @@ impl EscrowContract {
 
         caller.require_auth();
 
+        // The last active cut (agent_referral, then beneficiary) always absorbs the
+        // integer-division rounding remainder, so all shares sum exactly to `total`.
         let total = escrow.amount;
-        let beneficiary_share = total * 90 / 100;
-        let governance_share = total * 5 / 100;
-        let agent_share = total - beneficiary_share - governance_share;
+        let has_governance = escrow.platform_governance.is_some();
+        let has_agent = escrow.agent_referral.is_some();
+
+        let governance_share = if has_governance { total * 5 / 100 } else { 0 };
+        let beneficiary_bps = match (has_governance, has_agent) {
+            (true, true) => 90,
+            (true, false) => 0, // beneficiary_share computed as remainder below
+            (false, true) => 95,
+            (false, false) => 0, // beneficiary_share computed as remainder below
+        };
+        let beneficiary_share = if beneficiary_bps > 0 {
+            total * beneficiary_bps / 100
+        } else {
+            total - governance_share
+        };
+        let agent_share = if has_agent {
+            total - beneficiary_share - governance_share
+        } else {
+            0
+        };
 
         // EFFECTS: mark as released before any transfers (checks-effects-interactions)
         escrow.status = EscrowStatus::Released;
@@ -829,16 +861,20 @@ impl EscrowContract {
             &escrow.beneficiary,
             &beneficiary_share,
         );
-        token_client.transfer(
-            &env.current_contract_address(),
-            &escrow.platform_governance,
-            &governance_share,
-        );
-        token_client.transfer(
-            &env.current_contract_address(),
-            &escrow.agent_referral,
-            &agent_share,
-        );
+        if let Some(platform_governance) = &escrow.platform_governance {
+            token_client.transfer(
+                &env.current_contract_address(),
+                platform_governance,
+                &governance_share,
+            );
+        }
+        if let Some(agent_referral) = &escrow.agent_referral {
+            token_client.transfer(
+                &env.current_contract_address(),
+                agent_referral,
+                &agent_share,
+            );
+        }
 
         events::rent_released(
             &env,
