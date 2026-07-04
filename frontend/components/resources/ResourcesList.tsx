@@ -51,8 +51,8 @@ export default function ResourcesList({
             href={`/resources/${r.slug}`}
             className="block block h-full"
           >
-            <div className="bg-slate-800/50 hover:bg-slate-800 transition-all rounded-2xl p-6 border border-white/10 hover:border-blue-500/50 shadow-xl h-full flex flex-col">
-              <div className="mb-4 text-blue-400">
+            <div className="bg-slate-800/50 hover:bg-slate-800 transition-all rounded-2xl p-6 border border-white/10 hover:border-brand-accent/50 shadow-xl h-full flex flex-col">
+              <div className="mb-4 text-brand-accent">
                 {r.type === 'guide' ? (
                   <FileText />
                 ) : r.type === 'video' ? (

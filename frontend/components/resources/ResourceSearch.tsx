@@ -16,7 +16,7 @@ export default function ResourceSearch({
         placeholder="Search for articles, guides..."
         value={query}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full bg-slate-800/80 border border-white/10 rounded-full py-4 pl-12 pr-6 text-white placeholder:text-slate-500 shadow-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+        className="w-full bg-slate-800/80 border border-white/10 rounded-full py-4 pl-12 pr-6 text-white placeholder:text-slate-500 shadow-xl focus:outline-none focus:ring-2 focus:ring-brand-accent transition-all"
       />
     </div>
   );
