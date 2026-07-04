@@ -34,9 +34,9 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({
       case 'pdf':
         return <FileText className="text-red-500" size={24} />;
       case 'image':
-        return <ImageIcon className="text-blue-500" size={24} />;
+        return <ImageIcon className="text-brand-accent" size={24} />;
       case 'docx':
-        return <File className="text-blue-600" size={24} />;
+        return <File className="text-brand-blue" size={24} />;
       case 'xlsx':
         return <File className="text-green-600" size={24} />;
       default:
@@ -55,7 +55,7 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({
 
     const colors: Record<string, string> = {
       lease: 'bg-purple-100 text-purple-700',
-      identity: 'bg-blue-100 text-blue-700',
+      identity: 'bg-brand-accent/10 text-brand-accent',
       payment: 'bg-green-100 text-green-700',
       maintenance: 'bg-orange-100 text-orange-700',
       inspection: 'bg-yellow-100 text-yellow-700',
@@ -130,7 +130,7 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({
           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
             <button
               onClick={() => onView(document)}
-              className="p-2 text-neutral-600 hover:text-brand-blue hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+              className="p-2 text-neutral-600 hover:text-brand-blue hover:bg-brand-blue/10 dark:hover:bg-brand-blue/20 rounded-lg transition-colors"
               title="View document"
             >
               <Eye size={18} />
