@@ -124,7 +124,7 @@ export const FileUpload: React.FC<Props> = ({
             onDrop={onDrop}
             className={`relative border-2 border-dashed rounded-3xl p-12 flex flex-col items-center justify-center transition-all ${
               isDragging
-                ? 'border-brand-blue bg-blue-50/50 dark:bg-blue-900/10'
+                ? 'border-brand-blue bg-brand-blue/5 dark:bg-brand-blue/10'
                 : 'border-neutral-200 dark:border-neutral-700 hover:border-neutral-300 dark:hover:border-neutral-600 bg-neutral-50 dark:bg-neutral-900/50'
             }`}
           >
@@ -205,7 +205,7 @@ export const FileUpload: React.FC<Props> = ({
                 files.length === 0 ||
                 files.some((f) => f.status === 'uploading')
               }
-              className="flex-1 py-4 bg-brand-blue hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-black rounded-2xl transition-all shadow-xl shadow-blue-500/20 active:scale-[0.98]"
+              className="flex-1 py-4 bg-brand-blue hover:bg-brand-blue-dark disabled:opacity-50 disabled:cursor-not-allowed text-white font-black rounded-2xl transition-all shadow-xl shadow-brand-blue/20 active:scale-[0.98]"
             >
               {files.some((f) => f.status === 'uploading')
                 ? 'Uploading...'
