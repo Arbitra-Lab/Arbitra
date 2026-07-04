@@ -8,8 +8,6 @@ Our goal is to give any marketplace or platform a shared, credibly-neutral trust
 
 ---
 
-Telegram: https://t.me/huston-housinggroup
-
 ## Why Arbitra?
 
 Two-party agreements that move money today suffer from the same handful of problems, regardless of vertical:

@@ -1,4 +1,26 @@
+<div align="center">
+  <img src="./public/logo.png" alt="Arbitra Logo" width="120" />
+  <h1>Arbitra Frontend</h1>
+</div>
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+
+## Architecture
+
+The frontend follows a **clean separation of concerns** with dedicated service and utility layers:
+
+- **`lib/services/`** - Encapsulated business logic (notifications, Stellar accounts)
+- **`lib/errors/`** - Centralized error handling, classification, and logging
+- **`lib/api/`** - API client and request/response handling
+- **`lib/validation/`** - Input validation and schema utilities
+- **`lib/query/`** - Query composition and data fetching
+- **`components/`** - Reusable UI components with error boundaries
+
+This structure makes it easy to:
+
+- Add new features without affecting existing code (Single Responsibility)
+- Test components and services in isolation
+- Extend functionality without breaking changes
 
 ## Getting Started
 
@@ -37,110 +59,76 @@ pnpm dev
 bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-## Error Handling Architecture
+## Error Handling & Resilience
 
-The frontend now includes a centralized, typed error handling system with route and component boundaries.
+The frontend includes a **centralized, composable error handling system** following the same builder pattern used in the backend:
 
-### What is in place
+### Core Components
 
-- `lib/errors/*`: shared error types, classifiers, message catalog, logging, and retry helpers.
-- `components/error/ErrorFallback.tsx`: accessible reusable fallback UI with retry + safe navigation.
-- `components/error/ClientErrorBoundary.tsx`: component-level React boundary for critical UI regions.
-- `app/error.tsx`, `app/user/error.tsx`, `app/admin/error.tsx`: route-level recoverable boundaries.
-- `components/error/ErrorMonitoringProvider.tsx`: captures `window.onerror` and unhandled promise rejections.
-- `components/error/NetworkStatusBanner.tsx`: offline detection with visible recovery action.
+- **`lib/errors/classifier.ts`** - Normalize and classify errors from any source
+- **`lib/errors/logger.ts`** - Structured error logging with context preservation
+- **`lib/errors/retry.ts`** - Retry strategies with exponential backoff
+- **`components/error/ErrorFallback.tsx`** - Reusable fallback UI with recovery actions
+- **`components/error/ClientErrorBoundary.tsx`** - Component-level React error boundaries
+- **`components/error/ErrorMonitoringProvider.tsx`** - Global error capture and monitoring
 
-### Usage conventions
+### Usage Patterns
 
-- Prefer `classifyUnknownError(...)` in `catch` blocks to normalize unknown failures.
-- Use `appError.userMessage` for user-facing feedback.
-- Use `logError(...)` to report structured context and preserve debugging metadata.
-- Wrap risky/critical component sections with `ClientErrorBoundary` for local recovery.
-- Keep form-level failures accessible via `role="alert"` and `aria-live` (see `FormErrorAlert`).
+Each layer has a single, clear responsibility:
 
-### Optional external reporting
+```typescript
+// Classify any error into a typed structure
+const typedError = classifyUnknownError(error);
 
-To connect a real monitoring provider (Sentry, Datadog, etc.), set a browser reporter function:
+// Log with structured context
+logError('payment_failed', typedError, { userId, amount });
+
+// Wrap critical sections with local recovery
+<ClientErrorBoundary fallback={<ErrorFallback onRetry={retry} />}>
+  <PaymentForm />
+</ClientErrorBoundary>
+```
+
+### Monitoring Integration
+
+Optional external reporting (Sentry, Datadog, etc.):
 
 ```ts
 window.__HUSTON_HOUSING_ERROR_REPORTER__ = (payload) => {
-  // Forward payload to your monitoring endpoint
+  // Forward to monitoring provider
 };
 ```
 
-## Pipeline Validation with Makefile
+## Development Workflow
 
-### Frontend Pipeline Checks
-
-The frontend includes a Makefile to run all CI/CD pipeline checks locally before creating a PR. This ensures your code will pass the GitHub Actions pipeline.
-
-#### Quick Start
+### Running Tests
 
 ```bash
-# Run full CI pipeline (recommended before PR)
-make ci
-
-# Quick pre-commit checks (faster for development)
-make pre-commit
-
-# Get help with all available commands
-make help
+make test              # Run unit tests
+make test-watch       # Run tests in watch mode
 ```
 
-#### Available Frontend Commands
+### Code Quality
 
 ```bash
-# Main pipeline commands
-make ci              # Full pipeline: install → audit → format-check → test → build
-make pre-commit      # Quick checks: format-check → test
-
-# Individual steps
-make install         # Install dependencies with frozen lockfile
-make audit           # Run npm audit for security vulnerabilities
-make lint            # Run ESLint checks
-make format          # Format code with Prettier
-make format-check    # Check Prettier formatting without modifying
-make test            # Run unit tests
-make build           # Create production build
-
-# Utilities
-make clean           # Clean node_modules and build artifacts
-make setup           # Initial development environment setup
+make lint             # Run ESLint
+make format           # Format with Prettier
+make format-check     # Check formatting
 ```
 
-#### Pipeline Workflow
-
-The Makefile mirrors the GitHub Actions workflow in `.github/workflows/frontend-ci-cd.yml`:
-
-1. **Dependencies** - Install with frozen lockfile
-2. **Security Audit** - Check for vulnerabilities
-3. **Code Quality** - ESLint and Prettier checks
-4. **Testing** - Unit tests with Vitest
-5. **Production Build** - Next.js production build verification
-
-### Before Creating a PR
-
-Run these commands to ensure your PR will pass all pipeline checks:
+### Building for Production
 
 ```bash
-# Frontend - full CI pipeline
-cd frontend
-make ci
+make build            # Create production build
+make ci               # Full pipeline (install → audit → lint → test → build)
+make pre-commit       # Quick pre-PR validation
 ```
 
-The Makefile is designed to replicate the exact same checks that run in GitHub Actions, giving you confidence that your PR will pass the CI/CD pipeline.
-
-For faster pre-commit validation without the full build:
-
-```bash
-make pre-commit
-```
+The Makefile mirrors the CI/CD pipeline in `.github/workflows/frontend-ci-cd.yml`, giving you confidence that local tests match what runs in GitHub Actions.
 
 ## Learn More
 
