@@ -39,13 +39,13 @@ export type AuthStore = AuthState & AuthActions;
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const AUTH_STORAGE_KEYS = {
-  ACCESS_TOKEN: 'huston-housing_access_token',
-  REFRESH_TOKEN: 'huston-housing_refresh_token',
-  USER: 'huston-housing_user',
-  WALLET_ADDRESS: 'huston-housing_wallet_address',
+  ACCESS_TOKEN: 'arbitra_access_token',
+  REFRESH_TOKEN: 'arbitra_refresh_token',
+  USER: 'arbitra_user',
+  WALLET_ADDRESS: 'arbitra_wallet_address',
 } as const;
 
-const AUTH_COOKIE_NAME = 'huston-housing_auth_token';
+const AUTH_COOKIE_NAME = 'arbitra_auth_token';
 
 // ─── Cookie Helpers ──────────────────────────────────────────────────────────
 
@@ -227,7 +227,7 @@ export const useAuthStore = create<AuthStore>()(
         */
 
         // DEV BYPASS: map demo emails to roles for local testing.
-        const normalizedEmail = (email || 'dev@huston-housing.local').toLowerCase();
+        const normalizedEmail = (email || 'dev@arbitra.local').toLowerCase();
         const inferredRole: User['role'] = normalizedEmail.includes('admin')
           ? 'admin'
           : 'user';

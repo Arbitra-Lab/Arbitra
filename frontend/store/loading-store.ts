@@ -39,6 +39,6 @@ export const useLoadingStore = create<LoadingStore>()(
       isLoading: (key) => get().loading.get(key) ?? false,
       clearLoading: () => set({ loading: new Map() }, false, 'clearLoading'),
     }),
-    { name: 'huston-housing/loading', enabled: process.env.NODE_ENV !== 'production' },
+    { name: 'arbitra/loading', enabled: process.env.NODE_ENV !== 'production' },
   ),
 );

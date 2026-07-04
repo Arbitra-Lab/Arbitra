@@ -140,7 +140,7 @@ export const useUIStore = create<UIStore>()(
       'ui',
     ),
     {
-      name: 'huston-housing-ui',
+      name: 'arbitra-ui',
       storage: createJSONStorage(() =>
         typeof window !== 'undefined' ? localStorage : noopStorage,
       ),
