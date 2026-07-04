@@ -8,14 +8,9 @@ import {
   FileText,
   ArrowUpRight,
   TrendingUp,
-  BarChart3,
   Eye,
-  ReceiptText,
-  AlertTriangle,
 } from 'lucide-react';
-import { AreaChart, Area, ResponsiveContainer, XAxis, Tooltip } from 'recharts';
 import { MicroCharts } from '@/components/dashboard/MicroCharts';
-import { TenantOnboardingBanner } from '@/components/user/TenantOnboardingBanner';
 import { useAuth } from '@/store/authStore';
 import { useUserAgreements } from '@/lib/query/hooks/use-agreements';
 import { useModal } from '@/contexts/ModalContext';
@@ -44,15 +39,6 @@ const mockAgreements = [
     dueDate: 'Sep 1, 2023',
     status: 'Completed',
   },
-];
-
-const analyticsPreviewData = [
-  { month: 'Jan', views: 120 },
-  { month: 'Feb', views: 180 },
-  { month: 'Mar', views: 240 },
-  { month: 'Apr', views: 200 },
-  { month: 'May', views: 320 },
-  { month: 'Jun', views: 410 },
 ];
 
 const DASHBOARD_IMAGE_FALLBACK =
@@ -112,10 +98,10 @@ export default function UserDashboardOverview() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[40vh] text-blue-200/80">
+      <div className="flex items-center justify-center min-h-[40vh] text-neutral-200/80">
         <div className="flex flex-col items-center space-y-4">
-          <div className="w-10 h-10 border-4 border-blue-400 border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm text-blue-200/60 font-medium">
+          <div className="w-10 h-10 border-4 border-brand-accent border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm text-neutral-200/60 font-medium">
             Loading dashboard…
           </p>
         </div>
@@ -161,15 +147,13 @@ export default function UserDashboardOverview() {
 
   return (
     <div className="space-y-6 sm:space-y-8 pb-10">
-      <TenantOnboardingBanner />
-
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
           <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
             Overview
           </h2>
-          <p className="text-blue-200/60 mt-1">
-            Welcome back. Here is the latest on your rentals.
+          <p className="text-neutral-200/60 mt-1">
+            Welcome back. Here is the latest on your agreements.
           </p>
         </div>
       </div>
@@ -187,16 +171,16 @@ export default function UserDashboardOverview() {
             </span>
           </div>
           <div className="mt-4">
-            <p className="text-sm font-medium text-blue-200/60 uppercase tracking-wider">
+            <p className="text-sm font-medium text-neutral-200/60 uppercase tracking-wider">
               Next Payment Due
             </p>
             <div className="flex items-baseline gap-2 mt-1">
               <h3 className="text-3xl font-bold tracking-tight text-white">
                 $1,200
               </h3>
-              <span className="text-sm text-blue-300/40">/mo</span>
+              <span className="text-sm text-neutral-200/40">/mo</span>
             </div>
-            <p className="text-sm text-blue-200/60 mt-2 truncate">
+            <p className="text-sm text-neutral-200/60 mt-2 truncate">
               Sunset Apartments, Unit 4B
             </p>
           </div>
@@ -213,7 +197,7 @@ export default function UserDashboardOverview() {
             </span>
           </div>
           <div className="mt-4">
-            <p className="text-sm font-medium text-blue-200/60 uppercase tracking-wider">
+            <p className="text-sm font-medium text-neutral-200/60 uppercase tracking-wider">
               Active Lease
             </p>
             <h3 className="text-xl font-bold tracking-tight text-white mt-1">
@@ -225,7 +209,7 @@ export default function UserDashboardOverview() {
                 style={{ width: '60%' }}
               />
             </div>
-            <p className="text-xs text-blue-300/40 mt-3 font-medium uppercase tracking-wider">
+            <p className="text-xs text-neutral-200/40 mt-3 font-medium uppercase tracking-wider">
               7 months remaining
             </p>
           </div>
@@ -234,7 +218,7 @@ export default function UserDashboardOverview() {
         {/* Rent Paid This Year */}
         <div className="bg-white/5 backdrop-blur-sm rounded-3xl shadow-xl p-6 border border-white/10 flex flex-col justify-between sm:col-span-2 lg:col-span-1 group hover:border-white/20 transition-all duration-300">
           <div className="flex items-start justify-between">
-            <div className="w-12 h-12 bg-white/5 text-blue-400 rounded-2xl flex items-center justify-center border border-white/5 group-hover:scale-110 transition-transform">
+            <div className="w-12 h-12 bg-white/5 text-brand-accent rounded-2xl flex items-center justify-center border border-white/5 group-hover:scale-110 transition-transform">
               <TrendingUp size={24} strokeWidth={1.5} />
             </div>
             <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-full uppercase tracking-wider">
@@ -245,7 +229,7 @@ export default function UserDashboardOverview() {
             <MicroCharts />
             <div className="flex items-baseline justify-between mt-4">
               <div>
-                <p className="text-sm font-medium text-blue-200/60 uppercase tracking-wider">
+                <p className="text-sm font-medium text-neutral-200/60 uppercase tracking-wider">
                   Rent Paid This Year
                 </p>
                 <h3 className="text-2xl font-bold tracking-tight text-white mt-1">
@@ -257,126 +241,16 @@ export default function UserDashboardOverview() {
         </div>
       </div>
 
-      {/* Analytics Preview */}
-      <div className="bg-white/5 backdrop-blur-sm rounded-3xl shadow-xl border border-white/10 p-6">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-white/5 text-blue-400 rounded-2xl flex items-center justify-center border border-white/5">
-              <BarChart3 size={20} strokeWidth={1.5} />
-            </div>
-            <div>
-              <h3 className="text-lg font-bold text-white tracking-tight">
-                Analytics
-              </h3>
-              <p className="text-xs text-blue-200/40">
-                Property performance overview
-              </p>
-            </div>
-          </div>
-          <Link
-            href="/user/analytics"
-            className="flex items-center gap-1 text-sm font-semibold text-blue-400 hover:text-blue-300 transition-colors"
-          >
-            View Analytics
-            <ArrowUpRight size={14} />
-          </Link>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Chart */}
-          <div className="md:col-span-2 h-40">
-            <ResponsiveContainer width="100%" height={160}>
-              <AreaChart
-                data={analyticsPreviewData}
-                margin={{ top: 5, right: 5, left: 5, bottom: 5 }}
-              >
-                <defs>
-                  <linearGradient
-                    id="analyticsGrad"
-                    x1="0"
-                    y1="0"
-                    x2="0"
-                    y2="1"
-                  >
-                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <XAxis
-                  dataKey="month"
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{
-                    fill: 'rgba(147, 197, 253, 0.4)',
-                    fontSize: 10,
-                    fontWeight: 700,
-                  }}
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'rgba(15, 23, 42, 0.9)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    borderRadius: '12px',
-                    padding: '8px 12px',
-                  }}
-                  itemStyle={{ color: '#fff', fontSize: '12px' }}
-                  labelStyle={{
-                    color: 'rgba(255, 255, 255, 0.5)',
-                    fontSize: '10px',
-                  }}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="views"
-                  stroke="#60a5fa"
-                  strokeWidth={2.5}
-                  fill="url(#analyticsGrad)"
-                  dot={false}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-
-          {/* Stats */}
-          <div className="flex flex-col gap-4 justify-center">
-            <div className="bg-white/5 rounded-2xl p-4 border border-white/5">
-              <p className="text-[10px] font-bold text-blue-300/40 uppercase tracking-widest">
-                Property Views
-              </p>
-              <div className="flex items-baseline gap-2 mt-1">
-                <p className="text-2xl font-bold text-white">1,470</p>
-                <span className="inline-flex items-center gap-0.5 text-xs font-bold text-emerald-400">
-                  <ArrowUpRight size={12} />
-                  +12%
-                </span>
-              </div>
-            </div>
-            <div className="bg-white/5 rounded-2xl p-4 border border-white/5">
-              <p className="text-[10px] font-bold text-blue-300/40 uppercase tracking-widest">
-                Inquiries
-              </p>
-              <div className="flex items-baseline gap-2 mt-1">
-                <p className="text-2xl font-bold text-white">83</p>
-                <span className="inline-flex items-center gap-0.5 text-xs font-bold text-emerald-400">
-                  <ArrowUpRight size={12} />
-                  +8%
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Payment and Dispute previews */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white/5 backdrop-blur-sm rounded-3xl shadow-xl border border-white/10 p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-bold text-white tracking-tight">
-              Payment Preview
+              Transaction Preview
             </h3>
             <Link
-              href="/user/payments"
-              className="text-xs font-bold uppercase tracking-widest text-blue-400 hover:text-blue-300 transition-colors"
+              href="/user/transactions"
+              className="text-xs font-bold uppercase tracking-widest text-brand-accent hover:text-brand-accent/80 transition-colors"
             >
               View all
             </Link>
@@ -405,14 +279,14 @@ export default function UserDashboardOverview() {
                     <p className="text-sm font-semibold text-white truncate">
                       {payment.property}
                     </p>
-                    <p className="text-xs text-blue-200/50">
+                    <p className="text-xs text-neutral-200/50">
                       {payment.amount} · {payment.date}
                     </p>
                   </div>
                 </div>
                 <Link
-                  href="/user/payments"
-                  className="inline-flex items-center gap-1 rounded-xl border border-blue-500/30 bg-blue-500/10 px-2 py-1.5 text-[10px] font-bold uppercase tracking-widest text-blue-300 hover:bg-blue-500/20 transition-colors"
+                  href="/user/transactions"
+                  className="inline-flex items-center gap-1 rounded-xl border border-brand-accent/30 bg-brand-accent/10 px-2 py-1.5 text-[10px] font-bold uppercase tracking-widest text-brand-accent hover:bg-brand-accent/20 transition-colors"
                   aria-label={`Preview payment ${payment.id}`}
                 >
                   <span className="relative h-5 w-5 overflow-hidden rounded-md border border-white/10 bg-white/5">
@@ -443,7 +317,7 @@ export default function UserDashboardOverview() {
             </h3>
             <Link
               href="/user/disputes"
-              className="text-xs font-bold uppercase tracking-widest text-blue-400 hover:text-blue-300 transition-colors"
+              className="text-xs font-bold uppercase tracking-widest text-brand-accent hover:text-brand-accent/80 transition-colors"
             >
               View all
             </Link>
@@ -472,14 +346,14 @@ export default function UserDashboardOverview() {
                     <p className="text-sm font-semibold text-white truncate">
                       {dispute.property}
                     </p>
-                    <p className="text-xs text-blue-200/50">
+                    <p className="text-xs text-neutral-200/50">
                       {dispute.disputeReference} · {dispute.status}
                     </p>
                   </div>
                 </div>
                 <Link
                   href={`/user/disputes/${dispute.id}`}
-                  className="inline-flex items-center gap-1 rounded-xl border border-blue-500/30 bg-blue-500/10 px-2 py-1.5 text-[10px] font-bold uppercase tracking-widest text-blue-300 hover:bg-blue-500/20 transition-colors"
+                  className="inline-flex items-center gap-1 rounded-xl border border-brand-accent/30 bg-brand-accent/10 px-2 py-1.5 text-[10px] font-bold uppercase tracking-widest text-brand-accent hover:bg-brand-accent/20 transition-colors"
                   aria-label={`Preview dispute ${dispute.disputeReference}`}
                 >
                   <span className="relative h-5 w-5 overflow-hidden rounded-md border border-white/10 bg-white/5">
@@ -510,13 +384,13 @@ export default function UserDashboardOverview() {
           <h3 className="text-lg font-bold text-white tracking-tight">
             Active Agreements
           </h3>
-          <button className="text-sm font-semibold text-blue-400 hover:text-blue-300 transition-colors">
+          <button className="text-sm font-semibold text-brand-accent hover:text-brand-accent/80 transition-colors">
             View All
           </button>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm whitespace-nowrap">
-            <thead className="bg-white/5 text-blue-300/40">
+            <thead className="bg-white/5 text-neutral-200/40">
               <tr>
                 <th className="px-6 py-4 font-bold uppercase tracking-widest text-[10px]">
                   Agreement ID
@@ -545,16 +419,16 @@ export default function UserDashboardOverview() {
                   onClick={() => handleAgreementPreview(agreement.id)}
                   className="hover:bg-white/5 transition-colors group cursor-pointer"
                 >
-                  <td className="px-6 py-4 font-bold text-white group-hover:text-blue-400 transition-colors">
+                  <td className="px-6 py-4 font-bold text-white group-hover:text-brand-accent transition-colors">
                     {agreement.id}
                   </td>
-                  <td className="px-6 py-4 text-blue-200/60 font-medium">
+                  <td className="px-6 py-4 text-neutral-200/60 font-medium">
                     {agreement.property}
                   </td>
                   <td className="px-6 py-4 text-white font-bold">
                     {agreement.amount}
                   </td>
-                  <td className="px-6 py-4 text-blue-200/60 font-medium">
+                  <td className="px-6 py-4 text-neutral-200/60 font-medium">
                     {agreement.dueDate}
                   </td>
                   <td className="px-6 py-4 text-right">
@@ -565,7 +439,7 @@ export default function UserDashboardOverview() {
                           e.stopPropagation();
                           handleAgreementPreview(agreement.id);
                         }}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-[10px] font-medium text-blue-400 hover:text-white hover:bg-blue-500/20 transition-colors"
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-[10px] font-medium text-brand-accent hover:text-white hover:bg-brand-accent/20 transition-colors"
                         title="Preview agreement"
                       >
                         <Eye size={12} />
@@ -577,7 +451,7 @@ export default function UserDashboardOverview() {
                             e.stopPropagation();
                             handleAgreementSign(agreement);
                           }}
-                          className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-blue-500/10 text-blue-400 border border-blue-500/20 hover:bg-blue-500/20 transition-colors"
+                          className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-brand-accent/10 text-brand-accent border border-brand-accent/20 hover:bg-brand-accent/20 transition-colors"
                         >
                           Sign
                         </button>
@@ -588,7 +462,7 @@ export default function UserDashboardOverview() {
                             ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
                             : agreement.status === 'Pending'
                               ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                              : 'bg-white/5 text-blue-300/40 border-white/10'
+                              : 'bg-white/5 text-neutral-200/40 border-white/10'
                         }`}
                       >
                         {agreement.status}
@@ -599,7 +473,7 @@ export default function UserDashboardOverview() {
                     <Link
                       href={`/user/agreements/${agreement.id}`}
                       onClick={(e) => e.stopPropagation()}
-                      className="inline-flex items-center gap-1 rounded-xl border border-blue-500/30 bg-blue-500/10 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-widest text-blue-300 hover:bg-blue-500/20 transition-colors"
+                      className="inline-flex items-center gap-1 rounded-xl border border-brand-accent/30 bg-brand-accent/10 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-widest text-brand-accent hover:bg-brand-accent/20 transition-colors"
                       aria-label={`Preview agreement ${agreement.id}`}
                     >
                       <Eye size={12} />

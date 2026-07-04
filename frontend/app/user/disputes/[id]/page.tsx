@@ -15,7 +15,7 @@ export default function TenantDisputeDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-brand-blue-dark to-slate-900 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
       </div>
     );
@@ -23,11 +23,11 @@ export default function TenantDisputeDetailPage() {
 
   if (!isAuthenticated || user?.role !== 'user') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center p-8">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-brand-blue-dark to-slate-900 flex items-center justify-center p-8">
         <div className="max-w-md text-center text-white">
-          <Flag className="w-20 h-20 text-blue-400 mx-auto mb-6 opacity-75" />
+          <Flag className="w-20 h-20 text-brand-accent mx-auto mb-6 opacity-75" />
           <h1 className="text-3xl font-bold mb-4">Access Denied</h1>
-          <p className="text-xl mb-8 text-blue-200/80">
+          <p className="text-xl mb-8 text-neutral-200/80">
             Dispute details are private to tenants.
           </p>
           <Link href="/">

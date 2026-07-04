@@ -20,7 +20,7 @@ export default function WalletPage() {
     <div className="max-w-7xl mx-auto space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-white">My Wallet</h1>
-        <p className="text-sm text-blue-200/60 mt-1">
+        <p className="text-sm text-neutral-200/60 mt-1">
           Track your earnings and handle payouts
         </p>
       </div>
