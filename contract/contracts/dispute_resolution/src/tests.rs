@@ -11,13 +11,13 @@ use soroban_sdk::{
 fn inject_open_dispute(env: &Env, client: &DisputeResolutionContractClient, dispute_id: &String) {
     env.as_contract(&client.address, || {
         let dispute = Dispute {
-            agreement_id: dispute_id.clone(),
+            case_id: dispute_id.clone(),
             details_hash: String::from_str(env, "QmWeightedTest"),
             raised_at: env.ledger().timestamp(),
             resolved: false,
             resolved_at: None,
-            votes_favor_landlord: 0,
-            votes_favor_tenant: 0,
+            votes_favor_claimant: 0,
+            votes_favor_respondent: 0,
             voters: soroban_sdk::Vec::new(env),
         };
         env.storage()
@@ -38,19 +38,19 @@ fn test_successful_initialization() {
     let client = create_contract(&env);
 
     let admin = Address::generate(&env);
-    let huston-housing_contract = Address::generate(&env);
+    let case_registry = Address::generate(&env);
     let min_votes = 3u32;
 
     env.mock_all_auths();
 
-    let result = client.try_initialize(&admin, &min_votes, &huston-housing_contract);
+    let result = client.try_initialize(&admin, &min_votes, &case_registry);
     assert!(result.is_ok());
 
     let state = client.get_state().unwrap();
     assert_eq!(state.admin, admin);
     assert!(state.initialized);
     assert_eq!(state.min_votes_required, min_votes);
-    assert_eq!(state.huston-housing_contract, huston-housing_contract);
+    assert_eq!(state.case_registry, case_registry);
 }
 
 #[test]
@@ -60,9 +60,9 @@ fn test_initialize_fails_without_admin_auth() {
     let client = create_contract(&env);
 
     let admin = Address::generate(&env);
-    let huston-housing_contract = Address::generate(&env);
+    let case_registry = Address::generate(&env);
 
-    client.initialize(&admin, &3, &huston-housing_contract);
+    client.initialize(&admin, &3, &case_registry);
 }
 
 #[test]
@@ -72,12 +72,12 @@ fn test_double_initialization_fails() {
     let client = create_contract(&env);
 
     let admin = Address::generate(&env);
-    let huston-housing_contract = Address::generate(&env);
+    let case_registry = Address::generate(&env);
 
     env.mock_all_auths();
 
-    client.initialize(&admin, &3, &huston-housing_contract);
-    client.initialize(&admin, &3, &huston-housing_contract);
+    client.initialize(&admin, &3, &case_registry);
+    client.initialize(&admin, &3, &case_registry);
 }
 
 #[test]
@@ -150,9 +150,9 @@ fn test_vote_fails_when_dispute_not_found() {
     client.initialize(&admin, &3, &Address::generate(&env));
     client.add_arbiter(&admin, &arbiter);
 
-    let agreement_id = String::from_str(&env, "agreement_001");
+    let case_id = String::from_str(&env, "agreement_001");
 
-    client.vote_on_dispute(&arbiter, &agreement_id, &true);
+    client.vote_on_dispute(&arbiter, &case_id, &true);
 }
 
 #[test]
@@ -223,13 +223,13 @@ fn setup_appeal_ready_dispute(
         voters.push_back(original_arbiter_3);
 
         let dispute = Dispute {
-            agreement_id: dispute_id.clone(),
+            case_id: dispute_id.clone(),
             details_hash: String::from_str(env, "QmResolvedDispute"),
             raised_at: 900_000,
             resolved: true,
             resolved_at: Some(999_000),
-            votes_favor_landlord: 2,
-            votes_favor_tenant: 1,
+            votes_favor_claimant: 2,
+            votes_favor_respondent: 1,
             voters,
         };
 
@@ -297,13 +297,13 @@ fn test_appeal_voting_and_resolution_approved_refunds_fee() {
         .unwrap();
 
     assert!(client
-        .try_vote_on_appeal(&arbiter_1, &appeal_id, &DisputeOutcome::FavorTenant)
+        .try_vote_on_appeal(&arbiter_1, &appeal_id, &DisputeOutcome::FavorRespondent)
         .is_ok());
     assert!(client
-        .try_vote_on_appeal(&arbiter_2, &appeal_id, &DisputeOutcome::FavorTenant)
+        .try_vote_on_appeal(&arbiter_2, &appeal_id, &DisputeOutcome::FavorRespondent)
         .is_ok());
     assert!(client
-        .try_vote_on_appeal(&arbiter_3, &appeal_id, &DisputeOutcome::FavorLandlord)
+        .try_vote_on_appeal(&arbiter_3, &appeal_id, &DisputeOutcome::FavorClaimant)
         .is_ok());
 
     assert!(client.try_resolve_appeal(&appeal_id).is_ok());
@@ -374,13 +374,13 @@ fn test_appeal_window_expired() {
         voters.push_back(old_arbiter_3);
 
         let dispute = Dispute {
-            agreement_id: dispute_id.clone(),
+            case_id: dispute_id.clone(),
             details_hash: String::from_str(&env, "QmResolvedOld"),
             raised_at: 500_000,
             resolved: true,
             resolved_at: Some(1_000_000),
-            votes_favor_landlord: 2,
-            votes_favor_tenant: 1,
+            votes_favor_claimant: 2,
+            votes_favor_respondent: 1,
             voters,
         };
 
@@ -402,7 +402,7 @@ fn test_dispute_timeout_auto_resolve_and_config() {
     let env = Env::default();
     let client = create_contract(&env);
     let admin = Address::generate(&env);
-    let agreement_id = String::from_str(&env, "dispute-timeout-1");
+    let case_id = String::from_str(&env, "dispute-timeout-1");
     env.mock_all_auths();
 
     client.initialize(&admin, &3, &Address::generate(&env));
@@ -418,25 +418,25 @@ fn test_dispute_timeout_auto_resolve_and_config() {
     env.ledger().with_mut(|l| l.timestamp = 1_000);
     env.as_contract(&client.address, || {
         let dispute = Dispute {
-            agreement_id: agreement_id.clone(),
+            case_id: case_id.clone(),
             details_hash: String::from_str(&env, "QmTimeout"),
             raised_at: 1_000,
             resolved: false,
             resolved_at: None,
-            votes_favor_landlord: 0,
-            votes_favor_tenant: 0,
+            votes_favor_claimant: 0,
+            votes_favor_respondent: 0,
             voters: soroban_sdk::Vec::new(&env),
         };
         env.storage()
             .persistent()
-            .set(&DataKey::Dispute(agreement_id.clone()), &dispute);
+            .set(&DataKey::Dispute(case_id.clone()), &dispute);
     });
 
     env.ledger().with_mut(|l| l.timestamp = 1_000 + 2 * 86_400);
-    let outcome = client.resolve_dispute_on_timeout(&agreement_id);
-    assert_eq!(outcome, DisputeOutcome::FavorTenant);
+    let outcome = client.resolve_dispute_on_timeout(&case_id);
+    assert_eq!(outcome, DisputeOutcome::FavorRespondent);
 
-    let stored = client.get_dispute(&agreement_id).unwrap();
+    let stored = client.get_dispute(&case_id).unwrap();
     assert!(stored.resolved);
     assert!(stored.resolved_at.is_some());
 }
@@ -548,13 +548,13 @@ fn test_vote_on_dispute_weighted_records_vote() {
     inject_open_dispute(&env, &client, &dispute_id);
 
     let result =
-        client.try_vote_on_dispute_weighted(&arbiter, &dispute_id, &DisputeOutcome::FavorLandlord);
+        client.try_vote_on_dispute_weighted(&arbiter, &dispute_id, &DisputeOutcome::FavorClaimant);
     assert!(result.is_ok());
 
     let votes = client.get_dispute_votes_weighted(&dispute_id);
     assert_eq!(votes.len(), 1);
     assert_eq!(votes.get(0).unwrap().weight, 400);
-    assert_eq!(votes.get(0).unwrap().vote, DisputeOutcome::FavorLandlord);
+    assert_eq!(votes.get(0).unwrap().vote, DisputeOutcome::FavorClaimant);
 }
 
 #[test]
@@ -571,13 +571,13 @@ fn test_vote_on_dispute_weighted_already_voted() {
     client.add_arbiter(&admin, &arbiter);
     inject_open_dispute(&env, &client, &dispute_id);
 
-    client.vote_on_dispute_weighted(&arbiter, &dispute_id, &DisputeOutcome::FavorLandlord);
+    client.vote_on_dispute_weighted(&arbiter, &dispute_id, &DisputeOutcome::FavorClaimant);
     // second vote should fail
-    client.vote_on_dispute_weighted(&arbiter, &dispute_id, &DisputeOutcome::FavorTenant);
+    client.vote_on_dispute_weighted(&arbiter, &dispute_id, &DisputeOutcome::FavorRespondent);
 }
 
 #[test]
-fn test_resolve_dispute_weighted_favor_landlord() {
+fn test_resolve_dispute_weighted_favor_claimant() {
     let env = Env::default();
     let client = create_contract(&env);
     let admin = Address::generate(&env);
@@ -601,20 +601,20 @@ fn test_resolve_dispute_weighted_favor_landlord() {
 
     inject_open_dispute(&env, &client, &dispute_id);
 
-    client.vote_on_dispute_weighted(&arbiter1, &dispute_id, &DisputeOutcome::FavorLandlord);
-    client.vote_on_dispute_weighted(&arbiter2, &dispute_id, &DisputeOutcome::FavorLandlord);
-    client.vote_on_dispute_weighted(&arbiter3, &dispute_id, &DisputeOutcome::FavorTenant);
+    client.vote_on_dispute_weighted(&arbiter1, &dispute_id, &DisputeOutcome::FavorClaimant);
+    client.vote_on_dispute_weighted(&arbiter2, &dispute_id, &DisputeOutcome::FavorClaimant);
+    client.vote_on_dispute_weighted(&arbiter3, &dispute_id, &DisputeOutcome::FavorRespondent);
 
-    // FavorLandlord: 800  vs  FavorTenant: 100
+    // FavorClaimant: 800  vs  FavorRespondent: 100
     let outcome = client.resolve_dispute_weighted(&dispute_id);
-    assert_eq!(outcome, DisputeOutcome::FavorLandlord);
+    assert_eq!(outcome, DisputeOutcome::FavorClaimant);
 
     let dispute = client.get_dispute(&dispute_id).unwrap();
     assert!(dispute.resolved);
 }
 
 #[test]
-fn test_resolve_dispute_weighted_favor_tenant() {
+fn test_resolve_dispute_weighted_favor_respondent() {
     let env = Env::default();
     let client = create_contract(&env);
     let admin = Address::generate(&env);
@@ -635,13 +635,13 @@ fn test_resolve_dispute_weighted_favor_tenant() {
 
     inject_open_dispute(&env, &client, &dispute_id);
 
-    // high-weight arbiters vote for tenant
-    client.vote_on_dispute_weighted(&arbiter1, &dispute_id, &DisputeOutcome::FavorTenant);
-    client.vote_on_dispute_weighted(&arbiter2, &dispute_id, &DisputeOutcome::FavorTenant);
-    client.vote_on_dispute_weighted(&arbiter3, &dispute_id, &DisputeOutcome::FavorLandlord);
+    // high-weight arbiters vote for respondent
+    client.vote_on_dispute_weighted(&arbiter1, &dispute_id, &DisputeOutcome::FavorRespondent);
+    client.vote_on_dispute_weighted(&arbiter2, &dispute_id, &DisputeOutcome::FavorRespondent);
+    client.vote_on_dispute_weighted(&arbiter3, &dispute_id, &DisputeOutcome::FavorClaimant);
 
     let outcome = client.resolve_dispute_weighted(&dispute_id);
-    assert_eq!(outcome, DisputeOutcome::FavorTenant);
+    assert_eq!(outcome, DisputeOutcome::FavorRespondent);
 }
 
 #[test]
@@ -664,16 +664,16 @@ fn test_resolve_dispute_weighted_tie_breaking() {
 
     inject_open_dispute(&env, &client, &dispute_id);
 
-    // first vote → FavorLandlord (should win on tie)
+    // first vote → FavorClaimant (should win on tie)
     env.ledger().with_mut(|l| l.timestamp = 1000);
-    client.vote_on_dispute_weighted(&arbiter1, &dispute_id, &DisputeOutcome::FavorLandlord);
+    client.vote_on_dispute_weighted(&arbiter1, &dispute_id, &DisputeOutcome::FavorClaimant);
 
     env.ledger().with_mut(|l| l.timestamp = 2000);
-    client.vote_on_dispute_weighted(&arbiter2, &dispute_id, &DisputeOutcome::FavorTenant);
+    client.vote_on_dispute_weighted(&arbiter2, &dispute_id, &DisputeOutcome::FavorRespondent);
 
-    // 400 vs 400 → tie broken by first vote → FavorLandlord
+    // 400 vs 400 → tie broken by first vote → FavorClaimant
     let outcome = client.resolve_dispute_weighted(&dispute_id);
-    assert_eq!(outcome, DisputeOutcome::FavorLandlord);
+    assert_eq!(outcome, DisputeOutcome::FavorClaimant);
 }
 
 #[test]
@@ -689,7 +689,7 @@ fn test_resolve_dispute_weighted_insufficient_votes() {
     client.add_arbiter(&admin, &arbiter1);
     inject_open_dispute(&env, &client, &dispute_id);
 
-    client.vote_on_dispute_weighted(&arbiter1, &dispute_id, &DisputeOutcome::FavorLandlord);
+    client.vote_on_dispute_weighted(&arbiter1, &dispute_id, &DisputeOutcome::FavorClaimant);
 
     // only 1 voter, need 3
     let result = client.try_resolve_dispute_weighted(&dispute_id);
@@ -722,7 +722,7 @@ fn test_dispute_timeout_not_reached() {
     let env = Env::default();
     let client = create_contract(&env);
     let admin = Address::generate(&env);
-    let agreement_id = String::from_str(&env, "dispute-timeout-2");
+    let case_id = String::from_str(&env, "dispute-timeout-2");
     env.mock_all_auths();
 
     client.initialize(&admin, &3, &Address::generate(&env));
@@ -738,21 +738,21 @@ fn test_dispute_timeout_not_reached() {
     env.ledger().with_mut(|l| l.timestamp = 10_000);
     env.as_contract(&client.address, || {
         let dispute = Dispute {
-            agreement_id: agreement_id.clone(),
+            case_id: case_id.clone(),
             details_hash: String::from_str(&env, "QmNoTimeout"),
             raised_at: 10_000,
             resolved: false,
             resolved_at: None,
-            votes_favor_landlord: 1,
-            votes_favor_tenant: 0,
+            votes_favor_claimant: 1,
+            votes_favor_respondent: 0,
             voters: soroban_sdk::Vec::new(&env),
         };
         env.storage()
             .persistent()
-            .set(&DataKey::Dispute(agreement_id.clone()), &dispute);
+            .set(&DataKey::Dispute(case_id.clone()), &dispute);
     });
 
     env.ledger().with_mut(|l| l.timestamp = 10_000 + 5 * 86_400);
-    let result = client.try_resolve_dispute_on_timeout(&agreement_id);
+    let result = client.try_resolve_dispute_on_timeout(&case_id);
     assert_eq!(result, Err(Ok(DisputeError::TimeoutNotReached)));
 }
