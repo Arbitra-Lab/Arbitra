@@ -17,22 +17,26 @@ pub enum EscrowStatus {
     Disputed = 4,
 }
 
-/// Represents a security deposit escrow managed by 2-of-3 multi-sig.
+/// Represents a generic 2-of-3 multi-sig escrow: funds deposited by one party,
+/// released to a beneficiary on mutual approval or arbiter ruling. Used for
+/// security deposits, freelance/trade-finance milestones, insurance payouts, etc.
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[contracttype]
 pub struct Escrow {
-    /// Unique identifier for the escrow (hash of agreement_id)
+    /// Unique identifier for the escrow (hash of the creation parameters)
     pub id: BytesN<32>,
-    /// The party depositing funds (tenant)
+    /// The party depositing funds
     pub depositor: Address,
-    /// The party who benefits from the deposit (landlord/admin)
+    /// The party who benefits from the deposit
     pub beneficiary: Address,
     /// The admin/arbiter who can resolve disputes
     pub arbiter: Address,
-    /// Platform governance address receiving 5% on rent release
-    pub platform_governance: Address,
-    /// Agent/referral address receiving 5% on rent release
-    pub agent_referral: Address,
+    /// Optional platform governance address receiving a cut on `release_rent`.
+    /// When `None`, no governance cut is taken.
+    pub platform_governance: Option<Address>,
+    /// Optional agent/referral address receiving a cut on `release_rent`.
+    /// When `None`, no referral cut is taken.
+    pub agent_referral: Option<Address>,
     /// Amount of funds in the escrow
     pub amount: i128,
     /// Token contract address (USDC, XLM, etc.)
