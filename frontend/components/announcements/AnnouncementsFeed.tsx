@@ -87,7 +87,7 @@ const typeIcons = {
 };
 
 const typeStyles: Record<Announcement['type'], string> = {
-  info: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
+  info: 'bg-brand-accent/10 text-brand-accent border-brand-accent/20',
   warning: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
   success: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
   maintenance: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
@@ -155,7 +155,7 @@ export default function AnnouncementsFeed({
           <h2 className="text-lg font-bold text-white">
             Property Announcements
           </h2>
-          <p className="text-sm text-blue-200/40 mt-0.5">
+          <p className="text-sm text-neutral-200/40 mt-0.5">
             Stay updated with important news from your property management.
           </p>
         </div>
@@ -168,8 +168,8 @@ export default function AnnouncementsFeed({
               onClick={() => setFilter(f)}
               className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors whitespace-nowrap ${
                 filter === f
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-white/5 text-blue-200/50 hover:bg-white/10 hover:text-white border border-white/10'
+                  ? 'bg-brand-blue text-white'
+                  : 'bg-white/5 text-neutral-200/50 hover:bg-white/10 hover:text-white border border-white/10'
               }`}
             >
               {f === 'all' ? 'All' : f.charAt(0).toUpperCase() + f.slice(1)}
@@ -181,8 +181,8 @@ export default function AnnouncementsFeed({
       <div className="space-y-3">
         {filtered.length === 0 ? (
           <div className="text-center py-12">
-            <Bell className="mx-auto h-10 w-10 text-blue-300/20 mb-3" />
-            <p className="text-blue-200/40">No announcements found.</p>
+            <Bell className="mx-auto h-10 w-10 text-neutral-200/20 mb-3" />
+            <p className="text-neutral-200/40">No announcements found.</p>
           </div>
         ) : (
           filtered.map((a) => {
@@ -205,15 +205,15 @@ export default function AnnouncementsFeed({
                         {a.title}
                       </h3>
                       {expired && (
-                        <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold bg-white/5 text-blue-300/30 border border-white/10 shrink-0">
+                        <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold bg-white/5 text-neutral-200/30 border border-white/10 shrink-0">
                           Expired
                         </span>
                       )}
                     </div>
-                    <p className="text-blue-200/60 text-sm leading-relaxed mb-3">
+                    <p className="text-neutral-200/60 text-sm leading-relaxed mb-3">
                       {a.message}
                     </p>
-                    <div className="flex flex-wrap items-center gap-3 text-xs text-blue-200/30">
+                    <div className="flex flex-wrap items-center gap-3 text-xs text-neutral-200/30">
                       <div className="flex items-center gap-1">
                         <Calendar size={12} />
                         {formatDate(a.createdAt)}
@@ -241,7 +241,7 @@ export default function AnnouncementsFeed({
 
       {filtered.length > 0 && (
         <div className="text-center">
-          <button className="text-sm font-medium text-blue-400 hover:text-blue-300 transition-colors">
+          <button className="text-sm font-medium text-brand-accent hover:text-brand-accent/80 transition-colors">
             Load older announcements
           </button>
         </div>
