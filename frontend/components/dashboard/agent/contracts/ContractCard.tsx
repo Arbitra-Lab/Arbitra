@@ -36,7 +36,7 @@ const STATUS_CONFIG: Record<
   EXPIRED: {
     label: 'Expired',
     icon: XCircle,
-    className: 'bg-white/5 text-blue-200/40 border-white/10',
+    className: 'bg-white/5 text-neutral-200/40 border-white/10',
   },
 };
 
@@ -52,7 +52,7 @@ function PropertyPreviewImage({
   if (!src || error) {
     return (
       <div className="w-full h-32 bg-white/5 flex items-center justify-center border-b border-white/5">
-        <Building2 size={32} className="text-blue-300/20" />
+        <Building2 size={32} className="text-neutral-200/20" />
       </div>
     );
   }
@@ -87,11 +87,11 @@ export function ContractCard({ contract, onViewDetails }: ContractCardProps) {
       <div className="p-6 pb-5 border-b border-white/5">
         <div className="flex items-start justify-between gap-3 mb-4">
           <div className="min-w-0 flex-1">
-            <h3 className="text-base font-bold text-white tracking-tight group-hover:text-blue-300 transition-colors">
+            <h3 className="text-base font-bold text-white tracking-tight group-hover:text-brand-accent transition-colors">
               {contract.propertyName}
             </h3>
-            <div className="flex items-center gap-1.5 mt-1 text-xs text-blue-200/60 font-medium">
-              <MapPin size={13} className="shrink-0 text-blue-400/60" />
+            <div className="flex items-center gap-1.5 mt-1 text-xs text-neutral-200/60 font-medium">
+              <MapPin size={13} className="shrink-0 text-brand-accent/60" />
               <span className="truncate">{contract.propertyAddress}</span>
             </div>
           </div>
@@ -107,18 +107,18 @@ export function ContractCard({ contract, onViewDetails }: ContractCardProps) {
         {/* Parties */}
         <div className="grid grid-cols-2 gap-4 text-sm mt-4">
           <div>
-            <span className="block text-[10px] font-bold text-blue-300/40 uppercase tracking-widest mb-1.5">
+            <span className="block text-[10px] font-bold text-neutral-200/40 uppercase tracking-widest mb-1.5">
               Landlord
             </span>
-            <span className="font-bold text-blue-100 group-hover:text-white transition-colors">
+            <span className="font-bold text-neutral-100 group-hover:text-white transition-colors">
               {contract.landlord.name}
             </span>
           </div>
           <div>
-            <span className="block text-[10px] font-bold text-blue-300/40 uppercase tracking-widest mb-1.5">
+            <span className="block text-[10px] font-bold text-neutral-200/40 uppercase tracking-widest mb-1.5">
               Tenant
             </span>
-            <span className="font-bold text-blue-100 group-hover:text-white transition-colors">
+            <span className="font-bold text-neutral-100 group-hover:text-white transition-colors">
               {contract.tenant.name}
             </span>
           </div>
@@ -127,15 +127,15 @@ export function ContractCard({ contract, onViewDetails }: ContractCardProps) {
       {/* Financial Details */}
       <div className="px-6 py-4 bg-white/10 border-b border-white/5 grid grid-cols-3 gap-4 text-sm shadow-inner">
         <div>
-          <span className="block text-[10px] font-bold text-blue-300/40 uppercase tracking-widest mb-1">
+          <span className="block text-[10px] font-bold text-neutral-200/40 uppercase tracking-widest mb-1">
             Rent/yr
           </span>
-          <span className="font-bold text-blue-400 tracking-tight">
+          <span className="font-bold text-brand-accent tracking-tight">
             {contract.rentAmount}
           </span>
         </div>
         <div>
-          <span className="block text-[10px] font-bold text-blue-300/40 uppercase tracking-widest mb-1">
+          <span className="block text-[10px] font-bold text-neutral-200/40 uppercase tracking-widest mb-1">
             Deposit
           </span>
           <span className="font-bold text-white/90">
@@ -143,7 +143,7 @@ export function ContractCard({ contract, onViewDetails }: ContractCardProps) {
           </span>
         </div>
         <div>
-          <span className="block text-[10px] font-bold text-blue-300/40 uppercase tracking-widest mb-1">
+          <span className="block text-[10px] font-bold text-neutral-200/40 uppercase tracking-widest mb-1">
             Comm.
           </span>
           <span className="font-bold text-white/90">
@@ -156,8 +156,8 @@ export function ContractCard({ contract, onViewDetails }: ContractCardProps) {
         <ContractTimeline currentStage={contract.stage} compact />
       </div>
       <div className="px-6 py-4 border-t border-white/5 bg-white/20 flex items-center justify-between mt-auto">
-        <div className="flex items-center gap-2 text-[10px] font-bold text-blue-300/40 uppercase tracking-widest">
-          <Calendar size={13} className="text-blue-400/60" />
+        <div className="flex items-center gap-2 text-[10px] font-bold text-neutral-200/40 uppercase tracking-widest">
+          <Calendar size={13} className="text-brand-accent/60" />
           <span>
             {new Date(contract.startDate).getFullYear()} &ndash;{' '}
             {new Date(contract.endDate).getFullYear()}
@@ -166,7 +166,7 @@ export function ContractCard({ contract, onViewDetails }: ContractCardProps) {
 
         <button
           onClick={() => onViewDetails(contract)}
-          className="inline-flex items-center gap-2 px-4 py-2 text-[10px] font-bold text-white bg-blue-600/50 border border-blue-500/30 rounded-xl hover:bg-blue-600 hover:border-blue-400 transition-all uppercase tracking-widest shadow-lg"
+          className="inline-flex items-center gap-2 px-4 py-2 text-[10px] font-bold text-white bg-brand-blue/50 border border-brand-blue/30 rounded-xl hover:bg-brand-blue hover:border-brand-blue-dark transition-all uppercase tracking-widest shadow-lg"
         >
           <Eye size={14} strokeWidth={2.5} />
           Details

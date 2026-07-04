@@ -49,7 +49,7 @@ export function ContractTimeline({
                     isCompleted
                       ? 'bg-green-500 text-white shadow-md shadow-green-200'
                       : isCurrent
-                        ? 'bg-brand-blue text-white shadow-lg shadow-blue-200 ring-4 ring-blue-100'
+                        ? 'bg-brand-blue text-white shadow-lg shadow-brand-blue/20 ring-4 ring-brand-blue/10'
                         : 'bg-neutral-100 text-neutral-400 border-2 border-neutral-200'
                   }
                 `}

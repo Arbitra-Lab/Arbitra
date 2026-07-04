@@ -65,10 +65,10 @@ export function ContractDashboard() {
     <div className="max-w-7xl mx-auto space-y-6">
       {/* Page Header */}
       <div>
-        <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-300 to-indigo-300 bg-clip-text text-transparent">
+        <h1 className="text-2xl font-bold text-gradient-verdict">
           Contracts & Legal
         </h1>
-        <p className="text-sm text-blue-200/60 font-medium mt-1">
+        <p className="text-sm text-neutral-200/60 font-medium mt-1">
           Manage all smart-contract leases you are a party to on the Stellar
           network.
         </p>
@@ -86,14 +86,14 @@ export function ContractDashboard() {
               onClick={() => setActiveTab(tab.key)}
               className={`flex items-center gap-3 p-5 rounded-2xl border transition-all text-left group ${
                 isActive
-                  ? 'bg-blue-600/20 text-white border-blue-500 shadow-[0_0_20px_rgba(37,99,235,0.2)]'
-                  : 'bg-white/5 text-blue-200/40 border-white/10 hover:border-white/20 hover:bg-white/10 shadow-sm'
+                  ? 'bg-brand-blue/20 text-white border-brand-blue shadow-[0_0_20px_rgba(37,99,235,0.2)]'
+                  : 'bg-white/5 text-neutral-200/40 border-white/10 hover:border-white/20 hover:bg-white/10 shadow-sm'
               }`}
             >
               <div
                 className={`p-2.5 rounded-xl border transition-all ${
                   isActive
-                    ? 'bg-blue-500 border-blue-400 shadow-lg'
+                    ? 'bg-brand-blue border-brand-blue-dark shadow-lg'
                     : 'bg-white/5 border-white/5'
                 }`}
               >
@@ -102,7 +102,7 @@ export function ContractDashboard() {
                   className={
                     isActive
                       ? 'text-white'
-                      : 'text-blue-400/60 group-hover:text-blue-400'
+                      : 'text-brand-accent/60 group-hover:text-brand-accent'
                   }
                 />
               </div>
@@ -119,8 +119,8 @@ export function ContractDashboard() {
                 <span
                   className={`block text-[10px] font-bold uppercase tracking-widest mt-1.5 ${
                     isActive
-                      ? 'text-blue-200'
-                      : 'text-blue-300/40 group-hover:text-blue-300/60'
+                      ? 'text-neutral-100'
+                      : 'text-neutral-200/40 group-hover:text-neutral-200/60'
                   }`}
                 >
                   {tab.label}
@@ -135,14 +135,14 @@ export function ContractDashboard() {
       <div className="relative group">
         <Search
           size={18}
-          className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-300/40 group-focus-within:text-blue-400 transition-colors"
+          className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-200/40 group-focus-within:text-brand-accent transition-colors"
         />
         <input
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Search by property, contract ID, landlord, or tenant..."
-          className="w-full pl-11 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl text-sm text-white placeholder:text-blue-300/20 outline-none focus:border-blue-500 focus:bg-white/10 focus:shadow-[0_0_20px_rgba(37,99,235,0.1)] transition-all"
+          className="w-full pl-11 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl text-sm text-white placeholder:text-neutral-200/20 outline-none focus:border-brand-accent focus:bg-white/10 focus:shadow-[0_0_20px_rgba(37,99,235,0.1)] transition-all"
         />
       </div>
 
