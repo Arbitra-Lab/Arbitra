@@ -131,7 +131,7 @@ export function ConflictResolutionModal({
                   <button
                     onClick={() => handleResolve(conflict.id)}
                     disabled={resolving}
-                    className="rounded-md bg-blue-600 px-3 py-1 text-sm text-white hover:bg-blue-700 disabled:opacity-50"
+                    className="rounded-md bg-brand-blue px-3 py-1 text-sm text-white hover:bg-brand-blue-dark disabled:opacity-50"
                   >
                     Resolve
                   </button>
@@ -156,7 +156,7 @@ export function ConflictResolutionModal({
             <button
               onClick={handleResolveAll}
               disabled={resolving}
-              className="rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
+              className="rounded-md bg-brand-blue px-4 py-2 text-white hover:bg-brand-blue-dark disabled:opacity-50"
             >
               {resolving ? 'Resolving...' : 'Resolve All'}
             </button>
