@@ -29,7 +29,7 @@ describe('persistence/storage', () => {
     expect(result).toBeNull();
 
     // Key should have been removed
-    expect(localStorage.getItem('huston-housing_test_versioned')).toBeNull();
+    expect(localStorage.getItem('arbitra_test_versioned')).toBeNull();
   });
 
   it('readStorage returns data when version matches', () => {
@@ -39,10 +39,10 @@ describe('persistence/storage', () => {
   });
 
   it('readStorage handles corrupted JSON gracefully', () => {
-    localStorage.setItem('huston-housing_test_corrupt', 'not-json');
+    localStorage.setItem('arbitra_test_corrupt', 'not-json');
     const result = readStorage('test', 'corrupt');
     expect(result).toBeNull();
-    expect(localStorage.getItem('huston-housing_test_corrupt')).toBeNull();
+    expect(localStorage.getItem('arbitra_test_corrupt')).toBeNull();
   });
 
   it('removeStorage deletes a single key', () => {

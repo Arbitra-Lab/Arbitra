@@ -6,9 +6,6 @@ import {
   selectUserRole,
   selectUnreadNotifications,
   selectNotificationsByType,
-  selectPropertyFilters,
-  selectPropertySort,
-  selectHasActiveFilters,
   selectTheme,
   selectSidebarOpen,
   selectActiveModal,
@@ -18,7 +15,6 @@ import {
 } from '@/store/selectors';
 import type { AuthStore } from '@/store/authStore';
 import type { NotificationStore } from '@/store/notificationStore';
-import type { PropertyStore } from '@/store/property-store';
 import type { UIStore } from '@/store/ui-store';
 
 // ─── Fixtures ────────────────────────────────────────────────────────────────
@@ -78,21 +74,6 @@ const notificationState: NotificationStore = {
   addNotification: () => {},
 };
 
-const propertyState: PropertyStore = {
-  filters: { city: 'Lagos' },
-  sortField: 'price',
-  sortDirection: 'asc',
-  selectedPropertyId: null,
-  viewMode: 'grid',
-  searchQuery: '',
-  setFilters: () => {},
-  resetFilters: () => {},
-  setSort: () => {},
-  selectProperty: () => {},
-  setViewMode: () => {},
-  setSearchQuery: () => {},
-};
-
 const uiState: UIStore = {
   theme: 'dark',
   sidebarOpen: false,
@@ -149,29 +130,6 @@ describe('selectors', () => {
       const payments = selectNotificationsByType('payment')(notificationState);
       expect(payments).toHaveLength(2);
       expect(payments.every((n) => n.type === 'payment')).toBe(true);
-    });
-  });
-
-  describe('property selectors', () => {
-    it('selectPropertyFilters returns current filters', () => {
-      expect(selectPropertyFilters(propertyState)).toEqual({ city: 'Lagos' });
-    });
-
-    it('selectPropertySort returns field and direction', () => {
-      expect(selectPropertySort(propertyState)).toEqual({
-        field: 'price',
-        direction: 'asc',
-      });
-    });
-
-    it('selectHasActiveFilters detects active filters', () => {
-      expect(selectHasActiveFilters(propertyState)).toBe(true);
-    });
-
-    it('selectHasActiveFilters returns false when empty', () => {
-      expect(selectHasActiveFilters({ ...propertyState, filters: {} })).toBe(
-        false,
-      );
     });
   });
 

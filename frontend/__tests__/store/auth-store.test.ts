@@ -15,7 +15,7 @@ function resetStore() {
 
 const mockUser = {
   id: 'u-1',
-  email: 'alice@huston-housing.local',
+  email: 'alice@arbitra.local',
   firstName: 'Alice',
   lastName: 'Smith',
   role: 'user' as const,
@@ -53,17 +53,17 @@ describe('authStore', () => {
     expect(state.isAuthenticated).toBe(true);
     expect(state.loading).toBe(false);
 
-    expect(localStorage.getItem('huston-housing_access_token')).toBe('at-1');
-    expect(localStorage.getItem('huston-housing_refresh_token')).toBe('rt-1');
-    expect(localStorage.getItem('huston-housing_user')).toBe(
+    expect(localStorage.getItem('arbitra_access_token')).toBe('at-1');
+    expect(localStorage.getItem('arbitra_refresh_token')).toBe('rt-1');
+    expect(localStorage.getItem('arbitra_user')).toBe(
       JSON.stringify(expectedStoredUser),
     );
   });
 
   it('hydrate restores state from localStorage', () => {
-    localStorage.setItem('huston-housing_access_token', 'at-2');
-    localStorage.setItem('huston-housing_refresh_token', 'rt-2');
-    localStorage.setItem('huston-housing_user', JSON.stringify(mockUser));
+    localStorage.setItem('arbitra_access_token', 'at-2');
+    localStorage.setItem('arbitra_refresh_token', 'rt-2');
+    localStorage.setItem('arbitra_user', JSON.stringify(mockUser));
 
     useAuthStore.getState().hydrate();
 
@@ -84,27 +84,27 @@ describe('authStore', () => {
   });
 
   it('hydrate clears corrupted localStorage data', () => {
-    localStorage.setItem('huston-housing_access_token', 'at-3');
-    localStorage.setItem('huston-housing_user', '{invalid-json');
+    localStorage.setItem('arbitra_access_token', 'at-3');
+    localStorage.setItem('arbitra_user', '{invalid-json');
 
     useAuthStore.getState().hydrate();
 
     const state = useAuthStore.getState();
     expect(state.user).toBeNull();
     expect(state.isAuthenticated).toBe(false);
-    expect(localStorage.getItem('huston-housing_access_token')).toBeNull();
+    expect(localStorage.getItem('arbitra_access_token')).toBeNull();
   });
 
   it('login sets tokens via dev bypass', async () => {
     const result = await useAuthStore
       .getState()
-      .login('test@huston-housing.local', 'pass');
+      .login('test@arbitra.local', 'pass');
 
     expect(result.success).toBe(true);
 
     const state = useAuthStore.getState();
     expect(state.isAuthenticated).toBe(true);
-    expect(state.user?.email).toBe('test@huston-housing.local');
+    expect(state.user?.email).toBe('test@arbitra.local');
   });
 
   it('logout clears state and localStorage', async () => {
@@ -122,7 +122,7 @@ describe('authStore', () => {
     expect(state.user).toBeNull();
     expect(state.accessToken).toBeNull();
     expect(state.isAuthenticated).toBe(false);
-    expect(localStorage.getItem('huston-housing_access_token')).toBeNull();
+    expect(localStorage.getItem('arbitra_access_token')).toBeNull();
 
     vi.unstubAllGlobals();
   });
