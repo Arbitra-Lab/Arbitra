@@ -74,7 +74,7 @@ export function UserManagementModal({
             <h2 className="text-xl font-bold text-white">
               Link User to Arbiter
             </h2>
-            <p className="text-sm text-blue-200/60 mt-1">
+            <p className="text-sm text-neutral-200/60 mt-1">
               Arbiter: {arbiterAddress.substring(0, 20)}...
             </p>
           </div>
@@ -90,14 +90,14 @@ export function UserManagementModal({
         {/* Search */}
         <div className="mb-4">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-blue-200/40" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-200/40" />
             <input
               type="text"
               placeholder="Search by email or name..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               disabled={isSubmitting}
-              className="w-full pl-10 pr-4 py-2 rounded-lg bg-slate-800 border border-white/10 text-white placeholder-blue-200/40 focus:outline-none focus:border-blue-500 disabled:opacity-50"
+              className="w-full pl-10 pr-4 py-2 rounded-lg bg-slate-800 border border-white/10 text-white placeholder-neutral-200/40 focus:outline-none focus:border-brand-accent disabled:opacity-50"
             />
           </div>
         </div>
@@ -105,7 +105,7 @@ export function UserManagementModal({
         {/* Users List */}
         <div className="flex-1 overflow-y-auto space-y-2 mb-4">
           {filteredUsers.length === 0 ? (
-            <div className="flex items-center justify-center h-32 text-blue-200/60">
+            <div className="flex items-center justify-center h-32 text-neutral-200/60">
               {search ? 'No users found' : 'Start typing to search users'}
             </div>
           ) : (
@@ -116,7 +116,7 @@ export function UserManagementModal({
                 disabled={isSubmitting || selectedUserId === user.id}
                 className={`w-full p-3 rounded-lg border transition-all text-left ${
                   selectedUserId === user.id
-                    ? 'bg-blue-500/20 border-blue-500/50'
+                    ? 'bg-brand-accent/20 border-brand-accent/50'
                     : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
                 } disabled:opacity-50 disabled:cursor-not-allowed`}
               >
@@ -125,9 +125,9 @@ export function UserManagementModal({
                     <p className="text-white font-medium">
                       {user.name || 'N/A'}
                     </p>
-                    <p className="text-sm text-blue-200/60">{user.email}</p>
+                    <p className="text-sm text-neutral-200/60">{user.email}</p>
                     <div className="flex gap-2 mt-1">
-                      <span className="text-xs px-2 py-1 rounded bg-blue-500/20 text-blue-300">
+                      <span className="text-xs px-2 py-1 rounded bg-brand-accent/20 text-brand-accent">
                         {user.role}
                       </span>
                       {user.isVerified && (
@@ -138,7 +138,7 @@ export function UserManagementModal({
                     </div>
                   </div>
                   {selectedUserId === user.id && isSubmitting && (
-                    <Loader className="h-5 w-5 text-blue-400 animate-spin" />
+                    <Loader className="h-5 w-5 text-brand-accent animate-spin" />
                   )}
                   {selectedUserId === user.id && !isSubmitting && (
                     <UserPlus className="h-5 w-5 text-green-400" />
@@ -160,7 +160,7 @@ export function UserManagementModal({
           </button>
           <button
             disabled={!selectedUserId || isSubmitting}
-            className="flex-1 rounded-lg bg-blue-500/20 border border-blue-500/30 px-4 py-2 text-blue-300 hover:bg-blue-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 rounded-lg bg-brand-accent/20 border border-brand-accent/30 px-4 py-2 text-brand-accent hover:bg-brand-accent/30 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSubmitting ? 'Linking...' : 'Link User'}
           </button>
