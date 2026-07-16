@@ -144,7 +144,7 @@ export function DisputeDetail({
           </div>
         </div>
         <a
-          href="https://t.me/huston-housinggroup"
+          href="https://t.me/arbitragroup"
           target="_blank"
           rel="noopener noreferrer"
           className="text-sm text-brand-accent/90 hover:text-brand-accent underline underline-offset-4 shrink-0"

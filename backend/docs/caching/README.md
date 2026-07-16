@@ -1,6 +1,6 @@
-# Caching in Houston Housing
+# Caching in Arbitra
 
-This directory contains the documentation for the caching architecture, operations, and development guidelines for the Houston Housing backend.
+This directory contains the documentation for the caching architecture, operations, and development guidelines for the Arbitra backend.
 
 ## 📖 Primary Documentation
 
@@ -9,9 +9,9 @@ This directory contains the documentation for the caching architecture, operatio
 
 ## 🏗 Core Abstractions
 
-- **[CacheService](file:///home/abujulaybeeb/Documents/Drips%206/huston-housing/backend/src/common/cache/cache.service.ts)**: The central service for all cache operations.
-- **[@Cached Decorator](file:///home/abujulaybeeb/Documents/Drips%206/huston-housing/backend/src/common/cache/cached.decorator.ts)**: A high-level decorator for easy method-level caching.
-- **[Monitoring Controller](file:///home/abujulaybeeb/Documents/Drips%206/huston-housing/backend/src/modules/monitoring/monitoring.controller.ts)**: Exposes real-time cache statistics at `/api/cache/stats`.
+- **[CacheService](file:///home/abujulaybeeb/Documents/Drips%206/arbitra/backend/src/common/cache/cache.service.ts)**: The central service for all cache operations.
+- **[@Cached Decorator](file:///home/abujulaybeeb/Documents/Drips%206/arbitra/backend/src/common/cache/cached.decorator.ts)**: A high-level decorator for easy method-level caching.
+- **[Monitoring Controller](file:///home/abujulaybeeb/Documents/Drips%206/arbitra/backend/src/modules/monitoring/monitoring.controller.ts)**: Exposes real-time cache statistics at `/api/cache/stats`.
 
 ## 📚 Deep Dives
 

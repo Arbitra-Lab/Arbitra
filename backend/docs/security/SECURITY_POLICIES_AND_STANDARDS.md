@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document defines the backend security baseline for Houston Housing. It covers data
+This document defines the backend security baseline for Arbitra. It covers data
 protection, access control, encryption, API and database safeguards, incident
 response, vulnerability handling, and the minimum checklist contributors should
 apply when shipping changes.

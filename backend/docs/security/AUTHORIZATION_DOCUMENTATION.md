@@ -2,7 +2,7 @@
 
 ## Overview
 
-Houston Housing backend uses layered authorization with:
+Arbitra backend uses layered authorization with:
 
 - role-based access control at the route level
 - a permission catalog for finer-grained resource/action rules

@@ -1,5 +1,5 @@
 use crate::{
-    errors::RentalError,
+    errors::AgreementError,
     types::{ActionType, Config},
     Contract, ContractClient,
 };
@@ -63,7 +63,7 @@ fn test_multisig_already_initialized() {
 
     // Try to initialize again
     let result = client.try_initialize_multisig(&admins, &2);
-    assert_eq!(result, Err(Ok(RentalError::AlreadyInitialized)));
+    assert_eq!(result, Err(Ok(AgreementError::AlreadyInitialized)));
 }
 
 #[test]
@@ -79,11 +79,11 @@ fn test_invalid_required_signatures() {
 
     // Required signatures = 0 (invalid)
     let result = client.try_initialize_multisig(&admins, &0);
-    assert_eq!(result, Err(Ok(RentalError::InvalidConfig)));
+    assert_eq!(result, Err(Ok(AgreementError::InvalidConfig)));
 
     // Required signatures > total admins (invalid)
     let result = client.try_initialize_multisig(&admins, &3);
-    assert_eq!(result, Err(Ok(RentalError::InvalidConfig)));
+    assert_eq!(result, Err(Ok(AgreementError::InvalidConfig)));
 }
 
 #[test]
@@ -149,7 +149,7 @@ fn test_propose_action_not_admin() {
 
     let data = Bytes::new(&env);
     let result = client.try_propose_action(&non_admin, &ActionType::Pause, &None, &data);
-    assert_eq!(result, Err(Ok(RentalError::Unauthorized)));
+    assert_eq!(result, Err(Ok(AgreementError::Unauthorized)));
 }
 
 #[test]
@@ -203,7 +203,7 @@ fn test_approve_action_already_approved() {
 
     // Admin1 tries to approve again (already approved as proposer)
     let result = client.try_approve_action(&admin1, &proposal_id);
-    assert_eq!(result, Err(Ok(RentalError::AlreadyApproved)));
+    assert_eq!(result, Err(Ok(AgreementError::AlreadyApproved)));
 }
 
 #[test]
@@ -261,7 +261,7 @@ fn test_execute_action_insufficient_approvals() {
 
     // Only 1 approval (proposer)
     let result = client.try_execute_action(&admin1, &proposal_id);
-    assert_eq!(result, Err(Ok(RentalError::InsufficientApprovals)));
+    assert_eq!(result, Err(Ok(AgreementError::InsufficientApprovals)));
 }
 
 #[test]
@@ -288,7 +288,7 @@ fn test_execute_action_already_executed() {
 
     // Try to execute again
     let result = client.try_execute_action(&admin1, &proposal_id);
-    assert_eq!(result, Err(Ok(RentalError::ProposalAlreadyExecuted)));
+    assert_eq!(result, Err(Ok(AgreementError::ProposalAlreadyExecuted)));
 }
 
 #[test]
@@ -316,7 +316,7 @@ fn test_reject_action() {
 
     // Proposal should no longer exist
     let result = client.try_get_proposal(&proposal_id);
-    assert_eq!(result, Err(Ok(RentalError::ProposalNotFound)));
+    assert_eq!(result, Err(Ok(AgreementError::ProposalNotFound)));
 }
 
 #[test]
@@ -340,7 +340,7 @@ fn test_reject_action_not_proposer() {
 
     // Admin2 tries to reject (not the proposer)
     let result = client.try_reject_action(&admin2, &proposal_id);
-    assert_eq!(result, Err(Ok(RentalError::Unauthorized)));
+    assert_eq!(result, Err(Ok(AgreementError::Unauthorized)));
 }
 
 #[test]

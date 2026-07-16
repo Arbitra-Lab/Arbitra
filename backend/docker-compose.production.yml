@@ -3,7 +3,7 @@ version: '3.8'
 services:
   nginx:
     image: nginx:1.27-alpine
-    container_name: huston-housing-nginx
+    container_name: arbitra-nginx
     restart: unless-stopped
     ports:
       - "80:80"
@@ -16,11 +16,11 @@ services:
     depends_on:
       - backend
     networks:
-      - huston-housing-network
+      - arbitra-network
 
   certbot:
     image: certbot/certbot:latest
-    container_name: huston-housing-certbot
+    container_name: arbitra-certbot
     volumes:
       - letsencrypt:/etc/letsencrypt
       - certbot-webroot:/var/www/certbot
@@ -32,11 +32,11 @@ services:
                sleep 12h & wait $${!};
              done"
     networks:
-      - huston-housing-network
+      - arbitra-network
 
   backend:
-    image: ${DOCKER_IMAGE:-huston-housing-backend:latest}
-    container_name: huston-housing-backend-${ENVIRONMENT:-production}
+    image: ${DOCKER_IMAGE:-arbitra-backend:latest}
+    container_name: arbitra-backend-${ENVIRONMENT:-production}
     restart: unless-stopped
     ports:
       - "${PORT:-3000}:3000"
@@ -54,7 +54,7 @@ services:
       - SOROBAN_RPC_URL=${SOROBAN_RPC_URL}
       - SENTRY_DSN=${SENTRY_DSN}
     networks:
-      - huston-housing-network
+      - arbitra-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
       interval: 30s
@@ -69,7 +69,7 @@ services:
 
   postgres:
     image: postgres:16-alpine
-    container_name: huston-housing-postgres-${ENVIRONMENT:-production}
+    container_name: arbitra-postgres-${ENVIRONMENT:-production}
     restart: unless-stopped
     command: postgres -c shared_preload_libraries=pg_stat_statements
     environment:
@@ -79,7 +79,7 @@ services:
     volumes:
       - postgres-data:/var/lib/postgresql/data
     networks:
-      - huston-housing-network
+      - arbitra-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME}"]
       interval: 10s
@@ -88,13 +88,13 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: huston-housing-redis-${ENVIRONMENT:-production}
+    container_name: arbitra-redis-${ENVIRONMENT:-production}
     restart: unless-stopped
     command: redis-server --requirepass ${REDIS_PASSWORD}
     volumes:
       - redis-data:/data
     networks:
-      - huston-housing-network
+      - arbitra-network
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -102,7 +102,7 @@ services:
       retries: 3
 
 networks:
-  huston-housing-network:
+  arbitra-network:
     driver: bridge
 
 volumes:

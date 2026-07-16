@@ -2,7 +2,7 @@
 
 **Comprehensive Guide to Database Backup and Disaster Recovery**
 
-This document defines backup and recovery procedures for the Houston Housing backend database, covering backup strategies, verification, recovery procedures, testing, and retention policies.
+This document defines backup and recovery procedures for the Arbitra backend database, covering backup strategies, verification, recovery procedures, testing, and retention policies.
 
 ## Quick Links
 
@@ -45,7 +45,7 @@ This document is written for database administrators, operators, and on-call eng
 
 ### 2.1 Backup Types
 
-Houston Housing uses a multi-layered backup strategy:
+Arbitra uses a multi-layered backup strategy:
 
 | Backup Type              | Frequency          | Retention | Purpose                          |
 | ------------------------ | ------------------ | --------- | -------------------------------- |
@@ -126,7 +126,7 @@ Configuration in `postgresql.conf`:
 ```conf
 wal_level = replica
 archive_mode = on
-archive_command = 'aws s3 cp %p s3://huston-housing-backups-prod/wal/%f'
+archive_command = 'aws s3 cp %p s3://arbitra-backups-prod/wal/%f'
 archive_timeout = 300
 ```
 
@@ -134,10 +134,10 @@ Verify WAL archiving:
 
 ```bash
 # Check archive status
-docker exec postgres psql -U huston-housing -c "SELECT archived_count, failed_count FROM pg_stat_archiver;"
+docker exec postgres psql -U arbitra -c "SELECT archived_count, failed_count FROM pg_stat_archiver;"
 
 # List recent WAL files
-aws s3 ls s3://huston-housing-backups-prod/wal/ --recursive | tail -20
+aws s3 ls s3://arbitra-backups-prod/wal/ --recursive | tail -20
 ```
 
 ### 3.2 Full Backup Procedure
@@ -152,7 +152,7 @@ set -euo pipefail
 
 BACKUP_DATE=$(date +%Y%m%d_%H%M%S)
 BACKUP_DIR="/backups/full/${BACKUP_DATE}"
-S3_BUCKET="s3://huston-housing-backups-prod/full"
+S3_BUCKET="s3://arbitra-backups-prod/full"
 
 # Create backup directory
 mkdir -p "${BACKUP_DIR}"
@@ -180,8 +180,8 @@ cat > "${BACKUP_DIR}/metadata.json" <<EOF
 {
   "backup_date": "${BACKUP_DATE}",
   "backup_type": "full",
-  "database_version": "$(psql -U huston-housing -t -c 'SELECT version();')",
-  "database_size": "$(psql -U huston-housing -t -c 'SELECT pg_size_pretty(pg_database_size(current_database()));')",
+  "database_version": "$(psql -U arbitra -t -c 'SELECT version();')",
+  "database_size": "$(psql -U arbitra -t -c 'SELECT pg_size_pretty(pg_database_size(current_database()));')",
   "backup_size": "$(du -sh ${BACKUP_DIR} | cut -f1)"
 }
 EOF
@@ -199,7 +199,7 @@ Schedule via cron:
 
 ```cron
 # Daily full backup at 2 AM
-0 2 * * * /opt/huston-housing/scripts/backup-full.sh >> /var/log/huston-housing/backup-full.log 2>&1
+0 2 * * * /opt/arbitra/scripts/backup-full.sh >> /var/log/arbitra/backup-full.log 2>&1
 ```
 
 ### 3.3 Incremental Backup Procedure
@@ -213,14 +213,14 @@ Incremental backup using `pg_dump`:
 set -euo pipefail
 
 BACKUP_DATE=$(date +%Y%m%d_%H%M%S)
-BACKUP_FILE="/backups/incremental/huston-housing_${BACKUP_DATE}.sql.gz"
-S3_BUCKET="s3://huston-housing-backups-prod/incremental"
+BACKUP_FILE="/backups/incremental/arbitra_${BACKUP_DATE}.sql.gz"
+S3_BUCKET="s3://arbitra-backups-prod/incremental"
 
 # Perform incremental dump
 pg_dump \
   -h localhost \
   -U backup_user \
-  -d huston-housing \
+  -d arbitra \
   --format=custom \
   --compress=9 \
   --file="${BACKUP_FILE}"
@@ -231,7 +231,7 @@ aws s3 cp "${BACKUP_FILE}" "${S3_BUCKET}/" \
   --sse AES256
 
 # Verify upload
-aws s3 ls "${S3_BUCKET}/huston-housing_${BACKUP_DATE}.sql.gz"
+aws s3 ls "${S3_BUCKET}/arbitra_${BACKUP_DATE}.sql.gz"
 
 # Clean up local backup after 24 hours
 find /backups/incremental -type f -mtime +1 -delete
@@ -243,7 +243,7 @@ Schedule via cron:
 
 ```cron
 # Incremental backup every 6 hours
-0 */6 * * * /opt/huston-housing/scripts/backup-incremental.sh >> /var/log/huston-housing/backup-incremental.log 2>&1
+0 */6 * * * /opt/arbitra/scripts/backup-incremental.sh >> /var/log/arbitra/backup-incremental.log 2>&1
 ```
 
 ### 3.4 Pre-Deployment Backup
@@ -258,8 +258,8 @@ set -euo pipefail
 
 DEPLOYMENT_ID="${1:-unknown}"
 BACKUP_DATE=$(date +%Y%m%d_%H%M%S)
-BACKUP_FILE="/backups/pre-deploy/huston-housing_pre_deploy_${DEPLOYMENT_ID}_${BACKUP_DATE}.sql.gz"
-S3_BUCKET="s3://huston-housing-backups-prod/pre-deploy"
+BACKUP_FILE="/backups/pre-deploy/arbitra_pre_deploy_${DEPLOYMENT_ID}_${BACKUP_DATE}.sql.gz"
+S3_BUCKET="s3://arbitra-backups-prod/pre-deploy"
 
 echo "Creating pre-deployment backup for deployment: ${DEPLOYMENT_ID}"
 
@@ -267,7 +267,7 @@ echo "Creating pre-deployment backup for deployment: ${DEPLOYMENT_ID}"
 pg_dump \
   -h localhost \
   -U backup_user \
-  -d huston-housing \
+  -d arbitra \
   --format=custom \
   --compress=9 \
   --file="${BACKUP_FILE}"
@@ -279,7 +279,7 @@ aws s3 cp "${BACKUP_FILE}" "${S3_BUCKET}/" \
   --metadata "deployment_id=${DEPLOYMENT_ID},backup_date=${BACKUP_DATE}"
 
 # Verify upload
-aws s3 ls "${S3_BUCKET}/huston-housing_pre_deploy_${DEPLOYMENT_ID}_${BACKUP_DATE}.sql.gz"
+aws s3 ls "${S3_BUCKET}/arbitra_pre_deploy_${DEPLOYMENT_ID}_${BACKUP_DATE}.sql.gz"
 
 echo "Pre-deployment backup completed: ${BACKUP_FILE}"
 echo "Deployment can proceed"
@@ -306,7 +306,7 @@ set -euo pipefail
 
 BACKUP_DATE=$(date +%Y%m%d)
 BACKUP_DIR="/backups/snapshot/${BACKUP_DATE}"
-S3_BUCKET="s3://huston-housing-backups-prod/snapshot"
+S3_BUCKET="s3://arbitra-backups-prod/snapshot"
 
 # Create snapshot directory
 mkdir -p "${BACKUP_DIR}"
@@ -315,13 +315,13 @@ mkdir -p "${BACKUP_DIR}"
 pg_dumpall \
   -h localhost \
   -U postgres \
-  --file="${BACKUP_DIR}/huston-housing_snapshot_${BACKUP_DATE}.sql"
+  --file="${BACKUP_DIR}/arbitra_snapshot_${BACKUP_DATE}.sql"
 
 # Compress
-gzip "${BACKUP_DIR}/huston-housing_snapshot_${BACKUP_DATE}.sql"
+gzip "${BACKUP_DIR}/arbitra_snapshot_${BACKUP_DATE}.sql"
 
 # Upload to S3 with Glacier transition
-aws s3 cp "${BACKUP_DIR}/huston-housing_snapshot_${BACKUP_DATE}.sql.gz" \
+aws s3 cp "${BACKUP_DIR}/arbitra_snapshot_${BACKUP_DATE}.sql.gz" \
   "${S3_BUCKET}/" \
   --storage-class GLACIER \
   --sse AES256
@@ -330,7 +330,7 @@ aws s3 cp "${BACKUP_DIR}/huston-housing_snapshot_${BACKUP_DATE}.sql.gz" \
 cat > "${BACKUP_DIR}/metadata.json" <<EOF
 {
   "snapshot_date": "${BACKUP_DATE}",
-  "database_version": "$(psql -U huston-housing -t -c 'SELECT version();')",
+  "database_version": "$(psql -U arbitra -t -c 'SELECT version();')",
   "total_size": "$(du -sh ${BACKUP_DIR} | cut -f1)",
   "retention_policy": "90 days"
 }
@@ -348,7 +348,7 @@ Schedule via cron:
 
 ```cron
 # Weekly snapshot on Sunday at 3 AM
-0 3 * * 0 /opt/huston-housing/scripts/backup-snapshot.sh >> /var/log/huston-housing/backup-snapshot.log 2>&1
+0 3 * * 0 /opt/arbitra/scripts/backup-snapshot.sh >> /var/log/arbitra/backup-snapshot.log 2>&1
 ```
 
 ---
@@ -419,7 +419,7 @@ Weekly automated restore to test environment:
 set -euo pipefail
 
 BACKUP_FILE="${1}"
-TEST_DB="huston-housing_restore_test"
+TEST_DB="arbitra_restore_test"
 
 echo "Testing restore from: ${BACKUP_FILE}"
 
@@ -461,7 +461,7 @@ Schedule via cron:
 
 ```cron
 # Weekly restore test on Saturday at 4 AM
-0 4 * * 6 /opt/huston-housing/scripts/test-restore.sh $(aws s3 ls s3://huston-housing-backups-prod/full/ | tail -1 | awk '{print $4}') >> /var/log/huston-housing/test-restore.log 2>&1
+0 4 * * 6 /opt/arbitra/scripts/test-restore.sh $(aws s3 ls s3://arbitra-backups-prod/full/ | tail -1 | awk '{print $4}') >> /var/log/arbitra/test-restore.log 2>&1
 ```
 
 ### 4.4 Backup Monitoring
@@ -479,7 +479,7 @@ Monitor backup health:
   annotations:
     summary: 'Database backup has not succeeded in 24 hours'
     description: 'Last successful backup: {{ $value | humanizeDuration }}'
-    runbook: 'https://docs.huston-housing.io/runbooks/backup-failed'
+    runbook: 'https://docs.arbitra.io/runbooks/backup-failed'
 ```
 
 Backup metrics to expose:
@@ -532,7 +532,7 @@ tar -xzf "${BASE_BACKUP}" -C /var/lib/postgresql/data/
 
 # Create recovery configuration
 cat > /var/lib/postgresql/data/recovery.conf <<EOF
-restore_command = 'aws s3 cp s3://huston-housing-backups-prod/wal/%f %p'
+restore_command = 'aws s3 cp s3://arbitra-backups-prod/wal/%f %p'
 recovery_target_time = '${TARGET_TIME}'
 recovery_target_action = 'promote'
 EOF
@@ -558,7 +558,7 @@ Restore from full backup:
 set -euo pipefail
 
 BACKUP_FILE="${1}"
-TARGET_DB="${2:-huston-housing}"
+TARGET_DB="${2:-arbitra}"
 
 echo "Starting full restore from: ${BACKUP_FILE}"
 
@@ -596,7 +596,7 @@ Restore from incremental backup:
 set -euo pipefail
 
 BACKUP_FILE="${1}"
-TARGET_DB="${2:-huston-housing}"
+TARGET_DB="${2:-arbitra}"
 
 echo "Starting incremental restore from: ${BACKUP_FILE}"
 
@@ -641,8 +641,8 @@ set -euo pipefail
 echo "Starting disaster recovery procedure"
 
 # Download latest snapshot
-LATEST_SNAPSHOT=$(aws s3 ls s3://huston-housing-backups-prod/snapshot/ | tail -1 | awk '{print $4}')
-aws s3 cp "s3://huston-housing-backups-prod/snapshot/${LATEST_SNAPSHOT}" /tmp/
+LATEST_SNAPSHOT=$(aws s3 ls s3://arbitra-backups-prod/snapshot/ | tail -1 | awk '{print $4}')
+aws s3 cp "s3://arbitra-backups-prod/snapshot/${LATEST_SNAPSHOT}" /tmp/
 
 # Extract and restore
 gunzip "/tmp/${LATEST_SNAPSHOT}"
@@ -650,7 +650,7 @@ psql -U postgres -f "/tmp/${LATEST_SNAPSHOT%.gz}"
 
 # Download and apply WAL archives
 mkdir -p /var/lib/postgresql/wal_archive
-aws s3 sync s3://huston-housing-backups-prod/wal/ /var/lib/postgresql/wal_archive/
+aws s3 sync s3://arbitra-backups-prod/wal/ /var/lib/postgresql/wal_archive/
 
 # Configure recovery
 cat > /var/lib/postgresql/data/recovery.conf <<EOF
@@ -678,7 +678,7 @@ set -euo pipefail
 
 BACKUP_FILE="${1}"
 TABLE_NAME="${2}"
-TARGET_DB="${3:-huston-housing}"
+TARGET_DB="${3:-arbitra}"
 
 echo "Recovering table: ${TABLE_NAME}"
 
@@ -829,7 +829,7 @@ Automated retention management:
 
 set -euo pipefail
 
-S3_BUCKET="s3://huston-housing-backups-prod"
+S3_BUCKET="s3://arbitra-backups-prod"
 
 echo "Cleaning up old backups"
 
@@ -861,7 +861,7 @@ aws s3 ls "${S3_BUCKET}/incremental/" | \
 aws s3 ls "${S3_BUCKET}/wal/" | \
   awk '{print $4}' | \
   while read -r wal; do
-    WAL_DATE=$(aws s3api head-object --bucket huston-housing-backups-prod --key "wal/${wal}" --query 'LastModified' --output text)
+    WAL_DATE=$(aws s3api head-object --bucket arbitra-backups-prod --key "wal/${wal}" --query 'LastModified' --output text)
     DAYS_OLD=$(( ($(date +%s) - $(date -d "${WAL_DATE}" +%s)) / 86400 ))
     if [ "${DAYS_OLD}" -gt 7 ]; then
       echo "Deleting old WAL archive: ${wal}"
@@ -876,7 +876,7 @@ Schedule via cron:
 
 ```cron
 # Daily cleanup at 5 AM
-0 5 * * * /opt/huston-housing/scripts/cleanup-old-backups.sh >> /var/log/huston-housing/cleanup-backups.log 2>&1
+0 5 * * * /opt/arbitra/scripts/cleanup-old-backups.sh >> /var/log/arbitra/cleanup-backups.log 2>&1
 ```
 
 ### 7.2 S3 Lifecycle Policies
@@ -991,7 +991,7 @@ Diagnostics:
 
 ```bash
 # Check backup logs
-tail -100 /var/log/huston-housing/backup-full.log
+tail -100 /var/log/arbitra/backup-full.log
 
 # Check disk space
 df -h /backups
@@ -1000,7 +1000,7 @@ df -h /backups
 psql -U backup_user -c "SELECT 1;"
 
 # Check S3 access
-aws s3 ls s3://huston-housing-backups-prod/
+aws s3 ls s3://arbitra-backups-prod/
 ```
 
 Common causes:
@@ -1037,7 +1037,7 @@ gzip -t /backups/full/backup.tar.gz
 pg_restore --list /backups/full/backup.sql.gz
 
 # Compare backup size to database size
-psql -U huston-housing -c "SELECT pg_size_pretty(pg_database_size('huston-housing'));"
+psql -U arbitra -c "SELECT pg_size_pretty(pg_database_size('arbitra'));"
 ls -lh /backups/full/backup.sql.gz
 ```
 
@@ -1073,7 +1073,7 @@ pg_restore --verbose /backups/full/backup.sql.gz 2>&1 | tee restore.log
 psql -U postgres -l
 
 # Check table count
-psql -U postgres -d huston-housing -c "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public';"
+psql -U postgres -d arbitra -c "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public';"
 
 # Check for errors
 grep ERROR restore.log
@@ -1111,7 +1111,7 @@ psql -U postgres -c "SELECT * FROM pg_stat_archiver;"
 tail -100 /var/log/postgresql/postgresql.log | grep archive
 
 # Test archive command manually
-su - postgres -c "aws s3 cp /var/lib/postgresql/data/pg_wal/000000010000000000000001 s3://huston-housing-backups-prod/wal/"
+su - postgres -c "aws s3 cp /var/lib/postgresql/data/pg_wal/000000010000000000000001 s3://arbitra-backups-prod/wal/"
 ```
 
 Common causes:

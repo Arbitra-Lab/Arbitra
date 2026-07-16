@@ -187,7 +187,7 @@ Emitted when a property is verified.
 
 ## Integration with Rental Contract
 
-The Houston Housing rental contract can be updated to query this registry before creating rental agreements:
+The Arbitra rental contract can be updated to query this registry before creating rental agreements:
 
 ```rust
 // In the rental contract
@@ -293,4 +293,4 @@ All persistent storage entries have a TTL of 500,000 ledgers.
 
 ## License
 
-This contract is part of the Houston Housing project.
+This contract is part of the Arbitra project.

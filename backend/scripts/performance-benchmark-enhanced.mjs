@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Enhanced Performance Benchmark Suite for Houston Housing API
+ * Enhanced Performance Benchmark Suite for Arbitra API
  * 
  * Features:
  * - Comprehensive endpoint testing
@@ -352,7 +352,7 @@ class PerformanceBenchmark {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Houston Housing Performance Benchmark Report</title>
+    <title>Arbitra Performance Benchmark Report</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 40px; background: #f5f5f5; }
         .container { max-width: 1200px; margin: 0 auto; background: white; padding: 40px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
@@ -378,7 +378,7 @@ class PerformanceBenchmark {
 </head>
 <body>
     <div class="container">
-        <h1>🚀 Houston Housing Performance Benchmark Report</h1>
+        <h1>🚀 Arbitra Performance Benchmark Report</h1>
         
         <div class="summary">
             <div class="metric">
@@ -496,7 +496,7 @@ async function main() {
 // Handle CLI arguments
 if (process.argv.includes('--help') || process.argv.includes('-h')) {
   console.log(`
-🚀 Houston Housing Performance Benchmark Suite
+🚀 Arbitra Performance Benchmark Suite
 
 Usage: node scripts/performance-benchmark-enhanced.mjs [BASE_URL] [OPTIONS]
 

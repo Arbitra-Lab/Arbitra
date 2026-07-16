@@ -28,7 +28,7 @@ import { StellarService } from './services/stellar.service';
 import { EncryptionService } from './services/encryption.service';
 import { AnchorService } from './services/anchor.service';
 import { IndexedTransactionsService } from './services/indexed-transactions.service';
-import { Houston HousingContractService } from './services/huston-housing-contract.service';
+import { ArbitraAgreementContractService } from './services/arbitra-agreement-contract.service';
 import { BlockchainEventService } from './services/blockchain-event.service';
 import { EscrowContractService } from './services/escrow-contract.service';
 import { DisputeContractService } from './services/dispute-contract.service';
@@ -86,7 +86,7 @@ import { PropertyRegistryService } from './services/property-registry.service';
     EncryptionService,
     AnchorService,
     IndexedTransactionsService,
-    Houston HousingContractService,
+    ArbitraAgreementContractService,
     BlockchainEventService,
     EscrowContractService,
     DisputeContractService,
@@ -102,7 +102,7 @@ import { PropertyRegistryService } from './services/property-registry.service';
     EncryptionService,
     AnchorService,
     IndexedTransactionsService,
-    Houston HousingContractService,
+    ArbitraAgreementContractService,
     BlockchainEventService,
     EscrowContractService,
     DisputeContractService,

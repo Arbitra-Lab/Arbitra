@@ -6,7 +6,7 @@
 
 ```bash
 # Build Docker image
-docker build -f Dockerfile.production -t huston-housing-backend:latest .
+docker build -f Dockerfile.production -t arbitra-backend:latest .
 
 # Start services
 docker-compose -f docker-compose.production.yml up -d
@@ -28,7 +28,7 @@ curl http://localhost/health
 kubectl create namespace production
 
 # Create secrets
-kubectl create secret generic huston-housing-backend-secrets \
+kubectl create secret generic arbitra-backend-secrets \
   --from-literal=database_url=$DATABASE_URL \
   --from-literal=redis_url=$REDIS_URL \
   --from-literal=jwt_secret=$JWT_SECRET \
@@ -54,7 +54,7 @@ kubectl get svc -n production
 kubectl get pods -n production -o wide
 
 # View logs
-kubectl logs -n production -l app=huston-housing-backend -f
+kubectl logs -n production -l app=arbitra-backend -f
 
 # Check HPA status
 kubectl get hpa -n production -o wide
@@ -63,7 +63,7 @@ kubectl get hpa -n production -o wide
 kubectl top pods -n production
 
 # Port forward for debugging
-kubectl port-forward -n production svc/huston-housing-backend 8080:80
+kubectl port-forward -n production svc/arbitra-backend 8080:80
 ```
 
 ### Troubleshooting
@@ -92,10 +92,10 @@ kubectl exec -it <pod-name> -n production -- npm run db:perf-report
 
 ```bash
 # Manual scale
-kubectl scale deployment huston-housing-backend --replicas=5 -n production
+kubectl scale deployment arbitra-backend --replicas=5 -n production
 
 # Check HPA status
-kubectl describe hpa huston-housing-backend-hpa -n production
+kubectl describe hpa arbitra-backend-hpa -n production
 
 # Check metrics
 kubectl get --raw /apis/custom.metrics.k8s.io/v1beta1/namespaces/production/pods/*/http_requests_per_second
@@ -105,16 +105,16 @@ kubectl get --raw /apis/custom.metrics.k8s.io/v1beta1/namespaces/production/pods
 
 ```bash
 # Check rollout history
-kubectl rollout history deployment/huston-housing-backend -n production
+kubectl rollout history deployment/arbitra-backend -n production
 
 # Rollback to previous version
-kubectl rollout undo deployment/huston-housing-backend -n production
+kubectl rollout undo deployment/arbitra-backend -n production
 
 # Rollback to specific revision
-kubectl rollout undo deployment/huston-housing-backend -n production --to-revision=<revision>
+kubectl rollout undo deployment/arbitra-backend -n production --to-revision=<revision>
 
 # Check rollout status
-kubectl rollout status deployment/huston-housing-backend -n production
+kubectl rollout status deployment/arbitra-backend -n production
 ```
 
 ## Configuration Files
@@ -176,7 +176,7 @@ DB_HOST=postgres
 DB_PORT=5432
 DB_USERNAME=...
 DB_PASSWORD=...
-DB_NAME=huston-housing
+DB_NAME=arbitra
 
 # Redis
 REDIS_URL=redis://...
@@ -287,7 +287,7 @@ kubectl describe nodes
 
 ```bash
 # Check error logs
-kubectl logs -n production -l app=huston-housing-backend | grep ERROR
+kubectl logs -n production -l app=arbitra-backend | grep ERROR
 
 # Check database connectivity
 kubectl exec -it <pod-name> -n production -- npm run db:monitor:health
@@ -313,7 +313,7 @@ kubectl delete pod <pod-name> -n production
 
 ```bash
 # Check HPA status
-kubectl describe hpa huston-housing-backend-hpa -n production
+kubectl describe hpa arbitra-backend-hpa -n production
 
 # Check metrics
 kubectl get --raw /apis/custom.metrics.k8s.io/v1beta1/namespaces/production/pods/*/http_requests_per_second
@@ -341,17 +341,17 @@ kubectl delete pod <pod-name> -n production --grace-period=45
 
 ```bash
 # Manual scale
-kubectl scale deployment huston-housing-backend --replicas=5 -n production
+kubectl scale deployment arbitra-backend --replicas=5 -n production
 
 # Update HPA max replicas
-kubectl patch hpa huston-housing-backend-hpa -n production -p '{"spec":{"maxReplicas":15}}'
+kubectl patch hpa arbitra-backend-hpa -n production -p '{"spec":{"maxReplicas":15}}'
 ```
 
 ### Increase Resource Limits
 
 ```bash
 # Edit deployment
-kubectl edit deployment huston-housing-backend -n production
+kubectl edit deployment arbitra-backend -n production
 
 # Update resources section:
 # resources:
@@ -367,7 +367,7 @@ kubectl edit deployment huston-housing-backend -n production
 
 ```bash
 # Edit HPA
-kubectl edit hpa huston-housing-backend-hpa -n production
+kubectl edit hpa arbitra-backend-hpa -n production
 
 # Update metrics thresholds:
 # metrics:

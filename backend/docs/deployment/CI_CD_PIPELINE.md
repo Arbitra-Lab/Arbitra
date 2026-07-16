@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Houston Housing project uses GitHub Actions for continuous integration and continuous deployment across three main components: Backend (NestJS), Frontend (Next.js), and Smart Contracts (Soroban). This document provides comprehensive guidance on pipeline architecture, stages, build processes, testing, deployment, monitoring, and troubleshooting.
+The Arbitra project uses GitHub Actions for continuous integration and continuous deployment across three main components: Backend (NestJS), Frontend (Next.js), and Smart Contracts (Soroban). This document provides comprehensive guidance on pipeline architecture, stages, build processes, testing, deployment, monitoring, and troubleshooting.
 
 ## Pipeline Architecture
 
@@ -141,10 +141,10 @@ All CI/CD workflows are defined in `.github/workflows/`:
 **Image Naming Convention**:
 
 ```
-ghcr.io/huston-housing-housing-protocol-i/huston-housing/backend:latest
-ghcr.io/huston-housing-housing-protocol-i/huston-housing/backend:main-<commit-sha>
-ghcr.io/huston-housing-housing-protocol-i/huston-housing/frontend:latest
-ghcr.io/huston-housing-housing-protocol-i/huston-housing/frontend:main-<commit-sha>
+ghcr.io/arbitra-housing-protocol-i/arbitra/backend:latest
+ghcr.io/arbitra-housing-protocol-i/arbitra/backend:main-<commit-sha>
+ghcr.io/arbitra-housing-protocol-i/arbitra/frontend:latest
+ghcr.io/arbitra-housing-protocol-i/arbitra/frontend:main-<commit-sha>
 ```
 
 **Failure Impact**: Deployment cannot proceed; investigate Docker build logs
@@ -458,7 +458,7 @@ git push origin main
 
 **GitHub Actions Dashboard**:
 
-- View workflow runs: https://github.com/huston-housing-housing-protocol-i/huston-housing/actions
+- View workflow runs: https://github.com/Arbitra-Lab/Arbitra/actions
 - Filter by workflow, branch, status
 - View logs for each job
 - Retry failed jobs
@@ -648,7 +648,7 @@ git push
 
 ```bash
 # Build Docker image locally
-docker build -f Dockerfile -t huston-housing-backend:test .
+docker build -f Dockerfile -t arbitra-backend:test .
 
 # Check Dockerfile for issues
 # Common issues: missing dependencies, incorrect paths, permission issues
@@ -868,7 +868,7 @@ git push
 1. Check pipeline logs in GitHub Actions
 2. Review this documentation
 3. Check recent commits for breaking changes
-4. Contact DevOps team: devops@huston-housing.io
+4. Contact DevOps team: devops@arbitra.io
 5. Escalate to platform lead if critical
 
 **Emergency Contacts**:

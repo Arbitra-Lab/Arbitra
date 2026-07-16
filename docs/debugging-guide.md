@@ -192,7 +192,7 @@ Or use `curl` for scripted testing:
 # Authenticate
 TOKEN=$(curl -s -X POST http://localhost:3000/api/v1/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"admin@huston-housing.local","password":"your-password"}' \
+  -d '{"email":"admin@arbitra.local","password":"your-password"}' \
   | jq -r '.accessToken')
 
 # Make authenticated request
@@ -391,13 +391,13 @@ Then attach VS Code to `localhost:9229` locally.
 
 ```bash
 # Get pod name
-kubectl get pods -n huston-housing
+kubectl get pods -n arbitra
 
 # Exec into pod
-kubectl exec -it <pod-name> -n huston-housing -- /bin/sh
+kubectl exec -it <pod-name> -n arbitra -- /bin/sh
 
 # Port-forward inspector
-kubectl port-forward <pod-name> 9229:9229 -n huston-housing
+kubectl port-forward <pod-name> 9229:9229 -n arbitra
 ```
 
 ---

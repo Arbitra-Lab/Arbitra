@@ -16,8 +16,8 @@ export const MOCK_USERS = {
   users: [
     {
       id: 'user-001',
-      name: 'Houston Housing Okafor',
-      email: 'huston-housing.okafor@email.com',
+      name: 'Arbitra Okafor',
+      email: 'arbitra.okafor@email.com',
       phone: '+234 805 123 4567',
       role: 'USER' as const,
       walletAddress: 'GABWYJTOT5X5UZM77BAYRAADXACDWT3O57WYMDEOI5F4EBSFATIK6WAM',
@@ -82,7 +82,7 @@ export const MOCK_USERS = {
     {
       id: 'admin-001',
       name: 'Admin User',
-      email: 'admin@huston-housing.local',
+      email: 'admin@arbitra.local',
       phone: '+234 800 000 0000',
       role: 'ADMIN' as const,
       walletAddress: 'GABWYJTOT5X5UZM77BAYRAADXACDWT3O57WYMDEOI5F4EBSFATIK6WAM',

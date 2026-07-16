@@ -1,6 +1,6 @@
 # Troubleshooting Guide
 
-Common issues encountered when developing, deploying, and operating the Houston Housing backend, organised by area.
+Common issues encountered when developing, deploying, and operating the Arbitra backend, organised by area.
 
 **Related documents:**
 - [Configuration Troubleshooting](./CONFIGURATION_MANAGEMENT.md#troubleshooting) — env var issues
@@ -189,7 +189,7 @@ pnpm install
 docker compose up -d postgres
 
 # Verify connectivity
-docker compose exec postgres pg_isready -U huston-housing
+docker compose exec postgres pg_isready -U arbitra
 
 # Check exposed port
 docker compose port postgres 5432
@@ -197,7 +197,7 @@ docker compose port postgres 5432
 
 ---
 
-### Error: `password authentication failed for user "huston-housing"`
+### Error: `password authentication failed for user "arbitra"`
 
 **Cause:** Wrong `DB_PASSWORD` or `DB_USERNAME`.
 
@@ -209,7 +209,7 @@ docker compose port postgres 5432
 **Resolution:**
 ```bash
 # Reset the password in PostgreSQL
-docker compose exec postgres psql -U postgres -c "ALTER USER huston-housing WITH PASSWORD 'new_password';"
+docker compose exec postgres psql -U postgres -c "ALTER USER arbitra WITH PASSWORD 'new_password';"
 
 # Update .env.development with the new password
 ```
@@ -294,7 +294,7 @@ SELECT pg_terminate_backend(<blocker_pid>);
 ```bash
 # Verify the secret is consistent across all instances
 # Rotate if needed — all users will need to re-authenticate
-kubectl set env deployment/huston-housing-backend JWT_SECRET=<new-secret>
+kubectl set env deployment/arbitra-backend JWT_SECRET=<new-secret>
 ```
 
 ---
@@ -337,7 +337,7 @@ psql "$DATABASE_URL" -c "
 "
 
 # Assign the missing role via admin API
-curl -X POST https://admin.huston-housing.io/api/v1/admin/users/<id>/roles \
+curl -X POST https://admin.arbitra.io/api/v1/admin/users/<id>/roles \
   -H "Authorization: Bearer $ADMIN_TOKEN" \
   -d '{"roles": ["property_manager"]}'
 ```
@@ -446,7 +446,7 @@ docker compose restart workers
 **Resolution:**
 ```bash
 # Retry all failed jobs via admin API
-curl -X POST https://admin.huston-housing.io/api/v1/admin/queues/email/retry-failed \
+curl -X POST https://admin.arbitra.io/api/v1/admin/queues/email/retry-failed \
   -H "Authorization: Bearer $ADMIN_TOKEN"
 
 # Or via Bull Board: click "Retry All" on the failed tab
@@ -467,10 +467,10 @@ curl -X POST https://admin.huston-housing.io/api/v1/admin/queues/email/retry-fai
 **Resolution:**
 ```bash
 # Scale up workers
-kubectl scale deployment huston-housing-workers --replicas=5
+kubectl scale deployment arbitra-workers --replicas=5
 
 # Or increase concurrency per worker
-kubectl set env deployment/huston-housing-workers WORKER_CONCURRENCY=10
+kubectl set env deployment/arbitra-workers WORKER_CONCURRENCY=10
 ```
 
 ---
@@ -522,7 +522,7 @@ curl -s "https://horizon.stellar.org/accounts/<account_id>" | jq '.sequence'
 **Resolution:**
 ```bash
 # Increase the max fee in the application config
-kubectl set env deployment/huston-housing-backend STELLAR_MAX_FEE=10000
+kubectl set env deployment/arbitra-backend STELLAR_MAX_FEE=10000
 ```
 
 ---
@@ -544,7 +544,7 @@ curl -X POST "$SOROBAN_RPC_URL" \
   -d '{"jsonrpc":"2.0","id":1,"method":"getHealth"}'
 
 # Switch to a backup RPC endpoint if needed
-kubectl set env deployment/huston-housing-backend SOROBAN_RPC_URL=https://soroban-mainnet.stellar.org
+kubectl set env deployment/arbitra-backend SOROBAN_RPC_URL=https://soroban-mainnet.stellar.org
 ```
 
 ---
@@ -566,7 +566,7 @@ kubectl set env deployment/huston-housing-backend SOROBAN_RPC_URL=https://soroba
 echo $PAYSTACK_SECRET_KEY | grep -q "^sk_live_" && echo "Live key" || echo "Test key"
 
 # Set the correct key
-kubectl set env deployment/huston-housing-backend PAYSTACK_SECRET_KEY=sk_live_...
+kubectl set env deployment/arbitra-backend PAYSTACK_SECRET_KEY=sk_live_...
 ```
 
 ---
@@ -589,11 +589,11 @@ kubectl set env deployment/huston-housing-backend PAYSTACK_SECRET_KEY=sk_live_..
 **Cause:** `PAYMENT_GATEWAY` is set to `mock` in staging or production.
 
 **Checklist:**
-- [ ] Check `PAYMENT_GATEWAY` value: `kubectl exec pod/huston-housing-backend -- env | grep PAYMENT_GATEWAY`
+- [ ] Check `PAYMENT_GATEWAY` value: `kubectl exec pod/arbitra-backend -- env | grep PAYMENT_GATEWAY`
 
 **Resolution:**
 ```bash
-kubectl set env deployment/huston-housing-backend PAYMENT_GATEWAY=paystack
+kubectl set env deployment/arbitra-backend PAYMENT_GATEWAY=paystack
 ```
 
 ---
@@ -683,7 +683,7 @@ psql "$DATABASE_URL" -c "
 # Check PERFORMANCE_INDEXES.md for index recommendations
 
 # Scale up if needed
-kubectl scale deployment huston-housing-backend --replicas=5
+kubectl scale deployment arbitra-backend --replicas=5
 ```
 
 ---
@@ -717,7 +717,7 @@ kubectl scale deployment huston-housing-backend --replicas=5
 **Resolution:**
 ```bash
 # Increase memory limit (temporary)
-kubectl set resources deployment/huston-housing-backend \
+kubectl set resources deployment/arbitra-backend \
   -c=app --limits=memory=1Gi
 
 # Take a heap snapshot for analysis
@@ -743,7 +743,7 @@ node -e "require('v8').getHeapSnapshot().pipe(require('fs').createWriteStream('h
 aws sts get-caller-identity
 
 # Test bucket access
-aws s3 ls s3://huston-housing-files/
+aws s3 ls s3://arbitra-files/
 ```
 
 ---

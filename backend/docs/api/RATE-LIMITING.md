@@ -1,6 +1,6 @@
 # Rate Limiting and Throttling
 
-Houston Housing uses NestJS Throttler to protect API resources from abuse, smooth traffic spikes, and preserve predictable latency for normal users.
+Arbitra uses NestJS Throttler to protect API resources from abuse, smooth traffic spikes, and preserve predictable latency for normal users.
 
 ---
 

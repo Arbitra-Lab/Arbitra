@@ -1,5 +1,5 @@
 use crate::{
-    errors::RentalError,
+    errors::AgreementError,
     events,
     storage::DataKey,
     types::{ActionType, AdminProposal, MultiSigConfig},
@@ -13,26 +13,26 @@ pub fn initialize_multisig(
     env: &Env,
     admins: Vec<Address>,
     required_signatures: u32,
-) -> Result<(), RentalError> {
+) -> Result<(), AgreementError> {
     // Check if already initialized
     if env.storage().instance().has(&DataKey::MultiSigConfig) {
-        return Err(RentalError::AlreadyInitialized);
+        return Err(AgreementError::AlreadyInitialized);
     }
 
     let total_admins = admins.len();
     if total_admins == 0 {
-        return Err(RentalError::InvalidConfig);
+        return Err(AgreementError::InvalidConfig);
     }
 
     if required_signatures == 0 || required_signatures > total_admins {
-        return Err(RentalError::InvalidConfig);
+        return Err(AgreementError::InvalidConfig);
     }
 
     // Verify all admins are unique
     for i in 0..admins.len() {
         for j in (i + 1)..admins.len() {
             if admins.get(i).unwrap() == admins.get(j).unwrap() {
-                return Err(RentalError::InvalidConfig);
+                return Err(AgreementError::InvalidConfig);
             }
         }
     }
@@ -57,15 +57,15 @@ pub fn initialize_multisig(
 }
 
 /// Get multi-sig configuration
-pub fn get_multisig_config(env: &Env) -> Result<MultiSigConfig, RentalError> {
+pub fn get_multisig_config(env: &Env) -> Result<MultiSigConfig, AgreementError> {
     env.storage()
         .instance()
         .get(&DataKey::MultiSigConfig)
-        .ok_or(RentalError::MultiSigNotInitialized)
+        .ok_or(AgreementError::MultiSigNotInitialized)
 }
 
 /// Check if an address is an admin
-pub fn is_admin(env: &Env, address: &Address) -> Result<bool, RentalError> {
+pub fn is_admin(env: &Env, address: &Address) -> Result<bool, AgreementError> {
     let config = get_multisig_config(env)?;
 
     for admin in config.admins.iter() {
@@ -78,9 +78,9 @@ pub fn is_admin(env: &Env, address: &Address) -> Result<bool, RentalError> {
 }
 
 /// Require that the caller is an admin
-pub fn require_admin(env: &Env, caller: &Address) -> Result<(), RentalError> {
+pub fn require_admin(env: &Env, caller: &Address) -> Result<(), AgreementError> {
     if !is_admin(env, caller)? {
-        return Err(RentalError::Unauthorized);
+        return Err(AgreementError::Unauthorized);
     }
     Ok(())
 }
@@ -92,7 +92,7 @@ pub fn propose_action(
     action_type: ActionType,
     target: Option<Address>,
     data: Bytes,
-) -> Result<String, RentalError> {
+) -> Result<String, AgreementError> {
     proposer.require_auth();
     require_admin(env, &proposer)?;
 
@@ -163,7 +163,7 @@ pub fn approve_action(
     env: &Env,
     approver: Address,
     proposal_id: String,
-) -> Result<(), RentalError> {
+) -> Result<(), AgreementError> {
     approver.require_auth();
     require_admin(env, &approver)?;
 
@@ -171,22 +171,22 @@ pub fn approve_action(
         .storage()
         .persistent()
         .get(&DataKey::AdminProposal(proposal_id.clone()))
-        .ok_or(RentalError::ProposalNotFound)?;
+        .ok_or(AgreementError::ProposalNotFound)?;
 
     // Check if already executed
     if proposal.executed {
-        return Err(RentalError::ProposalAlreadyExecuted);
+        return Err(AgreementError::ProposalAlreadyExecuted);
     }
 
     // Check if expired
     if env.ledger().timestamp() > proposal.expiry {
-        return Err(RentalError::ProposalExpired);
+        return Err(AgreementError::ProposalExpired);
     }
 
     // Check if already approved by this address
     for approval in proposal.approvals.iter() {
         if approval == approver {
-            return Err(RentalError::AlreadyApproved);
+            return Err(AgreementError::AlreadyApproved);
         }
     }
 
@@ -209,7 +209,7 @@ pub fn execute_action(
     env: &Env,
     executor: Address,
     proposal_id: String,
-) -> Result<(), RentalError> {
+) -> Result<(), AgreementError> {
     executor.require_auth();
     require_admin(env, &executor)?;
 
@@ -217,22 +217,22 @@ pub fn execute_action(
         .storage()
         .persistent()
         .get(&DataKey::AdminProposal(proposal_id.clone()))
-        .ok_or(RentalError::ProposalNotFound)?;
+        .ok_or(AgreementError::ProposalNotFound)?;
 
     // Check if already executed
     if proposal.executed {
-        return Err(RentalError::ProposalAlreadyExecuted);
+        return Err(AgreementError::ProposalAlreadyExecuted);
     }
 
     // Check if expired
     if env.ledger().timestamp() > proposal.expiry {
-        return Err(RentalError::ProposalExpired);
+        return Err(AgreementError::ProposalExpired);
     }
 
     // Check if has enough approvals
     let config = get_multisig_config(env)?;
     if proposal.approval_count < config.required_signatures {
-        return Err(RentalError::InsufficientApprovals);
+        return Err(AgreementError::InsufficientApprovals);
     }
 
     // Mark as executed
@@ -264,7 +264,7 @@ pub fn execute_action(
 }
 
 /// Reject/cancel a proposal (only proposer can do this before execution)
-pub fn reject_action(env: &Env, caller: Address, proposal_id: String) -> Result<(), RentalError> {
+pub fn reject_action(env: &Env, caller: Address, proposal_id: String) -> Result<(), AgreementError> {
     caller.require_auth();
     require_admin(env, &caller)?;
 
@@ -272,15 +272,15 @@ pub fn reject_action(env: &Env, caller: Address, proposal_id: String) -> Result<
         .storage()
         .persistent()
         .get(&DataKey::AdminProposal(proposal_id.clone()))
-        .ok_or(RentalError::ProposalNotFound)?;
+        .ok_or(AgreementError::ProposalNotFound)?;
 
     // Only proposer can reject before execution
     if proposal.proposer != caller {
-        return Err(RentalError::Unauthorized);
+        return Err(AgreementError::Unauthorized);
     }
 
     if proposal.executed {
-        return Err(RentalError::ProposalAlreadyExecuted);
+        return Err(AgreementError::ProposalAlreadyExecuted);
     }
 
     // Remove proposal
@@ -311,13 +311,13 @@ pub fn reject_action(env: &Env, caller: Address, proposal_id: String) -> Result<
 }
 
 /// Add a new admin through multi-sig proposal execution
-pub fn add_admin_internal(env: &Env, new_admin: Address) -> Result<(), RentalError> {
+pub fn add_admin_internal(env: &Env, new_admin: Address) -> Result<(), AgreementError> {
     let mut config = get_multisig_config(env)?;
 
     // Check if already admin
     for admin in config.admins.iter() {
         if admin == new_admin {
-            return Err(RentalError::InvalidInput);
+            return Err(AgreementError::InvalidInput);
         }
     }
 
@@ -337,12 +337,12 @@ pub fn add_admin_internal(env: &Env, new_admin: Address) -> Result<(), RentalErr
 }
 
 /// Remove an admin through multi-sig proposal execution
-pub fn remove_admin_internal(env: &Env, admin_to_remove: Address) -> Result<(), RentalError> {
+pub fn remove_admin_internal(env: &Env, admin_to_remove: Address) -> Result<(), AgreementError> {
     let mut config = get_multisig_config(env)?;
 
     // Cannot remove last admin
     if config.total_admins <= 1 {
-        return Err(RentalError::InvalidConfig);
+        return Err(AgreementError::InvalidConfig);
     }
 
     // Find and remove admin
@@ -358,7 +358,7 @@ pub fn remove_admin_internal(env: &Env, admin_to_remove: Address) -> Result<(), 
     }
 
     if !found {
-        return Err(RentalError::Unauthorized);
+        return Err(AgreementError::Unauthorized);
     }
 
     config.admins = new_admins;
@@ -384,11 +384,11 @@ pub fn remove_admin_internal(env: &Env, admin_to_remove: Address) -> Result<(), 
 pub fn update_required_signatures_internal(
     env: &Env,
     new_required: u32,
-) -> Result<(), RentalError> {
+) -> Result<(), AgreementError> {
     let mut config = get_multisig_config(env)?;
 
     if new_required == 0 || new_required > config.total_admins {
-        return Err(RentalError::InvalidConfig);
+        return Err(AgreementError::InvalidConfig);
     }
 
     let old_required = config.required_signatures;
@@ -406,15 +406,15 @@ pub fn update_required_signatures_internal(
 }
 
 /// Get a proposal by ID
-pub fn get_proposal(env: &Env, proposal_id: String) -> Result<AdminProposal, RentalError> {
+pub fn get_proposal(env: &Env, proposal_id: String) -> Result<AdminProposal, AgreementError> {
     env.storage()
         .persistent()
         .get(&DataKey::AdminProposal(proposal_id))
-        .ok_or(RentalError::ProposalNotFound)
+        .ok_or(AgreementError::ProposalNotFound)
 }
 
 /// Get all active proposals
-pub fn get_active_proposals(env: &Env) -> Result<Vec<String>, RentalError> {
+pub fn get_active_proposals(env: &Env) -> Result<Vec<String>, AgreementError> {
     Ok(env
         .storage()
         .instance()

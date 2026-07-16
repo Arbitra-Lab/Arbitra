@@ -22,7 +22,7 @@ export class TempFileCleanupService {
 
     const directoriesToClean = [
       path.join(process.cwd(), 'uploads/temp'),
-      path.join(os.tmpdir(), 'huston-housing'),
+      path.join(os.tmpdir(), 'arbitra'),
     ];
 
     for (const dir of directoriesToClean) {

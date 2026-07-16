@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document summarizes the complete implementation of production-ready infrastructure for the Houston Housing backend, including load balancing, auto-scaling, graceful shutdown, and comprehensive alerting rules.
+This document summarizes the complete implementation of production-ready infrastructure for the Arbitra backend, including load balancing, auto-scaling, graceful shutdown, and comprehensive alerting rules.
 
 **Implementation Date**: May 28, 2026  
 **Status**: ✅ Complete and Tested  
@@ -363,7 +363,7 @@ backend/
 make lint && make typecheck && make test
 
 # 2. Build Docker image
-docker build -f Dockerfile.production -t huston-housing-backend:latest .
+docker build -f Dockerfile.production -t arbitra-backend:latest .
 
 # 3. Deploy to Kubernetes
 kubectl apply -f backend/k8s/rbac.yaml
@@ -457,7 +457,7 @@ For issues or questions, contact the DevOps team or refer to the documentation.
 
 ## Conclusion
 
-The Houston Housing backend infrastructure is now production-ready with:
+The Arbitra backend infrastructure is now production-ready with:
 
 ✅ **Load Balancing**: Nginx with least-connections strategy  
 ✅ **Auto-Scaling**: Kubernetes HPA with 4 metrics  

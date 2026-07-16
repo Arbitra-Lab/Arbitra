@@ -1,6 +1,6 @@
 extern crate alloc;
 
-use crate::errors::RentalError;
+use crate::errors::AgreementError;
 use crate::types::{AgreementInput, AgreementTerms, Config, RateLimitConfig};
 use crate::{Contract, ContractClient};
 use soroban_sdk::{
@@ -980,7 +980,7 @@ fn test_rate_limit_error_logged_on_exceed() {
 
     let op = String::from_str(&env, "create_agreement");
     let details = String::from_str(&env, "Daily rate limit exceeded for user");
-    client.log_error(&RentalError::RateLimitExceeded, &op, &details);
+    client.log_error(&AgreementError::RateLimitExceeded, &op, &details);
 
     let logs = client.get_error_logs(&10);
     assert_eq!(logs.len(), 1);

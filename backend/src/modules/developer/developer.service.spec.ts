@@ -60,7 +60,7 @@ describe('DeveloperService', () => {
         userId,
         name,
         keyHash: 'hash',
-        keyPrefix: 'huston-housing_sk_...',
+        keyPrefix: 'arbitra_sk_...',
         expiresAt: new Date(),
         status: ApiKeyStatus.ACTIVE,
       } as ApiKey);
@@ -70,7 +70,7 @@ describe('DeveloperService', () => {
         userId,
         name,
         keyHash: 'hash',
-        keyPrefix: 'huston-housing_sk_...',
+        keyPrefix: 'arbitra_sk_...',
         expiresAt: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000),
         status: ApiKeyStatus.ACTIVE,
       } as ApiKey);
@@ -94,7 +94,7 @@ describe('DeveloperService', () => {
         userId,
         name,
         keyHash: 'hash',
-        keyPrefix: 'huston-housing_sk_...',
+        keyPrefix: 'arbitra_sk_...',
         expiresAt: customExpiration,
         status: ApiKeyStatus.ACTIVE,
       } as ApiKey);
@@ -122,7 +122,7 @@ describe('DeveloperService', () => {
         userId,
         name: 'Test Key',
         keyHash: 'old-hash',
-        keyPrefix: 'huston-housing_sk_old...',
+        keyPrefix: 'arbitra_sk_old...',
         status: ApiKeyStatus.ACTIVE,
         isExpired: () => false,
         rotatedAt: null,
@@ -134,7 +134,7 @@ describe('DeveloperService', () => {
         userId,
         name: 'Test Key',
         keyHash: 'new-hash',
-        keyPrefix: 'huston-housing_sk_new...',
+        keyPrefix: 'arbitra_sk_new...',
         isRotated: true,
         previousKeyHash: 'old-hash',
         rotatedAt: new Date(),
@@ -147,7 +147,7 @@ describe('DeveloperService', () => {
           userId,
           name: 'Test Key',
           keyHash: 'new-hash',
-          keyPrefix: 'huston-housing_sk_new...',
+          keyPrefix: 'arbitra_sk_new...',
           isRotated: true,
           previousKeyHash: 'old-hash',
           rotatedAt: new Date(),
@@ -237,7 +237,7 @@ describe('DeveloperService', () => {
     it('should return null for non-existent key', async () => {
       mockApiKeyRepo.findOne.mockResolvedValue(null);
       const result = await service.validateKey(
-        'huston-housing_sk_abcdefghijklmnopqrstuvwxyz',
+        'arbitra_sk_abcdefghijklmnopqrstuvwxyz',
       );
       expect(result).toBeNull();
     });
@@ -255,7 +255,7 @@ describe('DeveloperService', () => {
       mockApiKeyRepo.update.mockResolvedValue({ affected: 1 } as any);
 
       const result = await service.validateKey(
-        'huston-housing_sk_abcdefghijklmnopqrstuvwxyz',
+        'arbitra_sk_abcdefghijklmnopqrstuvwxyz',
       );
       expect(result).toBeNull();
     });
@@ -274,7 +274,7 @@ describe('DeveloperService', () => {
       mockApiKeyRepo.update.mockResolvedValue({ affected: 1 } as any);
 
       const result = await service.validateKey(
-        'huston-housing_sk_abcdefghijklmnopqrstuvwxyz',
+        'arbitra_sk_abcdefghijklmnopqrstuvwxyz',
       );
       expect(result).toEqual(validKey);
     });

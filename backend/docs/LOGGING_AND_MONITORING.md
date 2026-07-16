@@ -1,6 +1,6 @@
 # Logging and Monitoring
 
-This document covers the logging infrastructure, monitoring stack, alerting configuration, and observability practices used across the Houston Housing platform.
+This document covers the logging infrastructure, monitoring stack, alerting configuration, and observability practices used across the Arbitra platform.
 
 ---
 
@@ -233,14 +233,14 @@ The frontend uses a lightweight error logger:
 logError(error: Error | AppError, context?: ErrorContext)
 ```
 
-- Outputs structured error payloads to `console.error` with `[Houston Housing Error]` prefix
-- Supports a pluggable external reporter via `window.__HUSTON_HOUSING_ERROR_REPORTER__`
+- Outputs structured error payloads to `console.error` with `[Arbitra Error]` prefix
+- Supports a pluggable external reporter via `window.__ARBITRA_ERROR_REPORTER__`
 - Each payload includes: name, message, stack trace, context, and timestamp
 
 To integrate an external error reporting service (e.g., Sentry browser SDK), assign a reporter function:
 
 ```typescript
-window.__HUSTON_HOUSING_ERROR_REPORTER__ = (payload) => {
+window.__ARBITRA_ERROR_REPORTER__ = (payload) => {
   Sentry.captureException(new Error(payload.message), {
     extra: payload.context,
   });
@@ -288,7 +288,7 @@ The monitoring infrastructure is defined in `backend/monitoring/` and orchestrat
 - **Scrape interval:** 15 seconds
 - **Evaluation interval:** 15 seconds
 - **Target:** `host.docker.internal:3000/metrics`
-- **Job name:** `huston-housing-backend`
+- **Job name:** `arbitra-backend`
 
 Prometheus scrapes the `/metrics` endpoint exposed by the backend, which provides application-level metrics via the `prom-client` library.
 
@@ -322,7 +322,7 @@ Promtail tails application log files and pushes them to Loki:
 
 - **Source:** `/app/logs/*.log`
 - **Destination:** `http://loki:3100/loki/api/v1/push`
-- **Job label:** `huston-housing-backend`
+- **Job label:** `arbitra-backend`
 
 ### Alertmanager
 

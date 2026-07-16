@@ -68,18 +68,18 @@ export class SecurityController {
   getSecurityTxt(@Res() res: Response): void {
     const contact =
       this.configService.get<string>('SECURITY_CONTACT') ||
-      'security@huston-housing.app';
+      'security@arbitra.app';
     const policy =
       this.configService.get<string>('SECURITY_POLICY_URL') ||
-      'https://huston-housing.app/security';
+      'https://arbitra.app/security';
     const ack =
       this.configService.get<string>('SECURITY_ACKNOWLEDGMENTS_URL') ||
-      'https://huston-housing.app/security/acknowledgments';
+      'https://arbitra.app/security/acknowledgments';
     const langs =
       this.configService.get<string>('SECURITY_PREFERRED_LANGUAGES') || 'en';
     const canonical =
       this.configService.get<string>('SECURITY_CANONICAL_URL') ||
-      'https://huston-housing.app/.well-known/security.txt';
+      'https://arbitra.app/.well-known/security.txt';
     const expires =
       this.configService.get<string>('SECURITY_EXPIRES') ||
       new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();

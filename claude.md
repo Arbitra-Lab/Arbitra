@@ -178,7 +178,7 @@ The `contract/` directory contains Stellar Soroban smart contracts written in Ru
 **Available Contracts:**
 
 - `agent_registry/` - Agent registration and management
-- `huston-housing/` - Main contract with emergency pause mechanism
+- `arbitra/` - Main contract with emergency pause mechanism
 - `dispute_resolution/` - Dispute handling with timeout mechanisms
 - `escrow/` - Escrow management with timeout protection
 - `payment/` - Payment processing
@@ -188,7 +188,7 @@ The `contract/` directory contains Stellar Soroban smart contracts written in Ru
 
 **Critical Contract Features:**
 
-- Emergency pause mechanism (Houston Housing contract)
+- Emergency pause mechanism (Arbitra contract)
 - Timeout mechanisms for escrow and disputes
 - Event emission for monitoring
 - Admin-only operations for critical functions
@@ -222,7 +222,7 @@ cd contract && cargo test -- --nocapture
 cd contract && cargo build --target wasm32-unknown-unknown --release
 
 # Build specific contract
-cd contract && cargo build -p huston-housing --target wasm32-unknown-unknown --release
+cd contract && cargo build -p arbitra --target wasm32-unknown-unknown --release
 
 # Optimized build (if soroban-cli is installed)
 cd contract && soroban contract build

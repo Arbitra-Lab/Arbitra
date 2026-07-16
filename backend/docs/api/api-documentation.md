@@ -1,14 +1,14 @@
-# Houston Housing API Documentation
+# Arbitra API Documentation
 
 ## Overview
 
-The Houston Housing API is a RESTful API built on NestJS that provides endpoints for managing rental agreements, user authentication, and Stellar blockchain-based payments. The API follows a hybrid architecture combining traditional web2 authentication with Web3 Stellar wallet authentication.
+The Arbitra API is a RESTful API built on NestJS that provides endpoints for managing rental agreements, user authentication, and Stellar blockchain-based payments. The API follows a hybrid architecture combining traditional web2 authentication with Web3 Stellar wallet authentication.
 
 ## Base URL
 
 ```
 Development: http://localhost:5000/api
-Production: https://api.huston-housing.com/api
+Production: https://api.arbitra.com/api
 ```
 
 ## Authentication
@@ -382,7 +382,7 @@ List endpoints support pagination with these query parameters:
 
 ```typescript
 // Initialize API client
-const api = new Houston HousingAPI({
+const api = new ArbitraAPI({
   baseURL: 'http://localhost:5000/api',
   apiKey: 'your-jwt-token',
 });
@@ -413,10 +413,10 @@ const payment = await api.agreements.recordPayment(agreement.id, {
 ### Python
 
 ```python
-from huston-housing_sdk import Houston HousingAPI
+from arbitra_sdk import ArbitraAPI
 
 # Initialize client
-api = Houston HousingAPI(base_url='http://localhost:5000/api')
+api = ArbitraAPI(base_url='http://localhost:5000/api')
 api.set_token('your-jwt-token')
 
 # Get user agreements
@@ -436,7 +436,7 @@ agreement = api.agreements.create({
 
 ## Webhooks
 
-Houston Housing supports webhooks for real-time notifications:
+Arbitra supports webhooks for real-time notifications:
 
 ### Supported Events
 
@@ -449,7 +449,7 @@ Houston Housing supports webhooks for real-time notifications:
 
 ```json
 {
-  "url": "https://your-app.com/webhooks/huston-housing",
+  "url": "https://your-app.com/webhooks/arbitra",
   "events": ["payment.completed", "agreement.terminated"],
   "secret": "webhook-secret-key"
 }
@@ -499,12 +499,12 @@ For API support:
 
 - Documentation: Available at `/api/docs` (Swagger UI)
 - Issues: Create GitHub issue
-- Email: api-support@huston-housing.com
-- Discord: [Community Server](https://discord.gg/huston-housing)
+- Email: api-support@arbitra.com
+- Discord: [Community Server](https://discord.gg/arbitra)
 
 ## API Keys (Developer Portal)
 
-API keys provide programmatic access to the Houston Housing API. All API key endpoints require JWT authentication.
+API keys provide programmatic access to the Arbitra API. All API key endpoints require JWT authentication.
 
 ### Key Expiration
 
@@ -537,7 +537,7 @@ Content-Type: application/json
 ```json
 {
   "id": "uuid-string",
-  "key": "huston-housing_sk_xxxxxxxxxxxxxxxxxxxx",
+  "key": "arbitra_sk_xxxxxxxxxxxxxxxxxxxx",
   "name": "My Integration",
   "expiresAt": "2026-06-25T12:00:00Z"
 }
@@ -557,7 +557,7 @@ Authorization: Bearer <jwt_token>
   {
     "id": "uuid-string",
     "name": "My Integration",
-    "prefix": "huston-housing_sk_xxx...",
+    "prefix": "arbitra_sk_xxx...",
     "lastUsedAt": "2024-01-26T17:32:00Z",
     "createdAt": "2024-01-26T17:32:00Z",
     "expiresAt": "2026-06-25T12:00:00Z",
@@ -586,7 +586,7 @@ Content-Type: application/json
 ```json
 {
   "id": "new-uuid-string",
-  "key": "huston-housing_sk_xxxxxxxxxxxxxxxxxxxx",
+  "key": "arbitra_sk_xxxxxxxxxxxxxxxxxxxx",
   "name": "My Integration",
   "expiresAt": "2026-12-31T23:59:59Z"
 }
@@ -606,8 +606,8 @@ Authorization: Bearer <jwt_token>
   {
     "id": "history-uuid",
     "rotatedAt": "2024-02-01T10:00:00Z",
-    "oldKeyPrefix": "huston-housing_sk_old...",
-    "newKeyPrefix": "huston-housing_sk_new..."
+    "oldKeyPrefix": "arbitra_sk_old...",
+    "newKeyPrefix": "arbitra_sk_new..."
   }
 ]
 ```
@@ -644,7 +644,7 @@ Authorization: Bearer <jwt_token>
 Include the API key in the `X-API-Key` header:
 
 ```http
-X-API-Key: huston-housing_sk_xxxxxxxxxxxxxxxxxxxx
+X-API-Key: arbitra_sk_xxxxxxxxxxxxxxxxxxxx
 ```
 
 ## Changelog

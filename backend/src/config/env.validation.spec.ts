@@ -88,7 +88,7 @@ describe('validateEnvironment', () => {
         DB_HOST: 'localhost',
         DB_USERNAME: 'postgres',
         DB_PASSWORD: 'secret',
-        DB_NAME: 'huston-housing',
+        DB_NAME: 'arbitra',
         REDIS_HOST: 'localhost',
         REDIS_PORT: '6379',
         ENCRYPTION_KEY_BASE64: Buffer.alloc(32, 2).toString('base64'),

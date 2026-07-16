@@ -1,6 +1,6 @@
 # Testnet Deployment Guide
 
-This guide walks through deploying the Houston Housing smart contracts to Stellar's testnet.
+This guide walks through deploying the Arbitra smart contracts to Stellar's testnet.
 
 ## Prerequisites
 
@@ -12,7 +12,7 @@ This guide walks through deploying the Houston Housing smart contracts to Stella
 
 | Contract           | Size | Purpose                              |
 | ------------------ | ---- | ------------------------------------ |
-| huston-housing             | 132K | Main rental agreement lifecycle      |
+| arbitra             | 132K | Main rental agreement lifecycle      |
 | dispute_resolution | 64K  | Dispute handling & arbitration       |
 | escrow             | 43K  | Security deposit management          |
 | payment            | 60K  | Rent payment processing              |
@@ -127,11 +127,11 @@ soroban contract deploy \
   --network testnet
 ```
 
-#### Step 3h: Deploy Houston Housing (Main Contract)
+#### Step 3h: Deploy Arbitra (Main Contract)
 
 ```bash
 soroban contract deploy \
-  --wasm contract/target/wasm32-unknown-unknown/release/huston-housing.wasm \
+  --wasm contract/target/wasm32-unknown-unknown/release/arbitra.wasm \
   --source testnet-deployer \
   --network testnet
 ```
@@ -215,14 +215,14 @@ soroban contract invoke \
   -- initialize \
   --admin <YOUR_PUBLIC_KEY> \
   --min_votes_required 3 \
-  --huston-housing_contract <HUSTON_HOUSING_CONTRACT_ID>
+  --arbitra_contract <ARBITRA_CONTRACT_ID>
 ```
 
-#### Initialize Houston Housing (Main Contract)
+#### Initialize Arbitra (Main Contract)
 
 ```bash
 soroban contract invoke \
-  --id <HUSTON_HOUSING_CONTRACT_ID> \
+  --id <ARBITRA_CONTRACT_ID> \
   --source testnet-deployer \
   --network testnet \
   -- initialize \
@@ -259,7 +259,7 @@ Create a `.env.testnet` file to store deployed contract IDs:
 
 ```bash
 # .env.testnet
-HUSTON_HOUSING_CONTRACT_ID=C...
+ARBITRA_CONTRACT_ID=C...
 DISPUTE_RESOLUTION_CONTRACT_ID=C...
 ESCROW_CONTRACT_ID=C...
 PAYMENT_CONTRACT_ID=C...

@@ -1,6 +1,6 @@
 # Database Migration Runbook
 
-**Project:** Houston Housing Platform  
+**Project:** Arbitra Platform  
 **Version:** 1.0  
 **Last Updated:** April 2026  
 **Owner:** Backend Team  
@@ -10,7 +10,7 @@
 
 ## Purpose
 
-This runbook provides step-by-step procedures for safely creating, testing, and applying database migrations in the Houston Housing platform. Use this whenever you need to modify the database schema.
+This runbook provides step-by-step procedures for safely creating, testing, and applying database migrations in the Arbitra platform. Use this whenever you need to modify the database schema.
 
 For detailed reference, see [DATABASE_DOCUMENTATION_GUIDE.md](../../database/DATABASE_DOCUMENTATION_GUIDE.md).
 
@@ -172,10 +172,10 @@ pnpm run migration:run:safe
 
 # Verify immediately:
 # 1. Application health
-curl -f https://api.huston-housing.io/health
+curl -f https://api.arbitra.io/health
 
 # 2. Database connectivity
-curl -s https://api.huston-housing.io/health/detailed | jq '.database'
+curl -s https://api.arbitra.io/health/detailed | jq '.database'
 
 # 3. No migration errors
 pnpm run migration:show
@@ -295,7 +295,7 @@ pnpm run start:dev
 ```bash
 # 1. Stop writes to affected tables
 # 2. Assess data damage
-psql -U huston-housing -c "SELECT COUNT(*), MIN(created_at), MAX(created_at) FROM affected_table;"
+psql -U arbitra -c "SELECT COUNT(*), MIN(created_at), MAX(created_at) FROM affected_table;"
 
 # 3. Decide on recovery path:
 #    - Rollback migration if safe

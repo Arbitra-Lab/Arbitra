@@ -4,7 +4,7 @@ services:
   # Prometheus - Metrics Collection
   prometheus:
     image: prom/prometheus:latest
-    container_name: huston-housing-prometheus
+    container_name: arbitra-prometheus
     ports:
       - "9090:9090"
     volumes:
@@ -19,7 +19,7 @@ services:
   # Grafana - Metrics Visualization
   grafana:
     image: grafana/grafana:latest
-    container_name: huston-housing-grafana
+    container_name: arbitra-grafana
     ports:
       - "3001:3000"
     environment:
@@ -36,7 +36,7 @@ services:
   # Loki - Log Aggregation
   loki:
     image: grafana/loki:latest
-    container_name: huston-housing-loki
+    container_name: arbitra-loki
     ports:
       - "3100:3100"
     volumes:
@@ -49,7 +49,7 @@ services:
   # Promtail - Log Shipper
   promtail:
     image: grafana/promtail:latest
-    container_name: huston-housing-promtail
+    container_name: arbitra-promtail
     volumes:
       - ./monitoring/promtail/promtail-config.yml:/etc/promtail/config.yml
       - /var/log:/var/log
@@ -63,7 +63,7 @@ services:
   # Jaeger - Distributed Tracing
   jaeger:
     image: jaegertracing/all-in-one:latest
-    container_name: huston-housing-jaeger
+    container_name: arbitra-jaeger
     ports:
       - "5775:5775/udp"
       - "6831:6831/udp"
@@ -81,7 +81,7 @@ services:
   # AlertManager - Alert Management
   alertmanager:
     image: prom/alertmanager:latest
-    container_name: huston-housing-alertmanager
+    container_name: arbitra-alertmanager
     ports:
       - "9093:9093"
     volumes:

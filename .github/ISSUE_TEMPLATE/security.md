@@ -10,7 +10,7 @@ assignees: ""
 
 **Do NOT disclose security vulnerabilities publicly!**
 
-- Email security@huston-housing.dev instead
+- Email security@arbitra.dev instead
 - Or use GitHub's private vulnerability reporting
 - See SECURITY.md for responsible disclosure
 

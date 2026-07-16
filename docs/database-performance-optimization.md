@@ -378,7 +378,7 @@ For applications with many short-lived connections (serverless, many pods), add 
 ```ini
 # pgbouncer.ini
 [databases]
-huston-housing = host=postgres port=5432 dbname=huston-housing_db
+arbitra = host=postgres port=5432 dbname=arbitra_db
 
 [pgbouncer]
 pool_mode = transaction
@@ -478,13 +478,13 @@ Target: index hit rate > 95% for frequently queried tables.
 
 ```bash
 # Initialize with scale factor 10 (~1.4M rows)
-pgbench -i -s 10 huston-housing_db
+pgbench -i -s 10 arbitra_db
 
 # Run 60-second benchmark with 10 concurrent clients
-pgbench -c 10 -T 60 huston-housing_db
+pgbench -c 10 -T 60 arbitra_db
 
 # Custom query benchmark
-pgbench -c 10 -T 60 -f benchmark.sql huston-housing_db
+pgbench -c 10 -T 60 -f benchmark.sql arbitra_db
 ```
 
 **benchmark.sql example:**

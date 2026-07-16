@@ -2,11 +2,11 @@
 
 ## 1. Purpose
 
-This guide explains how Houston Housing estimates and tracks gas consumption for high-value contract operations.
+This guide explains how Arbitra estimates and tracks gas consumption for high-value contract operations.
 
 ## 2. Built-in estimates
 
-The `huston-housing` contract exposes `estimate_gas_cost` for the following operations:
+The `arbitra` contract exposes `estimate_gas_cost` for the following operations:
 
 | OperationType      | Operation name              | Estimate |
 | ------------------ | --------------------------- | -------: |

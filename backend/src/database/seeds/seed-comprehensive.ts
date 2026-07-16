@@ -28,38 +28,38 @@ const SEED_PASSWORD = 'Seed@123456';
 
 const ADMIN_FIXTURES = [
   {
-    email: 'admin.alice@huston-housing.local',
+    email: 'admin.alice@arbitra.local',
     firstName: 'Alice',
     lastName: 'Okafor',
   },
   {
-    email: 'admin.bob@huston-housing.local',
+    email: 'admin.bob@arbitra.local',
     firstName: 'Bob',
     lastName: 'Mensah',
   },
   {
-    email: 'admin.carol@huston-housing.local',
+    email: 'admin.carol@arbitra.local',
     firstName: 'Carol',
     lastName: 'Nwosu',
   },
   {
-    email: 'admin.david@huston-housing.local',
+    email: 'admin.david@arbitra.local',
     firstName: 'David',
     lastName: 'Eze',
   },
   {
-    email: 'admin.eve@huston-housing.local',
+    email: 'admin.eve@arbitra.local',
     firstName: 'Eve',
     lastName: 'Adeyemi',
   },
 ];
 
 const USER_FIXTURES = [
-  { email: 'user.frank@huston-housing.local', firstName: 'Frank', lastName: 'Bello' },
-  { email: 'user.grace@huston-housing.local', firstName: 'Grace', lastName: 'Dike' },
-  { email: 'user.henry@huston-housing.local', firstName: 'Henry', lastName: 'Olawale' },
-  { email: 'user.iris@huston-housing.local', firstName: 'Iris', lastName: 'Chukwu' },
-  { email: 'user.james@huston-housing.local', firstName: 'James', lastName: 'Abiodun' },
+  { email: 'user.frank@arbitra.local', firstName: 'Frank', lastName: 'Bello' },
+  { email: 'user.grace@arbitra.local', firstName: 'Grace', lastName: 'Dike' },
+  { email: 'user.henry@arbitra.local', firstName: 'Henry', lastName: 'Olawale' },
+  { email: 'user.iris@arbitra.local', firstName: 'Iris', lastName: 'Chukwu' },
+  { email: 'user.james@arbitra.local', firstName: 'James', lastName: 'Abiodun' },
 ];
 
 // ─── Property fixtures (20 properties with Unsplash images) ─────────────────

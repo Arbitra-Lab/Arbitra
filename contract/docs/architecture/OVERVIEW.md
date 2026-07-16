@@ -4,15 +4,15 @@
 
 ### High-Level Design
 
-The Houston Housing smart contract system is built on Soroban (Stellar's smart contract platform) and implements a modular architecture with 8 specialized contracts that work together to enable secure rental agreements, payments, and dispute resolution on the blockchain.
+The Arbitra smart contract system is built on Soroban (Stellar's smart contract platform) and implements a modular architecture with 8 specialized contracts that work together to enable secure rental agreements, payments, and dispute resolution on the blockchain.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    Houston Housing Smart Contracts                    │
+│                    Arbitra Smart Contracts                    │
 ├─────────────────────────────────────────────────────────────┤
 │                                                               │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐       │
-│  │   Houston Housing     │  │   Payment    │  │   Escrow     │       │
+│  │   Arbitra     │  │   Payment    │  │   Escrow     │       │
 │  │   (Main)     │  │              │  │              │       │
 │  └──────────────┘  └──────────────┘  └──────────────┘       │
 │         │                 │                  │               │
@@ -31,7 +31,7 @@ The Houston Housing smart contract system is built on Soroban (Stellar's smart c
 
 ### Contract Modules
 
-#### 1. Houston Housing (Main Contract)
+#### 1. Arbitra (Main Contract)
 
 **Purpose**: Central contract managing system state and emergency controls
 
@@ -961,8 +961,8 @@ pub fn get_payment_status(env: Env, payment_id: String) -> Result<PaymentStatus,
 1. Check contract logs
 2. Review this documentation
 3. Check recent contract deployments
-4. Contact blockchain team: blockchain@huston-housing.io
+4. Contact blockchain team: blockchain@arbitra.io
 5. Escalate to platform lead if critical
 
-**Blockchain Team Contact**: blockchain@huston-housing.io
+**Blockchain Team Contact**: blockchain@arbitra.io
 **Emergency Hotline**: [contact info]

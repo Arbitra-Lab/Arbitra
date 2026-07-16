@@ -1,6 +1,6 @@
 # Incident Response Runbook
 
-**Project:** Houston Housing Platform  
+**Project:** Arbitra Platform  
 **Version:** 1.0  
 **Last Updated:** April 2026  
 **Owner:** Security Team / On-Call Engineer  
@@ -10,7 +10,7 @@
 
 ## Purpose
 
-This runbook provides step-by-step procedures for responding to security and operational incidents in the Houston Housing platform. Use this during an active incident — not as a reference document.
+This runbook provides step-by-step procedures for responding to security and operational incidents in the Arbitra platform. Use this during an active incident — not as a reference document.
 
 For detailed reference, see [INCIDENT_RESPONSE.md](../../INCIDENT_RESPONSE.md).  
 For the deployment rollback procedure, see [DEPLOYMENT_RUNBOOK.md](./DEPLOYMENT_RUNBOOK.md).
@@ -71,7 +71,7 @@ The responder assesses scope and impact:
 
 ```bash
 # Check service health
-curl -s https://api.huston-housing.io/health | jq '.'
+curl -s https://api.arbitra.io/health | jq '.'
 
 # Check error rates (via Prometheus)
 # Sustained 5xx rate > 1% indicates P1/P2
@@ -80,10 +80,10 @@ curl -s https://api.huston-housing.io/health | jq '.'
 # Has anything changed in the last hour?
 
 # Check Sentry for recent errors
-# https://sentry.io/organizations/huston-housing
+# https://sentry.io/organizations/arbitra
 
 # Check audit logs for anomalies
-# Query Loki: {app="huston-housing-backend"} |= "audit" | json | event=~"auth\\.login\\.failure|authz\\.access\\.denied"
+# Query Loki: {app="arbitra-backend"} |= "audit" | json | event=~"auth\\.login\\.failure|authz\\.access\\.denied"
 ```
 
 **Assessment checklist:**
@@ -102,7 +102,7 @@ Contain the incident to prevent further damage:
 
 ```bash
 # Option A: Disable specific feature via feature flag
-curl -X POST https://api.huston-housing.io/admin/feature-flags/disable \
+curl -X POST https://api.arbitra.io/admin/feature-flags/disable \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   -d '{"flag": "affected-feature"}'
 
@@ -110,7 +110,7 @@ curl -X POST https://api.huston-housing.io/admin/feature-flags/disable \
 # Add to blocklist via admin API or WAF
 
 # Option C: Pause the system (emergency only)
-curl -X POST https://api.huston-housing.io/admin/pause \
+curl -X POST https://api.arbitra.io/admin/pause \
   -H "Authorization: Bearer ${ADMIN_TOKEN}"
 ```
 
@@ -124,7 +124,7 @@ curl -X POST https://api.huston-housing.io/admin/pause \
 # See: SECRETS_MANAGEMENT.md
 
 # Isolate affected instances
-# kubectl scale deployment/huston-housing-backend --replicas=0 (if compromised)
+# kubectl scale deployment/arbitra-backend --replicas=0 (if compromised)
 ```
 
 #### Data-Level Containment
@@ -134,7 +134,7 @@ curl -X POST https://api.huston-housing.io/admin/pause \
 # Force password reset for affected users
 
 # Take a forensic snapshot of affected data
-pg_dump -h $DB_HOST -U $DB_USER -d huston-housing \
+pg_dump -h $DB_HOST -U $DB_USER -d arbitra \
   -t affected_table \
   > /tmp/forensic_snapshot_$(date +%s).sql
 ```
@@ -145,7 +145,7 @@ Gather evidence and determine root cause:
 
 ```bash
 # Collect logs
-docker logs huston-housing-backend --tail 500 > /tmp/incident_logs_$(date +%s).txt
+docker logs arbitra-backend --tail 500 > /tmp/incident_logs_$(date +%s).txt
 
 # Export relevant audit logs
 # Query Loki for the incident timeframe
@@ -193,7 +193,7 @@ git checkout -b hotfix/incident-description v1.2.3
 # See: RECOVERY_RUNBOOK.md
 
 # 2. Verify data integrity
-psql -U huston-housing -c "SELECT count(*), min(created_at), max(created_at) FROM affected_table;"
+psql -U arbitra -c "SELECT count(*), min(created_at), max(created_at) FROM affected_table;"
 ```
 
 ### 6. Recover
@@ -202,11 +202,11 @@ Restore normal operations:
 
 ```bash
 # If system was paused:
-curl -X POST https://api.huston-housing.io/admin/unpause \
+curl -X POST https://api.arbitra.io/admin/unpause \
   -H "Authorization: Bearer ${ADMIN_TOKEN}"
 
 # If feature was disabled:
-curl -X POST https://api.huston-housing.io/admin/feature-flags/enable \
+curl -X POST https://api.arbitra.io/admin/feature-flags/enable \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   -d '{"flag": "affected-feature"}'
 
@@ -214,7 +214,7 @@ curl -X POST https://api.huston-housing.io/admin/feature-flags/enable \
 # Notify affected users to re-authenticate
 
 # Verify all systems are operational:
-curl -s https://api.huston-housing.io/health | jq '.'
+curl -s https://api.arbitra.io/health | jq '.'
 bash scripts/smoke-tests.sh
 ```
 
@@ -335,10 +335,10 @@ Post-incident review scheduled: [date/time]
 | Role             | Contact                   | Responsibility                       |
 | ---------------- | ------------------------- | ------------------------------------ |
 | On-Call Engineer | PagerDuty / On-call phone | First responder, triage, containment |
-| Security Lead    | security@huston-housing.io        | Security incident investigation      |
-| DevOps Lead      | devops@huston-housing.io          | Infrastructure incidents             |
-| Engineering Lead | engineering@huston-housing.io     | Code-level remediation               |
-| CTO              | cto@huston-housing.io             | Business decisions, P1 escalation    |
+| Security Lead    | security@arbitra.io        | Security incident investigation      |
+| DevOps Lead      | devops@arbitra.io          | Infrastructure incidents             |
+| Engineering Lead | engineering@arbitra.io     | Code-level remediation               |
+| CTO              | cto@arbitra.io             | Business decisions, P1 escalation    |
 
 **Escalation path:** On-Call Engineer → Engineering Lead → CTO
 

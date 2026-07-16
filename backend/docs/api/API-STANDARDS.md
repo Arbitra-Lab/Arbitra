@@ -1,4 +1,4 @@
-# Houston Housing API Documentation Standards
+# Arbitra API Documentation Standards
 
 This document defines the conventions all backend engineers must follow when adding or modifying API endpoints. Following these standards keeps Swagger/OpenAPI output accurate and consistent.
 

@@ -1,4 +1,4 @@
-# Houston Housing Demo Credentials
+# Arbitra Demo Credentials
 
 This document contains demo user credentials for development and testing purposes.
 
@@ -65,28 +65,28 @@ These credentials are used in production for demo purposes:
 
 #### Admin User
 
-- **Email:** `admin@huston-housing.demo`
+- **Email:** `admin@arbitra.demo`
 - **Password:** `Admin@Demo2024!`
 - **Role:** Admin
 - **Access:** Full system administration
 
 #### Agent User
 
-- **Email:** `agent@huston-housing.demo`
+- **Email:** `agent@arbitra.demo`
 - **Password:** `Agent@Demo2024!`
 - **Role:** Agent
 - **Access:** Property management, client relations
 
 #### Landlord User
 
-- **Email:** `landlord@huston-housing.demo`
+- **Email:** `landlord@arbitra.demo`
 - **Password:** `Landlord@Demo2024!`
 - **Role:** Landlord
 - **Access:** Property listings, tenant management
 
 #### Tenant User
 
-- **Email:** `tenant@huston-housing.demo`
+- **Email:** `tenant@arbitra.demo`
 - **Password:** `Tenant@Demo2024!`
 - **Role:** Tenant
 - **Access:** Property browsing, rent payments
@@ -97,28 +97,28 @@ For local development (auto-generated passwords):
 
 #### Admin User
 
-- **Email:** `admin@huston-housing.local`
+- **Email:** `admin@arbitra.local`
 - **Password:** `QwW??H<EauRx6EyB>wm_`
 - **Role:** Admin
 - **Access:** Full system administration
 
 #### Agent User
 
-- **Email:** `agent@huston-housing.local`
+- **Email:** `agent@arbitra.local`
 - **Password:** `nWkW~HWN6S*-6o!??kHg`
 - **Role:** Agent
 - **Access:** Property management, client relations
 
 #### Landlord User
 
-- **Email:** `landlord@huston-housing.local`
+- **Email:** `landlord@arbitra.local`
 - **Password:** (auto-generated on seed)
 - **Role:** Landlord
 - **Access:** Property listings, tenant management
 
 #### Tenant User
 
-- **Email:** `tenant@huston-housing.local`
+- **Email:** `tenant@arbitra.local`
 - **Password:** `8T<}2QXRm(?rwyJ4Pq3/`
 - **Role:** Tenant
 - **Access:** Property browsing, rent payments
@@ -167,7 +167,7 @@ DB_HOST=localhost
 DB_PORT=5432
 DB_USERNAME=postgres
 DB_PASSWORD=password
-DB_NAME=huston-housing_db
+DB_NAME=arbitra_db
 ```
 
 Run migrations before seeding:

@@ -1,6 +1,6 @@
 # Error Handling
 
-This document covers the error handling architecture across the Houston Housing platform, including backend exception filters, custom error classes, frontend error classification, and standardized error response formats.
+This document covers the error handling architecture across the Arbitra platform, including backend exception filters, custom error classes, frontend error classification, and standardized error response formats.
 
 ---
 
@@ -29,7 +29,7 @@ This document covers the error handling architecture across the Houston Housing 
 
 ## Overview
 
-Houston Housing uses a layered error handling strategy:
+Arbitra uses a layered error handling strategy:
 
 1. **Backend:** A global `AllExceptionsFilter` catches all unhandled exceptions and maps them to standardized HTTP responses
 2. **Frontend:** An `AppError` type system classifies errors by category, severity, and recoverability, with user-friendly messages
@@ -134,7 +134,7 @@ The filter maps exceptions to HTTP status codes in priority order:
 
 ### Custom Error Classes
 
-Houston Housing defines domain-specific error classes for clear exception handling:
+Arbitra defines domain-specific error classes for clear exception handling:
 
 #### Retry Errors (`backend/src/common/errors/retry-errors.ts`)
 
@@ -361,7 +361,7 @@ logError(error, { source: 'PaymentForm', action: 'submit' });
 Output (console):
 
 ```
-[Houston Housing Error] {
+[Arbitra Error] {
   name: "AppError",
   message: "HTTP 500 Server Error",
   stack: "...",
@@ -370,7 +370,7 @@ Output (console):
 }
 ```
 
-**External reporter integration:** Assign `window.__HUSTON_HOUSING_ERROR_REPORTER__` to forward errors to an external service (e.g., Sentry browser SDK).
+**External reporter integration:** Assign `window.__ARBITRA_ERROR_REPORTER__` to forward errors to an external service (e.g., Sentry browser SDK).
 
 ---
 

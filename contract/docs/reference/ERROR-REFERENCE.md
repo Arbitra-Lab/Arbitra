@@ -1,6 +1,6 @@
-# Houston Housing Contract Error Reference
+# Arbitra Contract Error Reference
 
-This document provides a comprehensive reference of error codes used across the Houston Housing housing protocol smart contracts.
+This document provides a comprehensive reference of error codes used across the Arbitra housing protocol smart contracts.
 
 ## Overview
 Error codes are returned as `u32` values when a contract operation fails. This guide helps developers and integrators understand the meaning, causes, and potential solutions for these errors.

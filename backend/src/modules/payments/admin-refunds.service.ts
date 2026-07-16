@@ -157,7 +157,7 @@ export class AdminRefundsService {
       currency: payment.currency,
       status,
       requesterName: this.getUserName(user),
-      requesterEmail: user?.email || 'unknown@huston-housing.local',
+      requesterEmail: user?.email || 'unknown@arbitra.local',
       reasonSummary: reason.slice(0, 120),
       requestedAt: payment.createdAt.toISOString(),
       updatedAt: payment.updatedAt.toISOString(),

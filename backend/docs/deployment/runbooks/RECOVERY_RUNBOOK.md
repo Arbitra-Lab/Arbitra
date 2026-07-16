@@ -1,6 +1,6 @@
 # Database Recovery Runbook
 
-**Project:** Houston Housing Platform  
+**Project:** Arbitra Platform  
 **Version:** 1.0  
 **Last Updated:** April 2026  
 **Owner:** Database Administrator / On-Call Engineer  
@@ -57,22 +57,22 @@ Is database accessible?
 
 ```bash
 # 1. STOP - Don't do anything else that might write to DB
-systemctl stop huston-housing-backend
+systemctl stop arbitra-backend
 
 # 2. Identify when deletion occurred
 DELETION_TIME="2024-03-30 14:30:00"
 
 # 3. Run PITR recovery
-/opt/huston-housing/scripts/recover-pitr.sh "$DELETION_TIME" "s3://huston-housing-backups-prod/full/[latest_backup]"
+/opt/arbitra/scripts/recover-pitr.sh "$DELETION_TIME" "s3://arbitra-backups-prod/full/[latest_backup]"
 
 # 4. Verify recovery
-psql -U huston-housing -c "SELECT COUNT(*) FROM users;"
+psql -U arbitra -c "SELECT COUNT(*) FROM users;"
 
 # 5. Restart application
-systemctl start huston-housing-backend
+systemctl start arbitra-backend
 
 # 6. Monitor logs
-tail -f /var/log/huston-housing/application.log
+tail -f /var/log/arbitra/application.log
 ```
 
 ### Detailed Procedure
@@ -81,18 +81,18 @@ tail -f /var/log/huston-housing/application.log
 
 ```bash
 # 1a. Confirm table is deleted
-psql -U huston-housing -d postgres -c "\dt users"
+psql -U arbitra -d postgres -c "\dt users"
 # If no output, table is gone
 
 # 1b. Check database logs for deletion time
 tail -100 /var/log/postgresql/postgresql.log | grep DROP
 
 # 1c. Estimate data loss impact
-psql -U huston-housing -c "SELECT COUNT(*) FROM properties;"  # May fail if linked table gone
+psql -U arbitra -c "SELECT COUNT(*) FROM properties;"  # May fail if linked table gone
 
 # 1d. Stop writes to prevent further damage
-systemctl stop huston-housing-backend
-systemctl stop huston-housing-cron  # Stop any scheduled jobs
+systemctl stop arbitra-backend
+systemctl stop arbitra-cron  # Stop any scheduled jobs
 echo "Application stopped at $(date)"
 ```
 
@@ -113,7 +113,7 @@ RECOVERY_TIME=$(date -u -d "$DELETION_TIME - 5 minutes" '+%Y-%m-%d %H:%M:%S')
 echo "Will recover to: $RECOVERY_TIME"
 
 # 2c. Verify WAL archives available
-aws s3 ls s3://huston-housing-backups-prod/wal/ | tail -20
+aws s3 ls s3://arbitra-backups-prod/wal/ | tail -20
 # Should see WAL files around the deletion time
 ```
 
@@ -129,12 +129,12 @@ du -sh /var/lib/postgresql/data
 # Should have enough free space to clear and restore
 
 # 3c. Get latest full backup
-BACKUP_DATE=$(aws s3 ls s3://huston-housing-backups-prod/full/ | tail -1 | awk '{print $4}')
+BACKUP_DATE=$(aws s3 ls s3://arbitra-backups-prod/full/ | tail -1 | awk '{print $4}')
 echo "Using backup from: $BACKUP_DATE"
 
 # 3d. Download backup locally (optional, for speed)
 mkdir -p /backups/recovery
-aws s3 cp s3://huston-housing-backups-prod/full/${BACKUP_DATE}/ /backups/recovery/ --recursive
+aws s3 cp s3://arbitra-backups-prod/full/${BACKUP_DATE}/ /backups/recovery/ --recursive
 echo "Backup prepared for recovery"
 ```
 
@@ -151,7 +151,7 @@ echo "Base backup extracted"
 
 # 4c. Create recovery configuration
 cat > /var/lib/postgresql/data/recovery.conf << EOF
-restore_command = 'aws s3 cp s3://huston-housing-backups-prod/wal/%f %p'
+restore_command = 'aws s3 cp s3://arbitra-backups-prod/wal/%f %p'
 recovery_target_time = '${RECOVERY_TIME}'
 recovery_target_action = 'promote'
 EOF
@@ -177,7 +177,7 @@ tail -f /var/log/postgresql/postgresql.log | grep -i "recovery\|restored\|comple
 # Expected message: "database system is ready to accept connections"
 
 # 5b. Connect to database
-psql -U huston-housing -d postgres
+psql -U arbitra -d postgres
 
 # 5c. Verify deleted table is restored
 SELECT COUNT(*) FROM users;
@@ -188,7 +188,7 @@ SELECT DISTINCT role FROM users;  -- Should show multiple roles
 SELECT DISTINCT status FROM rental_agreements;  -- Should show multiple statuses
 
 # 5e. Check for corruption
-REINDEX DATABASE huston-housing;  -- Takes 2-5 minutes
+REINDEX DATABASE arbitra;  -- Takes 2-5 minutes
 ANALYZE;  -- Updates statistics
 
 # 5f. Exit psql
@@ -199,12 +199,12 @@ ANALYZE;  -- Updates statistics
 
 ```bash
 # 6a. Start application services
-systemctl start huston-housing-backend
-systemctl start huston-housing-cron
+systemctl start arbitra-backend
+systemctl start arbitra-cron
 echo "Application started at $(date)"
 
 # 6b. Monitor application logs
-tail -50 /var/log/huston-housing/application.log | grep -i error
+tail -50 /var/log/arbitra/application.log | grep -i error
 
 # 6c. Test basic connectivity
 curl -s http://localhost:3000/health | jq .
@@ -219,10 +219,10 @@ curl -s http://localhost:3000/api/users?limit=1 | jq '.data[0]'
 # 7a. Send notification to stakeholders
 echo "Database recovery completed successfully at $(date)" | \
   mail -s "Database Recovery Complete - Deleted Table Restored" \
-  operations@huston-housing.dev
+  operations@arbitra.dev
 
 # 7b. Create incident report
-cat > /var/log/huston-housing/incident_$(date +%Y%m%d_%H%M%S).log << EOF
+cat > /var/log/arbitra/incident_$(date +%Y%m%d_%H%M%S).log << EOF
 INCIDENT: Accidental Table Deletion
 
 TIMELINE:
@@ -243,13 +243,13 @@ PREVENTIVE MEASURES: [What to prevent in future]
 EOF
 
 # 7c. Document recovery for audit trail
-aws s3 cp /var/log/huston-housing/incident_*.log s3://huston-housing-backups-prod/incidents/
+aws s3 cp /var/log/arbitra/incident_*.log s3://arbitra-backups-prod/incidents/
 
 # 7d. Schedule post-incident review (within 24 hours)
 echo "Schedule post-incident review for tomorrow at 10 AM"
 
 # 7e. Verify backup is still working
-/opt/huston-housing/scripts/verify-backup.sh
+/opt/arbitra/scripts/verify-backup.sh
 ```
 
 ### Troubleshooting
@@ -260,7 +260,7 @@ echo "Schedule post-incident review for tomorrow at 10 AM"
 
 ```bash
 # Check available WAL files
-aws s3 ls s3://huston-housing-backups-prod/wal/ | grep $(date +%Y%m%d)
+aws s3 ls s3://arbitra-backups-prod/wal/ | grep $(date +%Y%m%d)
 
 # Check recovery logs
 tail -20 /var/log/postgresql/postgresql.log | grep WAL
@@ -338,7 +338,7 @@ echo "Expected recovery time: $RECOVERY_TIME"
 RECOVERY_TIME="2024-03-30 14:30:00"  # Exact time before issue
 
 # 2. Stop writes to database
-systemctl stop huston-housing-backend
+systemctl stop arbitra-backend
 
 # 3. Stop PostgreSQL
 systemctl stop postgresql
@@ -349,7 +349,7 @@ tar -xzf /backups/recovery/base.tar.gz -C /var/lib/postgresql/data/
 
 # 5. Create recovery.conf with target time
 cat > /var/lib/postgresql/data/recovery.conf << EOF
-restore_command = 'aws s3 cp s3://huston-housing-backups-prod/wal/%f %p'
+restore_command = 'aws s3 cp s3://arbitra-backups-prod/wal/%f %p'
 recovery_target_time = '${RECOVERY_TIME}'
 recovery_target_action = 'promote'
 EOF
@@ -361,22 +361,22 @@ systemctl start postgresql
 tail -f /var/log/postgresql/postgresql.log | grep -i "complete\|ready"
 
 # 8. Verify recovery point
-psql -U huston-housing -c "SELECT EXTRACT(EPOCH FROM pg_postmaster_start_time()) as start_time;"
+psql -U arbitra -c "SELECT EXTRACT(EPOCH FROM pg_postmaster_start_time()) as start_time;"
 
 # 9. Restart application
-systemctl start huston-housing-backend
+systemctl start arbitra-backend
 ```
 
 ### Detailed Verification
 
 ```bash
 # Verify the recovery point achieved
-psql -U huston-housing -c \
+psql -U arbitra -c \
   "SELECT last_wal_receive_lsn, last_wal_replay_lsn, latest_end_lsn
    FROM pg_stat_replication;"
 
 # Check for data integrity
-psql -U huston-housing << EOF
+psql -U arbitra << EOF
 -- Check table counts
 SELECT 'users' as table, COUNT(*) FROM users
 UNION ALL
@@ -390,7 +390,7 @@ SELECT MAX(updated_at) as latest_updated FROM properties;
 EOF
 
 # Run REINDEX and ANALYZE
-psql -U huston-housing -c "REINDEX DATABASE huston-housing; ANALYZE;"
+psql -U arbitra -c "REINDEX DATABASE arbitra; ANALYZE;"
 ```
 
 ---
@@ -407,27 +407,27 @@ psql -U huston-housing -c "REINDEX DATABASE huston-housing; ANALYZE;"
 
 ```bash
 # 1. Stop application to prevent further corruption
-systemctl stop huston-housing-backend
+systemctl stop arbitra-backend
 
 # 2. Download latest known-good backup
-BACKUP=$(aws s3 ls s3://huston-housing-backups-prod/full/ | tail -1 | awk '{print $4}')
-aws s3 cp s3://huston-housing-backups-prod/full/${BACKUP}/ /backups/recovery/ --recursive
+BACKUP=$(aws s3 ls s3://arbitra-backups-prod/full/ | tail -1 | awk '{print $4}')
+aws s3 cp s3://arbitra-backups-prod/full/${BACKUP}/ /backups/recovery/ --recursive
 
 # 3. Stop PostgreSQL
 systemctl stop postgresql
 
 # 4. Create new database
-psql -U postgres -c "DROP DATABASE IF EXISTS huston-housing; CREATE DATABASE huston-housing;"
+psql -U postgres -c "DROP DATABASE IF EXISTS arbitra; CREATE DATABASE arbitra;"
 
 # 5. Restore backup
-pg_restore -h localhost -U postgres -d huston-housing --clean --if-exists /backups/recovery/huston-housing_*.sql.gz
+pg_restore -h localhost -U postgres -d arbitra --clean --if-exists /backups/recovery/arbitra_*.sql.gz
 
 # 6. Start PostgreSQL and verify
 systemctl start postgresql
-psql -U huston-housing -c "SELECT COUNT(*) FROM users;"
+psql -U arbitra -c "SELECT COUNT(*) FROM users;"
 
 # 7. Restart application
-systemctl start huston-housing-backend
+systemctl start arbitra-backend
 ```
 
 ### Detailed Procedure
@@ -436,11 +436,11 @@ systemctl start huston-housing-backend
 
 ```bash
 # 1a. Attempt connection
-psql -U huston-housing -d postgres
+psql -U arbitra -d postgres
 # If connection fails, database is unreachable
 
 # 1b. If connected, check for obvious corruption
-psql -U huston-housing << EOF
+psql -U arbitra << EOF
 -- Check for missing tables
 SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' LIMIT 5;
 
@@ -449,7 +449,7 @@ SELECT COUNT(*) FROM users;
 SELECT MIN(created_at), MAX(created_at) FROM users;
 
 -- Check for index issues
-REINDEX DATABASE huston-housing;
+REINDEX DATABASE arbitra;
 
 -- Check for constraint violations
 SELECT * FROM information_schema.constraint_column_usage LIMIT 5;
@@ -471,15 +471,15 @@ echo "Corruption assessment:
 
 ```bash
 # 2a. Stop application immediately
-systemctl stop huston-housing-backend
+systemctl stop arbitra-backend
 echo "Application stopped at $(date)"
 
 # 2b. Stop any background jobs
-systemctl stop huston-housing-cron
-systemctl stop huston-housing-scheduled-tasks
+systemctl stop arbitra-cron
+systemctl stop arbitra-scheduled-tasks
 
 # 2c. Stop automated backups to prevent including corruption
-systemctl stop huston-housing-backup-service
+systemctl stop arbitra-backup-service
 # Or manually kill backup process
 killall pg_basebackup pg_dump
 
@@ -489,7 +489,7 @@ killall pg_basebackup pg_dump
 
 # 2e. Notify team
 echo "⚠️  Database corruption detected - recovery in progress" | \
-  mail -s "URGENT: Database Recovery in Progress" team@huston-housing.dev
+  mail -s "URGENT: Database Recovery in Progress" team@arbitra.dev
 ```
 
 #### Step 3: Download Latest Backup (5-15 minutes)
@@ -497,16 +497,16 @@ echo "⚠️  Database corruption detected - recovery in progress" | \
 ```bash
 # 3a. Identify latest backup before corruption was introduced
 # Usually use most recent daily backup
-LATEST_BACKUP=$(aws s3 ls s3://huston-housing-backups-prod/full/ | tail -1 | awk '{print $4}')
+LATEST_BACKUP=$(aws s3 ls s3://arbitra-backups-prod/full/ | tail -1 | awk '{print $4}')
 echo "Latest backup: $LATEST_BACKUP"
 
 # 3b. Check backup metadata
-aws s3 cp s3://huston-housing-backups-prod/full/${LATEST_BACKUP}/metadata.json - | jq .
+aws s3 cp s3://arbitra-backups-prod/full/${LATEST_BACKUP}/metadata.json - | jq .
 
 # 3c. Download backup to local storage
 mkdir -p /backups/recovery/${LATEST_BACKUP}
 echo "Downloading backup (this may take 20-60 minutes)..."
-time aws s3 cp s3://huston-housing-backups-prod/full/${LATEST_BACKUP}/ \
+time aws s3 cp s3://arbitra-backups-prod/full/${LATEST_BACKUP}/ \
   /backups/recovery/${LATEST_BACKUP}/ \
   --recursive \
   --no-progress 2>&1 | tee /tmp/download.log
@@ -580,9 +580,9 @@ echo "Database is accessible"
 
 ```bash
 # 6a. Check database integrity
-psql -U huston-housing << EOF
+psql -U arbitra << EOF
 -- Run integrity checks
-REINDEX DATABASE huston-housing;
+REINDEX DATABASE arbitra;
 ANALYZE;
 
 -- Check table counts
@@ -624,16 +624,16 @@ echo "❌ Data integrity issues found - investigate before restart"
 
 ```bash
 # 7a. Start application
-systemctl start huston-housing-backend
+systemctl start arbitra-backend
 echo "Application started at $(date)"
 
 # 7b. Start background jobs
-systemctl start huston-housing-cron
-systemctl start huston-housing-scheduled-tasks
+systemctl start arbitra-cron
+systemctl start arbitra-scheduled-tasks
 
 # 7c. Monitor startup
 sleep 5
-tail -50 /var/log/huston-housing/application.log | grep -E "ERROR|WARN|startup"
+tail -50 /var/log/arbitra/application.log | grep -E "ERROR|WARN|startup"
 
 # 7d. Health check
 curl -s http://localhost:3000/health | jq .status
@@ -648,7 +648,7 @@ curl -s "http://localhost:3000/api/properties?limit=1" | jq '.data | length'
 
 ```bash
 # 8a. Create incident documentation
-cat > /var/log/huston-housing/recovery_report_$(date +%Y%m%d_%H%M%S).md << EOF
+cat > /var/log/arbitra/recovery_report_$(date +%Y%m%d_%H%M%S).md << EOF
 # Database Corruption Recovery Report
 
 ## Timeline
@@ -679,23 +679,23 @@ EOF
 # 8b. Notify stakeholders
 mail -s "Database Recovery Complete - Status Update" \
   -a "Content-Type: text/markdown" \
-  operations@huston-housing.dev < /var/log/huston-housing/recovery_report_*.md
+  operations@arbitra.dev < /var/log/arbitra/recovery_report_*.md
 
 # 8c. Archive corrupted database for forensics
 # Storage location for investigation
 echo "Corrupted database backed up at /backups/corrupted_data_*.tar.gz"
 
 # 8d. Restart automated backups
-systemctl start huston-housing-backup-service
+systemctl start arbitra-backup-service
 
 # 8e. Verify backup is working
-/opt/huston-housing/scripts/verify-backup.sh
+/opt/arbitra/scripts/verify-backup.sh
 
 # 8f. Schedule post-incident review (24 hours)
 echo "Schedule incident review for tomorrow"
 
 # 8g. Check that daily backups resume normally
-watch 'aws s3 ls s3://huston-housing-backups-prod/full/ | tail -3'
+watch 'aws s3 ls s3://arbitra-backups-prod/full/ | tail -3'
 ```
 
 ### Troubleshooting Full Restore
@@ -706,13 +706,13 @@ watch 'aws s3 ls s3://huston-housing-backups-prod/full/ | tail -3'
 
 ```bash
 # Check file exists
-ls -lh /backups/recovery/huston-housing_*.sql.gz
+ls -lh /backups/recovery/arbitra_*.sql.gz
 
 # Verify file integrity
-gzip -t /backups/recovery/huston-housing_*.sql.gz
+gzip -t /backups/recovery/arbitra_*.sql.gz
 
 # If corrupted, re-download
-aws s3 cp s3://huston-housing-backups-prod/full/${LATEST_BACKUP}/ /backups/recovery/ --recursive
+aws s3 cp s3://arbitra-backups-prod/full/${LATEST_BACKUP}/ /backups/recovery/ --recursive
 ```
 
 #### "pg_restore: error: foreign key constraint violations"
@@ -726,10 +726,10 @@ aws s3 cp s3://huston-housing-backups-prod/full/${LATEST_BACKUP}/ /backups/recov
 pg_restore ... --disable-triggers --data-only
 
 # Option 2: Restore to different database first
-pg_restore ... -d huston-housing_test  # Test restore
+pg_restore ... -d arbitra_test  # Test restore
 
 # Option 3: Manually fix constraint violations
-psql -U huston-housing << EOF
+psql -U arbitra << EOF
 -- Identify orphaned records
 SELECT * FROM escrow e WHERE NOT EXISTS (
   SELECT 1 FROM rental_agreements a WHERE a.id = e.agreement_id
@@ -765,9 +765,9 @@ iostat -x 1 | head -20
 # 3. Use --jobs option for parallel restore
 
 pg_restore \
-  -h localhost -U postgres -d huston-housing \
+  -h localhost -U postgres -d arbitra \
   --jobs=4 \
-  /backups/recovery/huston-housing_*.sql.gz
+  /backups/recovery/arbitra_*.sql.gz
 ```
 
 ---
@@ -788,11 +788,11 @@ pg_restore \
 # - Install PostgreSQL, configure access
 
 # 2. Download latest snapshot backup
-aws s3 cp s3://huston-housing-backups-prod/snapshot/$(aws s3 ls s3://huston-housing-backups-prod/snapshot/ | tail -1 | awk '{print $4}') /tmp/
+aws s3 cp s3://arbitra-backups-prod/snapshot/$(aws s3 ls s3://arbitra-backups-prod/snapshot/ | tail -1 | awk '{print $4}') /tmp/
 
 # 3. Restore snapshot
-gunzip /tmp/huston-housing_snapshot_*.sql.gz
-psql -U postgres -f /tmp/huston-housing_snapshot_*.sql
+gunzip /tmp/arbitra_snapshot_*.sql.gz
+psql -U postgres -f /tmp/arbitra_snapshot_*.sql
 
 # 4. Apply WAL archives (if available)
 # For each WAL file after snapshot:
@@ -826,27 +826,27 @@ See [BACKUP_AND_RECOVERY.md Section 5.5: Disaster Recovery](../BACKUP_AND_RECOVE
 TABLE_NAME="users"  # Or whichever table is corrupted
 
 # 2. Create recovery backup (before restoring)
-pg_dump -U huston-housing -d huston-housing -t ${TABLE_NAME} > /tmp/${TABLE_NAME}_current.sql
+pg_dump -U arbitra -d arbitra -t ${TABLE_NAME} > /tmp/${TABLE_NAME}_current.sql
 
 # 3. Get backup with correct table
-BACKUP="s3://huston-housing-backups-prod/full/20240330_000000"
+BACKUP="s3://arbitra-backups-prod/full/20240330_000000"
 
 # 4. Download backup
 aws s3 cp ${BACKUP}/ /backups/recovery/ --recursive
 
 # 5. Restore specific table to test database
-pg_restore -U postgres -d huston-housing_test -t ${TABLE_NAME} /backups/recovery/huston-housing_*.sql.gz
+pg_restore -U postgres -d arbitra_test -t ${TABLE_NAME} /backups/recovery/arbitra_*.sql.gz
 
 # 6. Verify recovered table
-psql -U postgres -d huston-housing_test -c "SELECT COUNT(*) FROM ${TABLE_NAME};"
+psql -U postgres -d arbitra_test -c "SELECT COUNT(*) FROM ${TABLE_NAME};"
 
 # 7. Replace corrupted table (Option A: Rename, restore, replace)
-psql -U huston-housing << EOF
+psql -U arbitra << EOF
 -- Backup current corrupted table
 ALTER TABLE ${TABLE_NAME} RENAME TO ${TABLE_NAME}_corrupted;
 
 -- Restore clean table from recovery database
-\copy (SELECT * FROM huston-housing_test.${TABLE_NAME}) TO /tmp/${TABLE_NAME}_clean.sql
+\copy (SELECT * FROM arbitra_test.${TABLE_NAME}) TO /tmp/${TABLE_NAME}_clean.sql
 
 -- Import clean table into production
 DROP TABLE IF EXISTS ${TABLE_NAME};
@@ -857,10 +857,10 @@ DROP TABLE ${TABLE_NAME}_corrupted;
 EOF
 
 # 8. Verify
-psql -U huston-housing -c "SELECT COUNT(*) FROM ${TABLE_NAME};"
+psql -U arbitra -c "SELECT COUNT(*) FROM ${TABLE_NAME};"
 
 # 9. Restart application
-systemctl restart huston-housing-backend
+systemctl restart arbitra-backend
 ```
 
 ### Alternative: Restore Using PITR
@@ -869,19 +869,19 @@ systemctl restart huston-housing-backend
 # If using point-in-time recovery for single table:
 
 # 1. Recover to temp database at specific time
-psql -U postgres -c "CREATE DATABASE huston-housing_pitr_temp;"
+psql -U postgres -c "CREATE DATABASE arbitra_pitr_temp;"
 
 # 2. Restore from PITR backup
 recover-pitr.sh "2024-03-30 14:25:00" s3://backup/full/latest
 
 # 3. Export recovered table
-pg_dump -U postgres -d huston-housing_pitr_temp -t ${TABLE_NAME} > /tmp/${TABLE_NAME}_recovered.sql
+pg_dump -U postgres -d arbitra_pitr_temp -t ${TABLE_NAME} > /tmp/${TABLE_NAME}_recovered.sql
 
 # 4. Import into production
-psql -U postgres -d huston-housing < /tmp/${TABLE_NAME}_recovered.sql
+psql -U postgres -d arbitra < /tmp/${TABLE_NAME}_recovered.sql
 
 # 5. Drop temp database
-psql -U postgres -c "DROP DATABASE huston-housing_pitr_temp;"
+psql -U postgres -c "DROP DATABASE arbitra_pitr_temp;"
 ```
 
 ---
@@ -898,10 +898,10 @@ psql -U postgres -c "DROP DATABASE huston-housing_pitr_temp;"
 
 ```bash
 # 1. Check replication status on primary
-psql -U huston-housing -c "SELECT * FROM pg_stat_replication;"
+psql -U arbitra -c "SELECT * FROM pg_stat_replication;"
 
 # 2. Check lag
-psql -U huston-housing -c "SELECT
+psql -U arbitra -c "SELECT
   client_addr,
   state,
   write_lag,
@@ -916,7 +916,7 @@ FROM pg_stat_replication;"
 #   - Restart replication if stuck: pg_ctl restart
 
 # 4. Monitor recovery
-watch 'psql -U huston-housing -c "SELECT now() - pg_last_wal_receive_lsn() as lag;"'
+watch 'psql -U arbitra -c "SELECT now() - pg_last_wal_receive_lsn() as lag;"'
 # Should decrease over time
 ```
 
@@ -939,13 +939,13 @@ netstat -tlnp | grep 5432
 tail -50 /var/log/postgresql/postgresql.log | grep -i error
 ```
 
-### "FATAL: role 'huston-housing' does not exist"
+### "FATAL: role 'arbitra' does not exist"
 
 ```bash
 # User doesn't exist
-psql -U postgres -c "CREATE USER huston-housing WITH PASSWORD 'password';"
-psql -U postgres -c "ALTER ROLE huston-housing WITH SUPERUSER;"
-psql -U postgres -c "GRANT ALL PRIVILEGES ON DATABASE huston-housing TO huston-housing;"
+psql -U postgres -c "CREATE USER arbitra WITH PASSWORD 'password';"
+psql -U postgres -c "ALTER ROLE arbitra WITH SUPERUSER;"
+psql -U postgres -c "GRANT ALL PRIVILEGES ON DATABASE arbitra TO arbitra;"
 ```
 
 ### "permission denied for schema public"
@@ -953,9 +953,9 @@ psql -U postgres -c "GRANT ALL PRIVILEGES ON DATABASE huston-housing TO huston-h
 ```bash
 # Grant permissions to user
 psql -U postgres << EOF
-GRANT ALL PRIVILEGES ON SCHEMA public TO huston-housing;
-GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO huston-housing;
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO huston-housing;
+GRANT ALL PRIVILEGES ON SCHEMA public TO arbitra;
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO arbitra;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO arbitra;
 EOF
 ```
 

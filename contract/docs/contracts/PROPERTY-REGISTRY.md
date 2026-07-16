@@ -17,14 +17,14 @@
 
 ## Contract Overview
 
-The **Property Registry** contract provides an on-chain property verification layer for the Houston Housing housing protocol. It enables landlords to register properties with metadata hashes and allows administrators to verify property authenticity before they can be used in rental agreements.
+The **Property Registry** contract provides an on-chain property verification layer for the Arbitra housing protocol. It enables landlords to register properties with metadata hashes and allows administrators to verify property authenticity before they can be used in rental agreements.
 
 ### Purpose
 
 - Maintain a decentralized registry of rental properties on the Stellar blockchain
 - Enable landlords to register properties with verifiable metadata
 - Provide admin-controlled verification of property authenticity
-- Support property queries for integration with other Houston Housing contracts (e.g., rental agreements, escrow)
+- Support property queries for integration with other Arbitra contracts (e.g., rental agreements, escrow)
 
 ### Key Features
 

@@ -159,7 +159,7 @@ pending → failed
 
 ## Status Mapping
 
-| Anchor Status               | Houston Housing Status |
+| Anchor Status               | Arbitra Status |
 | --------------------------- | ------------- |
 | pending_user_transfer_start | pending       |
 | pending_anchor              | processing    |

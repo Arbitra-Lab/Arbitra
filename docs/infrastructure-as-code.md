@@ -48,16 +48,16 @@ RUN npm prune --production
 FROM node:20-alpine AS runtime
 
 # Security: run as non-root user
-RUN addgroup -S huston-housing && adduser -S huston-housing -G huston-housing
+RUN addgroup -S arbitra && adduser -S arbitra -G arbitra
 
 WORKDIR /app
 
 # Copy only what the runtime needs
-COPY --from=builder --chown=huston-housing:huston-housing /app/dist ./dist
-COPY --from=builder --chown=huston-housing:huston-housing /app/node_modules ./node_modules
-COPY --from=builder --chown=huston-housing:huston-housing /app/package.json ./package.json
+COPY --from=builder --chown=arbitra:arbitra /app/dist ./dist
+COPY --from=builder --chown=arbitra:arbitra /app/node_modules ./node_modules
+COPY --from=builder --chown=arbitra:arbitra /app/package.json ./package.json
 
-USER huston-housing
+USER arbitra
 
 EXPOSE 3000
 
@@ -90,16 +90,16 @@ RUN npm run build
 # ── Runtime ──────────────────────────────────────────────────────────────────
 FROM node:20-alpine AS runtime
 
-RUN addgroup -S huston-housing && adduser -S huston-housing -G huston-housing
+RUN addgroup -S arbitra && adduser -S arbitra -G arbitra
 
 WORKDIR /app
 
-COPY --from=builder --chown=huston-housing:huston-housing /app/.next ./.next
-COPY --from=builder --chown=huston-housing:huston-housing /app/public ./public
-COPY --from=builder --chown=huston-housing:huston-housing /app/node_modules ./node_modules
-COPY --from=builder --chown=huston-housing:huston-housing /app/package.json ./package.json
+COPY --from=builder --chown=arbitra:arbitra /app/.next ./.next
+COPY --from=builder --chown=arbitra:arbitra /app/public ./public
+COPY --from=builder --chown=arbitra:arbitra /app/node_modules ./node_modules
+COPY --from=builder --chown=arbitra:arbitra /app/package.json ./package.json
 
-USER huston-housing
+USER arbitra
 
 EXPOSE 3001
 
@@ -110,17 +110,17 @@ CMD ["npm", "start"]
 
 ```bash
 # Backend
-docker build -t huston-housing-backend:latest ./backend
+docker build -t arbitra-backend:latest ./backend
 
 # Frontend (with build args)
 docker build \
-  --build-arg NEXT_PUBLIC_API_URL=https://api.huston-housing.app \
+  --build-arg NEXT_PUBLIC_API_URL=https://api.arbitra.app \
   --build-arg NEXT_PUBLIC_STELLAR_NETWORK=testnet \
-  -t huston-housing-frontend:latest ./frontend
+  -t arbitra-frontend:latest ./frontend
 
 # Tag for a registry
-docker tag huston-housing-backend:latest ghcr.io/huston-housing-housing-protocol-i/huston-housing/backend:latest
-docker push ghcr.io/huston-housing-housing-protocol-i/huston-housing/backend:latest
+docker tag arbitra-backend:latest ghcr.io/arbitra-housing-protocol-i/arbitra/backend:latest
+docker push ghcr.io/arbitra-housing-protocol-i/arbitra/backend:latest
 ```
 
 ### 1.3 Image Tagging Convention
@@ -189,7 +189,7 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
-      POSTGRES_DB: huston-housing_db
+      POSTGRES_DB: arbitra_db
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./backend/src/database/migrations:/docker-entrypoint-initdb.d
@@ -244,7 +244,7 @@ docker compose restart backend
 docker compose exec backend npm run migration:run
 
 # Open a PostgreSQL shell
-docker compose exec postgres psql -U postgres huston-housing_db
+docker compose exec postgres psql -U postgres arbitra_db
 
 # Stop and remove containers (keep volumes)
 docker compose down
@@ -261,7 +261,7 @@ version: "3.9"
 
 services:
   backend:
-    image: ghcr.io/huston-housing-housing-protocol-i/huston-housing/backend:${IMAGE_TAG}
+    image: ghcr.io/arbitra-housing-protocol-i/arbitra/backend:${IMAGE_TAG}
     command: node dist/main.js
     environment:
       NODE_ENV: production
@@ -274,7 +274,7 @@ services:
         failure_action: rollback
 
   frontend:
-    image: ghcr.io/huston-housing-housing-protocol-i/huston-housing/frontend:${IMAGE_TAG}
+    image: ghcr.io/arbitra-housing-protocol-i/arbitra/frontend:${IMAGE_TAG}
     restart: always
 ```
 
@@ -294,9 +294,9 @@ IMAGE_TAG=v1.2.3 docker compose -f docker-compose.yml -f docker-compose.prod.yml
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: huston-housing
+  name: arbitra
   labels:
-    app.kubernetes.io/name: huston-housing
+    app.kubernetes.io/name: arbitra
 ```
 
 ### 3.2 Backend Deployment
@@ -306,15 +306,15 @@ metadata:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: huston-housing-backend
-  namespace: huston-housing
+  name: arbitra-backend
+  namespace: arbitra
   labels:
-    app: huston-housing-backend
+    app: arbitra-backend
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: huston-housing-backend
+      app: arbitra-backend
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -323,23 +323,23 @@ spec:
   template:
     metadata:
       labels:
-        app: huston-housing-backend
+        app: arbitra-backend
     spec:
-      serviceAccountName: huston-housing-backend
+      serviceAccountName: arbitra-backend
       securityContext:
         runAsNonRoot: true
         runAsUser: 1000
       containers:
         - name: backend
-          image: ghcr.io/huston-housing-housing-protocol-i/huston-housing/backend:v1.2.3
+          image: ghcr.io/arbitra-housing-protocol-i/arbitra/backend:v1.2.3
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3000
           envFrom:
             - configMapRef:
-                name: huston-housing-backend-config
+                name: arbitra-backend-config
             - secretRef:
-                name: huston-housing-backend-secrets
+                name: arbitra-backend-secrets
           resources:
             requests:
               cpu: "250m"
@@ -374,11 +374,11 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: huston-housing-backend
-  namespace: huston-housing
+  name: arbitra-backend
+  namespace: arbitra
 spec:
   selector:
-    app: huston-housing-backend
+    app: arbitra-backend
   ports:
     - port: 80
       targetPort: 3000
@@ -388,8 +388,8 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: huston-housing-backend
-  namespace: huston-housing
+  name: arbitra-backend
+  namespace: arbitra
   annotations:
     nginx.ingress.kubernetes.io/proxy-body-size: "10m"
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
@@ -397,17 +397,17 @@ spec:
   ingressClassName: nginx
   tls:
     - hosts:
-        - api.huston-housing.app
-      secretName: huston-housing-tls
+        - api.arbitra.app
+      secretName: arbitra-tls
   rules:
-    - host: api.huston-housing.app
+    - host: api.arbitra.app
       http:
         paths:
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: huston-housing-backend
+                name: arbitra-backend
                 port:
                   number: 80
 ```
@@ -419,8 +419,8 @@ spec:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: huston-housing-backend-config
-  namespace: huston-housing
+  name: arbitra-backend-config
+  namespace: arbitra
 data:
   NODE_ENV: "production"
   PORT: "3000"
@@ -440,8 +440,8 @@ data:
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: huston-housing-migration-v1-2-3
-  namespace: huston-housing
+  name: arbitra-migration-v1-2-3
+  namespace: arbitra
 spec:
   backoffLimit: 2
   template:
@@ -449,20 +449,20 @@ spec:
       restartPolicy: Never
       containers:
         - name: migration
-          image: ghcr.io/huston-housing-housing-protocol-i/huston-housing/backend:v1.2.3
+          image: ghcr.io/arbitra-housing-protocol-i/arbitra/backend:v1.2.3
           command: ["node", "dist/database/run-migrations.js"]
           envFrom:
             - configMapRef:
-                name: huston-housing-backend-config
+                name: arbitra-backend-config
             - secretRef:
-                name: huston-housing-backend-secrets
+                name: arbitra-backend-secrets
 ```
 
 ```bash
 # Apply and wait for completion
 kubectl apply -f k8s/jobs/migration.yaml
-kubectl wait --for=condition=complete job/huston-housing-migration-v1-2-3 -n huston-housing --timeout=120s
-kubectl logs job/huston-housing-migration-v1-2-3 -n huston-housing
+kubectl wait --for=condition=complete job/arbitra-migration-v1-2-3 -n arbitra --timeout=120s
+kubectl logs job/arbitra-migration-v1-2-3 -n arbitra
 ```
 
 ### 3.6 Horizontal Pod Autoscaler
@@ -472,13 +472,13 @@ kubectl logs job/huston-housing-migration-v1-2-3 -n huston-housing
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: huston-housing-backend
-  namespace: huston-housing
+  name: arbitra-backend
+  namespace: arbitra
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: huston-housing-backend
+    name: arbitra-backend
   minReplicas: 2
   maxReplicas: 10
   metrics:
@@ -536,11 +536,11 @@ terraform {
   }
 
   backend "s3" {
-    bucket         = "huston-housing-terraform-state"
+    bucket         = "arbitra-terraform-state"
     key            = "prod/terraform.tfstate"
     region         = "us-east-1"
     encrypt        = true
-    dynamodb_table = "huston-housing-terraform-locks"
+    dynamodb_table = "arbitra-terraform-locks"
   }
 }
 ```
@@ -549,15 +549,15 @@ terraform {
 
 ```hcl
 # infrastructure/modules/database/main.tf
-resource "aws_db_instance" "huston-housing_postgres" {
-  identifier        = "huston-housing-${var.environment}-postgres"
+resource "aws_db_instance" "arbitra_postgres" {
+  identifier        = "arbitra-${var.environment}-postgres"
   engine            = "postgres"
   engine_version    = "16.2"
   instance_class    = var.db_instance_class
   allocated_storage = var.db_storage_gb
   storage_encrypted = true
 
-  db_name  = "huston-housing_db"
+  db_name  = "arbitra_db"
   username = var.db_username
   password = var.db_password  # Injected from AWS Secrets Manager
 
@@ -570,7 +570,7 @@ resource "aws_db_instance" "huston-housing_postgres" {
 
   deletion_protection      = var.environment == "production"
   skip_final_snapshot      = var.environment != "production"
-  final_snapshot_identifier = "huston-housing-${var.environment}-final"
+  final_snapshot_identifier = "arbitra-${var.environment}-final"
 
   performance_insights_enabled = true
 
@@ -597,13 +597,13 @@ terraform -chdir=infrastructure destroy -var-file=terraform.tfvars
 terraform -chdir=infrastructure show
 
 # Import existing resource
-terraform -chdir=infrastructure import aws_s3_bucket.assets huston-housing-prod-assets
+terraform -chdir=infrastructure import aws_s3_bucket.assets arbitra-prod-assets
 ```
 
 ### 4.5 State Management
 
 - Remote state is stored in an S3 bucket with versioning enabled.
-- DynamoDB table `huston-housing-terraform-locks` prevents concurrent applies.
+- DynamoDB table `arbitra-terraform-locks` prevents concurrent applies.
 - Never commit `terraform.tfstate` or `terraform.tfvars` to git.
 
 ---
@@ -616,7 +616,7 @@ terraform -chdir=infrastructure import aws_s3_bucket.assets huston-housing-prod-
 |---|---|---|
 | Database | `DB_` | `DB_HOST`, `DB_PORT` |
 | Authentication | `JWT_` | `JWT_SECRET`, `JWT_EXPIRATION` |
-| Stellar/Blockchain | `STELLAR_`, `SOROBAN_` | `STELLAR_NETWORK`, `HUSTON_HOUSING_CONTRACT_ID` |
+| Stellar/Blockchain | `STELLAR_`, `SOROBAN_` | `STELLAR_NETWORK`, `ARBITRA_CONTRACT_ID` |
 | Storage | `AWS_` | `AWS_S3_BUCKET`, `AWS_REGION` |
 | Cache / Queue | `REDIS_`, `BULL_` | `REDIS_HOST`, `BULL_QUEUE_EMAIL_ATTEMPTS` |
 | Payment Gateways | `PAYSTACK_`, `FLUTTERWAVE_` | `PAYSTACK_SECRET_KEY` |
@@ -713,15 +713,15 @@ doppler run -- npm run start:dev
 
 ```bash
 # Create a secret from literal values
-kubectl create secret generic huston-housing-backend-secrets \
-  --namespace huston-housing \
+kubectl create secret generic arbitra-backend-secrets \
+  --namespace arbitra \
   --from-literal=JWT_SECRET="$(openssl rand -base64 48)" \
   --from-literal=DB_PASSWORD="$DB_PASSWORD" \
   --from-literal=SECURITY_ENCRYPTION_KEY="$ENCRYPTION_KEY"
 
 # Or from a .env file (do NOT commit this file)
-kubectl create secret generic huston-housing-backend-secrets \
-  --namespace huston-housing \
+kubectl create secret generic arbitra-backend-secrets \
+  --namespace arbitra \
   --from-env-file=./secrets.env
 ```
 
@@ -732,23 +732,23 @@ kubectl create secret generic huston-housing-backend-secrets \
 apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
-  name: huston-housing-backend-secrets
-  namespace: huston-housing
+  name: arbitra-backend-secrets
+  namespace: arbitra
 spec:
   refreshInterval: 1h
   secretStoreRef:
     name: aws-secrets-manager
     kind: ClusterSecretStore
   target:
-    name: huston-housing-backend-secrets
+    name: arbitra-backend-secrets
   data:
     - secretKey: JWT_SECRET
       remoteRef:
-        key: huston-housing/production/backend
+        key: arbitra/production/backend
         property: jwt_secret
     - secretKey: DB_PASSWORD
       remoteRef:
-        key: huston-housing/production/database
+        key: arbitra/production/database
         property: password
 ```
 
@@ -757,12 +757,12 @@ spec:
 ```bash
 # Create a secret
 aws secretsmanager create-secret \
-  --name huston-housing/production/backend \
+  --name arbitra/production/backend \
   --secret-string '{"jwt_secret":"...","db_password":"..."}'
 
 # Retrieve in application (preferred: inject via ExternalSecret)
 aws secretsmanager get-secret-value \
-  --secret-id huston-housing/production/backend \
+  --secret-id arbitra/production/backend \
   --query SecretString \
   --output text | jq .
 ```
@@ -793,7 +793,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: huston-housing-housing-protocol-i/huston-housing
+  IMAGE_NAME: arbitra-housing-protocol-i/arbitra
 
 jobs:
   test:
@@ -804,7 +804,7 @@ jobs:
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: password
-          POSTGRES_DB: huston-housing_test
+          POSTGRES_DB: arbitra_test
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -838,7 +838,7 @@ jobs:
           DB_PORT: 5432
           DB_USERNAME: postgres
           DB_PASSWORD: password
-          DB_NAME: huston-housing_test
+          DB_NAME: arbitra_test
         run: npm run migration:run
 
       - name: Run tests
@@ -899,15 +899,15 @@ jobs:
       - name: Run database migrations
         run: |
           kubectl apply -f k8s/jobs/migration.yaml
-          kubectl wait --for=condition=complete job/huston-housing-migration \
-            -n huston-housing --timeout=120s
+          kubectl wait --for=condition=complete job/arbitra-migration \
+            -n arbitra --timeout=120s
 
       - name: Deploy backend
         run: |
-          kubectl set image deployment/huston-housing-backend \
+          kubectl set image deployment/arbitra-backend \
             backend=${{ needs.build-and-push.outputs.image-tag }} \
-            -n huston-housing
-          kubectl rollout status deployment/huston-housing-backend -n huston-housing
+            -n arbitra
+          kubectl rollout status deployment/arbitra-backend -n arbitra
 ```
 
 ### 7.2 IaC Changes in CI
@@ -967,7 +967,7 @@ jobs:
     {
       "Effect": "Allow",
       "Action": ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"],
-      "Resource": "arn:aws:s3:::huston-housing-prod-assets/*"
+      "Resource": "arn:aws:s3:::arbitra-prod-assets/*"
     }
   ]
 }
@@ -1025,7 +1025,7 @@ env:
   - name: JWT_SECRET
     valueFrom:
       secretKeyRef:
-        name: huston-housing-backend-secrets
+        name: arbitra-backend-secrets
         key: JWT_SECRET
 ```
 
@@ -1051,10 +1051,10 @@ logs
 
 ```bash
 # Check pod status and events
-kubectl describe pod <pod-name> -n huston-housing
+kubectl describe pod <pod-name> -n arbitra
 
 # View container logs (including crash logs)
-kubectl logs <pod-name> -n huston-housing --previous
+kubectl logs <pod-name> -n arbitra --previous
 
 # Common causes:
 # - Missing required environment variable → check ConfigMap and Secret
@@ -1067,10 +1067,10 @@ kubectl logs <pod-name> -n huston-housing --previous
 
 ```bash
 # Get job logs
-kubectl logs job/huston-housing-migration -n huston-housing
+kubectl logs job/arbitra-migration -n arbitra
 
 # Delete job and re-apply
-kubectl delete job huston-housing-migration -n huston-housing
+kubectl delete job arbitra-migration -n arbitra
 kubectl apply -f k8s/jobs/migration.yaml
 ```
 
@@ -1078,7 +1078,7 @@ kubectl apply -f k8s/jobs/migration.yaml
 
 ```bash
 # Build with verbose output
-docker build --progress=plain -t huston-housing-backend:debug ./backend 2>&1 | tee build.log
+docker build --progress=plain -t arbitra-backend:debug ./backend 2>&1 | tee build.log
 
 # Common causes:
 # - npm ci fails → delete node_modules locally and retry
@@ -1091,23 +1091,23 @@ docker build --progress=plain -t huston-housing-backend:debug ./backend 2>&1 | t
 ```bash
 # Inspect state
 terraform state list
-terraform state show aws_db_instance.huston-housing_postgres
+terraform state show aws_db_instance.arbitra_postgres
 
 # Import if resource exists but is not in state
-terraform import aws_db_instance.huston-housing_postgres huston-housing-prod-postgres
+terraform import aws_db_instance.arbitra_postgres arbitra-prod-postgres
 
 # Use -target to apply selectively
-terraform apply -target=aws_db_instance.huston-housing_postgres
+terraform apply -target=aws_db_instance.arbitra_postgres
 ```
 
 ### Redis Connection Refused in Kubernetes
 
 ```bash
 # Test connectivity from the backend pod
-kubectl exec -it <backend-pod> -n huston-housing -- redis-cli -h $REDIS_HOST ping
+kubectl exec -it <backend-pod> -n arbitra -- redis-cli -h $REDIS_HOST ping
 
 # If using Upstash, verify REDIS_URL and REDIS_TOKEN are set in secrets
-kubectl get secret huston-housing-backend-secrets -n huston-housing -o jsonpath='{.data.REDIS_URL}' | base64 -d
+kubectl get secret arbitra-backend-secrets -n arbitra -o jsonpath='{.data.REDIS_URL}' | base64 -d
 ```
 
 ---
@@ -1118,8 +1118,8 @@ kubectl get secret huston-housing-backend-secrets -n huston-housing -o jsonpath=
 
 ```bash
 # 1. Clone and install
-git clone https://github.com/huston-housing-housing-protocol-i/huston-housing.git
-cd huston-housing
+git clone https://github.com/Arbitra-Lab/Arbitra.git
+cd arbitra
 cp backend/.env.example backend/.env
 # Edit backend/.env with local values
 
@@ -1143,23 +1143,23 @@ cd ../frontend && npm run dev
 
 ```bash
 # Tag and push new image
-docker build -t ghcr.io/huston-housing-housing-protocol-i/huston-housing/backend:v1.3.0 ./backend
-docker push ghcr.io/huston-housing-housing-protocol-i/huston-housing/backend:v1.3.0
+docker build -t ghcr.io/arbitra-housing-protocol-i/arbitra/backend:v1.3.0 ./backend
+docker push ghcr.io/arbitra-housing-protocol-i/arbitra/backend:v1.3.0
 
 # Run migration job first
 kubectl apply -f k8s/jobs/migration-v1-3-0.yaml
-kubectl wait --for=condition=complete job/huston-housing-migration-v1-3-0 -n huston-housing --timeout=120s
+kubectl wait --for=condition=complete job/arbitra-migration-v1-3-0 -n arbitra --timeout=120s
 
 # Roll out new deployment
-kubectl set image deployment/huston-housing-backend \
-  backend=ghcr.io/huston-housing-housing-protocol-i/huston-housing/backend:v1.3.0 \
-  -n huston-housing
+kubectl set image deployment/arbitra-backend \
+  backend=ghcr.io/arbitra-housing-protocol-i/arbitra/backend:v1.3.0 \
+  -n arbitra
 
 # Monitor rollout
-kubectl rollout status deployment/huston-housing-backend -n huston-housing
+kubectl rollout status deployment/arbitra-backend -n arbitra
 
 # Rollback if needed
-kubectl rollout undo deployment/huston-housing-backend -n huston-housing
+kubectl rollout undo deployment/arbitra-backend -n arbitra
 ```
 
 ### Example: Adding a New Environment Variable

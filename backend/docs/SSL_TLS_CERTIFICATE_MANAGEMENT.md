@@ -1,6 +1,6 @@
 # SSL/TLS Certificate Management
 
-This document covers how Houston Housing obtains, installs, and automatically renews
+This document covers how Arbitra obtains, installs, and automatically renews
 SSL/TLS certificates using [Let's Encrypt](https://letsencrypt.org) and
 [Certbot](https://certbot.eff.org).
 
@@ -19,8 +19,8 @@ SSL/TLS certificates using [Let's Encrypt](https://letsencrypt.org) and
 Certificates are stored in `/etc/letsencrypt/live/<domain>/` by Certbot and
 copied to the paths nginx expects:
 
-- **Certificate chain**: `/etc/ssl/certs/huston-housing.crt`
-- **Private key**: `/etc/ssl/private/huston-housing.key`
+- **Certificate chain**: `/etc/ssl/certs/arbitra.crt`
+- **Private key**: `/etc/ssl/private/arbitra.key`
 
 ---
 
@@ -28,7 +28,7 @@ copied to the paths nginx expects:
 
 ### Prerequisites
 
-- Domain `api.huston-housing.app` (or your domain) must resolve to the server's public IP.
+- Domain `api.arbitra.app` (or your domain) must resolve to the server's public IP.
 - Ports **80** and **443** must be open in your firewall/security group.
 - Docker and Docker Compose must be installed.
 
@@ -47,21 +47,21 @@ docker compose -f docker-compose.production.yml up -d nginx backend
 Run the setup script as root (or with `sudo`):
 
 ```bash
-sudo bash backend/scripts/ssl-setup.sh api.huston-housing.app admin@huston-housing.app
+sudo bash backend/scripts/ssl-setup.sh api.arbitra.app admin@arbitra.app
 ```
 
 The script will:
 
 1. Install Certbot if not present.
 2. Obtain a certificate via the HTTP-01 webroot challenge.
-3. Copy the certificate and key to `/etc/ssl/certs/huston-housing.crt` and
-   `/etc/ssl/private/huston-housing.key`.
-4. Install a daily cron job at `/etc/cron.d/huston-housing-ssl-renew`.
+3. Copy the certificate and key to `/etc/ssl/certs/arbitra.crt` and
+   `/etc/ssl/private/arbitra.key`.
+4. Install a daily cron job at `/etc/cron.d/arbitra-ssl-renew`.
 
 ### Step 3 — Reload nginx with TLS enabled
 
 ```bash
-docker exec huston-housing-nginx nginx -s reload
+docker exec arbitra-nginx nginx -s reload
 ```
 
 ### Step 4 — Start remaining services
@@ -112,7 +112,7 @@ automatically. No manual action is required.
 
 ### Automatic (bare-metal / cron)
 
-`ssl-setup.sh` installs a cron job at `/etc/cron.d/huston-housing-ssl-renew` that
+`ssl-setup.sh` installs a cron job at `/etc/cron.d/arbitra-ssl-renew` that
 runs `certbot renew` daily at 03:00 and reloads nginx on success.
 
 ### Manual renewal
@@ -135,7 +135,7 @@ redirecting to HTTPS:
 ```nginx
 server {
     listen 80;
-    server_name api.huston-housing.app;
+    server_name api.arbitra.app;
 
     location /.well-known/acme-challenge/ {
         root /var/www/certbot;
@@ -162,8 +162,8 @@ add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" alway
 ### Challenge fails (403 / connection refused)
 
 - Confirm port 80 is open and nginx is running.
-- Confirm the domain resolves to this server: `dig api.huston-housing.app`.
-- Check nginx logs: `docker logs huston-housing-nginx`.
+- Confirm the domain resolves to this server: `dig api.arbitra.app`.
+- Check nginx logs: `docker logs arbitra-nginx`.
 
 ### Certificate not found after renewal
 
@@ -189,7 +189,7 @@ certbot certonly --staging --webroot ...
 
 ## Security Notes
 
-- The private key (`huston-housing.key`) is chmod `600` — readable only by root.
+- The private key (`arbitra.key`) is chmod `600` — readable only by root.
 - Certificates auto-renew before expiry; no manual intervention needed.
 - HSTS is enabled with a 1-year max-age to prevent downgrade attacks.
 - TLS 1.0 and 1.1 are disabled; only TLS 1.2 and 1.3 are accepted.

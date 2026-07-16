@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Verify Houston Housing testnet deployment using contract IDs in .env.testnet
+# Verify Arbitra testnet deployment using contract IDs in .env.testnet
 
 set -euo pipefail
 
@@ -76,7 +76,7 @@ verify_exists "Rent Obligation" "${RENT_OBLIGATION_CONTRACT_ID:-}" || FAILED=$((
 verify_exists "Escrow" "${ESCROW_CONTRACT_ID:-}" || FAILED=$((FAILED + 1))
 verify_exists "Payment" "${PAYMENT_CONTRACT_ID:-}" || FAILED=$((FAILED + 1))
 verify_exists "Dispute Resolution" "${DISPUTE_RESOLUTION_CONTRACT_ID:-}" || FAILED=$((FAILED + 1))
-verify_exists "Houston Housing" "${HUSTON_HOUSING_CONTRACT_ID:-}" || FAILED=$((FAILED + 1))
+verify_exists "Arbitra Agreement" "${ARBITRA_AGREEMENT_CONTRACT_ID:-}" || FAILED=$((FAILED + 1))
 
 echo ""
 header "Read-only smoke tests"
@@ -86,11 +86,11 @@ test_view "Agent Registry" "${AGENT_REGISTRY_CONTRACT_ID:-}" get_agent_count
 test_view "Rent Obligation" "${RENT_OBLIGATION_CONTRACT_ID:-}" get_obligation_count
 test_view "Escrow" "${ESCROW_CONTRACT_ID:-}" get_admin
 test_view "Dispute Resolution" "${DISPUTE_RESOLUTION_CONTRACT_ID:-}" get_arbiter_count
-test_view "Houston Housing" "${HUSTON_HOUSING_CONTRACT_ID:-}" get_state
+test_view "Arbitra Agreement" "${ARBITRA_AGREEMENT_CONTRACT_ID:-}" get_state
 
 echo ""
 header "Local WASM sizes"
-for contract in user_profile property_registry agent_registry rent_obligation escrow payment dispute_resolution huston-housing; do
+for contract in user_profile property_registry agent_registry rent_obligation escrow payment dispute_resolution arbitra_agreement; do
   if [[ -f "$WASM_DIR/${contract}.wasm" ]]; then
     echo "  $contract: $(du -h "$WASM_DIR/${contract}.wasm" | cut -f1)"
   fi

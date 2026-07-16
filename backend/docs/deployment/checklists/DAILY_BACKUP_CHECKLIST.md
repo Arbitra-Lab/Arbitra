@@ -1,6 +1,6 @@
 # Daily Backup Checklist
 
-**Project:** Houston Housing Platform  
+**Project:** Arbitra Platform  
 **Frequency:** Daily  
 **Owner:** Database Administrator / On-Call Engineer  
 **Time Commitment:** 15-20 minutes
@@ -14,27 +14,27 @@
 Review overnight backup completion:
 
 - [ ] **Full Backup Completed**
-  - Check: `aws s3 ls s3://huston-housing-backups-prod/full/ | tail -5`
+  - Check: `aws s3 ls s3://arbitra-backups-prod/full/ | tail -5`
   - Expected: New backup dated today
-  - Action if missing: Check logs immediately → `tail -100 /var/log/huston-housing/backup-full.log`
+  - Action if missing: Check logs immediately → `tail -100 /var/log/arbitra/backup-full.log`
 
 - [ ] **Verify Backup File Size**
-  - Check: `aws s3 ls s3://huston-housing-backups-prod/full/ | tail -1`
+  - Check: `aws s3 ls s3://arbitra-backups-prod/full/ | tail -1`
   - Expected size: 1.5-3 GB for production
   - Action if too small: Investigate data loss → Escalate immediately
 
 - [ ] **WAL Archiving Active**
-  - Check: `psql -U huston-housing -c "SELECT archived_count, failed_count FROM pg_stat_archiver;"`
+  - Check: `psql -U arbitra -c "SELECT archived_count, failed_count FROM pg_stat_archiver;"`
   - Expected: `archived_count > 0, failed_count = 0`
   - Action if failed: Verify S3 credentials, check network
 
 - [ ] **Review Backup Logs**
-  - Check: `tail -50 /var/log/huston-housing/backup-full.log`
+  - Check: `tail -50 /var/log/arbitra/backup-full.log`
   - Look for: ERROR or FAILED messages
   - Action if errors: Document and investigate immediately
 
 - [ ] **Check S3 Upload Status**
-  - Command: `aws s3 ls s3://huston-housing-backups-prod/full/$(date +%Y%m%d)/ --recursive | wc -l`
+  - Command: `aws s3 ls s3://arbitra-backups-prod/full/$(date +%Y%m%d)/ --recursive | wc -l`
   - Expected: > 0 files successfully uploaded
   - Action if missing: Check AWS credentials, verify network connectivity
 
@@ -43,7 +43,7 @@ Review overnight backup completion:
 Brief health checks during business hours:
 
 - [ ] **Database Connectivity**
-  - Check: `psql -U huston-housing -c "SELECT 1;"`
+  - Check: `psql -U arbitra -c "SELECT 1;"`
   - Expected: Returns 1
   - Action if fails: Page on-call DBA immediately
 
@@ -62,12 +62,12 @@ Brief health checks during business hours:
 Pre-deployment backup readiness:
 
 - [ ] **Prepare for Incremental Backup** (every 6 hours)
-  - Check: `aws s3 ls s3://huston-housing-backups-prod/incremental/ | tail -3`
+  - Check: `aws s3 ls s3://arbitra-backups-prod/incremental/ | tail -3`
   - Expected: Recent incremental backups
   - Note: Next incremental at 6 PM and midnight
 
 - [ ] **Verify Replication Status** (if applicable)
-  - Check: `psql -U huston-housing -c "SELECT * FROM pg_stat_replication;"`
+  - Check: `psql -U arbitra -c "SELECT * FROM pg_stat_replication;"`
   - Expected: Replication lag < 1 second
   - Action if > 1 second: Investigate network, check replica resources
 
@@ -81,14 +81,14 @@ Pre-deployment backup readiness:
 Pre-close-of-business verification:
 
 - [ ] **Incremental Backup Status**
-  - Check: `tail -20 /var/log/huston-housing/backup-incremental.log`
+  - Check: `tail -20 /var/log/arbitra/backup-incremental.log`
   - Expected: Success message
   - Action if failed: Investigate before leaving for the day
 
 - [ ] **Log Rotation**
-  - Check: `ls -lh /var/log/huston-housing/ | grep backup`
+  - Check: `ls -lh /var/log/arbitra/ | grep backup`
   - Expected: Files not exceeding 100 MB each
-  - Action if large: Rotate manually: `logrotate -f /etc/logrotate.d/huston-housing`
+  - Action if large: Rotate manually: `logrotate -f /etc/logrotate.d/arbitra`
 
 - [ ] **Next Backup Schedule**
   - Verify: `crontab -l | grep backup`
@@ -115,8 +115,8 @@ Keep these metrics visible:
 
 | Metric              | Command                                                                   | Expected   | Alert Threshold   |
 | ------------------- | ------------------------------------------------------------------------- | ---------- | ----------------- |
-| Last backup success | `aws s3 ls s3://huston-housing-backups-prod/full/ \| tail -1`                     | < 24h ago  | > 25h             |
-| Backup size         | `aws s3 ls s3://huston-housing-backups-prod/full/ \| tail -1 \| awk '{print $5}'` | 1.5-3 GB   | < 1GB or > 5GB    |
+| Last backup success | `aws s3 ls s3://arbitra-backups-prod/full/ \| tail -1`                     | < 24h ago  | > 25h             |
+| Backup size         | `aws s3 ls s3://arbitra-backups-prod/full/ \| tail -1 \| awk '{print $5}'` | 1.5-3 GB   | < 1GB or > 5GB    |
 | WAL archives        | `psql -c "SELECT archived_count FROM pg_stat_archiver;"`                  | Increasing | No increase in 1h |
 | Disk available      | `df -h /backups`                                                          | > 20%      | < 15%             |
 | DB connections      | `psql -c "SELECT count(*) FROM pg_stat_activity;"`                        | < 50       | > 100             |
@@ -127,10 +127,10 @@ Keep these metrics visible:
 
 ### If Backup Failed
 
-1. Check logs: `tail -100 /var/log/huston-housing/backup-full.log`
-2. Verify database: `psql -U huston-housing -c "SELECT COUNT(*) FROM users;"`
+1. Check logs: `tail -100 /var/log/arbitra/backup-full.log`
+2. Verify database: `psql -U arbitra -c "SELECT COUNT(*) FROM users;"`
 3. Check disk: `df -h /backups`
-4. Check AWS: `aws s3 ls s3://huston-housing-backups-prod/full/`
+4. Check AWS: `aws s3 ls s3://arbitra-backups-prod/full/`
 5. If not resolved in 10 minutes: **Escalate immediately**
 
 ### If Database Unreachable
@@ -143,7 +143,7 @@ Keep these metrics visible:
 ### If Disk Space Critical (< 10%)
 
 1. Delete old local backups: `find /backups -mtime +7 -delete`
-2. Clean logs: `find /var/log/huston-housing -mtime +14 -delete`
+2. Clean logs: `find /var/log/arbitra -mtime +14 -delete`
 3. If still critical: **Escalate immediately** - may need volume expansion
 
 ---
@@ -185,10 +185,10 @@ Contact if needed: [Your name] at [phone/slack]
 
 ```bash
 # Check for data loss
-psql -U huston-housing -c "SELECT COUNT(*) FROM users;"
+psql -U arbitra -c "SELECT COUNT(*) FROM users;"
 
 # Compare to yesterday's size
-aws s3 ls s3://huston-housing-backups-prod/full/ | tail -2
+aws s3 ls s3://arbitra-backups-prod/full/ | tail -2
 
 # If significantly smaller, investigate data deletion
 # DO NOT restore without understanding why
@@ -201,10 +201,10 @@ aws s3 ls s3://huston-housing-backups-prod/full/ | tail -2
 systemctl status postgresql
 
 # Check S3 access
-aws s3 ls s3://huston-housing-backups-prod/wal/
+aws s3 ls s3://arbitra-backups-prod/wal/
 
 # Test archive command
-su - postgres -c "aws s3 cp /tmp/test s3://huston-housing-backups-prod/test/"
+su - postgres -c "aws s3 cp /tmp/test s3://arbitra-backups-prod/test/"
 
 # Restart WAL archiving if needed
 psql -U postgres -c "CHECKPOINT;"

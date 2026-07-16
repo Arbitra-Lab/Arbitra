@@ -308,7 +308,7 @@ describe('Metrics Collection (e2e)', () => {
       expect(metrics.length).toBeGreaterThan(0);
     });
 
-    it('should include custom huston-housing business metrics in export', async () => {
+    it('should include custom arbitra business metrics in export', async () => {
       metricsService.recordRentPayment('success');
       metricsService.recordNftMint('agreement');
 

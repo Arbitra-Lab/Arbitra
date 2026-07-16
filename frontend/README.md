@@ -98,7 +98,7 @@ logError('payment_failed', typedError, { userId, amount });
 Optional external reporting (Sentry, Datadog, etc.):
 
 ```ts
-window.__HUSTON_HOUSING_ERROR_REPORTER__ = (payload) => {
+window.__ARBITRA_ERROR_REPORTER__ = (payload) => {
   // Forward to monitoring provider
 };
 ```

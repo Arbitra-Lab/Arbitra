@@ -1,7 +1,7 @@
-//! Agreement management logic for the Houston Housing/Rental contract.
+//! Agreement management logic for the Arbitra/Rental contract.
 use soroban_sdk::{Address, Env, String, Vec};
 
-use crate::errors::RentalError;
+use crate::errors::AgreementError;
 use crate::events;
 use crate::rate_limit;
 use crate::storage::DataKey;
@@ -25,23 +25,23 @@ pub fn validate_agreement_params(
     start_date: &u64,
     end_date: &u64,
     agent_commission_rate: &u32,
-) -> Result<(), RentalError> {
+) -> Result<(), AgreementError> {
     if *monthly_rent <= 0 || *security_deposit < 0 {
-        return Err(RentalError::InvalidAmount);
+        return Err(AgreementError::InvalidAmount);
     }
 
     if *start_date >= *end_date {
-        return Err(RentalError::InvalidDate);
+        return Err(AgreementError::InvalidDate);
     }
 
     let now = env.ledger().timestamp();
     let grace_period: u64 = 86400; // 1 day in seconds
     if *start_date < now.saturating_sub(grace_period) {
-        return Err(RentalError::InvalidDate);
+        return Err(AgreementError::InvalidDate);
     }
 
     if *agent_commission_rate > 100 {
-        return Err(RentalError::InvalidCommissionRate);
+        return Err(AgreementError::InvalidCommissionRate);
     }
 
     Ok(())
@@ -49,7 +49,7 @@ pub fn validate_agreement_params(
 
 /// Create a new rent agreement
 #[allow(clippy::too_many_arguments)]
-pub fn create_agreement(env: &Env, input: crate::types::AgreementInput) -> Result<(), RentalError> {
+pub fn create_agreement(env: &Env, input: crate::types::AgreementInput) -> Result<(), AgreementError> {
     // Tenant MUST authorize creation
     input.user.require_auth();
 
@@ -63,7 +63,7 @@ pub fn create_agreement(env: &Env, input: crate::types::AgreementInput) -> Resul
 fn create_agreement_internal(
     env: &Env,
     input: crate::types::AgreementInput,
-) -> Result<(), RentalError> {
+) -> Result<(), AgreementError> {
     // Validate inputs
     validate_agreement_params(
         env,
@@ -82,7 +82,7 @@ fn create_agreement_internal(
         .persistent()
         .has(&DataKey::Agreement(agreement_id.clone()))
     {
-        return Err(RentalError::AgreementAlreadyExists);
+        return Err(AgreementError::AgreementAlreadyExists);
     }
 
     // Initialize agreement
@@ -146,7 +146,7 @@ fn create_agreement_internal(
 }
 
 /// Sign an agreement as the tenant
-pub fn sign_agreement(env: &Env, user: Address, agreement_id: String) -> Result<(), RentalError> {
+pub fn sign_agreement(env: &Env, user: Address, agreement_id: String) -> Result<(), AgreementError> {
     // Tenant MUST authorize signing
     user.require_auth();
 
@@ -158,22 +158,22 @@ pub fn sign_agreement(env: &Env, user: Address, agreement_id: String) -> Result<
         .storage()
         .persistent()
         .get(&DataKey::Agreement(agreement_id.clone()))
-        .ok_or(RentalError::AgreementNotFound)?;
+        .ok_or(AgreementError::AgreementNotFound)?;
 
     // Validate caller is the intended tenant
     if agreement.user != user {
-        return Err(RentalError::NotTenant);
+        return Err(AgreementError::NotTenant);
     }
 
     // Validate agreement is in Pending status
     if agreement.status != AgreementStatus::Pending {
-        return Err(RentalError::InvalidState);
+        return Err(AgreementError::InvalidState);
     }
 
     // Validate agreement has not expired
     let current_time = env.ledger().timestamp();
     if current_time > agreement.end_date {
-        return Err(RentalError::Expired);
+        return Err(AgreementError::Expired);
     }
 
     // Update agreement status and record signing time; awaiting witness approval
@@ -211,24 +211,24 @@ pub fn approve_agreement(
     env: &Env,
     approver: Address,
     agreement_id: String,
-) -> Result<(), RentalError> {
+) -> Result<(), AgreementError> {
     approver.require_auth();
 
     let mut agreement: RentAgreement = env
         .storage()
         .persistent()
         .get(&DataKey::Agreement(agreement_id.clone()))
-        .ok_or(RentalError::AgreementNotFound)?;
+        .ok_or(AgreementError::AgreementNotFound)?;
 
     // Only valid from PendingApproval state
     if agreement.status != AgreementStatus::PendingApproval {
-        return Err(RentalError::InvalidState);
+        return Err(AgreementError::InvalidState);
     }
 
     // Validate agreement has not expired
     let current_time = env.ledger().timestamp();
     if current_time > agreement.end_date {
-        return Err(RentalError::Expired);
+        return Err(AgreementError::Expired);
     }
 
     // Permanently record witness and activate agreement
@@ -255,21 +255,21 @@ pub fn submit_agreement(
     env: &Env,
     admin: Address,
     agreement_id: String,
-) -> Result<(), RentalError> {
+) -> Result<(), AgreementError> {
     admin.require_auth();
 
     let mut agreement: RentAgreement = env
         .storage()
         .persistent()
         .get(&DataKey::Agreement(agreement_id.clone()))
-        .ok_or(RentalError::AgreementNotFound)?;
+        .ok_or(AgreementError::AgreementNotFound)?;
 
     if agreement.admin != admin {
-        return Err(RentalError::Unauthorized);
+        return Err(AgreementError::Unauthorized);
     }
 
     if agreement.status != AgreementStatus::Draft {
-        return Err(RentalError::InvalidState);
+        return Err(AgreementError::InvalidState);
     }
 
     agreement.status = AgreementStatus::Pending;
@@ -293,18 +293,18 @@ pub fn cancel_agreement(
     env: &Env,
     caller: Address,
     agreement_id: String,
-) -> Result<(), RentalError> {
+) -> Result<(), AgreementError> {
     caller.require_auth();
 
     let mut agreement: RentAgreement = env
         .storage()
         .persistent()
         .get(&DataKey::Agreement(agreement_id.clone()))
-        .ok_or(RentalError::AgreementNotFound)?;
+        .ok_or(AgreementError::AgreementNotFound)?;
 
     // Only landlord can cancel
     if agreement.admin != caller {
-        return Err(RentalError::Unauthorized);
+        return Err(AgreementError::Unauthorized);
     }
 
     // Only in Draft, Pending, or PendingApproval states
@@ -312,7 +312,7 @@ pub fn cancel_agreement(
         && agreement.status != AgreementStatus::Pending
         && agreement.status != AgreementStatus::PendingApproval
     {
-        return Err(RentalError::InvalidState);
+        return Err(AgreementError::InvalidState);
     }
 
     agreement.status = AgreementStatus::Cancelled;
@@ -357,11 +357,11 @@ pub fn get_payment_split(
     env: &Env,
     agreement_id: String,
     month: u32,
-) -> Result<PaymentSplit, RentalError> {
+) -> Result<PaymentSplit, AgreementError> {
     env.storage()
         .persistent()
         .get(&DataKey::PaymentRecord(agreement_id, month))
-        .ok_or(RentalError::AgreementNotFound)
+        .ok_or(AgreementError::AgreementNotFound)
 }
 
 /// Get all payments for an agreement
@@ -394,12 +394,12 @@ pub fn update_metadata(
     agreement_id: String,
     metadata_uri: String,
     attributes: Vec<crate::types::Attribute>,
-) -> Result<(), RentalError> {
+) -> Result<(), AgreementError> {
     let mut agreement: RentAgreement = env
         .storage()
         .persistent()
         .get(&DataKey::Agreement(agreement_id.clone()))
-        .ok_or(RentalError::AgreementNotFound)?;
+        .ok_or(AgreementError::AgreementNotFound)?;
 
     agreement.admin.require_auth();
 
@@ -417,12 +417,12 @@ pub fn update_metadata(
 pub fn create_agreement_with_token(
     env: &Env,
     input: crate::types::AgreementInput,
-) -> Result<String, RentalError> {
+) -> Result<String, AgreementError> {
     input.user.require_auth();
 
     // Check if token is supported
     if !crate::multi_token::is_token_supported(env.clone(), input.payment_token.clone())? {
-        return Err(RentalError::TokenNotSupported);
+        return Err(AgreementError::TokenNotSupported);
     }
 
     let agreement_id = input.agreement_id.clone();
@@ -447,11 +447,11 @@ pub fn create_agreement_with_token(
 }
 
 /// Get the payment token for an agreement
-pub fn get_agreement_token(env: &Env, agreement_id: String) -> Result<Address, RentalError> {
+pub fn get_agreement_token(env: &Env, agreement_id: String) -> Result<Address, AgreementError> {
     env.storage()
         .persistent()
         .get(&DataKey::AgreementToken(agreement_id))
-        .ok_or(RentalError::AgreementNotFound)
+        .ok_or(AgreementError::AgreementNotFound)
 }
 
 /// Make a payment for an agreement using a specific token
@@ -460,17 +460,17 @@ pub fn make_payment_with_token(
     agreement_id: String,
     amount: i128,
     token: Address,
-) -> Result<(), RentalError> {
+) -> Result<(), AgreementError> {
     // Single storage read – reuse `agreement` for all subsequent checks and
     // the final write-back, avoiding a second persistent-storage lookup.
     let mut agreement: RentAgreement = env
         .storage()
         .persistent()
         .get(&DataKey::Agreement(agreement_id.clone()))
-        .ok_or(RentalError::AgreementNotFound)?;
+        .ok_or(AgreementError::AgreementNotFound)?;
 
     if agreement.status != AgreementStatus::Active {
-        return Err(RentalError::AgreementNotActive);
+        return Err(AgreementError::AgreementNotActive);
     }
 
     agreement.user.require_auth();
@@ -489,7 +489,7 @@ pub fn make_payment_with_token(
     };
 
     if amount_in_base < agreement.monthly_rent {
-        return Err(RentalError::InsufficientPayment);
+        return Err(AgreementError::InsufficientPayment);
     }
 
     // Transfer tokens from tenant to contract (escrow)
@@ -530,17 +530,17 @@ pub fn release_escrow_with_token(
     env: &Env,
     escrow_id: String,
     token: Address,
-) -> Result<(), RentalError> {
+) -> Result<(), AgreementError> {
     // For simplicity, we assume escrow_id is the agreement_id
     let agreement_id = escrow_id.clone();
     let agreement: RentAgreement = env
         .storage()
         .persistent()
         .get(&DataKey::Agreement(agreement_id))
-        .ok_or(RentalError::AgreementNotFound)?;
+        .ok_or(AgreementError::AgreementNotFound)?;
 
     if is_escrow_frozen(env, escrow_id.clone()) {
-        return Err(RentalError::InvalidState);
+        return Err(AgreementError::InvalidState);
     }
 
     // Only landlord can release? Or admin?
@@ -560,13 +560,13 @@ pub fn release_escrow_with_token(
     Ok(())
 }
 
-pub fn set_escrow_frozen(env: &Env, escrow_id: String, is_frozen: bool) -> Result<(), RentalError> {
+pub fn set_escrow_frozen(env: &Env, escrow_id: String, is_frozen: bool) -> Result<(), AgreementError> {
     if !env
         .storage()
         .persistent()
         .has(&DataKey::Agreement(escrow_id.clone()))
     {
-        return Err(RentalError::AgreementNotFound);
+        return Err(AgreementError::AgreementNotFound);
     }
 
     let key = DataKey::EscrowFrozen(escrow_id);
@@ -591,21 +591,21 @@ pub fn propose_extension(
     extension_months: u32,
     new_rent: Option<i128>,
     new_deposit: Option<i128>,
-) -> Result<String, RentalError> {
+) -> Result<String, AgreementError> {
     caller.require_auth();
 
     let agreement: RentAgreement = env
         .storage()
         .persistent()
         .get(&DataKey::Agreement(agreement_id.clone()))
-        .ok_or(RentalError::AgreementNotFound)?;
+        .ok_or(AgreementError::AgreementNotFound)?;
 
     if caller != agreement.admin && caller != agreement.user {
-        return Err(RentalError::Unauthorized);
+        return Err(AgreementError::Unauthorized);
     }
 
     if extension_months == 0 {
-        return Err(RentalError::InvalidInput);
+        return Err(AgreementError::InvalidInput);
     }
 
     let extension_start = get_current_agreement_end(env, agreement_id.clone())?;
@@ -659,31 +659,31 @@ pub fn accept_extension(
     env: &Env,
     caller: Address,
     extension_id: String,
-) -> Result<(), RentalError> {
+) -> Result<(), AgreementError> {
     caller.require_auth();
 
     let mut extension: AgreementExtension = env
         .storage()
         .persistent()
         .get(&DataKey::AgreementExtension(extension_id.clone()))
-        .ok_or(RentalError::AgreementNotFound)?;
+        .ok_or(AgreementError::AgreementNotFound)?;
 
     if extension.status != ExtensionStatus::Proposed {
-        return Err(RentalError::InvalidState);
+        return Err(AgreementError::InvalidState);
     }
 
     let agreement: RentAgreement = env
         .storage()
         .persistent()
         .get(&DataKey::Agreement(extension.original_agreement_id.clone()))
-        .ok_or(RentalError::AgreementNotFound)?;
+        .ok_or(AgreementError::AgreementNotFound)?;
 
     if caller == agreement.admin {
         extension.landlord_accepted = true;
     } else if caller == agreement.user {
         extension.tenant_accepted = true;
     } else {
-        return Err(RentalError::Unauthorized);
+        return Err(AgreementError::Unauthorized);
     }
 
     if extension.landlord_accepted && extension.tenant_accepted {
@@ -703,23 +703,23 @@ pub fn reject_extension(
     caller: Address,
     extension_id: String,
     reason: String,
-) -> Result<(), RentalError> {
+) -> Result<(), AgreementError> {
     caller.require_auth();
 
     let mut extension: AgreementExtension = env
         .storage()
         .persistent()
         .get(&DataKey::AgreementExtension(extension_id.clone()))
-        .ok_or(RentalError::AgreementNotFound)?;
+        .ok_or(AgreementError::AgreementNotFound)?;
 
     let agreement: RentAgreement = env
         .storage()
         .persistent()
         .get(&DataKey::Agreement(extension.original_agreement_id.clone()))
-        .ok_or(RentalError::AgreementNotFound)?;
+        .ok_or(AgreementError::AgreementNotFound)?;
 
     if caller != agreement.admin && caller != agreement.user {
-        return Err(RentalError::Unauthorized);
+        return Err(AgreementError::Unauthorized);
     }
 
     extension.status = ExtensionStatus::Rejected;
@@ -739,27 +739,27 @@ pub fn activate_extension(
     env: &Env,
     caller: Address,
     extension_id: String,
-) -> Result<(), RentalError> {
+) -> Result<(), AgreementError> {
     caller.require_auth();
 
     let mut extension: AgreementExtension = env
         .storage()
         .persistent()
         .get(&DataKey::AgreementExtension(extension_id.clone()))
-        .ok_or(RentalError::AgreementNotFound)?;
+        .ok_or(AgreementError::AgreementNotFound)?;
 
     if extension.status != ExtensionStatus::Accepted {
-        return Err(RentalError::InvalidState);
+        return Err(AgreementError::InvalidState);
     }
 
     let mut agreement: RentAgreement = env
         .storage()
         .persistent()
         .get(&DataKey::Agreement(extension.original_agreement_id.clone()))
-        .ok_or(RentalError::AgreementNotFound)?;
+        .ok_or(AgreementError::AgreementNotFound)?;
 
     if caller != agreement.admin {
-        return Err(RentalError::Unauthorized);
+        return Err(AgreementError::Unauthorized);
     }
 
     agreement.end_date = extension.extension_end;
@@ -786,29 +786,29 @@ pub fn cancel_extension(
     caller: Address,
     extension_id: String,
     reason: String,
-) -> Result<(), RentalError> {
+) -> Result<(), AgreementError> {
     caller.require_auth();
 
     let mut extension: AgreementExtension = env
         .storage()
         .persistent()
         .get(&DataKey::AgreementExtension(extension_id.clone()))
-        .ok_or(RentalError::AgreementNotFound)?;
+        .ok_or(AgreementError::AgreementNotFound)?;
 
     let agreement: RentAgreement = env
         .storage()
         .persistent()
         .get(&DataKey::Agreement(extension.original_agreement_id.clone()))
-        .ok_or(RentalError::AgreementNotFound)?;
+        .ok_or(AgreementError::AgreementNotFound)?;
 
     if caller != agreement.admin && caller != agreement.user {
-        return Err(RentalError::Unauthorized);
+        return Err(AgreementError::Unauthorized);
     }
 
     if extension.status == ExtensionStatus::Completed
         || extension.status == ExtensionStatus::Cancelled
     {
-        return Err(RentalError::InvalidState);
+        return Err(AgreementError::InvalidState);
     }
 
     extension.status = ExtensionStatus::Cancelled;
@@ -824,29 +824,29 @@ pub fn cancel_extension(
     Ok(())
 }
 
-pub fn get_extension(env: &Env, extension_id: String) -> Result<AgreementExtension, RentalError> {
+pub fn get_extension(env: &Env, extension_id: String) -> Result<AgreementExtension, AgreementError> {
     env.storage()
         .persistent()
         .get(&DataKey::AgreementExtension(extension_id))
-        .ok_or(RentalError::AgreementNotFound)
+        .ok_or(AgreementError::AgreementNotFound)
 }
 
 pub fn get_extension_history(
     env: &Env,
     agreement_id: String,
-) -> Result<ExtensionHistory, RentalError> {
+) -> Result<ExtensionHistory, AgreementError> {
     env.storage()
         .persistent()
         .get(&DataKey::ExtensionHistory(agreement_id))
-        .ok_or(RentalError::AgreementNotFound)
+        .ok_or(AgreementError::AgreementNotFound)
 }
 
-pub fn get_current_agreement_end(env: &Env, agreement_id: String) -> Result<u64, RentalError> {
+pub fn get_current_agreement_end(env: &Env, agreement_id: String) -> Result<u64, AgreementError> {
     let agreement: RentAgreement = env
         .storage()
         .persistent()
         .get(&DataKey::Agreement(agreement_id))
-        .ok_or(RentalError::AgreementNotFound)?;
+        .ok_or(AgreementError::AgreementNotFound)?;
 
     Ok(agreement.end_date)
 }

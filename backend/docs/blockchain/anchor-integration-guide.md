@@ -261,12 +261,12 @@ Log level can be configured via `LOG_LEVEL` environment variable.
 
 For issues or questions:
 
-- GitHub Issues: https://github.com/huston-housing/huston-housing/issues
-- Telegram: https://t.me/huston-housinggroup
+- GitHub Issues: https://github.com/Arbitra-Lab/Arbitra/issues
+- Telegram: https://t.me/arbitragroup
 - Documentation: See `/docs/anchor-integration.md`
 
 ## References
 
 - [SEP-24 Specification](https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0024.md)
 - [Stellar Anchor Directory](https://anchors.stellar.org/)
-- [Houston Housing API Documentation](./api-documentation.md)
+- [Arbitra API Documentation](./api-documentation.md)

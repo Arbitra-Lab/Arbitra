@@ -1,4 +1,4 @@
-# Houston Housing API Error Codes
+# Arbitra API Error Codes
 
 All error responses use a stable machine-readable `error` code alongside the HTTP status. Clients should branch on `error`, not `message` — messages may be localised or refined over time.
 

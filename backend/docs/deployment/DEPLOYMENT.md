@@ -1,6 +1,6 @@
-# Houston Housing Deployment Runbook
+# Arbitra Deployment Runbook
 
-This runbook documents how to deploy Houston Housing across development, staging, and
+This runbook documents how to deploy Arbitra across development, staging, and
 production environments. It is written as an operational guide for engineers
 performing deployments, validating releases, responding to incidents, and
 executing rollbacks safely.
@@ -240,14 +240,14 @@ Container expectations:
 Example backend image build:
 
 ```bash
-docker build -f backend/Dockerfile.production -t ghcr.io/<org>/huston-housing/backend:<sha> backend
+docker build -f backend/Dockerfile.production -t ghcr.io/<org>/arbitra/backend:<sha> backend
 ```
 
 Example production compose deploy:
 
 ```bash
 cd backend
-DOCKER_IMAGE=ghcr.io/<org>/huston-housing/backend:<sha> \
+DOCKER_IMAGE=ghcr.io/<org>/arbitra/backend:<sha> \
 docker compose -f docker-compose.production.yml up -d
 ```
 
@@ -260,7 +260,7 @@ Docker operational notes:
 
 ## 7. Kubernetes Guidance
 
-Kubernetes manifests are not present in this repository today, but if Houston Housing is
+Kubernetes manifests are not present in this repository today, but if Arbitra is
 deployed to Kubernetes, use the following deployment model:
 
 - `Deployment` for backend replicas
@@ -452,7 +452,7 @@ Logging requirements:
 Operational commands:
 
 ```bash
-docker logs -f huston-housing-backend-production
+docker logs -f arbitra-backend-production
 docker compose -f backend/docker-compose.monitoring.yml logs -f prometheus grafana loki promtail
 ```
 

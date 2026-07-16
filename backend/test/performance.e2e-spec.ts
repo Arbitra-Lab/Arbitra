@@ -36,7 +36,7 @@ describe('Performance gates (e2e)', () => {
 
     // Set up Swagger
     const config = new DocumentBuilder()
-      .setTitle('Houston Housing API')
+      .setTitle('Arbitra API')
       .setVersion('1.0')
       .addBearerAuth(
         { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },

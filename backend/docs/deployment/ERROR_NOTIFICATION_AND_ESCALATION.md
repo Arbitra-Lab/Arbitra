@@ -1,6 +1,6 @@
 # Error Notification and Escalation
 
-Production-ready error notification and escalation for the Houston Housing backend.
+Production-ready error notification and escalation for the Arbitra backend.
 
 ## Overview
 
@@ -50,8 +50,8 @@ Enable in staging/production:
 
 ```bash
 ERROR_NOTIFICATION_ENABLED=true
-ALERT_ONCALL_EMAIL=oncall@huston-housing.app
-ALERT_ESCALATION_EMAIL=platform-leads@huston-housing.app
+ALERT_ONCALL_EMAIL=oncall@arbitra.app
+ALERT_ESCALATION_EMAIL=platform-leads@arbitra.app
 SLACK_ALERT_WEBHOOK_URL=https://hooks.slack.com/services/...
 ALERT_WEBHOOK_SECRET=<strong-random-secret>
 ```

@@ -1230,7 +1230,7 @@ fn test_contract_paused_operations() {
         metadata_uri: String::from_str(&env, "").clone(),
         attributes: Vec::new(&env).clone(),
     });
-    assert_eq!(res, Err(Ok(RentalError::ContractPaused)));
+    assert_eq!(res, Err(Ok(AgreementError::ContractPaused)));
 
     client.unpause();
     assert!(!client.is_paused());
@@ -1267,7 +1267,7 @@ fn test_contract_paused_operations() {
     client.pause(&String::from_str(&env, "second incident"));
 
     let res_sign = client.try_sign_agreement(&tenant, &agreement_id);
-    assert_eq!(res_sign, Err(Ok(RentalError::ContractPaused)));
+    assert_eq!(res_sign, Err(Ok(AgreementError::ContractPaused)));
 
     client.unpause();
     let res_sign_success = client.try_sign_agreement(&tenant, &agreement_id);
@@ -1317,7 +1317,7 @@ fn test_pause_double_call_fails() {
     client.pause(&String::from_str(&env, "maintenance"));
 
     let result = client.try_pause(&String::from_str(&env, "maintenance again"));
-    assert_eq!(result, Err(Ok(RentalError::AlreadyPaused)));
+    assert_eq!(result, Err(Ok(AgreementError::AlreadyPaused)));
 }
 
 #[test]
@@ -1335,7 +1335,7 @@ fn test_unpause_when_not_paused_fails() {
 
     client.initialize(&admin, &config);
     let result = client.try_unpause();
-    assert_eq!(result, Err(Ok(RentalError::NotPaused)));
+    assert_eq!(result, Err(Ok(AgreementError::NotPaused)));
 }
 
 #[test]
@@ -1483,7 +1483,7 @@ fn test_release_escrow_fails_when_frozen() {
     client.freeze_escrow(&admin, &agreement_id);
 
     let result = client.try_release_escrow_with_token(&agreement_id, &payment_token);
-    assert_eq!(result, Err(Ok(RentalError::InvalidState)));
+    assert_eq!(result, Err(Ok(AgreementError::InvalidState)));
 }
 
 #[test]
@@ -1525,7 +1525,7 @@ fn test_freeze_escrow_unauthorized_rejected() {
     });
 
     let result = client.try_freeze_escrow(&attacker, &agreement_id);
-    assert_eq!(result, Err(Ok(RentalError::Unauthorized)));
+    assert_eq!(result, Err(Ok(AgreementError::Unauthorized)));
 }
 
 #[test]
@@ -1568,7 +1568,7 @@ fn test_unfreeze_escrow_unauthorized_rejected() {
 
     client.freeze_escrow(&admin, &agreement_id);
     let result = client.try_unfreeze_escrow(&attacker, &agreement_id);
-    assert_eq!(result, Err(Ok(RentalError::Unauthorized)));
+    assert_eq!(result, Err(Ok(AgreementError::Unauthorized)));
 }
 
 #[test]
@@ -1587,7 +1587,7 @@ fn test_freeze_escrow_missing_agreement_rejected() {
 
     let missing_id = String::from_str(&env, "FREEZE_MISSING");
     let result = client.try_freeze_escrow(&admin, &missing_id);
-    assert_eq!(result, Err(Ok(RentalError::AgreementNotFound)));
+    assert_eq!(result, Err(Ok(AgreementError::AgreementNotFound)));
 }
 
 #[test]
@@ -1606,5 +1606,5 @@ fn test_unfreeze_escrow_missing_agreement_rejected() {
 
     let missing_id = String::from_str(&env, "UNFREEZE_MISSING");
     let result = client.try_unfreeze_escrow(&admin, &missing_id);
-    assert_eq!(result, Err(Ok(RentalError::AgreementNotFound)));
+    assert_eq!(result, Err(Ok(AgreementError::AgreementNotFound)));
 }

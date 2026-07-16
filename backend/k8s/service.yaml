@@ -1,10 +1,10 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: huston-housing-backend
+  name: arbitra-backend
   namespace: production
   labels:
-    app: huston-housing-backend
+    app: arbitra-backend
   annotations:
     prometheus.io/scrape: 'true'
     prometheus.io/port: '3000'
@@ -12,7 +12,7 @@ metadata:
 spec:
   type: ClusterIP
   selector:
-    app: huston-housing-backend
+    app: arbitra-backend
   ports:
     - name: http
       port: 80

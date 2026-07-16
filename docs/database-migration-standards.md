@@ -292,11 +292,11 @@ npm run migration:show     # Confirm state
 npm run migration:run
 
 # Verify the schema
-psql -d huston-housing_db -c "\d properties"   # Inspect table structure
+psql -d arbitra_db -c "\d properties"   # Inspect table structure
 
 # Test the down migration
 npm run migration:revert
-psql -d huston-housing_db -c "\d properties"   # Confirm rollback
+psql -d arbitra_db -c "\d properties"   # Confirm rollback
 
 # Re-apply
 npm run migration:run
@@ -359,7 +359,7 @@ npm run migration:show
 
 ```bash
 # 1. Create a backup snapshot
-pg_dump -Fc huston-housing_production > backup_$(date +%Y%m%d_%H%M%S).dump
+pg_dump -Fc arbitra_production > backup_$(date +%Y%m%d_%H%M%S).dump
 
 # 2. Revert the migration
 DATABASE_URL=$PROD_DATABASE_URL npm run migration:revert
@@ -368,7 +368,7 @@ DATABASE_URL=$PROD_DATABASE_URL npm run migration:revert
 # (via your deployment tooling — Kubernetes rollout, ECS task revision, etc.)
 
 # 4. Verify application health
-curl https://api.huston-housing.app/health
+curl https://api.arbitra.app/health
 ```
 
 ### 6.4 Emergency Manual Rollback
@@ -425,7 +425,7 @@ ssh prod-server "cd /app/backend && npm run migration:run"
 npm run migration:show
 
 # Run health check
-curl https://api.huston-housing.app/health/detailed
+curl https://api.arbitra.app/health/detailed
 
 # Monitor error rates in Sentry for 10 minutes post-deploy
 ```

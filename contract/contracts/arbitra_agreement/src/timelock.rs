@@ -1,5 +1,5 @@
 use crate::{
-    errors::RentalError,
+    errors::AgreementError,
     events,
     storage::DataKey,
     types::{ContractState, TimelockAction, TimelockActionType},
@@ -55,14 +55,14 @@ pub fn get_min_delay(action_type: &TimelockActionType) -> u64 {
 
 // ─── Internal Helpers ─────────────────────────────────────────────────────────
 
-fn require_admin(env: &Env, caller: &Address) -> Result<(), RentalError> {
+fn require_admin(env: &Env, caller: &Address) -> Result<(), AgreementError> {
     let state: ContractState = env
         .storage()
         .instance()
         .get(&DataKey::State)
-        .ok_or(RentalError::InvalidState)?;
+        .ok_or(AgreementError::InvalidState)?;
     if state.admin != *caller {
-        return Err(RentalError::Unauthorized);
+        return Err(AgreementError::Unauthorized);
     }
     Ok(())
 }
@@ -99,14 +99,14 @@ pub fn queue_action(
     target: Address,
     data: Bytes,
     delay: u64,
-) -> Result<String, RentalError> {
+) -> Result<String, AgreementError> {
     caller.require_auth();
     require_admin(env, &caller)?;
 
     // Enforce minimum delay for the action type
     let min_delay = get_min_delay(&action_type);
     if delay < min_delay {
-        return Err(RentalError::TimelockDelayTooShort);
+        return Err(AgreementError::TimelockDelayTooShort);
     }
 
     let now = env.ledger().timestamp();
@@ -168,25 +168,25 @@ pub fn queue_action(
 ///
 /// Any caller may trigger execution once the ETA has passed. The action must
 /// not have been previously executed or cancelled.
-pub fn execute_action(env: &Env, caller: Address, action_id: String) -> Result<(), RentalError> {
+pub fn execute_action(env: &Env, caller: Address, action_id: String) -> Result<(), AgreementError> {
     caller.require_auth();
 
     let mut action: TimelockAction = env
         .storage()
         .persistent()
         .get(&DataKey::TimelockAction(action_id.clone()))
-        .ok_or(RentalError::TimelockNotFound)?;
+        .ok_or(AgreementError::TimelockNotFound)?;
 
     if action.executed {
-        return Err(RentalError::TimelockAlreadyExecuted);
+        return Err(AgreementError::TimelockAlreadyExecuted);
     }
 
     if action.cancelled {
-        return Err(RentalError::TimelockAlreadyCancelled);
+        return Err(AgreementError::TimelockAlreadyCancelled);
     }
 
     if env.ledger().timestamp() < action.eta {
-        return Err(RentalError::TimelockEtaNotReached);
+        return Err(AgreementError::TimelockEtaNotReached);
     }
 
     action.executed = true;
@@ -205,7 +205,7 @@ pub fn execute_action(env: &Env, caller: Address, action_id: String) -> Result<(
 ///
 /// Only the contract admin may cancel. The action must not have been
 /// previously executed or cancelled.
-pub fn cancel_action(env: &Env, caller: Address, action_id: String) -> Result<(), RentalError> {
+pub fn cancel_action(env: &Env, caller: Address, action_id: String) -> Result<(), AgreementError> {
     caller.require_auth();
     require_admin(env, &caller)?;
 
@@ -213,14 +213,14 @@ pub fn cancel_action(env: &Env, caller: Address, action_id: String) -> Result<()
         .storage()
         .persistent()
         .get(&DataKey::TimelockAction(action_id.clone()))
-        .ok_or(RentalError::TimelockNotFound)?;
+        .ok_or(AgreementError::TimelockNotFound)?;
 
     if action.executed {
-        return Err(RentalError::TimelockAlreadyExecuted);
+        return Err(AgreementError::TimelockAlreadyExecuted);
     }
 
     if action.cancelled {
-        return Err(RentalError::TimelockAlreadyCancelled);
+        return Err(AgreementError::TimelockAlreadyCancelled);
     }
 
     action.cancelled = true;
@@ -236,11 +236,11 @@ pub fn cancel_action(env: &Env, caller: Address, action_id: String) -> Result<()
 }
 
 /// Retrieve a timelock action by ID.
-pub fn get_action(env: &Env, action_id: String) -> Result<TimelockAction, RentalError> {
+pub fn get_action(env: &Env, action_id: String) -> Result<TimelockAction, AgreementError> {
     env.storage()
         .persistent()
         .get(&DataKey::TimelockAction(action_id))
-        .ok_or(RentalError::TimelockNotFound)
+        .ok_or(AgreementError::TimelockNotFound)
 }
 
 /// Return all currently active (pending) timelock action IDs.

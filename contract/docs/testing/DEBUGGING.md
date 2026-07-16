@@ -31,7 +31,7 @@ cargo test
 Run one contract package:
 
 ```bash
-cargo test -p huston-housing
+cargo test -p arbitra
 ```
 
 Run one test by name:

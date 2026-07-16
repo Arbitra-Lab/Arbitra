@@ -32,7 +32,7 @@ describe('PropertiesController Integration', () => {
           port: parseInt(process.env.DB_PORT || '5432'),
           username: process.env.DB_USERNAME || 'postgres',
           password: process.env.DB_PASSWORD || 'password',
-          database: process.env.DB_NAME || 'huston-housing_test',
+          database: process.env.DB_NAME || 'arbitra_test',
           entities: [
             Property,
             PropertyImage,

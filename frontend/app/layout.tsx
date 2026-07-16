@@ -16,7 +16,7 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_APP_URL ||
-      'https://huston-housing-kappa.vercel.app',
+      'https://arbitra-kappa.vercel.app',
   ),
   title: {
     default: 'Arbitra — On-Chain Arbitration & Escrow, Built on Stellar',

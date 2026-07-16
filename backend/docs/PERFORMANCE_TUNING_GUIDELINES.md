@@ -1,6 +1,6 @@
 # Performance Tuning Guidelines
 
-Operational guide for tuning the Houston Housing NestJS backend in development, staging, and production. Use this document when optimizing latency, throughput, or resource usage before and after deployments.
+Operational guide for tuning the Arbitra NestJS backend in development, staging, and production. Use this document when optimizing latency, throughput, or resource usage before and after deployments.
 
 **Related documentation:**
 

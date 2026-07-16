@@ -207,7 +207,7 @@ fn propose_extension_zero_months_returns_invalid_input() {
     );
 
     let res = client.try_propose_extension(&landlord, &agreement_id, &0u32, &None, &None);
-    assert_eq!(res, Err(Ok(RentalError::InvalidInput)));
+    assert_eq!(res, Err(Ok(AgreementError::InvalidInput)));
 }
 
 #[test]
@@ -229,7 +229,7 @@ fn propose_extension_stranger_unauthorized() {
     );
 
     let res = client.try_propose_extension(&stranger, &agreement_id, &1u32, &None, &None);
-    assert_eq!(res, Err(Ok(RentalError::Unauthorized)));
+    assert_eq!(res, Err(Ok(AgreementError::Unauthorized)));
 }
 
 #[test]
@@ -240,7 +240,7 @@ fn propose_extension_agreement_not_found() {
     let missing = String::from_str(&env, "NO_SUCH_AGR");
 
     let res = client.try_propose_extension(&landlord, &missing, &1u32, &None, &None);
-    assert_eq!(res, Err(Ok(RentalError::AgreementNotFound)));
+    assert_eq!(res, Err(Ok(AgreementError::AgreementNotFound)));
 }
 
 #[test]
@@ -264,7 +264,7 @@ fn accept_extension_stranger_unauthorized() {
     let extension_id = client.propose_extension(&landlord, &agreement_id, &1u32, &None, &None);
 
     let res = client.try_accept_extension(&stranger, &extension_id);
-    assert_eq!(res, Err(Ok(RentalError::Unauthorized)));
+    assert_eq!(res, Err(Ok(AgreementError::Unauthorized)));
 }
 
 #[test]
@@ -288,7 +288,7 @@ fn accept_extension_after_fully_accepted_is_invalid_state() {
     client.accept_extension(&tenant, &extension_id);
 
     let res = client.try_accept_extension(&landlord, &extension_id);
-    assert_eq!(res, Err(Ok(RentalError::InvalidState)));
+    assert_eq!(res, Err(Ok(AgreementError::InvalidState)));
 }
 
 #[test]
@@ -311,7 +311,7 @@ fn activate_extension_before_accepted_invalid_state() {
     let extension_id = client.propose_extension(&landlord, &agreement_id, &1u32, &None, &None);
 
     let res = client.try_activate_extension(&landlord, &extension_id);
-    assert_eq!(res, Err(Ok(RentalError::InvalidState)));
+    assert_eq!(res, Err(Ok(AgreementError::InvalidState)));
 }
 
 #[test]
@@ -335,7 +335,7 @@ fn activate_extension_non_landlord_unauthorized() {
     client.accept_extension(&tenant, &extension_id);
 
     let res = client.try_activate_extension(&tenant, &extension_id);
-    assert_eq!(res, Err(Ok(RentalError::Unauthorized)));
+    assert_eq!(res, Err(Ok(AgreementError::Unauthorized)));
 }
 
 #[test]
@@ -365,7 +365,7 @@ fn reject_extension_sets_status_and_reason() {
     assert_eq!(ext.last_reason, Some(reason));
 
     let res_activate = client.try_activate_extension(&landlord, &extension_id);
-    assert_eq!(res_activate, Err(Ok(RentalError::InvalidState)));
+    assert_eq!(res_activate, Err(Ok(AgreementError::InvalidState)));
 }
 
 #[test]
@@ -398,7 +398,7 @@ fn cancel_extension_after_accept_prevents_activation() {
     assert_eq!(ext.status, ExtensionStatus::Cancelled);
 
     let res = client.try_activate_extension(&landlord, &extension_id);
-    assert_eq!(res, Err(Ok(RentalError::InvalidState)));
+    assert_eq!(res, Err(Ok(AgreementError::InvalidState)));
 }
 
 #[test]
@@ -424,7 +424,7 @@ fn cancel_extension_twice_second_call_invalid_state() {
     client.cancel_extension(&landlord, &extension_id, &r);
 
     let res = client.try_cancel_extension(&tenant, &extension_id, &String::from_str(&env, "r2"));
-    assert_eq!(res, Err(Ok(RentalError::InvalidState)));
+    assert_eq!(res, Err(Ok(AgreementError::InvalidState)));
 }
 
 #[test]
@@ -432,7 +432,7 @@ fn get_extension_not_found() {
     let env = Env::default();
     let (client, _) = setup_initialized_client(&env);
     let res = client.try_get_extension(&String::from_str(&env, "missing_ext"));
-    assert_eq!(res, Err(Ok(RentalError::AgreementNotFound)));
+    assert_eq!(res, Err(Ok(AgreementError::AgreementNotFound)));
 }
 
 #[test]
@@ -453,7 +453,7 @@ fn get_extension_history_not_found_before_any_proposal() {
     );
 
     let res = client.try_get_extension_history(&agreement_id);
-    assert_eq!(res, Err(Ok(RentalError::AgreementNotFound)));
+    assert_eq!(res, Err(Ok(AgreementError::AgreementNotFound)));
 }
 
 #[test]
@@ -476,5 +476,5 @@ fn propose_extension_while_paused_returns_contract_paused() {
     client.pause(&String::from_str(&env, "maintenance"));
 
     let res = client.try_propose_extension(&landlord, &agreement_id, &1u32, &None, &None);
-    assert_eq!(res, Err(Ok(RentalError::ContractPaused)));
+    assert_eq!(res, Err(Ok(AgreementError::ContractPaused)));
 }

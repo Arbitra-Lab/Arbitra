@@ -8,7 +8,7 @@ This document provides comprehensive documentation for the Dispute Resolution co
 
 ### 1.1 Purpose
 
-The Dispute Resolution contract manages conflict resolution between rental parties on the Houston Housing platform. It enables:
+The Dispute Resolution contract manages conflict resolution between rental parties on the Arbitra platform. It enables:
 
 - creation and tracking of disputes
 - voting-based resolution mechanisms

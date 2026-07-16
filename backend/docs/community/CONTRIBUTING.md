@@ -1,7 +1,7 @@
 ````markdown
-# Contributing to Houston Housing
+# Contributing to Arbitra
 
-This document outlines the contribution process for the Houston Housing platform. We welcome community contributions that advance our mission of making rental payments transparent, low-cost, and programmable.
+This document outlines the contribution process for the Arbitra platform. We welcome community contributions that advance our mission of making rental payments transparent, low-cost, and programmable.
 
 ## Table of Contents
 
@@ -17,7 +17,7 @@ This document outlines the contribution process for the Houston Housing platform
 
 ## Introduction
 
-Houston Housing is an open-source platform built on the Stellar blockchain, connecting landlords, agents, and tenants through a hybrid architecture that combines on-chain settlement with off-chain business logic.
+Arbitra is an open-source platform built on the Stellar blockchain, connecting landlords, agents, and tenants through a hybrid architecture that combines on-chain settlement with off-chain business logic.
 
 ## Prerequisites
 
@@ -34,8 +34,8 @@ Ensure you have the following installed:
 1.  **Clone the repository**:
 
     ```bash
-    git clone https://github.com/caxtonacollins/huston-housing.git
-    cd huston-housing
+    git clone https://github.com/caxtonacollins/arbitra.git
+    cd arbitra
     ```
 
 2.  **Install dependencies**:
@@ -119,7 +119,7 @@ Located in `contract/`.
 4. Reference any related issues in your pull request description
 5. Address reviewer feedback promptly and professionally
 
-We appreciate your contributions to the Houston Housing platform.
+We appreciate your contributions to the Arbitra platform.
 
 ## Local Pipeline Validation
 

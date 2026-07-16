@@ -1,6 +1,6 @@
 # SDK Generation
 
-The Houston Housing API exposes an OpenAPI 3.0 spec at `/api/docs-json` (when the server is running) or via a static file generated with:
+The Arbitra API exposes an OpenAPI 3.0 spec at `/api/docs-json` (when the server is running) or via a static file generated with:
 
 ```bash
 pnpm run openapi:generate

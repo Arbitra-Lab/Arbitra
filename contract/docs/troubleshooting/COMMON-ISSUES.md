@@ -1,6 +1,6 @@
 # Common Issues and Solutions
 
-This document outlines the most frequently encountered issues when working with Houston Housing smart contracts, along with their causes and step-by-step resolution procedures.
+This document outlines the most frequently encountered issues when working with Arbitra smart contracts, along with their causes and step-by-step resolution procedures.
 
 ## Table of Contents
 

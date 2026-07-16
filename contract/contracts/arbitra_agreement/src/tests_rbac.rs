@@ -1,4 +1,4 @@
-//! Role-Based Access Control tests for the Houston Housing contract.
+//! Role-Based Access Control tests for the Arbitra contract.
 //!
 //! Verifies that privileged functions enforce admin-only access and that
 //! agreement signing is restricted to the specific tenant on each agreement.

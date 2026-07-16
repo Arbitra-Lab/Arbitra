@@ -16,8 +16,8 @@ This backend now exposes a payments orchestration layer that bridges the generic
 ## Operational assumptions
 
 - Stellar rent payments require the caller to provide a valid tenant secret for transaction signing.
-- Stellar escrow creation assumes the source and destination Stellar accounts are already registered in Houston Housing.
-- If `PAYMENT_WEBHOOK_SECRET` is configured, webhook callers must provide it in `x-huston-housing-payment-secret`.
+- Stellar escrow creation assumes the source and destination Stellar accounts are already registered in Arbitra.
+- If `PAYMENT_WEBHOOK_SECRET` is configured, webhook callers must provide it in `x-arbitra-payment-secret`.
 - Escrow-backed payments are stored as `pending` until reconciliation observes `RELEASED` or `REFUNDED`.
 
 ## Reconciliation model

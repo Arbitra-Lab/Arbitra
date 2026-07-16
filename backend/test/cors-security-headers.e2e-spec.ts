@@ -17,7 +17,7 @@ describe('CORS and Security Headers Integration (e2e)', () => {
 
     // Setup CORS as in main.ts
     app.enableCors({
-      origin: ['http://localhost:3001', 'https://huston-housing.io'],
+      origin: ['http://localhost:3001', 'https://arbitra.io'],
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
       allowedHeaders: [
@@ -60,11 +60,11 @@ describe('CORS and Security Headers Integration (e2e)', () => {
     it('should allow requests from multiple permitted origins', async () => {
       const response = await request(app.getHttpServer())
         .get('/')
-        .set('Origin', 'https://huston-housing.io')
+        .set('Origin', 'https://arbitra.io')
         .expect(200);
 
       expect(response.headers['access-control-allow-origin']).toBe(
-        'https://huston-housing.io',
+        'https://arbitra.io',
       );
     });
 

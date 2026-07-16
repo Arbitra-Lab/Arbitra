@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Comprehensive Load Testing Script for Houston Housing API
+ * Comprehensive Load Testing Script for Arbitra API
  * 
  * This script runs various load testing scenarios against the API
  * and provides detailed performance analysis and reporting.
@@ -620,7 +620,7 @@ async function main() {
 // Show help
 if (args.includes('--help') || args.includes('-h')) {
   console.log(`
-🚀 Houston Housing Load Testing Suite
+🚀 Arbitra Load Testing Suite
 
 Usage: node scripts/load-test.mjs [environment] [options]
 

@@ -1,6 +1,6 @@
 # Graceful Shutdown and Connection Cleanup
 
-This document describes the graceful shutdown mechanism implemented in the Houston Housing backend, ensuring clean termination of connections and in-flight requests.
+This document describes the graceful shutdown mechanism implemented in the Arbitra backend, ensuring clean termination of connections and in-flight requests.
 
 ## Overview
 
@@ -289,7 +289,7 @@ kill -TERM <pid>
 
 ```bash
 # Start container
-docker run -it huston-housing-backend:latest
+docker run -it arbitra-backend:latest
 
 # In another terminal, stop container
 docker stop <container-id>
@@ -347,13 +347,13 @@ Monitor shutdown logs:
 
 ```bash
 # Watch for shutdown logs
-kubectl logs -n production -l app=huston-housing-backend -f | grep -i shutdown
+kubectl logs -n production -l app=arbitra-backend -f | grep -i shutdown
 
 # Check for timeout warnings
-kubectl logs -n production -l app=huston-housing-backend | grep "timeout exceeded"
+kubectl logs -n production -l app=arbitra-backend | grep "timeout exceeded"
 
 # Check for connection errors
-kubectl logs -n production -l app=huston-housing-backend | grep "connection"
+kubectl logs -n production -l app=arbitra-backend | grep "connection"
 ```
 
 ### Alerts

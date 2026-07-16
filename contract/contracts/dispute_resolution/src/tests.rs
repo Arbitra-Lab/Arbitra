@@ -134,7 +134,7 @@ fn test_add_arbiter_fails_when_already_exists() {
     client.add_arbiter(&admin, &arbiter);
 }
 
-// `raise_dispute` + cross-contract Houston Housing integration tests live in `tests_raise_dispute.rs`.
+// `raise_dispute` + cross-contract Arbitra integration tests live in `tests_raise_dispute.rs`.
 
 #[test]
 #[should_panic(expected = "Error(Contract, #6)")]

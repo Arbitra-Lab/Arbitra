@@ -1,6 +1,6 @@
 # Agent Registry Contract Integration Guide
 
-This guide explains how to integrate the Agent Registry Contract with the Houston Housing rent payment ecosystem.
+This guide explains how to integrate the Agent Registry Contract with the Arbitra rent payment ecosystem.
 
 ## Overview
 
@@ -99,7 +99,7 @@ agent_registry.register_agent(
 // 3. Admin verifies the agent
 agent_registry.verify_agent(&admin_address, &agent_address);
 
-// 4. Rent agreement is created (in huston-housing contract)
+// 4. Rent agreement is created (in arbitra contract)
 // Verify agent before including in agreement
 let agent_info = agent_registry.get_agent_info(&agent_address)?;
 if !agent_info.verified {

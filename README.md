@@ -118,7 +118,7 @@ All Soroban contracts are currently deployed on **Stellar Testnet**. Click an ad
 | Property Registry | [`CAUHZN2FUPS7GVV2TYTUYCKG7CZX5NY7K6RA6INZ4KOGMUBRC4L4QJI7`](https://stellar.expert/explorer/testnet/contract/CAUHZN2FUPS7GVV2TYTUYCKG7CZX5NY7K6RA6INZ4KOGMUBRC4L4QJI7) |
 | Rent Obligation | [`CBGPDLUDTVHUR7HZPZ45CM6SYBISC2LQHMVVSEIVFA6WWZX24PIGDNOM`](https://stellar.expert/explorer/testnet/contract/CBGPDLUDTVHUR7HZPZ45CM6SYBISC2LQHMVVSEIVFA6WWZX24PIGDNOM) |
 | User Profile | [`CDEK2S5U36ELIGZW23EXHGYCWENGLMLHL47ZKQWPOMLO4GTK5O2YSMMH`](https://stellar.expert/explorer/testnet/contract/CDEK2S5U36ELIGZW23EXHGYCWENGLMLHL47ZKQWPOMLO4GTK5O2YSMMH) |
-| Huston Housing (Rental Agreement) | [`CBFLJVOHQ2LRVUMYBZQCHCVP5JGZ6WFTOSMYYUZQHAPHX6JKSDQXF5JD`](https://stellar.expert/explorer/testnet/contract/CBFLJVOHQ2LRVUMYBZQCHCVP5JGZ6WFTOSMYYUZQHAPHX6JKSDQXF5JD) |
+| Arbitra Agreement (Rental Agreement) | [`CBFLJVOHQ2LRVUMYBZQCHCVP5JGZ6WFTOSMYYUZQHAPHX6JKSDQXF5JD`](https://stellar.expert/explorer/testnet/contract/CBFLJVOHQ2LRVUMYBZQCHCVP5JGZ6WFTOSMYYUZQHAPHX6JKSDQXF5JD) |
 
 These IDs are also available in [`frontend/.env.example`](frontend/.env.example) and [`contract/.env.testnet.example`](contract/.env.testnet.example). Contracts are redeployed periodically during active development — if an address here doesn't resolve, check [`contract/docs/deployment/`](contract/docs/deployment/) for the latest.
 

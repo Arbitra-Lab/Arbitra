@@ -76,7 +76,7 @@ This directory contains templates to help contributors create clear, descriptive
 
 **⚠️ IMPORTANT**: Do NOT create public issues for security vulnerabilities!
 
-- Email security@huston-housing.dev instead
+- Email security@arbitra.dev instead
 - Or use GitHub's private vulnerability reporting
 - See SECURITY.md for details
 

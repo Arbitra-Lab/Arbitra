@@ -1,6 +1,6 @@
 # Comprehensive Monitoring and Observability Guide
 
-This document provides comprehensive guidance on monitoring and observability for the Houston Housing platform, covering metrics collection, event monitoring, alerting strategies, and observability best practices.
+This document provides comprehensive guidance on monitoring and observability for the Arbitra platform, covering metrics collection, event monitoring, alerting strategies, and observability best practices.
 
 ## Table of Contents
 
@@ -80,7 +80,7 @@ global:
     cluster: us-east-1
 
 scrape_configs:
-  - job_name: 'huston-housing-backend'
+  - job_name: 'arbitra-backend'
     static_configs:
       - targets: ['backend:5000']
     metrics_path: '/metrics'
@@ -243,10 +243,10 @@ node_network_transmit_bytes_total{device="eth0"}
 #### Container Metrics (cAdvisor)
 
 ```
-container_cpu_usage_seconds_total{container_name="huston-housing-backend"}
-container_memory_usage_bytes{container_name="huston-housing-backend"}
-container_network_receive_bytes_total{container_name="huston-housing-backend"}
-container_fs_usage_bytes{container_name="huston-housing-backend"}
+container_cpu_usage_seconds_total{container_name="arbitra-backend"}
+container_memory_usage_bytes{container_name="arbitra-backend"}
+container_network_receive_bytes_total{container_name="arbitra-backend"}
+container_fs_usage_bytes{container_name="arbitra-backend"}
 ```
 
 ### 4. Database Metrics
@@ -411,7 +411,7 @@ const logger = winston.createLogger({
     winston.format.errors({ stack: true }),
     winston.format.json(),
   ),
-  defaultMeta: { service: 'huston-housing-backend' },
+  defaultMeta: { service: 'arbitra-backend' },
   transports: [
     new winston.transports.File({ filename: 'error.log', level: 'error' }),
     new winston.transports.File({ filename: 'combined.log' }),
@@ -486,19 +486,19 @@ scrape_configs:
 
 ```logql
 # All errors in last hour
-{service="huston-housing-backend"} | json | level="error" | __error__=""
+{service="arbitra-backend"} | json | level="error" | __error__=""
 
 # Errors by endpoint
-{service="huston-housing-backend"} | json | level="error" | pattern `<_> <endpoint> <_>`
+{service="arbitra-backend"} | json | level="error" | pattern `<_> <endpoint> <_>`
 
 # User registration events
-{service="huston-housing-backend"} | json | action="user_registered"
+{service="arbitra-backend"} | json | action="user_registered"
 
 # Slow requests
-{service="huston-housing-backend"} | json | duration > 1000
+{service="arbitra-backend"} | json | duration > 1000
 
 # Failed transactions
-{service="huston-housing-backend"} | json | action="transaction" | status="failed"
+{service="arbitra-backend"} | json | action="transaction" | status="failed"
 ```
 
 ---
@@ -542,14 +542,14 @@ scrape_configs:
 
 ```yaml
 - alert: ServiceDown
-  expr: up{job="huston-housing-backend"} == 0
+  expr: up{job="arbitra-backend"} == 0
   for: 1m
   labels:
     severity: critical
   annotations:
-    summary: 'Houston Housing backend is down'
+    summary: 'Arbitra backend is down'
     description: 'Backend service {{ $labels.instance }} has been unreachable for 1 minute'
-    runbook: 'https://docs.huston-housing.io/runbooks/service-down'
+    runbook: 'https://docs.arbitra.io/runbooks/service-down'
 
 - alert: HighErrorRate
   expr: |
@@ -562,7 +562,7 @@ scrape_configs:
   annotations:
     summary: 'High error rate detected'
     description: 'Error rate is {{ $value | humanizePercentage }} over 5 minutes'
-    runbook: 'https://docs.huston-housing.io/runbooks/high-error-rate'
+    runbook: 'https://docs.arbitra.io/runbooks/high-error-rate'
 
 - alert: HighLatency
   expr: |
@@ -575,7 +575,7 @@ scrape_configs:
   annotations:
     summary: 'High request latency detected'
     description: 'P95 latency is {{ $value }}s'
-    runbook: 'https://docs.huston-housing.io/runbooks/high-latency'
+    runbook: 'https://docs.arbitra.io/runbooks/high-latency'
 ```
 
 #### Database Alerts
@@ -753,12 +753,12 @@ receivers:
   - name: 'team-channel'
     slack_configs:
       - api_url: '${SLACK_WEBHOOK_URL}'
-        channel: '#huston-housing-alerts'
+        channel: '#arbitra-alerts'
 
   - name: 'email'
     email_configs:
-      - to: 'team@huston-housing.io'
-        from: 'alerts@huston-housing.io'
+      - to: 'team@arbitra.io'
+        from: 'alerts@arbitra.io'
         smarthost: 'smtp.gmail.com:587'
         auth_username: '${SMTP_USERNAME}'
         auth_password: '${SMTP_PASSWORD}'
@@ -980,7 +980,7 @@ import { PrometheusModule } from '@willsoto/nestjs-prometheus';
       path: '/metrics',
       defaultMetrics: { enabled: true },
       defaultLabels: {
-        app: 'huston-housing-backend',
+        app: 'arbitra-backend',
         environment: process.env.NODE_ENV,
       },
     }),

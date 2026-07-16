@@ -444,7 +444,7 @@ Recovery Procedures:
 
 | Detail             | Value                        |
 | ------------------ | ---------------------------- |
-| **Project**        | Houston Housing Platform              |
+| **Project**        | Arbitra Platform              |
 | **Subject**        | Database Backup and Recovery |
 | **Created**        | April 24, 2026               |
 | **Status**         | ✅ COMPLETE                  |

@@ -1,15 +1,15 @@
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: huston-housing-backend-hpa
+  name: arbitra-backend-hpa
   namespace: production
   labels:
-    app: huston-housing-backend
+    app: arbitra-backend
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: huston-housing-backend
+    name: arbitra-backend
 
   # Scaling bounds
   minReplicas: 3

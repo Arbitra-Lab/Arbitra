@@ -1,5 +1,5 @@
 [package]
-name = "user-profile"
+name = "user_profile"
 version = "0.1.0"
 edition = "2021"
 publish = false

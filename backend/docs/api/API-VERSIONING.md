@@ -1,6 +1,6 @@
 # API Versioning Strategy
 
-This document defines the strategy for versioning, deprecating, and migrating the Houston Housing API. Following these guidelines ensures stability for our clients and a predictable upgrade path for developers.
+This document defines the strategy for versioning, deprecating, and migrating the Arbitra API. Following these guidelines ensures stability for our clients and a predictable upgrade path for developers.
 
 ---
 
@@ -8,10 +8,10 @@ This document defines the strategy for versioning, deprecating, and migrating th
 
 ### URI-Based Versioning (Path)
 
-Houston Housing uses **URI Versioning** for major API versions. This approach makes it easy to track versions in server logs and enables side-by-side deployment of multiple versions.
+Arbitra uses **URI Versioning** for major API versions. This approach makes it easy to track versions in server logs and enables side-by-side deployment of multiple versions.
 
-- **v1 (Current):** `https://api.huston-housing.app/api/...`
-- **v2 (Future):** `https://api.huston-housing.app/api/v2/...`
+- **v1 (Current):** `https://api.arbitra.app/api/...`
+- **v2 (Future):** `https://api.arbitra.app/api/v2/...`
 
 > [!NOTE]
 > The `/api` prefix without a version segment defaults to **v1** via the NestJS `defaultVersion: '1'` configuration.

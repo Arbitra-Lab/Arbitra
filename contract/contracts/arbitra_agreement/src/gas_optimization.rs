@@ -1,13 +1,13 @@
-//! Gas optimization utilities for the Houston Housing contract.
+//! Gas optimization utilities for the Arbitra contract.
 //!
 //! Provides benchmarking structs and helper functions to estimate, track, and
 //! reduce the computational cost of on-chain operations.
 //!
-//! Resolves: https://github.com/huston-housing-housing-protocol-I/huston-housing/issues/478
+//! Resolves: https://github.com/Arbitra-Lab/Arbitra/issues/478
 
 use soroban_sdk::{contracttype, Env, String, Vec};
 
-use crate::errors::RentalError;
+use crate::errors::AgreementError;
 use crate::storage::DataKey;
 
 // ─── Gas Metrics ─────────────────────────────────────────────────────────────
@@ -54,7 +54,7 @@ pub enum OperationType {
 ///
 /// Values are conservative upper-bound estimates based on the number of
 /// storage reads/writes each operation performs.
-pub fn estimate_gas_cost(env: Env, operation: OperationType) -> Result<u64, RentalError> {
+pub fn estimate_gas_cost(env: Env, operation: OperationType) -> Result<u64, AgreementError> {
     // Each persistent storage read ≈ 5 000 gas units (Soroban approximation).
     // Each persistent storage write ≈ 10 000 gas units.
     // Token transfer (cross-contract call) ≈ 25 000 gas units.
@@ -101,7 +101,7 @@ pub fn estimate_gas_cost(env: Env, operation: OperationType) -> Result<u64, Rent
 }
 
 /// Return all persisted gas metrics.
-pub fn get_gas_metrics(env: Env) -> Result<Vec<GasMetrics>, RentalError> {
+pub fn get_gas_metrics(env: Env) -> Result<Vec<GasMetrics>, AgreementError> {
     let ops = [
         OperationType::CreateAgreement,
         OperationType::MakePayment,
@@ -128,7 +128,7 @@ pub fn get_gas_metrics(env: Env) -> Result<Vec<GasMetrics>, RentalError> {
 pub fn optimize_operation(
     env: Env,
     operation: OperationType,
-) -> Result<OptimizationSuggestion, RentalError> {
+) -> Result<OptimizationSuggestion, AgreementError> {
     let op_name = operation_name(&env, &operation);
     let (suggestion_text, savings) = match operation {
         OperationType::CreateAgreement => (

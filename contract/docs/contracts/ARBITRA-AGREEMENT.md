@@ -1,4 +1,4 @@
-# Houston Housing Contract Documentation
+# Arbitra Agreement Contract Documentation
 
 ## Table of Contents
 
@@ -17,7 +17,7 @@
 
 ## Contract Overview
 
-The `huston-housing` contract is the protocol's primary rental-agreement orchestration contract. It manages agreement lifecycle, multi-token payments, escrow release hooks, metadata, extension flows, rate limiting, royalty support, deposit-interest accounting, multi-signature governance, timelock actions, and upgrade/version tracking.
+The `arbitra_agreement` contract is the protocol's primary rental-agreement orchestration contract. It manages agreement lifecycle, multi-token payments, escrow release hooks, metadata, extension flows, rate limiting, multi-signature governance, timelock actions, and upgrade/version tracking.
 
 ### Core capabilities
 
@@ -31,7 +31,7 @@ The `huston-housing` contract is the protocol's primary rental-agreement orchest
 ### Source layout
 
 ```text
-contract/contracts/huston-housing/src/
+contract/contracts/arbitra_agreement/src/
 |- lib.rs               # Public contract entry points
 |- agreement.rs         # Agreement lifecycle and payment helpers
 |- storage.rs           # Storage keys
@@ -42,7 +42,6 @@ contract/contracts/huston-housing/src/
 |- multi_sig.rs         # Multisig administration
 |- multi_token.rs       # Token support and exchange rates
 |- rate_limit.rs        # Per-user and per-block protection
-|- royalties.rs         # Royalty support
 |- timelock.rs          # Delayed admin actions
 ```
 
@@ -55,7 +54,7 @@ contract/contracts/huston-housing/src/
 Initializes the contract once with an admin address and runtime config.
 
 ```rust
-pub fn initialize(env: Env, admin: Address, config: Config) -> Result<(), RentalError>
+pub fn initialize(env: Env, admin: Address, config: Config) -> Result<(), AgreementError>
 ```
 
 ### Initialization requirements
@@ -172,32 +171,14 @@ The contract exposes a large API surface. The tables below group functions by ca
 | `get_extension_history(env, agreement_id)`                                              | Read the extension history for an agreement. |
 | `get_current_agreement_end(env, agreement_id)`                                          | Return current effective end date.           |
 
-### 6. Deposit interest and diagnostics
+### 6. Diagnostics
 
 | Function                                                                                                 | Purpose                                        |
 | -------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
-| `set_deposit_interest_config(env, agreement_id, annual_rate, compounding_frequency, interest_recipient)` | Set interest settings for a deposit.           |
-| `get_deposit_interest_config(env, agreement_id)`                                                         | Read interest config.                          |
-| `calculate_accrued_interest(env, escrow_id)`                                                             | Calculate accrued interest without persisting. |
-| `accrue_interest(env, escrow_id)`                                                                        | Persist an accrual event.                      |
-| `get_deposit_interest(env, escrow_id)`                                                                   | Return current deposit-interest state.         |
-| `get_accrual_history(env, escrow_id)`                                                                    | Return stored accrual history.                 |
-| `distribute_interest(env, escrow_id)`                                                                    | Distribute accrued interest.                   |
-| `process_interest_accruals(env)`                                                                         | Batch-process accruals.                        |
 | `log_error(env, error, operation, details)`                                                              | Persist a diagnostic error log entry.          |
 | `get_error_logs(env, limit)`                                                                             | Return recent error logs.                      |
 
-### 7. Royalties and secondary transfer hooks
-
-| Function                                                            | Purpose                                   |
-| ------------------------------------------------------------------- | ----------------------------------------- |
-| `set_royalty(env, token_id, royalty_percentage, royalty_recipient)` | Configure royalties.                      |
-| `get_royalty(env, token_id)`                                        | Read royalty config.                      |
-| `calculate_royalty(env, token_id, sale_price)`                      | Estimate royalty for a sale.              |
-| `transfer_with_royalty(env, token_id, to, sale_price)`              | Execute transfer with royalty accounting. |
-| `get_royalty_payments(env, token_id)`                               | Return royalty history.                   |
-
-### 8. Rate limiting
+### 7. Rate limiting
 
 | Function                                          | Purpose                                   |
 | ------------------------------------------------- | ----------------------------------------- |
@@ -306,13 +287,13 @@ match client.try_make_payment_with_token(
     &usdc_token,
 ) {
     Ok(Ok(())) => {}
-    Ok(Err(RentalError::TokenNotSupported)) => {
+    Ok(Err(AgreementError::TokenNotSupported)) => {
         // choose a supported payment token
     }
-    Ok(Err(RentalError::AgreementNotFound)) => {
+    Ok(Err(AgreementError::AgreementNotFound)) => {
         // agreement id is invalid
     }
-    Ok(Err(RentalError::RateLimitExceeded)) => {
+    Ok(Err(AgreementError::RateLimitExceeded)) => {
         // retry later
     }
     _ => {}
@@ -336,12 +317,8 @@ pub enum DataKey {
     SupportedTokens,
     ExchangeRate(Address, Address),
     AgreementToken(String),
-    DepositInterestConfig(String),
-    DepositInterest(String),
     ErrorLog(u32),
     ErrorLogCount,
-    RoyaltyConfig(String),
-    RoyaltyPayments(String),
     RateLimitConfig,
     UserCallCount(Address, String),
     BlockCallCount(u64, String),
@@ -374,7 +351,6 @@ pub enum DataKey {
 | `AgreementExtension` / `ExtensionHistory`    | Extension workflow data.                           |
 | `SupportedToken` / `TokenExchangeRate`       | Token compatibility and conversion rates.          |
 | `PaymentSplit`                               | Persisted rent payment split history.              |
-| `DepositInterestConfig` / `DepositInterest`  | Security-deposit interest lifecycle.               |
 | `AdminProposal` / `MultiSigConfig`           | Governance proposals and signer thresholds.        |
 | `TimelockAction` / `ContractUpgradeProposal` | Delayed admin and upgrade flow state.              |
 | `ErrorContext`                               | Diagnostic audit record for contract-level errors. |
@@ -430,11 +406,8 @@ The contract emits events for agreement actions, token support, governance, upgr
 - `PaymentMadeWithToken`
 - `EscrowReleasedWithToken`
 
-### Deposit interest and diagnostics
+### Diagnostics
 
-- `InterestConfigSet`
-- `InterestAccruedEvent`
-- `InterestDistributed`
 - `ErrorOccurred`
 
 ### Governance and safety events
@@ -472,7 +445,7 @@ const events = await server.getEvents({
   filters: [
     {
       type: "contract",
-      contractIds: [huston-housingContractId],
+      contractIds: [arbitraAgreementContractId],
     },
   ],
 });
@@ -506,9 +479,6 @@ const events = await server.getEvents({
 | 22   | `InsufficientPayment`        |
 | 23   | `AlreadyPaused`              |
 | 24   | `NotPaused`                  |
-| 25   | `InterestConfigNotFound`     |
-| 26   | `InterestAlreadyInitialized` |
-| 27   | `NoPrincipal`                |
 
 ### Payment, escrow, and governance errors
 
@@ -622,7 +592,7 @@ client.execute_contract_upgrade(&executor, &proposal_id, &new_version)?;
 
 ### Backend services
 
-- Map `RentalError` codes to backend API error responses instead of exposing raw failures directly.
+- Map `AgreementError` codes to backend API error responses instead of exposing raw failures directly.
 - Subscribe to contract events for asynchronous read-model updates.
 
 ---
@@ -643,10 +613,8 @@ The contract includes dedicated unit and module-specific tests:
 
 - `tests.rs`
 - `tests_multi_token.rs`
-- `tests_deposit_interest.rs`
 - `tests_multisig_governance.rs`
 - `tests_errors.rs`
-- `tests_royalties.rs`
 - `tests_rate_limit.rs`
 - `tests_multisig.rs`
 - `tests_timelock.rs`

@@ -10,7 +10,7 @@ import {
 import { Payment } from '../rent/entities/payment.entity';
 import { AuditService } from '../audit/audit.service';
 import { ReviewPromptService } from '../reviews/review-prompt.service';
-import { Houston HousingContractService } from '../stellar/services/huston-housing-contract.service';
+import { ArbitraAgreementContractService } from '../stellar/services/arbitra-agreement-contract.service';
 import { BlockchainSyncService } from './blockchain-sync.service';
 import { EscrowIntegrationService } from './escrow-integration.service';
 import { TemplateRenderingService } from './template-rendering.service';
@@ -24,7 +24,7 @@ describe('AgreementsService (lease extensions)', () => {
 
   const baseAgreement = {
     id: 'agr-1',
-    agreementNumber: 'HUSTON_HOUSING-2026-0001',
+    agreementNumber: 'ARBITRA-2026-0001',
     propertyId: 'p1',
     landlordId: 'l1',
     tenantId: 't1',
@@ -92,7 +92,7 @@ describe('AgreementsService (lease extensions)', () => {
         { provide: getRepositoryToken(Payment), useValue: mockPaymentRepo },
         { provide: AuditService, useValue: {} },
         { provide: ReviewPromptService, useValue: {} },
-        { provide: Houston HousingContractService, useValue: {} },
+        { provide: ArbitraAgreementContractService, useValue: {} },
         { provide: BlockchainSyncService, useValue: {} },
         { provide: EscrowIntegrationService, useValue: {} },
         { provide: TemplateRenderingService, useValue: { render: jest.fn() } },

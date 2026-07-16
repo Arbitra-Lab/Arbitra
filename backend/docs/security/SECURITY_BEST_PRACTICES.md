@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document defines security best practices for developing, deploying, and operating the Houston Housing platform. All engineers and contributors are expected to follow these practices when working with the codebase.
+This document defines security best practices for developing, deploying, and operating the Arbitra platform. All engineers and contributors are expected to follow these practices when working with the codebase.
 
 Use this document alongside:
 

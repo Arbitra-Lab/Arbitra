@@ -6,13 +6,13 @@
 
 ## Overview
 
-This guide explains how external smart contracts can integrate with Houston Housing's contracts for payment processing, property registry access, and escrow management.
+This guide explains how external smart contracts can integrate with Arbitra's contracts for payment processing, property registry access, and escrow management.
 
 ## 1. Cross-Contract Communication
 
 ### 1.1 Contract Call Pattern
 
-External contracts call Houston Housing contracts using the Stellar contract invocation protocol:
+External contracts call Arbitra contracts using the Stellar contract invocation protocol:
 
 ```rust
 use soroban_sdk::{
@@ -24,13 +24,13 @@ pub struct ExternalContractClient;
 
 #[contractimpl]
 impl ExternalContractClient {
-    pub fn call_huston-housing_payment(
+    pub fn call_arbitra_payment(
         env: Env,
-        huston-housing_payment_addr: Address,
+        arbitra_payment_addr: Address,
         agreement_id: Symbol,
         amount: u128,
     ) -> Result<Val, Val> {
-        let client = Houston HousingPaymentClient::new(&env, &huston-housing_payment_addr);
+        let client = ArbitraPaymentClient::new(&env, &arbitra_payment_addr);
         
         client.process_payment(
             &agreement_id,
@@ -42,17 +42,17 @@ impl ExternalContractClient {
 
 ### 1.2 Contract Client Generation
 
-Generated client for Houston Housing Payment contract:
+Generated client for Arbitra Payment contract:
 
 ```rust
-pub struct Houston HousingPaymentClient {
+pub struct ArbitraPaymentClient {
     env: Env,
     address: Address,
 }
 
-impl Houston HousingPaymentClient {
+impl ArbitraPaymentClient {
     pub fn new(env: &Env, address: &Address) -> Self {
-        Houston HousingPaymentClient {
+        ArbitraPaymentClient {
             env: env.clone(),
             address: address.clone(),
         }
@@ -86,7 +86,7 @@ impl Houston HousingPaymentClient {
 
 ### 2.1 Calling Payment Processing
 
-External contracts can invoke Houston Housing's payment contract:
+External contracts can invoke Arbitra's payment contract:
 
 ```rust
 pub fn execute_deferred_payment(
@@ -96,7 +96,7 @@ pub fn execute_deferred_payment(
     amount: u128,
     from: Address,
 ) -> Result<Symbol, u32> {
-    let payment_client = Houston HousingPaymentClient::new(&env, &payment_contract);
+    let payment_client = ArbitraPaymentClient::new(&env, &payment_contract);
 
     // Process the payment
     let result = payment_client.process_payment(&agreement_id, &amount)
@@ -122,7 +122,7 @@ pub fn verify_payment(
     payment_contract: Address,
     agreement_id: Symbol,
 ) -> Result<PaymentStatus, u32> {
-    let payment_client = Houston HousingPaymentClient::new(&env, &payment_contract);
+    let payment_client = ArbitraPaymentClient::new(&env, &payment_contract);
 
     // Read payment status from storage
     let status = env.storage()
@@ -274,7 +274,7 @@ pub fn emit_integration_event(
 }
 ```
 
-### 5.2 Listening to Houston Housing Events
+### 5.2 Listening to Arbitra Events
 
 Backend systems monitor contract events:
 
@@ -408,10 +408,10 @@ pub fn retry_payment_with_backoff(
 
 ## 8. Integration Testing
 
-### 8.1 Mock Houston Housing Contract
+### 8.1 Mock Arbitra Contract
 
 ```typescript
-// test/mocks/mockHouston HousingContract.ts
+// test/mocks/mockArbitraContract.ts
 import { mockContractClient } from '@stellar/soroban-test-utils';
 
 export const mockPaymentContract = mockContractClient({
@@ -551,17 +551,17 @@ pub fn listen_and_react(
 // config/contracts.ts
 export const contractConfig = {
   payment: {
-    id: process.env.HUSTON_HOUSING_PAYMENT_CONTRACT_ID || '',
+    id: process.env.ARBITRA_PAYMENT_CONTRACT_ID || '',
     network: 'testnet',
     timeout: 30000
   },
   property: {
-    id: process.env.HUSTON_HOUSING_PROPERTY_CONTRACT_ID || '',
+    id: process.env.ARBITRA_PROPERTY_CONTRACT_ID || '',
     network: 'testnet',
     timeout: 30000
   },
   escrow: {
-    id: process.env.HUSTON_HOUSING_ESCROW_CONTRACT_ID || '',
+    id: process.env.ARBITRA_ESCROW_CONTRACT_ID || '',
     network: 'testnet',
     timeout: 30000
   }
@@ -572,18 +572,18 @@ export const contractConfig = {
 
 ```bash
 #!/bin/bash
-# Deploy external contract with Houston Housing integration
+# Deploy external contract with Arbitra integration
 
 CONTRACT_NAME="external_integration"
-HUSTON_HOUSING_PAYMENT=$(cat huston-housing_payment_id.txt)
-HUSTON_HOUSING_ESCROW=$(cat huston-housing_escrow_id.txt)
+ARBITRA_PAYMENT=$(cat arbitra_payment_id.txt)
+ARBITRA_ESCROW=$(cat arbitra_escrow_id.txt)
 
 soroban contract deploy \
   --network testnet \
   --source-account funding-account \
   --wasm target/wasm32-unknown-unknown/release/${CONTRACT_NAME}.wasm \
   --init-fn initialize \
-  --init-args payment=$HUSTON_HOUSING_PAYMENT escrow=$HUSTON_HOUSING_ESCROW
+  --init-args payment=$ARBITRA_PAYMENT escrow=$ARBITRA_ESCROW
 ```
 
 ## Related Documentation

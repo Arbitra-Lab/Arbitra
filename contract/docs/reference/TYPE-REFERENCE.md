@@ -1,6 +1,6 @@
 # Type Definitions Reference
 
-Comprehensive documentation of all custom types and data structures used in the Houston Housing smart contracts.
+Comprehensive documentation of all custom types and data structures used in the Arbitra smart contracts.
 
 ## Table of Contents
 
@@ -12,7 +12,7 @@ Comprehensive documentation of all custom types and data structures used in the 
 6. [Escrow Contract](#6-escrow-contract)
 7. [Dispute Resolution Contract](#7-dispute-resolution-contract)
 8. [Agent Registry Contract](#8-agent-registry-contract)
-9. [Houston Housing (Main) Contract](#9-huston-housing-main-contract)
+9. [Arbitra (Main) Contract](#9-arbitra-main-contract)
 10. [Shared Types](#10-shared-types)
 11. [Serialization](#serialization)
 12. [Validation](#validation)
@@ -518,7 +518,7 @@ pub struct ContractState {
     pub admin: Address,
     pub initialized: bool,
     pub min_votes_required: u32,
-    pub huston-housing_contract: Address,
+    pub arbitra_contract: Address,
 }
 ```
 
@@ -653,9 +653,9 @@ pub struct AgentTransaction {
 
 ---
 
-## 9. Houston Housing (Main) Contract
+## 9. Arbitra (Main) Contract
 
-**Location:** `contracts/huston-housing/src/types.rs`
+**Location:** `contracts/arbitra/src/types.rs`
 
 ### TimelockActionType
 

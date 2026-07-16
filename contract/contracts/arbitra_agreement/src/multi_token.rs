@@ -1,4 +1,4 @@
-use crate::errors::RentalError;
+use crate::errors::AgreementError;
 use crate::events;
 use crate::storage::DataKey;
 use crate::types::{SupportedToken, TokenExchangeRate};
@@ -11,7 +11,7 @@ pub fn add_supported_token(
     decimals: u32,
     min_amount: i128,
     max_amount: i128,
-) -> Result<(), RentalError> {
+) -> Result<(), AgreementError> {
     let key = DataKey::SupportedToken(token_address.clone());
     let token = SupportedToken {
         token_address: token_address.clone(),
@@ -41,10 +41,10 @@ pub fn add_supported_token(
     Ok(())
 }
 
-pub fn remove_supported_token(env: Env, token_address: Address) -> Result<(), RentalError> {
+pub fn remove_supported_token(env: Env, token_address: Address) -> Result<(), AgreementError> {
     let key = DataKey::SupportedToken(token_address.clone());
     if !env.storage().persistent().has(&key) {
-        return Err(RentalError::TokenNotSupported);
+        return Err(AgreementError::TokenNotSupported);
     }
 
     let mut token: SupportedToken = env.storage().persistent().get(&key).unwrap();
@@ -55,7 +55,7 @@ pub fn remove_supported_token(env: Env, token_address: Address) -> Result<(), Re
     Ok(())
 }
 
-pub fn get_supported_tokens(env: Env) -> Result<Vec<SupportedToken>, RentalError> {
+pub fn get_supported_tokens(env: Env) -> Result<Vec<SupportedToken>, AgreementError> {
     let addresses: Vec<Address> = env
         .storage()
         .persistent()
@@ -77,7 +77,7 @@ pub fn get_supported_tokens(env: Env) -> Result<Vec<SupportedToken>, RentalError
     Ok(tokens)
 }
 
-pub fn is_token_supported(env: Env, token_address: Address) -> Result<bool, RentalError> {
+pub fn is_token_supported(env: Env, token_address: Address) -> Result<bool, AgreementError> {
     let key = DataKey::SupportedToken(token_address);
     if let Some(token) = env
         .storage()
@@ -95,7 +95,7 @@ pub fn set_exchange_rate(
     from_token: Address,
     to_token: Address,
     rate: i128,
-) -> Result<(), RentalError> {
+) -> Result<(), AgreementError> {
     let key = DataKey::ExchangeRate(from_token.clone(), to_token.clone());
     let exchange_rate = TokenExchangeRate {
         from_token: from_token.clone(),
@@ -114,7 +114,7 @@ pub fn get_exchange_rate(
     env: Env,
     from_token: Address,
     to_token: Address,
-) -> Result<i128, RentalError> {
+) -> Result<i128, AgreementError> {
     if from_token == to_token {
         return Ok(1_000_000_000_000_000_000); // 1.0 scaled by 10^18
     }
@@ -127,7 +127,7 @@ pub fn get_exchange_rate(
     {
         Ok(rate_struct.rate)
     } else {
-        Err(RentalError::RateNotFound)
+        Err(AgreementError::RateNotFound)
     }
 }
 
@@ -136,7 +136,7 @@ pub fn convert_amount(
     from_token: Address,
     to_token: Address,
     amount: i128,
-) -> Result<i128, RentalError> {
+) -> Result<i128, AgreementError> {
     if from_token == to_token {
         return Ok(amount);
     }
@@ -145,7 +145,7 @@ pub fn convert_amount(
     // amount * rate / 10^18
     let converted = amount
         .checked_mul(rate)
-        .ok_or(RentalError::ConversionError)?
+        .ok_or(AgreementError::ConversionError)?
         / 1_000_000_000_000_000_000;
     Ok(converted)
 }

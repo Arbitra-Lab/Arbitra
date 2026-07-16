@@ -1,6 +1,6 @@
-# Houston Housing API Usage Guide
+# Arbitra API Usage Guide
 
-Step-by-step guide for integrating with the Houston Housing backend API.
+Step-by-step guide for integrating with the Arbitra backend API.
 
 ## Prerequisites
 
@@ -77,7 +77,7 @@ Use the key on subsequent requests:
 
 ```bash
 curl http://localhost:5000/api/users/me \
-  -H "X-API-Key: huston-housing_sk_..."
+  -H "X-API-Key: arbitra_sk_..."
 ```
 
 Manage keys: list (`GET /api/developer/api-keys`), rotate (`POST .../rotate`), revoke (`DELETE .../:id`).

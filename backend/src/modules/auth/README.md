@@ -2,7 +2,7 @@
 
 ## 📋 Overview
 
-The Auth module implements a secure, production-ready authentication system for the Houston Housing application. It provides comprehensive user authentication, password management, and security features following OWASP best practices.
+The Auth module implements a secure, production-ready authentication system for the Arbitra application. It provides comprehensive user authentication, password management, and security features following OWASP best practices.
 
 ## 🎯 Features
 
@@ -362,7 +362,7 @@ DB_HOST=localhost
 DB_PORT=5432
 DB_USERNAME=postgres
 DB_PASSWORD=password
-DB_NAME=huston-housing_db
+DB_NAME=arbitra_db
 
 # Application
 NODE_ENV=development
@@ -653,7 +653,7 @@ For issues or questions:
 
 ## 📄 License
 
-This authentication module is part of the Houston Housing project and follows the same license.
+This authentication module is part of the Arbitra project and follows the same license.
 
 ---
 

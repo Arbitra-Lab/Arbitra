@@ -8,7 +8,7 @@
 - **Feature**: Use [Feature Request](ISSUE_TEMPLATE/feature_request.md) template
 - **Docs**: Use [Documentation](ISSUE_TEMPLATE/documentation.md) template
 - **Performance**: Use [Performance](ISSUE_TEMPLATE/performance.md) template
-- **Security**: Email security@huston-housing.dev (don't create public issue!)
+- **Security**: Email security@arbitra.dev (don't create public issue!)
 - **CI/CD**: Use [CI/CD Failure](ISSUE_TEMPLATE/ci_cd_failure.md) template
 
 ### Creating PRs
@@ -84,7 +84,7 @@ priority-low     - Low priority
 
 **⚠️ NEVER create public security issues!**
 
-**Report to**: security@huston-housing.dev
+**Report to**: security@arbitra.dev
 
 **Or use**: GitHub private vulnerability reporting
 
@@ -192,7 +192,7 @@ cargo test --all         # Tests
 ## 📞 Getting Help
 
 - **Questions**: GitHub Discussions
-- **Security**: security@huston-housing.dev
+- **Security**: security@arbitra.dev
 - **Bugs**: Create issue with Bug Report template
 - **Features**: Create issue with Feature Request template
 - **Docs**: Create issue with Documentation template
@@ -218,7 +218,7 @@ cargo test --all         # Tests
 ### I found a security vulnerability
 
 1. **DO NOT** create public issue
-2. Email security@huston-housing.dev
+2. Email security@arbitra.dev
 3. Include: description, location, reproduction, impact, suggested fix
 4. Wait for response before disclosing
 

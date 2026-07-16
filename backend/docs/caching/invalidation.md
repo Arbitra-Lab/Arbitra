@@ -1,6 +1,6 @@
 # Cache Invalidation Patterns
 
-This guide documents the invalidation patterns used in Houston Housing backend services.
+This guide documents the invalidation patterns used in Arbitra backend services.
 
 ## 1) Time-based Expiration
 

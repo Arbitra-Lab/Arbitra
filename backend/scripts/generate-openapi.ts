@@ -43,13 +43,13 @@ async function generate() {
   app.enableVersioning({ type: VersioningType.URI, defaultVersion: '1' });
 
   const config = new DocumentBuilder()
-    .setTitle('Houston Housing API')
+    .setTitle('Arbitra API')
     .setDescription(
-      'REST API for Houston Housing — Stellar blockchain-based rental payment platform.',
+      'REST API for Arbitra — Stellar blockchain-based rental payment platform.',
     )
     .setVersion('1.0')
-    .setContact('Houston Housing', 'https://huston-housing.app', 'support@huston-housing.app')
-    .setLicense('Open Source', 'https://github.com/huston-housing/huston-housing')
+    .setContact('Arbitra', 'https://arbitra.app', 'support@arbitra.app')
+    .setLicense('Open Source', 'https://github.com/Arbitra-Lab/Arbitra')
     .addServer('http://localhost:5000', 'Default')
     .addBearerAuth(
       {

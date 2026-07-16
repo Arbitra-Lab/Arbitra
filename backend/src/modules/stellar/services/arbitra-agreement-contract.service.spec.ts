@@ -1,15 +1,15 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
-import { Houston HousingContractService } from './huston-housing-contract.service';
+import { ArbitraAgreementContractService } from './arbitra-agreement-contract.service';
 
-describe('Houston HousingContractService', () => {
-  let service: Houston HousingContractService;
+describe('ArbitraAgreementContractService', () => {
+  let service: ArbitraAgreementContractService;
 
   const mockConfigService = {
     get: jest.fn((key: string, defaultValue?: any) => {
       const config = {
         SOROBAN_RPC_URL: 'https://soroban-testnet.stellar.org',
-        HUSTON_HOUSING_CONTRACT_ID:
+        ARBITRA_AGREEMENT_CONTRACT_ID:
           'CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD2KM',
         STELLAR_ADMIN_SECRET_KEY: '', // Empty to skip keypair creation in tests
         STELLAR_NETWORK: 'testnet',
@@ -21,7 +21,7 @@ describe('Houston HousingContractService', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        Houston HousingContractService,
+        ArbitraAgreementContractService,
         {
           provide: ConfigService,
           useValue: mockConfigService,
@@ -29,7 +29,7 @@ describe('Houston HousingContractService', () => {
       ],
     }).compile();
 
-    service = module.get<Houston HousingContractService>(Houston HousingContractService);
+    service = module.get<ArbitraAgreementContractService>(ArbitraAgreementContractService);
   });
 
   it('should be defined', () => {

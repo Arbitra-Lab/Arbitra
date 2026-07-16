@@ -6,7 +6,7 @@
 
 ## Overview
 
-This guide explains how the Houston Housing backend integrates with Stellar smart contracts, handles payments, manages escrows, and coordinates with external services.
+This guide explains how the Arbitra backend integrates with Stellar smart contracts, handles payments, manages escrows, and coordinates with external services.
 
 ## 1. Backend Architecture Overview
 

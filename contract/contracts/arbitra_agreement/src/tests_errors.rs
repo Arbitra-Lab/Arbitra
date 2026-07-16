@@ -27,21 +27,21 @@ fn test_error_codes_and_messages() {
     let env = Env::default();
 
     // Check some core errors
-    assert_eq!(RentalError::AlreadyInitialized.code(), 1);
-    assert_eq!(RentalError::AgreementNotFound.code(), 13);
-    assert_eq!(RentalError::Unauthorized.code(), 18);
+    assert_eq!(AgreementError::AlreadyInitialized.code(), 1);
+    assert_eq!(AgreementError::AgreementNotFound.code(), 13);
+    assert_eq!(AgreementError::Unauthorized.code(), 18);
 
     // Check new booking/agreement errors
-    assert_eq!(RentalError::AgreementNotFound.code(), 13);
-    assert_eq!(RentalError::AgreementAlreadyExists.code(), 4);
+    assert_eq!(AgreementError::AgreementNotFound.code(), 13);
+    assert_eq!(AgreementError::AgreementAlreadyExists.code(), 4);
 
     // Check messages
     assert_eq!(
-        RentalError::AgreementNotFound.message(&env),
+        AgreementError::AgreementNotFound.message(&env),
         String::from_str(&env, "Agreement not found. Please check the ID.")
     );
     assert_eq!(
-        RentalError::Unauthorized.message(&env),
+        AgreementError::Unauthorized.message(&env),
         String::from_str(&env, "You are not authorized to perform this action.")
     );
 }
@@ -55,7 +55,7 @@ fn test_log_and_get_errors() {
     let op = String::from_str(&env, "create_agreement");
     let details = String::from_str(&env, "Missing ID");
 
-    client.log_error(&RentalError::AgreementNotFound, &op, &details);
+    client.log_error(&AgreementError::AgreementNotFound, &op, &details);
 
     let logs = client.get_error_logs(&10);
     assert_eq!(logs.len(), 1);
@@ -77,7 +77,7 @@ fn test_multiple_logs_limit() {
     let details = String::from_str(&env, "details");
 
     for _i in 0..15 {
-        client.log_error(&RentalError::InternalError, &op, &details);
+        client.log_error(&AgreementError::InternalError, &op, &details);
     }
 
     // Test limit
@@ -97,7 +97,7 @@ fn test_error_log_context_fields() {
     let op = String::from_str(&env, "create_agreement");
     let details = String::from_str(&env, "Agreement ID not found in storage");
 
-    client.log_error(&RentalError::AgreementNotFound, &op, &details);
+    client.log_error(&AgreementError::AgreementNotFound, &op, &details);
 
     let logs = client.get_error_logs(&10);
     assert_eq!(logs.len(), 1);
@@ -123,7 +123,7 @@ fn test_error_log_timestamp() {
 
     let op = String::from_str(&env, "test_op");
     let details = String::from_str(&env, "test details");
-    client.log_error(&RentalError::InternalError, &op, &details);
+    client.log_error(&AgreementError::InternalError, &op, &details);
 
     let logs = client.get_error_logs(&10);
     let log = logs.get(0).unwrap();
@@ -139,12 +139,12 @@ fn test_error_log_operation_name() {
     let details = String::from_str(&env, "details");
 
     client.log_error(
-        &RentalError::AgreementNotFound,
+        &AgreementError::AgreementNotFound,
         &String::from_str(&env, "create_agreement"),
         &details,
     );
     client.log_error(
-        &RentalError::PaymentFailed,
+        &AgreementError::PaymentFailed,
         &String::from_str(&env, "make_payment"),
         &details,
     );
@@ -173,7 +173,7 @@ fn test_error_log_details_completeness() {
     );
     let op = String::from_str(&env, "validate");
 
-    client.log_error(&RentalError::InvalidInput, &op, &long_details);
+    client.log_error(&AgreementError::InvalidInput, &op, &long_details);
 
     let logs = client.get_error_logs(&10);
     let log = logs.get(0).unwrap();
@@ -189,7 +189,7 @@ fn test_error_log_persistence() {
     let op = String::from_str(&env, "create_agreement");
     let details = String::from_str(&env, "persistence test");
 
-    client.log_error(&RentalError::AgreementNotFound, &op, &details);
+    client.log_error(&AgreementError::AgreementNotFound, &op, &details);
 
     // Perform unrelated read operation
     let _config = client.get_rate_limit_config();
@@ -209,22 +209,22 @@ fn test_error_log_various_types() {
     let details = String::from_str(&env, "test");
 
     client.log_error(
-        &RentalError::AgreementNotFound,
+        &AgreementError::AgreementNotFound,
         &String::from_str(&env, "core"),
         &details,
     );
     client.log_error(
-        &RentalError::PaymentInsufficientFunds,
+        &AgreementError::PaymentInsufficientFunds,
         &String::from_str(&env, "payment"),
         &details,
     );
     client.log_error(
-        &RentalError::EscrowNotFound,
+        &AgreementError::EscrowNotFound,
         &String::from_str(&env, "escrow"),
         &details,
     );
     client.log_error(
-        &RentalError::RateLimitExceeded,
+        &AgreementError::RateLimitExceeded,
         &String::from_str(&env, "rate_limit"),
         &details,
     );
@@ -246,27 +246,27 @@ fn test_error_log_ordering() {
     let details = String::from_str(&env, "d");
 
     client.log_error(
-        &RentalError::InternalError,
+        &AgreementError::InternalError,
         &String::from_str(&env, "op1"),
         &details,
     );
     client.log_error(
-        &RentalError::InternalError,
+        &AgreementError::InternalError,
         &String::from_str(&env, "op2"),
         &details,
     );
     client.log_error(
-        &RentalError::InternalError,
+        &AgreementError::InternalError,
         &String::from_str(&env, "op3"),
         &details,
     );
     client.log_error(
-        &RentalError::InternalError,
+        &AgreementError::InternalError,
         &String::from_str(&env, "op4"),
         &details,
     );
     client.log_error(
-        &RentalError::InternalError,
+        &AgreementError::InternalError,
         &String::from_str(&env, "op5"),
         &details,
     );
@@ -305,77 +305,77 @@ fn test_error_log_limit_returns_most_recent() {
 
     // Log 15 errors with distinguishable details
     client.log_error(
-        &RentalError::InternalError,
+        &AgreementError::InternalError,
         &op,
         &String::from_str(&env, "error_0"),
     );
     client.log_error(
-        &RentalError::InternalError,
+        &AgreementError::InternalError,
         &op,
         &String::from_str(&env, "error_1"),
     );
     client.log_error(
-        &RentalError::InternalError,
+        &AgreementError::InternalError,
         &op,
         &String::from_str(&env, "error_2"),
     );
     client.log_error(
-        &RentalError::InternalError,
+        &AgreementError::InternalError,
         &op,
         &String::from_str(&env, "error_3"),
     );
     client.log_error(
-        &RentalError::InternalError,
+        &AgreementError::InternalError,
         &op,
         &String::from_str(&env, "error_4"),
     );
     client.log_error(
-        &RentalError::InternalError,
+        &AgreementError::InternalError,
         &op,
         &String::from_str(&env, "error_5"),
     );
     client.log_error(
-        &RentalError::InternalError,
+        &AgreementError::InternalError,
         &op,
         &String::from_str(&env, "error_6"),
     );
     client.log_error(
-        &RentalError::InternalError,
+        &AgreementError::InternalError,
         &op,
         &String::from_str(&env, "error_7"),
     );
     client.log_error(
-        &RentalError::InternalError,
+        &AgreementError::InternalError,
         &op,
         &String::from_str(&env, "error_8"),
     );
     client.log_error(
-        &RentalError::InternalError,
+        &AgreementError::InternalError,
         &op,
         &String::from_str(&env, "error_9"),
     );
     client.log_error(
-        &RentalError::InternalError,
+        &AgreementError::InternalError,
         &op,
         &String::from_str(&env, "error_10"),
     );
     client.log_error(
-        &RentalError::InternalError,
+        &AgreementError::InternalError,
         &op,
         &String::from_str(&env, "error_11"),
     );
     client.log_error(
-        &RentalError::InternalError,
+        &AgreementError::InternalError,
         &op,
         &String::from_str(&env, "error_12"),
     );
     client.log_error(
-        &RentalError::InternalError,
+        &AgreementError::InternalError,
         &op,
         &String::from_str(&env, "error_13"),
     );
     client.log_error(
-        &RentalError::InternalError,
+        &AgreementError::InternalError,
         &op,
         &String::from_str(&env, "error_14"),
     );
@@ -422,7 +422,7 @@ fn test_get_error_logs_zero_limit_returns_empty_vec() {
     let client = setup(&env);
 
     client.log_error(
-        &RentalError::InternalError,
+        &AgreementError::InternalError,
         &String::from_str(&env, "op"),
         &String::from_str(&env, "details"),
     );
@@ -438,17 +438,17 @@ fn test_get_error_logs_limit_above_count_returns_all_logs() {
     let client = setup(&env);
 
     client.log_error(
-        &RentalError::AgreementNotFound,
+        &AgreementError::AgreementNotFound,
         &String::from_str(&env, "op_a"),
         &String::from_str(&env, "a"),
     );
     client.log_error(
-        &RentalError::PaymentFailed,
+        &AgreementError::PaymentFailed,
         &String::from_str(&env, "op_b"),
         &String::from_str(&env, "b"),
     );
     client.log_error(
-        &RentalError::EscrowNotFound,
+        &AgreementError::EscrowNotFound,
         &String::from_str(&env, "op_c"),
         &String::from_str(&env, "c"),
     );

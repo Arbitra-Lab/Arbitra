@@ -47,7 +47,7 @@ describe('Integration (e2e)', () => {
 
     // Set up Swagger
     const config = new DocumentBuilder()
-      .setTitle('Houston Housing API')
+      .setTitle('Arbitra API')
       .setVersion('1.0')
       .addBearerAuth(
         { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
@@ -98,7 +98,7 @@ describe('Integration (e2e)', () => {
         .get('/developer-portal')
         .expect(200);
       expect(res.headers['content-type']).toMatch(/text\/html/);
-      expect(res.text).toContain('Houston Housing Developer Portal');
+      expect(res.text).toContain('Arbitra Developer Portal');
       expect(res.text).toContain('api/docs');
       expect(res.text).toContain('Documentation');
     });

@@ -46,7 +46,7 @@ export interface IndexedTransaction {
   memo?: string;
   memoType?: 'text' | 'id' | 'hash';
 
-  // Houston Housing-specific references
+  // Arbitra-specific references
   agreementId?: UUID;
   propertyId?: UUID;
   paymentId?: UUID;

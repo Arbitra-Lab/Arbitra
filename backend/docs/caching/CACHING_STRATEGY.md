@@ -1,6 +1,6 @@
 # Caching Strategy & Architecture
 
-This document outlines the comprehensive caching strategy for the Houston Housing backend. The goal is to maximize performance, reduce database load, and ensure data consistency through a multi-tier caching architecture.
+This document outlines the comprehensive caching strategy for the Arbitra backend. The goal is to maximize performance, reduce database load, and ensure data consistency through a multi-tier caching architecture.
 
 ## 1. Cache Types
 

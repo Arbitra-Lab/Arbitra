@@ -1,23 +1,21 @@
 #![no_std]
 #![allow(clippy::too_many_arguments)]
 
-//! Houston Housing rental agreement contract.
+//! Arbitra rental agreement contract.
 //!
-//! @title Houston Housing
+//! @title Arbitra Agreement
 //! @notice On-chain rental agreement lifecycle: create, sign, submit, cancel, and query agreements.
 //! Optimized for gas efficiency and security.
 
 use soroban_sdk::{contract, contractimpl, Address, Bytes, Env, String, Vec};
 
 mod agreement;
-mod deposit_interest;
 mod errors;
 mod events;
 mod gas_optimization;
 mod multi_sig;
 mod multi_token;
 mod rate_limit;
-mod royalties;
 mod storage;
 mod timelock;
 mod types;
@@ -29,16 +27,10 @@ mod tests;
 mod tests_multi_token;
 
 #[cfg(test)]
-mod tests_deposit_interest;
-
-#[cfg(test)]
 mod tests_multisig_governance;
 
 #[cfg(test)]
 mod tests_errors;
-
-#[cfg(test)]
-mod tests_royalties;
 
 #[cfg(test)]
 mod tests_rate_limit;
@@ -67,7 +59,7 @@ pub use agreement::{
     set_escrow_frozen, sign_agreement, submit_agreement, update_metadata,
     validate_agreement_params,
 };
-pub use errors::RentalError;
+pub use errors::AgreementError;
 pub use gas_optimization::{
     estimate_gas_cost, get_gas_metrics, optimize_operation, GasMetrics, OperationType,
     OptimizationSuggestion,
@@ -79,15 +71,13 @@ pub use multi_token::{
 pub use storage::DataKey;
 pub use types::{
     ActionType, AdminProposal, AgreementExtension, AgreementInput, AgreementStatus, AgreementTerms,
-    AgreementWithToken, Attribute, CompoundingFrequency, Config, ContractState,
-    ContractUpgradeProposal, ContractVersion, DepositInterest, DepositInterestConfig, ErrorContext,
-    ExtensionHistory, ExtensionStatus, InterestAccrual, InterestRecipient, MultiSigConfig,
-    PauseState, PaymentSplit, RateLimitConfig, RateLimitReason, RentAgreement, RoyaltyConfig,
-    RoyaltyPayment, SupportedToken, TimelockAction, TimelockActionType, TokenExchangeRate,
-    UserCallCount, VersionStatus,
+    AgreementWithToken, Attribute, Config, ContractState, ContractUpgradeProposal, ContractVersion,
+    ErrorContext, ExtensionHistory, ExtensionStatus, MultiSigConfig, PauseState, PaymentSplit,
+    RateLimitConfig, RateLimitReason, RentAgreement, SupportedToken, TimelockAction,
+    TimelockActionType, TokenExchangeRate, UserCallCount, VersionStatus,
 };
 
-/// Houston Housing rental agreement contract.
+/// Arbitra rental agreement contract.
 ///
 /// @title Contract
 #[contract]
@@ -115,8 +105,8 @@ impl Contract {
     }
 
     /// Record a new contract version (admin only).
-    pub fn record_version(env: Env, version: ContractVersion) -> Result<(), RentalError> {
-        let state = Self::get_state(env.clone()).ok_or(RentalError::InvalidState)?;
+    pub fn record_version(env: Env, version: ContractVersion) -> Result<(), AgreementError> {
+        let state = Self::get_state(env.clone()).ok_or(AgreementError::InvalidState)?;
         state.admin.require_auth();
 
         env.storage()
@@ -147,15 +137,15 @@ impl Contract {
         minor: u32,
         patch: u32,
         status: VersionStatus,
-    ) -> Result<(), RentalError> {
-        let state = Self::get_state(env.clone()).ok_or(RentalError::InvalidState)?;
+    ) -> Result<(), AgreementError> {
+        let state = Self::get_state(env.clone()).ok_or(AgreementError::InvalidState)?;
         state.admin.require_auth();
 
         let mut history: Vec<ContractVersion> = env
             .storage()
             .instance()
             .get(&DataKey::VersionHistory)
-            .ok_or(RentalError::InvalidState)?;
+            .ok_or(AgreementError::InvalidState)?;
 
         let mut found = false;
         for i in 0..history.len() {
@@ -176,7 +166,7 @@ impl Contract {
         }
 
         if !found {
-            return Err(RentalError::InvalidState); // Version not found
+            return Err(AgreementError::InvalidState); // Version not found
         }
 
         env.storage()
@@ -201,7 +191,7 @@ impl Contract {
         wasm_hash: Bytes,
         notes: String,
         delay_seconds: u64,
-    ) -> Result<(), RentalError> {
+    ) -> Result<(), AgreementError> {
         proposer.require_auth();
         multi_sig::require_admin(&env, &proposer)?;
 
@@ -210,7 +200,7 @@ impl Contract {
             .persistent()
             .has(&DataKey::UpgradeProposal(proposal_id.clone()))
         {
-            return Err(RentalError::InvalidInput);
+            return Err(AgreementError::InvalidInput);
         }
 
         let config = multi_sig::get_multisig_config(&env)?;
@@ -269,7 +259,7 @@ impl Contract {
         env: Env,
         approver: Address,
         proposal_id: String,
-    ) -> Result<u32, RentalError> {
+    ) -> Result<u32, AgreementError> {
         approver.require_auth();
         multi_sig::require_admin(&env, &approver)?;
 
@@ -277,15 +267,15 @@ impl Contract {
             .storage()
             .persistent()
             .get(&DataKey::UpgradeProposal(proposal_id.clone()))
-            .ok_or(RentalError::ProposalNotFound)?;
+            .ok_or(AgreementError::ProposalNotFound)?;
 
         if proposal.executed {
-            return Err(RentalError::ProposalAlreadyExecuted);
+            return Err(AgreementError::ProposalAlreadyExecuted);
         }
 
         for approved in proposal.approvals.iter() {
             if approved == approver {
-                return Err(RentalError::AlreadyApproved);
+                return Err(AgreementError::AlreadyApproved);
             }
         }
 
@@ -306,7 +296,7 @@ impl Contract {
         executor: Address,
         proposal_id: String,
         mut new_version: ContractVersion,
-    ) -> Result<(), RentalError> {
+    ) -> Result<(), AgreementError> {
         executor.require_auth();
         multi_sig::require_admin(&env, &executor)?;
 
@@ -314,18 +304,18 @@ impl Contract {
             .storage()
             .persistent()
             .get(&DataKey::UpgradeProposal(proposal_id.clone()))
-            .ok_or(RentalError::ProposalNotFound)?;
+            .ok_or(AgreementError::ProposalNotFound)?;
 
         if proposal.executed {
-            return Err(RentalError::ProposalAlreadyExecuted);
+            return Err(AgreementError::ProposalAlreadyExecuted);
         }
 
         if env.ledger().timestamp() < proposal.eta {
-            return Err(RentalError::TimelockEtaNotReached);
+            return Err(AgreementError::TimelockEtaNotReached);
         }
 
         if proposal.approvals.len() < proposal.required_signatures {
-            return Err(RentalError::InsufficientApprovals);
+            return Err(AgreementError::InsufficientApprovals);
         }
 
         proposal.executed = true;
@@ -362,11 +352,11 @@ impl Contract {
     pub fn get_upgrade_proposal(
         env: Env,
         proposal_id: String,
-    ) -> Result<ContractUpgradeProposal, RentalError> {
+    ) -> Result<ContractUpgradeProposal, AgreementError> {
         env.storage()
             .persistent()
             .get(&DataKey::UpgradeProposal(proposal_id))
-            .ok_or(RentalError::ProposalNotFound)
+            .ok_or(AgreementError::ProposalNotFound)
     }
 
     pub fn get_active_upgrade_proposals(env: Env) -> Vec<String> {
@@ -392,15 +382,15 @@ impl Contract {
     /// @return Ok(()) on success.
     /// @custom:error AlreadyInitialized If the contract has already been initialized.
     /// @custom:error InvalidConfig If config.fee_bps > 10000.
-    pub fn initialize(env: Env, admin: Address, config: Config) -> Result<(), RentalError> {
+    pub fn initialize(env: Env, admin: Address, config: Config) -> Result<(), AgreementError> {
         if env.storage().persistent().has(&DataKey::Initialized) {
-            return Err(RentalError::AlreadyInitialized);
+            return Err(AgreementError::AlreadyInitialized);
         }
 
         admin.require_auth();
 
         if config.fee_bps > 10_000 {
-            return Err(RentalError::InvalidConfig);
+            return Err(AgreementError::InvalidConfig);
         }
 
         env.storage().persistent().set(&DataKey::Initialized, &true);
@@ -455,9 +445,9 @@ impl Contract {
         pause_state
     }
 
-    fn check_paused(env: &Env) -> Result<(), RentalError> {
+    fn check_paused(env: &Env) -> Result<(), AgreementError> {
         if Self::is_paused(env.clone()) {
-            return Err(RentalError::ContractPaused);
+            return Err(AgreementError::ContractPaused);
         }
         Ok(())
     }
@@ -470,15 +460,15 @@ impl Contract {
     /// @return Ok(()) on success.
     /// @custom:error InvalidState If contract state is missing.
     /// @custom:error InvalidConfig If new_config.fee_bps > 10000.
-    pub fn update_config(env: Env, new_config: Config) -> Result<(), RentalError> {
-        let mut state = Self::get_state(env.clone()).ok_or(RentalError::InvalidState)?;
+    pub fn update_config(env: Env, new_config: Config) -> Result<(), AgreementError> {
+        let mut state = Self::get_state(env.clone()).ok_or(AgreementError::InvalidState)?;
 
         state.admin.require_auth();
 
         let was_paused = Self::is_paused(env.clone());
 
         if new_config.fee_bps > 10_000 {
-            return Err(RentalError::InvalidConfig);
+            return Err(AgreementError::InvalidConfig);
         }
 
         let old_config = state.config.clone();
@@ -501,13 +491,13 @@ impl Contract {
         Ok(())
     }
 
-    pub fn pause(env: Env, reason: String) -> Result<(), RentalError> {
-        let mut state = Self::get_state(env.clone()).ok_or(RentalError::InvalidState)?;
+    pub fn pause(env: Env, reason: String) -> Result<(), AgreementError> {
+        let mut state = Self::get_state(env.clone()).ok_or(AgreementError::InvalidState)?;
 
         state.admin.require_auth();
 
         if Self::is_paused(env.clone()) {
-            return Err(RentalError::AlreadyPaused);
+            return Err(AgreementError::AlreadyPaused);
         }
 
         Self::set_pause_state(&env, state.admin.clone(), reason.clone());
@@ -522,13 +512,13 @@ impl Contract {
         Ok(())
     }
 
-    pub fn unpause(env: Env) -> Result<(), RentalError> {
-        let mut state = Self::get_state(env.clone()).ok_or(RentalError::InvalidState)?;
+    pub fn unpause(env: Env) -> Result<(), AgreementError> {
+        let mut state = Self::get_state(env.clone()).ok_or(AgreementError::InvalidState)?;
 
         state.admin.require_auth();
 
         if !Self::is_paused(env.clone()) {
-            return Err(RentalError::NotPaused);
+            return Err(AgreementError::NotPaused);
         }
 
         env.storage().instance().remove(&DataKey::PauseState);
@@ -568,10 +558,10 @@ impl Contract {
         decimals: u32,
         min_amount: i128,
         max_amount: i128,
-    ) -> Result<(), RentalError> {
+    ) -> Result<(), AgreementError> {
         Self::check_paused(&env)?;
         // Only admin can add tokens
-        let state = Self::get_state(env.clone()).ok_or(RentalError::InvalidState)?;
+        let state = Self::get_state(env.clone()).ok_or(AgreementError::InvalidState)?;
         state.admin.require_auth();
 
         multi_token::add_supported_token(
@@ -584,19 +574,19 @@ impl Contract {
         )
     }
 
-    pub fn remove_supported_token(env: Env, token_address: Address) -> Result<(), RentalError> {
+    pub fn remove_supported_token(env: Env, token_address: Address) -> Result<(), AgreementError> {
         Self::check_paused(&env)?;
-        let state = Self::get_state(env.clone()).ok_or(RentalError::InvalidState)?;
+        let state = Self::get_state(env.clone()).ok_or(AgreementError::InvalidState)?;
         state.admin.require_auth();
 
         multi_token::remove_supported_token(env, token_address)
     }
 
-    pub fn get_supported_tokens(env: Env) -> Result<Vec<SupportedToken>, RentalError> {
+    pub fn get_supported_tokens(env: Env) -> Result<Vec<SupportedToken>, AgreementError> {
         multi_token::get_supported_tokens(env)
     }
 
-    pub fn is_token_supported(env: Env, token_address: Address) -> Result<bool, RentalError> {
+    pub fn is_token_supported(env: Env, token_address: Address) -> Result<bool, AgreementError> {
         multi_token::is_token_supported(env, token_address)
     }
 
@@ -607,9 +597,9 @@ impl Contract {
         from_token: Address,
         to_token: Address,
         rate: i128,
-    ) -> Result<(), RentalError> {
+    ) -> Result<(), AgreementError> {
         Self::check_paused(&env)?;
-        let state = Self::get_state(env.clone()).ok_or(RentalError::InvalidState)?;
+        let state = Self::get_state(env.clone()).ok_or(AgreementError::InvalidState)?;
         state.admin.require_auth();
 
         multi_token::set_exchange_rate(env, from_token, to_token, rate)
@@ -619,16 +609,16 @@ impl Contract {
         env: Env,
         from_token: Address,
         to_token: Address,
-    ) -> Result<i128, RentalError> {
+    ) -> Result<i128, AgreementError> {
         multi_token::get_exchange_rate(env, from_token, to_token)
     }
 
     pub fn update_exchange_rates(
         env: Env,
         rates: Vec<(Address, Address, i128)>,
-    ) -> Result<(), RentalError> {
+    ) -> Result<(), AgreementError> {
         Self::check_paused(&env)?;
-        let state = Self::get_state(env.clone()).ok_or(RentalError::InvalidState)?;
+        let state = Self::get_state(env.clone()).ok_or(AgreementError::InvalidState)?;
         state.admin.require_auth();
 
         for (from, to, rate) in rates.iter() {
@@ -642,7 +632,7 @@ impl Contract {
         from_token: Address,
         to_token: Address,
         amount: i128,
-    ) -> Result<i128, RentalError> {
+    ) -> Result<i128, AgreementError> {
         multi_token::convert_amount(env, from_token, to_token, amount)
     }
 
@@ -651,12 +641,12 @@ impl Contract {
     pub fn create_agreement_with_token(
         env: Env,
         input: crate::types::AgreementInput,
-    ) -> Result<String, RentalError> {
+    ) -> Result<String, AgreementError> {
         Self::check_paused(&env)?;
         agreement::create_agreement_with_token(&env, input)
     }
 
-    pub fn get_agreement_token(env: Env, agreement_id: String) -> Result<Address, RentalError> {
+    pub fn get_agreement_token(env: Env, agreement_id: String) -> Result<Address, AgreementError> {
         agreement::get_agreement_token(&env, agreement_id)
     }
 
@@ -667,7 +657,7 @@ impl Contract {
         agreement_id: String,
         amount: i128,
         token: Address,
-    ) -> Result<(), RentalError> {
+    ) -> Result<(), AgreementError> {
         Self::check_paused(&env)?;
         agreement::make_payment_with_token(&env, agreement_id, amount, token)
     }
@@ -676,7 +666,7 @@ impl Contract {
         env: Env,
         escrow_id: String,
         token: Address,
-    ) -> Result<(), RentalError> {
+    ) -> Result<(), AgreementError> {
         Self::check_paused(&env)?;
         agreement::release_escrow_with_token(&env, escrow_id, token)
     }
@@ -684,14 +674,14 @@ impl Contract {
     /// Freeze escrow funds for a specific agreement.
     ///
     /// Can be called by system admin or a configured multi-sig admin (DAO-voted entity).
-    pub fn freeze_escrow(env: Env, caller: Address, escrow_id: String) -> Result<(), RentalError> {
+    pub fn freeze_escrow(env: Env, caller: Address, escrow_id: String) -> Result<(), AgreementError> {
         caller.require_auth();
-        let state = Self::get_state(env.clone()).ok_or(RentalError::InvalidState)?;
+        let state = Self::get_state(env.clone()).ok_or(AgreementError::InvalidState)?;
         let is_system_admin = caller == state.admin;
         let is_dao_admin = multi_sig::is_admin(&env, &caller).unwrap_or(false);
 
         if !is_system_admin && !is_dao_admin {
-            return Err(RentalError::Unauthorized);
+            return Err(AgreementError::Unauthorized);
         }
 
         agreement::set_escrow_frozen(&env, escrow_id, true)
@@ -704,14 +694,14 @@ impl Contract {
         env: Env,
         caller: Address,
         escrow_id: String,
-    ) -> Result<(), RentalError> {
+    ) -> Result<(), AgreementError> {
         caller.require_auth();
-        let state = Self::get_state(env.clone()).ok_or(RentalError::InvalidState)?;
+        let state = Self::get_state(env.clone()).ok_or(AgreementError::InvalidState)?;
         let is_system_admin = caller == state.admin;
         let is_dao_admin = multi_sig::is_admin(&env, &caller).unwrap_or(false);
 
         if !is_system_admin && !is_dao_admin {
-            return Err(RentalError::Unauthorized);
+            return Err(AgreementError::Unauthorized);
         }
 
         agreement::set_escrow_frozen(&env, escrow_id, false)
@@ -741,7 +731,7 @@ impl Contract {
     pub fn create_agreement(
         env: Env,
         input: crate::types::AgreementInput,
-    ) -> Result<(), RentalError> {
+    ) -> Result<(), AgreementError> {
         Self::check_paused(&env)?;
         agreement::create_agreement(&env, input)
     }
@@ -758,7 +748,7 @@ impl Contract {
         env: Env,
         user: Address,
         agreement_id: String,
-    ) -> Result<(), RentalError> {
+    ) -> Result<(), AgreementError> {
         Self::check_paused(&env)?;
         agreement::sign_agreement(&env, user, agreement_id)
     }
@@ -776,7 +766,7 @@ impl Contract {
         env: Env,
         approver: Address,
         agreement_id: String,
-    ) -> Result<(), RentalError> {
+    ) -> Result<(), AgreementError> {
         Self::check_paused(&env)?;
         agreement::approve_agreement(&env, approver, agreement_id)
     }
@@ -792,7 +782,7 @@ impl Contract {
         env: Env,
         admin: Address,
         agreement_id: String,
-    ) -> Result<(), RentalError> {
+    ) -> Result<(), AgreementError> {
         Self::check_paused(&env)?;
         agreement::submit_agreement(&env, admin, agreement_id)
     }
@@ -808,7 +798,7 @@ impl Contract {
         env: Env,
         caller: Address,
         agreement_id: String,
-    ) -> Result<(), RentalError> {
+    ) -> Result<(), AgreementError> {
         Self::check_paused(&env)?;
         agreement::cancel_agreement(&env, caller, agreement_id)
     }
@@ -820,7 +810,7 @@ impl Contract {
         extension_months: u32,
         new_rent: Option<i128>,
         new_deposit: Option<i128>,
-    ) -> Result<String, RentalError> {
+    ) -> Result<String, AgreementError> {
         Self::check_paused(&env)?;
         agreement::propose_extension(
             &env,
@@ -836,7 +826,7 @@ impl Contract {
         env: Env,
         caller: Address,
         extension_id: String,
-    ) -> Result<(), RentalError> {
+    ) -> Result<(), AgreementError> {
         Self::check_paused(&env)?;
         agreement::accept_extension(&env, caller, extension_id)
     }
@@ -846,7 +836,7 @@ impl Contract {
         caller: Address,
         extension_id: String,
         reason: String,
-    ) -> Result<(), RentalError> {
+    ) -> Result<(), AgreementError> {
         Self::check_paused(&env)?;
         agreement::reject_extension(&env, caller, extension_id, reason)
     }
@@ -855,7 +845,7 @@ impl Contract {
         env: Env,
         caller: Address,
         extension_id: String,
-    ) -> Result<(), RentalError> {
+    ) -> Result<(), AgreementError> {
         Self::check_paused(&env)?;
         agreement::activate_extension(&env, caller, extension_id)
     }
@@ -865,7 +855,7 @@ impl Contract {
         caller: Address,
         extension_id: String,
         reason: String,
-    ) -> Result<(), RentalError> {
+    ) -> Result<(), AgreementError> {
         Self::check_paused(&env)?;
         agreement::cancel_extension(&env, caller, extension_id, reason)
     }
@@ -873,18 +863,18 @@ impl Contract {
     pub fn get_extension(
         env: Env,
         extension_id: String,
-    ) -> Result<AgreementExtension, RentalError> {
+    ) -> Result<AgreementExtension, AgreementError> {
         agreement::get_extension(&env, extension_id)
     }
 
     pub fn get_extension_history(
         env: Env,
         agreement_id: String,
-    ) -> Result<ExtensionHistory, RentalError> {
+    ) -> Result<ExtensionHistory, AgreementError> {
         agreement::get_extension_history(&env, agreement_id)
     }
 
-    pub fn get_current_agreement_end(env: Env, agreement_id: String) -> Result<u64, RentalError> {
+    pub fn get_current_agreement_end(env: Env, agreement_id: String) -> Result<u64, AgreementError> {
         agreement::get_current_agreement_end(&env, agreement_id)
     }
 
@@ -928,7 +918,7 @@ impl Contract {
         env: Env,
         agreement_id: String,
         month: u32,
-    ) -> Result<PaymentSplit, RentalError> {
+    ) -> Result<PaymentSplit, AgreementError> {
         agreement::get_payment_split(&env, agreement_id, month)
     }
 
@@ -943,148 +933,31 @@ impl Contract {
         agreement_id: String,
         metadata_uri: String,
         attributes: Vec<Attribute>,
-    ) -> Result<(), RentalError> {
+    ) -> Result<(), AgreementError> {
         Self::check_paused(&env)?;
         agreement::update_metadata(&env, agreement_id, metadata_uri, attributes)
-    }
-
-    // ─── Deposit Interest Functions ───────────────────────────────────────────
-
-    /// Set the interest configuration for a security deposit.
-    ///
-    /// Admin-only. Also initialises the DepositInterest record on first call.
-    pub fn set_deposit_interest_config(
-        env: Env,
-        agreement_id: String,
-        annual_rate: u32,
-        compounding_frequency: CompoundingFrequency,
-        interest_recipient: InterestRecipient,
-    ) -> Result<(), RentalError> {
-        Self::check_paused(&env)?;
-        let state = Self::get_state(env.clone()).ok_or(RentalError::InvalidState)?;
-        state.admin.require_auth();
-        deposit_interest::set_deposit_interest_config(
-            env,
-            agreement_id,
-            annual_rate,
-            compounding_frequency,
-            interest_recipient,
-        )
-    }
-
-    /// Get the interest configuration for a security deposit.
-    pub fn get_deposit_interest_config(
-        env: Env,
-        agreement_id: String,
-    ) -> Result<DepositInterestConfig, RentalError> {
-        deposit_interest::get_deposit_interest_config(env, agreement_id)
-    }
-
-    /// Calculate (but do not persist) the interest accrued so far.
-    pub fn calculate_accrued_interest(env: Env, escrow_id: String) -> Result<i128, RentalError> {
-        deposit_interest::calculate_accrued_interest(env, escrow_id)
-    }
-
-    /// Accrue interest up to the current ledger time and persist the update.
-    pub fn accrue_interest(env: Env, escrow_id: String) -> Result<InterestAccrual, RentalError> {
-        Self::check_paused(&env)?;
-        deposit_interest::accrue_interest(env, escrow_id)
-    }
-
-    /// Get the full deposit-interest state.
-    pub fn get_deposit_interest(
-        env: Env,
-        escrow_id: String,
-    ) -> Result<DepositInterest, RentalError> {
-        deposit_interest::get_deposit_interest(env, escrow_id)
-    }
-
-    /// Get the accrual history for a deposit.
-    pub fn get_accrual_history(
-        env: Env,
-        escrow_id: String,
-    ) -> Result<Vec<InterestAccrual>, RentalError> {
-        deposit_interest::get_accrual_history(env, escrow_id)
-    }
-
-    /// Distribute all accrued interest to tenant / landlord per configuration.
-    pub fn distribute_interest(env: Env, escrow_id: String) -> Result<(), RentalError> {
-        Self::check_paused(&env)?;
-        deposit_interest::distribute_interest(env, escrow_id)
-    }
-
-    /// (Keeper / oracle entry-point) Accrue interest for all deposits.
-    pub fn process_interest_accruals(env: Env) -> Result<Vec<String>, RentalError> {
-        Self::check_paused(&env)?;
-        deposit_interest::process_interest_accruals(env)
     }
 
     /// Log an error context for diagnostics.
     pub fn log_error(
         env: Env,
-        error: RentalError,
+        error: AgreementError,
         operation: String,
         details: String,
-    ) -> Result<(), RentalError> {
+    ) -> Result<(), AgreementError> {
         errors::log_error(&env, error, operation, details)
     }
 
     /// Retrieve the most recent error logs.
-    pub fn get_error_logs(env: Env, limit: u32) -> Result<Vec<ErrorContext>, RentalError> {
+    pub fn get_error_logs(env: Env, limit: u32) -> Result<Vec<ErrorContext>, AgreementError> {
         errors::get_error_logs(&env, limit)
-    }
-
-    // ─── Royalty Functions ───────────────────────────────────────────────────
-
-    /// Set the royalty configuration for a specific token (agreement).
-    pub fn set_royalty(
-        env: Env,
-        token_id: String,
-        royalty_percentage: u32,
-        royalty_recipient: Address,
-    ) -> Result<(), RentalError> {
-        Self::check_paused(&env)?;
-        royalties::set_royalty(env, token_id, royalty_percentage, royalty_recipient)
-    }
-
-    /// Retrieve the royalty configuration for a token.
-    pub fn get_royalty(env: Env, token_id: String) -> Result<RoyaltyConfig, RentalError> {
-        royalties::get_royalty(env, token_id)
-    }
-
-    /// Calculate the royalty amount for a given sale price.
-    pub fn calculate_royalty(
-        env: Env,
-        token_id: String,
-        sale_price: i128,
-    ) -> Result<i128, RentalError> {
-        royalties::calculate_royalty(env, token_id, sale_price)
-    }
-
-    /// Perform a transfer of the "agreement" ownership with royalty payment.
-    pub fn transfer_with_royalty(
-        env: Env,
-        token_id: String,
-        to: Address,
-        sale_price: i128,
-    ) -> Result<(), RentalError> {
-        Self::check_paused(&env)?;
-        royalties::transfer_with_royalty(env, token_id, to, sale_price)
-    }
-
-    /// Get the royalty payment history for a token.
-    pub fn get_royalty_payments(
-        env: Env,
-        token_id: String,
-    ) -> Result<Vec<RoyaltyPayment>, RentalError> {
-        royalties::get_royalty_payments(env, token_id)
     }
 
     // ─── Rate Limiting Functions ──────────────────────────────────────────────
 
     /// Set rate limit configuration (admin only).
-    pub fn set_rate_limit_config(env: Env, config: RateLimitConfig) -> Result<(), RentalError> {
-        let state = Self::get_state(env.clone()).ok_or(RentalError::InvalidState)?;
+    pub fn set_rate_limit_config(env: Env, config: RateLimitConfig) -> Result<(), AgreementError> {
+        let state = Self::get_state(env.clone()).ok_or(AgreementError::InvalidState)?;
         state.admin.require_auth();
 
         rate_limit::set_rate_limit_config(&env, config.clone())?;
@@ -1123,8 +996,8 @@ impl Contract {
         env: Env,
         user: Address,
         function_name: String,
-    ) -> Result<(), RentalError> {
-        let state = Self::get_state(env.clone()).ok_or(RentalError::InvalidState)?;
+    ) -> Result<(), AgreementError> {
+        let state = Self::get_state(env.clone()).ok_or(AgreementError::InvalidState)?;
         state.admin.require_auth();
 
         rate_limit::reset_user_rate_limit(&env, &user, function_name)
@@ -1137,21 +1010,21 @@ impl Contract {
         env: Env,
         admins: Vec<Address>,
         required_signatures: u32,
-    ) -> Result<(), RentalError> {
+    ) -> Result<(), AgreementError> {
         // Only contract admin can initialize multi-sig
-        let state = Self::get_state(env.clone()).ok_or(RentalError::InvalidState)?;
+        let state = Self::get_state(env.clone()).ok_or(AgreementError::InvalidState)?;
         state.admin.require_auth();
 
         multi_sig::initialize_multisig(&env, admins, required_signatures)
     }
 
     /// Get current multi-sig configuration
-    pub fn get_multisig_config(env: Env) -> Result<MultiSigConfig, RentalError> {
+    pub fn get_multisig_config(env: Env) -> Result<MultiSigConfig, AgreementError> {
         multi_sig::get_multisig_config(&env)
     }
 
     /// Check if an address is an admin
-    pub fn is_admin(env: Env, address: Address) -> Result<bool, RentalError> {
+    pub fn is_admin(env: Env, address: Address) -> Result<bool, AgreementError> {
         multi_sig::is_admin(&env, &address)
     }
 
@@ -1162,7 +1035,7 @@ impl Contract {
         action_type: ActionType,
         target: Option<Address>,
         data: soroban_sdk::Bytes,
-    ) -> Result<String, RentalError> {
+    ) -> Result<String, AgreementError> {
         multi_sig::propose_action(&env, proposer, action_type, target, data)
     }
 
@@ -1171,7 +1044,7 @@ impl Contract {
         env: Env,
         approver: Address,
         proposal_id: String,
-    ) -> Result<(), RentalError> {
+    ) -> Result<(), AgreementError> {
         multi_sig::approve_action(&env, approver, proposal_id)
     }
 
@@ -1180,7 +1053,7 @@ impl Contract {
         env: Env,
         executor: Address,
         proposal_id: String,
-    ) -> Result<(), RentalError> {
+    ) -> Result<(), AgreementError> {
         multi_sig::execute_action(&env, executor, proposal_id)
     }
 
@@ -1189,12 +1062,12 @@ impl Contract {
         env: Env,
         caller: Address,
         proposal_id: String,
-    ) -> Result<(), RentalError> {
+    ) -> Result<(), AgreementError> {
         multi_sig::reject_action(&env, caller, proposal_id)
     }
 
     /// Add a new admin (must be called through proposal execution)
-    pub fn add_admin(env: Env, new_admin: Address) -> Result<(), RentalError> {
+    pub fn add_admin(env: Env, new_admin: Address) -> Result<(), AgreementError> {
         // This should only be called through execute_action after approval
         // For now, we'll add a check for multi-sig admin
         let caller = new_admin.clone(); // In real scenario, get from context
@@ -1203,24 +1076,24 @@ impl Contract {
     }
 
     /// Remove an admin (must be called through proposal execution)
-    pub fn remove_admin(env: Env, admin_to_remove: Address) -> Result<(), RentalError> {
+    pub fn remove_admin(env: Env, admin_to_remove: Address) -> Result<(), AgreementError> {
         // This should only be called through execute_action after approval
         multi_sig::remove_admin_internal(&env, admin_to_remove)
     }
 
     /// Update required signatures (must be called through proposal execution)
-    pub fn update_required_signatures(env: Env, new_required: u32) -> Result<(), RentalError> {
+    pub fn update_required_signatures(env: Env, new_required: u32) -> Result<(), AgreementError> {
         // This should only be called through execute_action after approval
         multi_sig::update_required_signatures_internal(&env, new_required)
     }
 
     /// Get a proposal by ID
-    pub fn get_proposal(env: Env, proposal_id: String) -> Result<AdminProposal, RentalError> {
+    pub fn get_proposal(env: Env, proposal_id: String) -> Result<AdminProposal, AgreementError> {
         multi_sig::get_proposal(&env, proposal_id)
     }
 
     /// Get all active proposals
-    pub fn get_active_proposals(env: Env) -> Result<Vec<String>, RentalError> {
+    pub fn get_active_proposals(env: Env) -> Result<Vec<String>, AgreementError> {
         multi_sig::get_active_proposals(&env)
     }
 
@@ -1243,7 +1116,7 @@ impl Contract {
         target: Address,
         data: soroban_sdk::Bytes,
         delay: u64,
-    ) -> Result<String, RentalError> {
+    ) -> Result<String, AgreementError> {
         timelock::queue_action(&env, caller, action_type, target, data, delay)
     }
 
@@ -1252,7 +1125,7 @@ impl Contract {
         env: Env,
         caller: Address,
         action_id: String,
-    ) -> Result<(), RentalError> {
+    ) -> Result<(), AgreementError> {
         timelock::execute_action(&env, caller, action_id)
     }
 
@@ -1261,12 +1134,12 @@ impl Contract {
         env: Env,
         caller: Address,
         action_id: String,
-    ) -> Result<(), RentalError> {
+    ) -> Result<(), AgreementError> {
         timelock::cancel_action(&env, caller, action_id)
     }
 
     /// Retrieve a timelock action by ID.
-    pub fn get_timelock_action(env: Env, action_id: String) -> Result<TimelockAction, RentalError> {
+    pub fn get_timelock_action(env: Env, action_id: String) -> Result<TimelockAction, AgreementError> {
         timelock::get_action(&env, action_id)
     }
 
@@ -1285,12 +1158,12 @@ impl Contract {
     /// Estimate the gas cost for a given operation type.
     ///
     /// Returns a conservative upper-bound estimate in Soroban gas units.
-    pub fn estimate_gas_cost(env: Env, operation: OperationType) -> Result<u64, RentalError> {
+    pub fn estimate_gas_cost(env: Env, operation: OperationType) -> Result<u64, AgreementError> {
         gas_optimization::estimate_gas_cost(env, operation)
     }
 
     /// Return persisted gas metrics for all tracked operations.
-    pub fn get_gas_metrics(env: Env) -> Result<Vec<GasMetrics>, RentalError> {
+    pub fn get_gas_metrics(env: Env) -> Result<Vec<GasMetrics>, AgreementError> {
         gas_optimization::get_gas_metrics(env)
     }
 
@@ -1298,7 +1171,7 @@ impl Contract {
     pub fn optimize_operation(
         env: Env,
         operation: OperationType,
-    ) -> Result<OptimizationSuggestion, RentalError> {
+    ) -> Result<OptimizationSuggestion, AgreementError> {
         gas_optimization::optimize_operation(env, operation)
     }
 }

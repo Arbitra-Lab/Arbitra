@@ -1,6 +1,6 @@
 # Monitoring Setup Guide
 
-Practical guide for running, verifying, and operating the Houston Housing backend monitoring stack.
+Practical guide for running, verifying, and operating the Arbitra backend monitoring stack.
 
 For deeper reference see:
 
@@ -59,7 +59,7 @@ curl http://localhost:3000/metrics
 Expected output starts with:
 
 ```
-# Houston Housing Backend Metrics
+# Arbitra Backend Metrics
 ```
 
 Metrics are recorded by `MetricsService` (`src/modules/monitoring/metrics.service.ts`) and collected by `MetricsMiddleware` on every request.
@@ -172,16 +172,16 @@ Query logs in Grafana (Explore → Loki datasource):
 
 ```logql
 # All backend logs
-{job="huston-housing-backend"}
+{job="arbitra-backend"}
 
 # Errors only
-{job="huston-housing-backend"} | json | level="ERROR"
+{job="arbitra-backend"} | json | level="ERROR"
 
 # Logs for a specific request
-{job="huston-housing-backend"} | json | correlationId="<uuid>"
+{job="arbitra-backend"} | json | correlationId="<uuid>"
 
 # Slow requests (> 500ms)
-{job="huston-housing-backend"} | json | responseTime > 500
+{job="arbitra-backend"} | json | responseTime > 500
 ```
 
 ---

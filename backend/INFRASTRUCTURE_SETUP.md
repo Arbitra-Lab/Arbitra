@@ -1,6 +1,6 @@
 # Infrastructure Setup: Load Balancing, Auto-Scaling, Graceful Shutdown & Alerting
 
-This document provides a comprehensive guide to the production-ready infrastructure setup for the Houston Housing backend, including load balancing, auto-scaling, graceful shutdown, and alerting rules.
+This document provides a comprehensive guide to the production-ready infrastructure setup for the Arbitra backend, including load balancing, auto-scaling, graceful shutdown, and alerting rules.
 
 ## Quick Start
 
@@ -32,7 +32,7 @@ docker-compose logs -f backend
 kubectl create namespace production
 
 # Create secrets
-kubectl create secret generic huston-housing-backend-secrets \
+kubectl create secret generic arbitra-backend-secrets \
   --from-literal=database_url=$DATABASE_URL \
   --from-literal=redis_url=$REDIS_URL \
   --from-literal=jwt_secret=$JWT_SECRET \
@@ -207,7 +207,7 @@ DB_HOST=postgres
 DB_PORT=5432
 DB_USERNAME=...
 DB_PASSWORD=...
-DB_NAME=huston-housing
+DB_NAME=arbitra
 
 # Redis
 REDIS_URL=redis://...
@@ -225,7 +225,7 @@ SOROBAN_RPC_URL=https://soroban-mainnet.stellar.org
 ### Kubernetes Secrets
 
 ```bash
-kubectl create secret generic huston-housing-backend-secrets \
+kubectl create secret generic arbitra-backend-secrets \
   --from-literal=database_url=$DATABASE_URL \
   --from-literal=redis_url=$REDIS_URL \
   --from-literal=jwt_secret=$JWT_SECRET \
@@ -240,12 +240,12 @@ kubectl create secret generic huston-housing-backend-secrets \
 ### Kubernetes ConfigMap
 
 ```bash
-kubectl create configmap huston-housing-backend-config \
+kubectl create configmap arbitra-backend-config \
   --from-literal=db_host=postgres \
   --from-literal=db_port=5432 \
-  --from-literal=db_name=huston-housing \
+  --from-literal=db_name=arbitra \
   --from-literal=aws_region=us-east-1 \
-  --from-literal=aws_s3_bucket=huston-housing-prod \
+  --from-literal=aws_s3_bucket=arbitra-prod \
   -n production
 ```
 
@@ -358,7 +358,7 @@ kubectl logs <pod-name> -n production
 
 ```bash
 # Check error logs
-kubectl logs -n production -l app=huston-housing-backend | grep ERROR
+kubectl logs -n production -l app=arbitra-backend | grep ERROR
 
 # Check error rate by endpoint
 curl http://prometheus:9090/api/v1/query?query='rate(http_requests_total{status=~"5.."}[5m]) by (path)'
@@ -377,7 +377,7 @@ curl http://prometheus:9090/api/v1/query?query='histogram_quantile(0.95, rate(db
 kubectl exec -it <pod-name> -n production -- npm run db:perf-report
 
 # Check request distribution
-kubectl logs -n production -l app=huston-housing-backend | grep "duration"
+kubectl logs -n production -l app=arbitra-backend | grep "duration"
 ```
 
 ### Memory Leak
@@ -390,14 +390,14 @@ curl http://prometheus:9090/api/v1/query_range?query='process_resident_memory_by
 kubectl exec -it <pod-name> -n production -- npm run test:leaks
 
 # Restart affected pods
-kubectl rollout restart deployment/huston-housing-backend -n production
+kubectl rollout restart deployment/arbitra-backend -n production
 ```
 
 ### Pod Not Scaling
 
 ```bash
 # Check HPA status
-kubectl describe hpa huston-housing-backend-hpa -n production
+kubectl describe hpa arbitra-backend-hpa -n production
 
 # Check metrics availability
 kubectl get --raw /apis/custom.metrics.k8s.io/v1beta1/namespaces/production/pods/*/http_requests_per_second

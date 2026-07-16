@@ -8,13 +8,13 @@
 #   BACKUP_VERIFY_METADATA_ONLY=true ./scripts/verify-backup.sh
 #
 # Environment:
-#   BACKUP_DIR                  Backup directory (default: /var/backups/huston-housing)
+#   BACKUP_DIR                  Backup directory (default: /var/backups/arbitra)
 #   BACKUP_VERIFY_METADATA_ONLY When "true", only checks file presence and gzip integrity
 #   DB_HOST, DB_PORT, DB_USERNAME, DB_PASSWORD  PostgreSQL connection
 
 set -euo pipefail
 
-BACKUP_DIR="${BACKUP_DIR:-/var/backups/huston-housing}"
+BACKUP_DIR="${BACKUP_DIR:-/var/backups/arbitra}"
 DB_HOST="${DB_HOST:-localhost}"
 DB_PORT="${DB_PORT:-5432}"
 DB_USERNAME="${DB_USERNAME:-postgres}"
@@ -22,7 +22,7 @@ METADATA_ONLY="${BACKUP_VERIFY_METADATA_ONLY:-false}"
 
 usage() {
   cat <<'EOF'
-Houston Housing backup verification
+Arbitra backup verification
 
   ./scripts/verify-backup.sh
       Full verification: restore latest backup to a temp DB and query schema.
@@ -76,7 +76,7 @@ if [[ "$METADATA_ONLY" == "true" ]]; then
   exit 0
 fi
 
-TEMP_DB="huston-housing_verify_$(date +%s)"
+TEMP_DB="arbitra_verify_$(date +%s)"
 
 if [[ -n "${DB_PASSWORD:-}" ]]; then
   export PGPASSWORD="${DB_PASSWORD}"

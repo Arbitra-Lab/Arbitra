@@ -1,6 +1,6 @@
 # Configuration Options and Environment Variables
 
-Complete reference of all environment variables used by the Houston Housing backend.
+Complete reference of all environment variables used by the Arbitra backend.
 
 **Related documents:**
 - [Configuration Management](./CONFIGURATION_MANAGEMENT.md) — setup, validation, secrets
@@ -47,7 +47,7 @@ Complete reference of all environment variables used by the Houston Housing back
 | `DB_PORT` | number | `5432` | R | R | R | R | Database port |
 | `DB_USERNAME` | string | `postgres` | R | R | R | R | Database user |
 | `DB_PASSWORD` | string | — | R | R | R | R | Database password |
-| `DB_NAME` | string | `huston-housing_db` | R | R | R | R | Database name |
+| `DB_NAME` | string | `arbitra_db` | R | R | R | R | Database name |
 | `DATABASE_URL` | string | — | - | - | R | - | Full connection URL with `?sslmode=require` (production) |
 | `DB_SSL` | boolean | `false` | - | - | R | - | Enable SSL connection (production) |
 | `DB_POOL_SIZE` | number | `10` | O | O | O | O | TypeORM connection pool size |
@@ -110,7 +110,7 @@ Complete reference of all environment variables used by the Houston Housing back
 | `STELLAR_ADMIN_SECRET_KEY` | string | — | O | R | R | - | Admin Stellar secret key |
 | `SERVER_STELLAR_SECRET` | string | — | O | O | O | - | Server Stellar secret for operations |
 | `STELLAR_SERVER_SECRET_KEY` | string | — | O | O | O | - | Alternative server secret key |
-| `HUSTON_HOUSING_CONTRACT_ID` | string | — | O | O | R | - | Houston Housing Soroban contract address |
+| `ARBITRA_CONTRACT_ID` | string | — | O | O | R | - | Arbitra Soroban contract address |
 | `ESCROW_CONTRACT_ID` | string | — | O | O | R | - | Escrow Soroban contract address |
 | `RENT_OBLIGATION_CONTRACT_ID` | string | — | O | O | R | - | Rent obligation NFT contract address |
 | `DEFAULT_ARBITER_ADDRESS` | string | — | O | O | R | - | Default arbiter Stellar address |
@@ -255,7 +255,7 @@ Complete reference of all environment variables used by the Houston Housing back
 
 | Variable | Type | Default | Dev | Stg | Prd | Test | Description |
 |---|---|---|---|---|---|---|---|
-| `ADMIN_DEFAULT_EMAIL` | string | `admin@huston-housing.local` | O | O | O | - | Default admin email for seeding |
+| `ADMIN_DEFAULT_EMAIL` | string | `admin@arbitra.local` | O | O | O | - | Default admin email for seeding |
 | `ADMIN_DEFAULT_FIRST_NAME` | string | `System` | O | O | O | - | Default admin first name |
 | `ADMIN_DEFAULT_LAST_NAME` | string | `Administrator` | O | O | O | - | Default admin last name |
 | `ADMIN_AUTO_GENERATE_PASSWORD` | boolean | `true` | O | O | O | - | Auto-generate admin password on seed |

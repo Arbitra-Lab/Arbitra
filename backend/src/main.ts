@@ -152,15 +152,15 @@ async function bootstrap() {
   });
 
   const config = new DocumentBuilder()
-    .setTitle('Houston Housing API')
+    .setTitle('Arbitra API')
     .setDescription(
-      'REST API for Houston Housing — a Stellar blockchain-based rental payment platform. ' +
+      'REST API for Arbitra — a Stellar blockchain-based rental payment platform. ' +
         'Supports landlords, agents, and tenants with JWT and Stellar (SEP-0010) authentication, ' +
         'rent agreements, payments, escrow, disputes, and KYC.',
     )
     .setVersion('1.0')
-    .setContact('Houston Housing', 'https://huston-housing.app', 'support@huston-housing.app')
-    .setLicense('Open Source', 'https://github.com/huston-housing/huston-housing')
+    .setContact('Arbitra', 'https://arbitra.app', 'support@arbitra.app')
+    .setLicense('Open Source', 'https://github.com/Arbitra-Lab/Arbitra')
     .addServer(
       configService.get<string>('API_BASE_URL') || 'http://localhost:5000',
       'Default',
@@ -207,7 +207,7 @@ async function bootstrap() {
       filter: true,
       showRequestDuration: true,
     },
-    customSiteTitle: 'Houston Housing API Docs',
+    customSiteTitle: 'Arbitra API Docs',
   });
 
   registerGracefulShutdown(app, { logger: bootstrapLogger });

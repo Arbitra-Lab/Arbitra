@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document defines how Houston Housing stores, accesses, rotates, and audits secrets
+This document defines how Arbitra stores, accesses, rotates, and audits secrets
 across all environments. Secrets include API keys, database credentials,
 encryption keys, JWT signing material, webhook secrets, and any other sensitive
 configuration values.

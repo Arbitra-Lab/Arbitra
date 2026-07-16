@@ -1,6 +1,6 @@
-# Houston Housing Backend Team Code of Conduct
+# Arbitra Backend Team Code of Conduct
 
-As contributors and maintainers to the backend of Houston Housing, we pledge to make our participation a harassment-free experience for everyone, regardless of background, technical ability, or identity.
+As contributors and maintainers to the backend of Arbitra, we pledge to make our participation a harassment-free experience for everyone, regardless of background, technical ability, or identity.
 
 ## 1. Professional Standards
 
@@ -14,7 +14,7 @@ We expect all contributors to adhere to high professional standards:
 
 ## 2. Respect and Inclusion
 
-Houston Housing is built for a diverse ecosystem. We require maintaining an environment of mutual respect, where no discriminatory, derogatory, or exclusionary comments (either explicit or implicit) are tolerated.
+Arbitra is built for a diverse ecosystem. We require maintaining an environment of mutual respect, where no discriminatory, derogatory, or exclusionary comments (either explicit or implicit) are tolerated.
 
 ## 3. Communication Guidelines
 

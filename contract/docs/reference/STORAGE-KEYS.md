@@ -6,11 +6,11 @@
 
 ## Overview
 
-This document provides a comprehensive reference of all storage keys used across the Houston Housing housing protocol smart contracts. Understanding storage keys is essential for contract development, maintenance, and integration.
+This document provides a comprehensive reference of all storage keys used across the Arbitra housing protocol smart contracts. Understanding storage keys is essential for contract development, maintenance, and integration.
 
 ## 1. Key Naming Conventions
 
-All storage keys in Houston Housing follow consistent naming patterns to ensure clarity and maintainability:
+All storage keys in Arbitra follow consistent naming patterns to ensure clarity and maintainability:
 
 ```
 {contract_name}:{entity_type}:{entity_id}:{field_name}
@@ -33,7 +33,7 @@ escrow:balance:hash_ghi789:amount
 
 ## 2. Data Types
 
-Houston Housing uses Stellar contract data types for storage. Common types include:
+Arbitra uses Stellar contract data types for storage. Common types include:
 
 | Type | Size | Usage |
 |------|------|-------|

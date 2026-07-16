@@ -7,11 +7,11 @@
 
 ## 1. Objective
 
-This guide documents practical performance optimization techniques for Houston Housing Soroban contracts, with a focus on gas usage, storage efficiency, predictable throughput, and safe optimization rollouts.
+This guide documents practical performance optimization techniques for Arbitra Soroban contracts, with a focus on gas usage, storage efficiency, predictable throughput, and safe optimization rollouts.
 
 ## 2. Current Optimization Baseline
 
-The `huston-housing` contract already exposes built-in gas estimation and optimization helpers in `src/gas_optimization.rs`.
+The `arbitra` contract already exposes built-in gas estimation and optimization helpers in `src/gas_optimization.rs`.
 
 ### Current tracked operations
 

@@ -1,6 +1,6 @@
 # Monitoring and Alerting
 
-This document defines monitoring and alerting procedures for the Houston Housing backend, covering metrics collection, alert configuration, dashboard creation, alert response, escalation, and tuning.
+This document defines monitoring and alerting procedures for the Arbitra backend, covering metrics collection, alert configuration, dashboard creation, alert response, escalation, and tuning.
 
 Use this together with:
 
@@ -27,7 +27,7 @@ This document is written for operators, on-call engineers, and SREs responsible 
 
 ### 2.1 Metrics Sources
 
-Houston Housing collects metrics from:
+Arbitra collects metrics from:
 
 - application instrumentation (NestJS + Prometheus client)
 - database (PostgreSQL query performance, connection pool)
@@ -136,7 +136,7 @@ Scrape targets:
 
 ```yaml
 scrape_configs:
-  - job_name: 'huston-housing-backend'
+  - job_name: 'arbitra-backend'
     static_configs:
       - targets: ['backend:5000']
     metrics_path: '/metrics'
@@ -196,14 +196,14 @@ Alerts defined in `backend/monitoring/prometheus/alerts.yml`:
 
 ```yaml
 - alert: ServiceDown
-  expr: up{job="huston-housing-backend"} == 0
+  expr: up{job="arbitra-backend"} == 0
   for: 1m
   labels:
     severity: critical
   annotations:
-    summary: 'Houston Housing backend is down'
+    summary: 'Arbitra backend is down'
     description: 'Backend service has been unreachable for 1 minute'
-    runbook: 'https://docs.huston-housing.io/runbooks/service-down'
+    runbook: 'https://docs.arbitra.io/runbooks/service-down'
 ```
 
 #### High Error Rate
@@ -220,7 +220,7 @@ Alerts defined in `backend/monitoring/prometheus/alerts.yml`:
   annotations:
     summary: 'High 5xx error rate detected'
     description: 'Error rate is {{ $value | humanizePercentage }} over 5 minutes'
-    runbook: 'https://docs.huston-housing.io/runbooks/high-error-rate'
+    runbook: 'https://docs.arbitra.io/runbooks/high-error-rate'
 ```
 
 #### High Latency
@@ -237,7 +237,7 @@ Alerts defined in `backend/monitoring/prometheus/alerts.yml`:
   annotations:
     summary: 'High request latency detected'
     description: 'P95 latency is {{ $value }}s over 10 minutes'
-    runbook: 'https://docs.huston-housing.io/runbooks/high-latency'
+    runbook: 'https://docs.arbitra.io/runbooks/high-latency'
 ```
 
 #### Database Connection Pool Exhaustion
@@ -253,7 +253,7 @@ Alerts defined in `backend/monitoring/prometheus/alerts.yml`:
   annotations:
     summary: 'Database connection pool near exhaustion'
     description: '{{ $value | humanizePercentage }} of connections in use'
-    runbook: 'https://docs.huston-housing.io/runbooks/db-pool-exhausted'
+    runbook: 'https://docs.arbitra.io/runbooks/db-pool-exhausted'
 ```
 
 #### Redis Memory High
@@ -267,7 +267,7 @@ Alerts defined in `backend/monitoring/prometheus/alerts.yml`:
   annotations:
     summary: 'Redis memory usage high'
     description: 'Redis using {{ $value | humanizePercentage }} of max memory'
-    runbook: 'https://docs.huston-housing.io/runbooks/redis-memory'
+    runbook: 'https://docs.arbitra.io/runbooks/redis-memory'
 ```
 
 #### Queue Backlog Growing
@@ -282,7 +282,7 @@ Alerts defined in `backend/monitoring/prometheus/alerts.yml`:
   annotations:
     summary: 'Queue backlog growing'
     description: 'Queue {{ $labels.queue }} backlog increasing'
-    runbook: 'https://docs.huston-housing.io/runbooks/queue-backlog'
+    runbook: 'https://docs.arbitra.io/runbooks/queue-backlog'
 ```
 
 #### High Job Failure Rate
@@ -299,7 +299,7 @@ Alerts defined in `backend/monitoring/prometheus/alerts.yml`:
   annotations:
     summary: 'High background job failure rate'
     description: '{{ $value | humanizePercentage }} of jobs failing'
-    runbook: 'https://docs.huston-housing.io/runbooks/job-failures'
+    runbook: 'https://docs.arbitra.io/runbooks/job-failures'
 ```
 
 #### Disk Space Low
@@ -314,7 +314,7 @@ Alerts defined in `backend/monitoring/prometheus/alerts.yml`:
   annotations:
     summary: 'Disk space low on {{ $labels.instance }}'
     description: 'Only {{ $value | humanizePercentage }} space remaining'
-    runbook: 'https://docs.huston-housing.io/runbooks/disk-space'
+    runbook: 'https://docs.arbitra.io/runbooks/disk-space'
 ```
 
 #### SSL Certificate Expiring
@@ -329,7 +329,7 @@ Alerts defined in `backend/monitoring/prometheus/alerts.yml`:
   annotations:
     summary: 'SSL certificate expiring soon'
     description: 'Certificate expires in {{ $value }} days'
-    runbook: 'https://docs.huston-housing.io/runbooks/ssl-renewal'
+    runbook: 'https://docs.arbitra.io/runbooks/ssl-renewal'
 ```
 
 ### 3.4 Alert Routing
@@ -374,7 +374,7 @@ receivers:
   - name: 'team-channel'
     slack_configs:
       - api_url: '<SLACK_WEBHOOK_URL>'
-        channel: '#huston-housing-alerts'
+        channel: '#arbitra-alerts'
 ```
 
 ### 3.5 Alert Inhibition
@@ -513,7 +513,7 @@ Mark deployments and incidents:
 Grafana folder structure:
 
 ```
-Houston Housing/
+Arbitra/
 ├── Overview/
 │   └── Service Overview
 ├── Application/
@@ -547,9 +547,9 @@ Provisioning config in `backend/monitoring/grafana/provisioning/dashboards/dashb
 apiVersion: 1
 
 providers:
-  - name: 'Houston Housing Dashboards'
+  - name: 'Arbitra Dashboards'
     orgId: 1
-    folder: 'Houston Housing'
+    folder: 'Arbitra'
     type: file
     disableDeletion: false
     updateIntervalSeconds: 10
@@ -586,16 +586,16 @@ Diagnostics:
 
 ```bash
 # Check service status
-docker ps | grep huston-housing-backend
+docker ps | grep arbitra-backend
 
 # Check logs
-docker logs huston-housing-backend --tail 100
+docker logs arbitra-backend --tail 100
 
 # Check health endpoint
 curl http://localhost:5000/health
 
 # Check database connectivity
-docker exec huston-housing-backend npm run typeorm query "SELECT 1"
+docker exec arbitra-backend npm run typeorm query "SELECT 1"
 ```
 
 Common causes:
@@ -628,7 +628,7 @@ Diagnostics:
 curl http://localhost:9090/api/v1/query?query='sum by (route) (rate(http_requests_total{status=~"5.."}[5m]))'
 
 # Check recent errors in logs
-docker logs huston-housing-backend --since 10m | grep ERROR
+docker logs arbitra-backend --since 10m | grep ERROR
 
 # Check Sentry for error details
 # Visit Sentry dashboard
@@ -664,10 +664,10 @@ Diagnostics:
 curl http://localhost:9090/api/v1/query?query='histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))'
 
 # Check database slow queries
-docker exec postgres psql -U huston-housing -c "SELECT query, mean_exec_time FROM pg_stat_statements ORDER BY mean_exec_time DESC LIMIT 10;"
+docker exec postgres psql -U arbitra -c "SELECT query, mean_exec_time FROM pg_stat_statements ORDER BY mean_exec_time DESC LIMIT 10;"
 
 # Check active connections
-docker exec postgres psql -U huston-housing -c "SELECT count(*) FROM pg_stat_activity WHERE state = 'active';"
+docker exec postgres psql -U arbitra -c "SELECT count(*) FROM pg_stat_activity WHERE state = 'active';"
 ```
 
 Common causes:
@@ -701,10 +701,10 @@ Diagnostics:
 curl http://localhost:5000/health/detailed | jq '.database'
 
 # Check active queries
-docker exec postgres psql -U huston-housing -c "SELECT pid, usename, state, query FROM pg_stat_activity WHERE state != 'idle';"
+docker exec postgres psql -U arbitra -c "SELECT pid, usename, state, query FROM pg_stat_activity WHERE state != 'idle';"
 
 # Check for long-running transactions
-docker exec postgres psql -U huston-housing -c "SELECT pid, now() - xact_start AS duration, query FROM pg_stat_activity WHERE state = 'active' ORDER BY duration DESC;"
+docker exec postgres psql -U arbitra -c "SELECT pid, now() - xact_start AS duration, query FROM pg_stat_activity WHERE state = 'active' ORDER BY duration DESC;"
 ```
 
 Common causes:
@@ -739,7 +739,7 @@ curl http://localhost:5000/admin/queues
 # Visit Bull Board UI
 
 # Check worker logs
-docker logs huston-housing-backend | grep "Queue worker"
+docker logs arbitra-backend | grep "Queue worker"
 ```
 
 Common causes:
@@ -934,13 +934,13 @@ Recurring tasks for monitoring health:
 
 ```bash
 # Check Prometheus target status
-curl http://localhost:9090/api/v1/targets | jq '.data.activeTargets[] | select(.job=="huston-housing-backend")'
+curl http://localhost:9090/api/v1/targets | jq '.data.activeTargets[] | select(.job=="arbitra-backend")'
 
 # Check application metrics endpoint
 curl http://localhost:5000/metrics | head -20
 
 # Check Prometheus scrape logs
-docker logs prometheus | grep "huston-housing-backend" | tail -20
+docker logs prometheus | grep "arbitra-backend" | tail -20
 
 # Verify network connectivity
 docker exec prometheus ping backend
@@ -976,7 +976,7 @@ curl http://localhost:9090/api/v1/query?query='count(count by (__name__) ({__nam
 curl http://localhost:9090/api/v1/rules | jq '.data.groups[].rules[] | select(.name=="ServiceDown")'
 
 # Check alert evaluation
-curl http://localhost:9090/api/v1/query?query='up{job="huston-housing-backend"}'
+curl http://localhost:9090/api/v1/query?query='up{job="arbitra-backend"}'
 
 # Check Prometheus logs
 docker logs prometheus | grep -i alert | tail -20

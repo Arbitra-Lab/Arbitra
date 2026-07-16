@@ -6,11 +6,11 @@
 
 set -e
 
-BACKUP_DIR="${BACKUP_DIR:-/var/backups/huston-housing}"
+BACKUP_DIR="${BACKUP_DIR:-/var/backups/arbitra}"
 DB_HOST="${DB_HOST:-localhost}"
 DB_PORT="${DB_PORT:-5432}"
 DB_USERNAME="${DB_USERNAME:-postgres}"
-DB_NAME="${DB_NAME:-huston-housing_db}"
+DB_NAME="${DB_NAME:-arbitra_db}"
 
 if [ -n "$1" ]; then
   BACKUP_FILE="$1"
@@ -28,7 +28,7 @@ fi
 echo "Restoring from $BACKUP_FILE..."
 
 if [ "${USE_DOCKER}" = "1" ]; then
-  CONTAINER="${DOCKER_CONTAINER:-huston-housing-postgres-production}"
+  CONTAINER="${DOCKER_CONTAINER:-arbitra-postgres-production}"
   if [[ "$BACKUP_FILE" == *.gz ]]; then
     gunzip -c "$BACKUP_FILE" | docker exec -i "$CONTAINER" psql -U "$DB_USERNAME" -d "$DB_NAME" > /dev/null
   else

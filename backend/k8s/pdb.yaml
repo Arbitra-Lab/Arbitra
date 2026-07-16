@@ -1,13 +1,13 @@
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
-  name: huston-housing-backend-pdb
+  name: arbitra-backend-pdb
   namespace: production
   labels:
-    app: huston-housing-backend
+    app: arbitra-backend
 spec:
   minAvailable: 2
   selector:
     matchLabels:
-      app: huston-housing-backend
+      app: arbitra-backend
   unhealthyPodEvictionPolicy: AlwaysAllow

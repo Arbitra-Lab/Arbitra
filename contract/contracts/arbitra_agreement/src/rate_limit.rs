@@ -4,7 +4,7 @@
 
 use soroban_sdk::{Address, Env, String};
 
-use crate::errors::RentalError;
+use crate::errors::AgreementError;
 use crate::events;
 use crate::storage::DataKey;
 use crate::types::{RateLimitConfig, UserCallCount};
@@ -12,7 +12,7 @@ use crate::types::{RateLimitConfig, UserCallCount};
 const BLOCKS_PER_DAY: u64 = 17280; // Assuming ~5 second blocks
 
 /// Initialize rate limit configuration (admin only).
-pub fn set_rate_limit_config(env: &Env, config: RateLimitConfig) -> Result<(), RentalError> {
+pub fn set_rate_limit_config(env: &Env, config: RateLimitConfig) -> Result<(), AgreementError> {
     env.storage()
         .persistent()
         .set(&DataKey::RateLimitConfig, &config);
@@ -40,7 +40,7 @@ pub fn get_rate_limit_config(env: &Env) -> RateLimitConfig {
 /// 1. Per-block global rate limiting
 /// 2. Per-user daily rate limiting
 /// 3. Cooldown period enforcement
-pub fn check_rate_limit(env: &Env, user: &Address, function_name: &str) -> Result<(), RentalError> {
+pub fn check_rate_limit(env: &Env, user: &Address, function_name: &str) -> Result<(), AgreementError> {
     let config = get_rate_limit_config(env);
     let current_block = env.ledger().sequence() as u64;
 
@@ -68,7 +68,7 @@ pub fn check_rate_limit(env: &Env, user: &Address, function_name: &str) -> Resul
                 String::from_str(env, function_name),
                 crate::types::RateLimitReason::CooldownNotMet,
             );
-            return Err(RentalError::CooldownNotMet);
+            return Err(AgreementError::CooldownNotMet);
         }
     }
 
@@ -87,7 +87,7 @@ pub fn check_rate_limit(env: &Env, user: &Address, function_name: &str) -> Resul
             String::from_str(env, function_name),
             crate::types::RateLimitReason::DailyLimitExceeded,
         );
-        return Err(RentalError::RateLimitExceeded);
+        return Err(AgreementError::RateLimitExceeded);
     }
 
     // Check per-block limit
@@ -101,7 +101,7 @@ pub fn check_rate_limit(env: &Env, user: &Address, function_name: &str) -> Resul
             String::from_str(env, function_name),
             crate::types::RateLimitReason::BlockLimitExceeded,
         );
-        return Err(RentalError::RateLimitExceeded);
+        return Err(AgreementError::RateLimitExceeded);
     }
 
     // Update counters
@@ -146,7 +146,7 @@ pub fn reset_user_rate_limit(
     env: &Env,
     user: &Address,
     function_name: String,
-) -> Result<(), RentalError> {
+) -> Result<(), AgreementError> {
     let key = DataKey::UserCallCount(user.clone(), function_name);
     env.storage().persistent().remove(&key);
     Ok(())

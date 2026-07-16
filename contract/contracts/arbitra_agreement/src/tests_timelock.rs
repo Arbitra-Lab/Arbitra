@@ -1,5 +1,5 @@
 use crate::{
-    errors::RentalError,
+    errors::AgreementError,
     types::{Config, TimelockActionType},
     Contract, ContractClient,
 };
@@ -94,7 +94,7 @@ fn test_queue_delay_too_short_rejected() {
         &data,
         &(MIN_DELAY_UPDATE_ADMIN - 1),
     );
-    assert_eq!(result, Err(Ok(RentalError::TimelockDelayTooShort)));
+    assert_eq!(result, Err(Ok(AgreementError::TimelockDelayTooShort)));
 }
 
 #[test]
@@ -112,7 +112,7 @@ fn test_queue_requires_admin() {
         &data,
         &MIN_DELAY_UPDATE_CONFIG,
     );
-    assert_eq!(result, Err(Ok(RentalError::Unauthorized)));
+    assert_eq!(result, Err(Ok(AgreementError::Unauthorized)));
 }
 
 // ─── Get Action Tests ─────────────────────────────────────────────────────────
@@ -145,7 +145,7 @@ fn test_get_action_not_found() {
 
     let fake_id = String::from_str(&_env, "nonexistent");
     let result = client.try_get_timelock_action(&fake_id);
-    assert_eq!(result, Err(Ok(RentalError::TimelockNotFound)));
+    assert_eq!(result, Err(Ok(AgreementError::TimelockNotFound)));
 }
 
 // ─── Execute Action Tests ─────────────────────────────────────────────────────
@@ -167,7 +167,7 @@ fn test_execute_before_eta_fails() {
 
     // ETA not reached yet
     let result = client.try_execute_timelock_action(&admin, &action_id);
-    assert_eq!(result, Err(Ok(RentalError::TimelockEtaNotReached)));
+    assert_eq!(result, Err(Ok(AgreementError::TimelockEtaNotReached)));
 }
 
 #[test]
@@ -222,7 +222,7 @@ fn test_execute_already_executed_fails() {
 
     // Attempt to execute a second time
     let result = client.try_execute_timelock_action(&admin, &action_id);
-    assert_eq!(result, Err(Ok(RentalError::TimelockAlreadyExecuted)));
+    assert_eq!(result, Err(Ok(AgreementError::TimelockAlreadyExecuted)));
 }
 
 #[test]
@@ -248,7 +248,7 @@ fn test_execute_cancelled_action_fails() {
     });
 
     let result = client.try_execute_timelock_action(&admin, &action_id);
-    assert_eq!(result, Err(Ok(RentalError::TimelockAlreadyCancelled)));
+    assert_eq!(result, Err(Ok(AgreementError::TimelockAlreadyCancelled)));
 }
 
 // ─── Cancel Action Tests ──────────────────────────────────────────────────────
@@ -293,7 +293,7 @@ fn test_cancel_requires_admin() {
 
     let non_admin = Address::generate(&env);
     let result = client.try_cancel_timelock_action(&non_admin, &action_id);
-    assert_eq!(result, Err(Ok(RentalError::Unauthorized)));
+    assert_eq!(result, Err(Ok(AgreementError::Unauthorized)));
 }
 
 #[test]
@@ -314,7 +314,7 @@ fn test_cancel_already_cancelled_fails() {
     client.cancel_timelock_action(&admin, &action_id);
 
     let result = client.try_cancel_timelock_action(&admin, &action_id);
-    assert_eq!(result, Err(Ok(RentalError::TimelockAlreadyCancelled)));
+    assert_eq!(result, Err(Ok(AgreementError::TimelockAlreadyCancelled)));
 }
 
 #[test]
@@ -339,7 +339,7 @@ fn test_cancel_executed_action_fails() {
     client.execute_timelock_action(&admin, &action_id);
 
     let result = client.try_cancel_timelock_action(&admin, &action_id);
-    assert_eq!(result, Err(Ok(RentalError::TimelockAlreadyExecuted)));
+    assert_eq!(result, Err(Ok(AgreementError::TimelockAlreadyExecuted)));
 }
 
 // ─── Active Actions List Tests ────────────────────────────────────────────────

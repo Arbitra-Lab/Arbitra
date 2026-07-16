@@ -1,7 +1,7 @@
 /** Deployed Soroban contract IDs (testnet defaults from contract/.env.testnet). */
 
 export interface ContractIds {
-  houstonHousing: string;
+  arbitraAgreement: string;
   disputeResolution: string;
   escrow: string;
   payment: string;
@@ -16,7 +16,7 @@ function env(name: string, fallback = ''): string {
 }
 
 const TESTNET_DEFAULTS: ContractIds = {
-  houstonHousing: 'CBFLJVOHQ2LRVUMYBZQCHCVP5JGZ6WFTOSMYYUZQHAPHX6JKSDQXF5JD',
+  arbitraAgreement: 'CBFLJVOHQ2LRVUMYBZQCHCVP5JGZ6WFTOSMYYUZQHAPHX6JKSDQXF5JD',
   disputeResolution: 'CA4GNSPPX6RMHPKMJB5GSOKQU6WDPBEGMPSU3SJ5SEJWA5F7RFK2NN65',
   escrow: 'CDDUZKXCDSK3TZVFUUEEJRMSFNILCUEO5E5RORTREEH4KOALQC637DEZ',
   payment: 'CDXNI4WNAIFVVN5RIVETAENYYQ5OTT7TLFQSF2JWAHU3X3B3RT5KQBED',
@@ -29,14 +29,14 @@ const TESTNET_DEFAULTS: ContractIds = {
 export function getContractIds(): ContractIds {
   const useDefaults =
     process.env.NODE_ENV === 'development' &&
-    !env('NEXT_PUBLIC_HUSTON_HOUSING_CONTRACT_ID');
+    !env('NEXT_PUBLIC_ARBITRA_AGREEMENT_CONTRACT_ID');
 
   const defaults = useDefaults ? TESTNET_DEFAULTS : ({} as ContractIds);
 
   return {
-    houstonHousing: env(
-      'NEXT_PUBLIC_HUSTON_HOUSING_CONTRACT_ID',
-      defaults.houstonHousing,
+    arbitraAgreement: env(
+      'NEXT_PUBLIC_ARBITRA_AGREEMENT_CONTRACT_ID',
+      defaults.arbitraAgreement,
     ),
     disputeResolution: env(
       'NEXT_PUBLIC_DISPUTE_RESOLUTION_CONTRACT_ID',

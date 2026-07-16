@@ -1,6 +1,6 @@
-# Houston Housing Backend Documentation
+# Arbitra Backend Documentation
 
-Welcome to the Houston Housing backend documentation hub. This index covers all aspects of the NestJS API service, from local setup to production operations.
+Welcome to the Arbitra backend documentation hub. This index covers all aspects of the NestJS API service, from local setup to production operations.
 
 ---
 
@@ -141,7 +141,7 @@ pnpm run migration:generate  # generate migration from entity changes
 | [API Authentication Guide](./api/AUTHENTICATION.md)     | Quick API reference with request/response examples                      |
 | [Stellar Auth (SEP-0010)](./blockchain/stellar-auth.md) | Wallet-based authentication flow details                                |
 
-Houston Housing supports dual authentication: **JWT (email/password)** and **Stellar SEP-0010 (wallet)**. Both methods issue JWT access tokens with 15-minute lifetime and HttpOnly cookie refresh tokens with 7-day lifetime. MFA via TOTP is available for all accounts.
+Arbitra supports dual authentication: **JWT (email/password)** and **Stellar SEP-0010 (wallet)**. Both methods issue JWT access tokens with 15-minute lifetime and HttpOnly cookie refresh tokens with 7-day lifetime. MFA via TOTP is available for all accounts.
 
 ---
 

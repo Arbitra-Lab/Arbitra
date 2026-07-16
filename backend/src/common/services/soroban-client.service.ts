@@ -28,12 +28,12 @@ export class SorobanClientService {
       'https://soroban-testnet.stellar.org',
     );
     this.server = new SorobanRpc.Server(rpcUrl);
-    this.contractId = this.configService.get<string>('HUSTON_HOUSING_CONTRACT_ID', '');
+    this.contractId = this.configService.get<string>('ARBITRA_AGREEMENT_CONTRACT_ID', '');
     this.networkPassphrase = this.getNetworkPassphrase();
 
     if (!this.contractId) {
       this.logger.warn(
-        'HUSTON_HOUSING_CONTRACT_ID not set - on-chain features will be disabled',
+        'ARBITRA_AGREEMENT_CONTRACT_ID not set - on-chain features will be disabled',
       );
     }
   }
@@ -149,7 +149,7 @@ export class SorobanClientService {
   ensureContractId(): void {
     if (!this.contractId) {
       throw new BadRequestException(
-        'On-chain features are not configured. HUSTON_HOUSING_CONTRACT_ID is not set.',
+        'On-chain features are not configured. ARBITRA_AGREEMENT_CONTRACT_ID is not set.',
       );
     }
   }

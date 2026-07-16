@@ -2,7 +2,7 @@
 
 ## System Overview
 
-Houston Housing backend is a NestJS modular monolith that serves REST APIs, background
+Arbitra backend is a NestJS modular monolith that serves REST APIs, background
 processing, security monitoring, blockchain integrations, and operational
 tooling from one deployable service. The architecture is intentionally layered:
 

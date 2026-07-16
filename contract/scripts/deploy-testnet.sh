@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Deploy all Houston Housing Soroban contracts to Stellar testnet.
+# Deploy all Arbitra Soroban contracts to Stellar testnet.
 # Based on: https://developers.stellar.org/docs/build/smart-contracts/getting-started/deploy-to-testnet
 #
 # Usage (from contract/):
@@ -30,7 +30,7 @@ WASM_DIR="${WASM_DIR:-target/wasm32v1-none/release}"
 ENV_FILE="${ENV_FILE:-.env.testnet}"
 PLATFORM_FEE_BPS="${PLATFORM_FEE_BPS:-500}"
 MIN_DISPUTE_VOTES="${MIN_DISPUTE_VOTES:-3}"
-ALIAS_PREFIX="${ALIAS_PREFIX:-huston-housing_testnet}"
+ALIAS_PREFIX="${ALIAS_PREFIX:-arbitra_testnet}"
 
 SKIP_BUILD=0
 SKIP_FUND=0
@@ -72,10 +72,10 @@ CONTRACTS=(
   escrow
   payment
   dispute_resolution
-  huston-housing
+  arbitra_agreement
 )
 
-# Init order: huston-housing before dispute_resolution
+# Init order: arbitra_agreement before dispute_resolution
 INIT_CONTRACTS=(
   user_profile
   property_registry
@@ -83,7 +83,7 @@ INIT_CONTRACTS=(
   rent_obligation
   escrow
   payment
-  huston-housing
+  arbitra_agreement
   dispute_resolution
 )
 
@@ -201,7 +201,7 @@ initialize_contract() {
     payment)
       invoke_write "$contract_id" set_platform_fee_collector --collector "$admin"
       ;;
-    huston-housing)
+    arbitra_agreement)
       invoke_write "$contract_id" initialize \
         --admin "$admin" \
         --config "{\"fee_bps\": ${PLATFORM_FEE_BPS}, \"fee_collector\": \"${admin}\", \"paused\": false}"
@@ -209,14 +209,14 @@ initialize_contract() {
     dispute_resolution)
       # shellcheck disable=SC1090
       source "$ENV_FILE"
-      if [[ -z "${HUSTON_HOUSING_CONTRACT_ID:-}" ]]; then
-        err "HUSTON_HOUSING_CONTRACT_ID missing; cannot initialize dispute_resolution"
+      if [[ -z "${ARBITRA_AGREEMENT_CONTRACT_ID:-}" ]]; then
+        err "ARBITRA_AGREEMENT_CONTRACT_ID missing; cannot initialize dispute_resolution"
         return 1
       fi
       invoke_write "$contract_id" initialize \
         --admin "$admin" \
         --min_votes_required "$MIN_DISPUTE_VOTES" \
-        --huston-housing_contract "$HUSTON_HOUSING_CONTRACT_ID"
+        --case_registry "$ARBITRA_AGREEMENT_CONTRACT_ID"
       ;;
     *)
       warn "No initializer for $contract"
@@ -230,7 +230,7 @@ initialize_contract() {
 write_env_header() {
   local admin="$1"
   cat >"$ENV_FILE" <<EOF
-# Houston Housing testnet deployment — $(date -u +"%Y-%m-%dT%H:%M:%SZ")
+# Arbitra testnet deployment — $(date -u +"%Y-%m-%dT%H:%M:%SZ")
 DEPLOYER_KEY=${DEPLOYER_KEY}
 NETWORK=${NETWORK}
 ADMIN_ADDRESS=${admin}

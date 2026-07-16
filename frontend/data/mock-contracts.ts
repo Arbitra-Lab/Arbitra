@@ -35,7 +35,7 @@ This Lease Agreement ("Agreement") is entered into on this 1st day of June, 2024
 
 LANDLORD: Chief Emeka Okonkwo
 TENANT: Adaeze Nwankwo
-AGENT: Sarah Jenks (Houston Housing Platform Agent #8839)
+AGENT: Sarah Jenks (Arbitra Platform Agent #8839)
 
 PROPERTY: Sunrise Apartments - Unit 4B, 12 Victoria Island Rd, Lagos, Nigeria
 
@@ -85,7 +85,7 @@ This Lease Agreement ("Agreement") is entered into on this 1st day of September,
 
 LANDLORD: Mrs. Funke Adeyemi
 TENANT: Chinedu Okoro
-AGENT: Sarah Jenks (Houston Housing Platform Agent #8839)
+AGENT: Sarah Jenks (Arbitra Platform Agent #8839)
 
 PROPERTY: Ocean View Terrace - Suite 12, 45 Admiralty Way, Lekki Phase 1, Lagos
 
@@ -133,7 +133,7 @@ This Lease Agreement ("Agreement") is entered into on this 1st day of January, 2
 
 LANDLORD: Dr. Ibrahim Musa
 TENANT: Grace Obi
-AGENT: Sarah Jenks (Houston Housing Platform Agent #8839)
+AGENT: Sarah Jenks (Arbitra Platform Agent #8839)
 
 PROPERTY: Green Estate Villa - Block C, 8 Green Estate, Amuwo Odofin, Lagos
 
@@ -179,7 +179,7 @@ This Lease Agreement ("Agreement") is entered into on this 1st day of January, 2
 
 LANDLORD: Alhaji Sule Bello
 TENANT: Tunde Fashola
-AGENT: Sarah Jenks (Houston Housing Platform Agent #8839)
+AGENT: Sarah Jenks (Arbitra Platform Agent #8839)
 
 PROPERTY: Skyline Towers - Penthouse 2A, 101 Ozumba Mbadiwe Ave, Victoria Island, Lagos
 
@@ -227,7 +227,7 @@ This Lease Agreement ("Agreement") is entered into on this 1st day of October, 2
 
 LANDLORD: Mrs. Ngozi Eze
 TENANT: Yusuf Abdullahi
-AGENT: Sarah Jenks (Houston Housing Platform Agent #8839)
+AGENT: Sarah Jenks (Arbitra Platform Agent #8839)
 
 PROPERTY: Palm Heights - Flat 3C, 23 Adeola Odeku St, Victoria Island, Lagos
 

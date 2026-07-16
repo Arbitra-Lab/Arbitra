@@ -115,7 +115,7 @@ export class PaymentService {
 
     // Note: In production, fetch actual user email from UsersService.findById(userId)
     // For now, using userId as fallback since UsersService has unrelated type issues
-    const userEmail = `user_${userId}@huston-housing.local`;
+    const userEmail = `user_${userId}@arbitra.local`;
 
     const decryptedMetadata = decryptMetadata(paymentMethod.encryptedMetadata);
 
@@ -300,7 +300,7 @@ export class PaymentService {
       fileName: `receipt-${payment.id}.txt`,
       data: Buffer.from(
         [
-          'HUSTON_HOUSING PAYMENT RECEIPT',
+          'ARBITRA PAYMENT RECEIPT',
           `Payment ID: ${receipt.paymentId}`,
           `Amount: ${receipt.amount} ${receipt.currency}`,
           `Status: ${receipt.status}`,

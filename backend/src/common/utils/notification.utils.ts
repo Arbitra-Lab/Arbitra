@@ -28,7 +28,7 @@ export class NotificationUtils {
           <h2>${title}</h2>
           <p>${message}</p>
           <hr />
-          <small>Sent via Houston Housing Protocol</small>
+          <small>Sent via Arbitra Protocol</small>
         </div>
       `,
     };

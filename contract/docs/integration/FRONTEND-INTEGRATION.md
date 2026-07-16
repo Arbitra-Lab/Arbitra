@@ -6,7 +6,7 @@
 
 ## Overview
 
-This guide explains how the Houston Housing frontend integrates with the backend API and interacts with Stellar wallets for blockchain operations.
+This guide explains how the Arbitra frontend integrates with the backend API and interacts with Stellar wallets for blockchain operations.
 
 ## 1. Frontend Architecture
 

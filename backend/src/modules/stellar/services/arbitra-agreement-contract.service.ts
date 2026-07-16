@@ -23,8 +23,8 @@ export interface PaymentSplit {
 }
 
 @Injectable()
-export class Houston HousingContractService {
-  private readonly logger = new Logger(Houston HousingContractService.name);
+export class ArbitraAgreementContractService {
+  private readonly logger = new Logger(ArbitraAgreementContractService.name);
   private readonly server: SorobanRpc.Server;
   private readonly contract?: Contract;
   private readonly networkPassphrase: string;
@@ -36,7 +36,7 @@ export class Houston HousingContractService {
       this.configService.get<string>('SOROBAN_RPC_URL') ||
       'https://soroban-testnet.stellar.org';
     const contractId =
-      this.configService.get<string>('HUSTON_HOUSING_CONTRACT_ID') || '';
+      this.configService.get<string>('ARBITRA_AGREEMENT_CONTRACT_ID') || '';
     const adminSecret =
       this.configService.get<string>('STELLAR_ADMIN_SECRET_KEY') || '';
     const network = this.configService.get<string>(
@@ -52,7 +52,7 @@ export class Houston HousingContractService {
       this.isConfigured = true;
     } else {
       this.logger.warn(
-        'HUSTON_HOUSING_CONTRACT_ID not set - on-chain features will be disabled',
+        'ARBITRA_AGREEMENT_CONTRACT_ID not set - on-chain features will be disabled',
       );
       this.isConfigured = false;
     }

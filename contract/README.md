@@ -1,29 +1,36 @@
-# Soroban Project
+# Arbitra Soroban Contracts
+
+The on-chain layer of [Arbitra](../README.md) — a set of Soroban smart contracts for
+generic escrow, arbitration, and a rental-marketplace reference application.
 
 ## Project Structure
 
-This repository uses the recommended structure for a Soroban project:
+This is a Cargo workspace; each contract lives in its own directory under `contracts/`:
 
 ```text
 .
 ├── contracts
-│   └── hello_world
-│       ├── src
-│       │   ├── lib.rs
-│       │   └── test.rs
-│       └── Cargo.toml
-├── Cargo.toml
+│   ├── arbitra_agreement   # Rental agreement orchestration (lifecycle, payments, escrow hooks)
+│   ├── escrow              # Generic 2-of-3 multi-sig escrow
+│   ├── dispute_resolution  # Case-agnostic arbitration engine
+│   ├── payment             # Rent / recurring payment processing
+│   ├── agent_registry      # Agent registration & verification
+│   ├── property_registry   # Property registration & verification
+│   ├── rent_obligation     # Tokenized rent obligations
+│   └── user_profile        # User profile management
+├── docs                    # Per-contract and integration documentation
+├── scripts                 # Testnet deploy & verification scripts
+├── Cargo.toml              # Workspace manifest
 └── README.md
 ```
 
-- New Soroban contracts can be put in `contracts`, each in their own directory. There is already a `hello_world` contract in there to get you started.
-- If you initialized this project with any other example contracts via `--with-example`, those contracts will be in the `contracts` directory as well.
-- Contracts should have their own `Cargo.toml` files that rely on the top-level `Cargo.toml` workspace for their dependencies.
-- Frontend libraries can be added to the top-level directory as well. If you initialized this project with a frontend template via `--frontend-template` you will have those files already included.
+- Each contract has its own `Cargo.toml` that relies on the top-level workspace for shared dependencies.
+- Per-contract documentation lives in [`docs/contracts/`](docs/contracts/).
+- See [`scripts/README.md`](scripts/README.md) for deployment.
 
-## Emergency Pause (Houston Housing Contract)
+## Emergency Pause (Arbitra Agreement Contract)
 
-The `contracts/huston-housing` contract now includes an emergency pause mechanism:
+The `contracts/arbitra_agreement` contract includes an emergency pause mechanism:
 
 - `pause(reason)` and `unpause()` are admin-only.
 - `is_paused()` exposes current circuit-breaker status.
@@ -33,7 +40,7 @@ The `contracts/huston-housing` contract now includes an emergency pause mechanis
 
 ## Timeout Mechanisms (Escrow + Dispute Resolution)
 
-Timeout protection is now available to prevent stale funds/disputes from remaining open indefinitely.
+Timeout protection is available to prevent stale funds/disputes from remaining open indefinitely.
 
 - Escrow contract supports:
   - `set_timeout_config(caller, config)` / `get_timeout_config()`

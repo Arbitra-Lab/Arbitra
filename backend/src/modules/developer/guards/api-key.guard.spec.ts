@@ -85,7 +85,7 @@ describe('ApiKeyGuard', () => {
     it('should throw UnauthorizedException if API key is invalid', async () => {
       reflector.getAllAndOverride.mockReturnValue(false);
       const context = createMockExecutionContext({
-        [API_KEY_HEADER]: 'huston-housing_sk_invalidkey123',
+        [API_KEY_HEADER]: 'arbitra_sk_invalidkey123',
       });
       developerService.validateKey.mockResolvedValue(null);
 
@@ -93,14 +93,14 @@ describe('ApiKeyGuard', () => {
         UnauthorizedException,
       );
       expect(developerService.validateKey).toHaveBeenCalledWith(
-        'huston-housing_sk_invalidkey123',
+        'arbitra_sk_invalidkey123',
       );
     });
 
     it('should set user and return true if API key is valid', async () => {
       reflector.getAllAndOverride.mockReturnValue(false);
       const context = createMockExecutionContext({
-        'x-api-key': 'huston-housing_sk_validkey123',
+        'x-api-key': 'arbitra_sk_validkey123',
       });
       const mockKey = {
         id: 'key-id-123',

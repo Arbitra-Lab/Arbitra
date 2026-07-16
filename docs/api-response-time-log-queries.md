@@ -28,14 +28,14 @@ The `slow` field is `true` when `duration_ms > 1000` (see `SLOW_REQUEST_THRESHOL
 ### All slow requests in the last hour
 
 ```logql
-{app="huston-housing-backend"} | json | event="http_request" | slow=`true`
+{app="arbitra-backend"} | json | event="http_request" | slow=`true`
 ```
 
 ### p95 latency per route (last 5 min)
 
 ```logql
 quantile_over_time(0.95,
-  {app="huston-housing-backend"}
+  {app="arbitra-backend"}
   | json
   | event="http_request"
   | unwrap duration_ms [5m]
@@ -47,7 +47,7 @@ quantile_over_time(0.95,
 ```logql
 sum by (route, method) (
   rate(
-    {app="huston-housing-backend"}
+    {app="arbitra-backend"}
     | json
     | event="http_request"
     | status >= 500 [1m]
@@ -60,7 +60,7 @@ sum by (route, method) (
 ```logql
 topk(10,
   avg_over_time(
-    {app="huston-housing-backend"}
+    {app="arbitra-backend"}
     | json
     | event="http_request"
     | unwrap duration_ms [1h]
