@@ -105,6 +105,25 @@ Stellar Network
 
 ---
 
+## Deployed Contracts (Testnet)
+
+All Soroban contracts are currently deployed on **Stellar Testnet**. Click an address to view it on Stellar Expert.
+
+| Contract | Contract ID |
+| --- | --- |
+| Escrow | [`CDDUZKXCDSK3TZVFUUEEJRMSFNILCUEO5E5RORTREEH4KOALQC637DEZ`](https://stellar.expert/explorer/testnet/contract/CDDUZKXCDSK3TZVFUUEEJRMSFNILCUEO5E5RORTREEH4KOALQC637DEZ) |
+| Dispute Resolution | [`CA4GNSPPX6RMHPKMJB5GSOKQU6WDPBEGMPSU3SJ5SEJWA5F7RFK2NN65`](https://stellar.expert/explorer/testnet/contract/CA4GNSPPX6RMHPKMJB5GSOKQU6WDPBEGMPSU3SJ5SEJWA5F7RFK2NN65) |
+| Payment | [`CDXNI4WNAIFVVN5RIVETAENYYQ5OTT7TLFQSF2JWAHU3X3B3RT5KQBED`](https://stellar.expert/explorer/testnet/contract/CDXNI4WNAIFVVN5RIVETAENYYQ5OTT7TLFQSF2JWAHU3X3B3RT5KQBED) |
+| Agent Registry | [`CBJHWU7LO6QCIOBGS5P6V45FV4NT4RXCQNSGIYM5MUSP36QPAZFQRSSM`](https://stellar.expert/explorer/testnet/contract/CBJHWU7LO6QCIOBGS5P6V45FV4NT4RXCQNSGIYM5MUSP36QPAZFQRSSM) |
+| Property Registry | [`CAUHZN2FUPS7GVV2TYTUYCKG7CZX5NY7K6RA6INZ4KOGMUBRC4L4QJI7`](https://stellar.expert/explorer/testnet/contract/CAUHZN2FUPS7GVV2TYTUYCKG7CZX5NY7K6RA6INZ4KOGMUBRC4L4QJI7) |
+| Rent Obligation | [`CBGPDLUDTVHUR7HZPZ45CM6SYBISC2LQHMVVSEIVFA6WWZX24PIGDNOM`](https://stellar.expert/explorer/testnet/contract/CBGPDLUDTVHUR7HZPZ45CM6SYBISC2LQHMVVSEIVFA6WWZX24PIGDNOM) |
+| User Profile | [`CDEK2S5U36ELIGZW23EXHGYCWENGLMLHL47ZKQWPOMLO4GTK5O2YSMMH`](https://stellar.expert/explorer/testnet/contract/CDEK2S5U36ELIGZW23EXHGYCWENGLMLHL47ZKQWPOMLO4GTK5O2YSMMH) |
+| Huston Housing (Rental Agreement) | [`CBFLJVOHQ2LRVUMYBZQCHCVP5JGZ6WFTOSMYYUZQHAPHX6JKSDQXF5JD`](https://stellar.expert/explorer/testnet/contract/CBFLJVOHQ2LRVUMYBZQCHCVP5JGZ6WFTOSMYYUZQHAPHX6JKSDQXF5JD) |
+
+These IDs are also available in [`frontend/.env.example`](frontend/.env.example) and [`contract/.env.testnet.example`](contract/.env.testnet.example). Contracts are redeployed periodically during active development — if an address here doesn't resolve, check [`contract/docs/deployment/`](contract/docs/deployment/) for the latest.
+
+---
+
 ## Open Source First
 
 Arbitra is being built **fully open-source**.
