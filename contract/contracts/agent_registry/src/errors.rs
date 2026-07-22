@@ -17,4 +17,10 @@ pub enum AgentError {
     TransactionNotFound = 11,
     NotTransactionParty = 12,
     TransactionNotCompleted = 13,
+    StakeConfigNotSet = 14,
+    InvalidAmount = 15,
+    InsufficientStake = 16,
+    NothingToWithdraw = 17,
+    UnbondingNotElapsed = 18,
+    MathOverflow = 19,
 }
