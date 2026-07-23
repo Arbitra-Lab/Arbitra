@@ -1,5 +1,5 @@
 //! Data structures for the Payment contract.
-use soroban_sdk::{contracttype, Address, Map, String};
+use soroban_sdk::{contracttype, Address, Map, String, Vec};
 
 /// Escalation type for programmable rent increases
 #[contracttype]
@@ -50,6 +50,55 @@ pub struct LateFeeRecord {
     pub calculated_at: u64,
     pub waived: bool,
     pub waive_reason: Option<String>,
+}
+
+/// A single breakpoint in a tiered fee schedule. A tier applies to any gross
+/// amount greater than or equal to `threshold`, up to (but not including) the
+/// next tier's threshold.
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct FeeTier {
+    /// Inclusive lower bound of gross amount for this tier. The first tier in
+    /// a schedule must have `threshold == 0`.
+    pub threshold: i128,
+    /// Fee rate for this tier, in basis points (1 bps = 0.01%). Must be
+    /// between 0 and 10_000 inclusive.
+    pub bps: u32,
+}
+
+/// Stored, admin-configurable tiered fee schedule. Tiers must be ordered by
+/// strictly increasing, non-overlapping `threshold`, starting at 0. Validate
+/// with [`crate::late_fee::validate_fee_schedule`] before persisting.
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct FeeSchedule {
+    pub tiers: Vec<FeeTier>,
+}
+
+/// A per-payer fee discount, applied on top of the resolved tier rate.
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct PayerDiscount {
+    pub payer: Address,
+    /// Discount subtracted from the tier's bps (floored at 0), in basis
+    /// points. Must be between 0 and 10_000 inclusive.
+    pub discount_bps: u32,
+}
+
+/// The deterministic result of quoting a fee for a gross amount and payer.
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct FeeQuote {
+    /// Index of the resolved tier within the fee schedule.
+    pub tier_index: u32,
+    /// The original amount the fee was quoted against.
+    pub gross: i128,
+    /// The fee charged, after any per-payer discount and rounding.
+    pub fee: i128,
+    /// The amount the discount saved versus the undiscounted tier rate.
+    pub discount: i128,
+    /// `gross - fee`. Always exact: `fee + net == gross`.
+    pub net: i128,
 }
 
 /// Payment record for tracking individual payments
@@ -152,7 +201,12 @@ pub enum RecurringStatus {
 pub struct PaymentExecution {
     pub recurring_id: String,
     pub executed_at: u64,
+    /// Gross amount for this execution, prior to fee deduction.
     pub amount: i128,
+    /// Platform fee quoted by the fee engine for this execution.
+    pub fee: i128,
+    /// Net amount (`amount - fee`) quoted by the fee engine for this execution.
+    pub net: i128,
     pub status: ExecutionStatus,
     pub transaction_hash: Option<String>,
 }
