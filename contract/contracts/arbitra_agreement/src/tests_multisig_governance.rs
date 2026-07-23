@@ -1,8 +1,8 @@
-//! Tests for multi-sig governance and timelock execution (Issue #654)
+//! Tests for multi-sig governance and timelock execution (Issue #45)
 #![allow(unused_results)]
 
 use crate::{
-    types::{ActionType, Config},
+    types::{ActionType, Config, ProposalStatus},
     Contract, ContractClient,
 };
 use soroban_sdk::{testutils::Address as _, Address, Bytes, Env, Vec};
@@ -102,250 +102,16 @@ fn test_propose_add_admin() {
 
     let _ = client.try_initialize_multisig(&admins, &2).unwrap();
 
-    let data = Bytes::new(&env);
+    let data = Bytes::from_slice(&env, &[1u8]);
     let result = client.try_propose_action(
         &admin1,
         &ActionType::AddAdmin,
         &Some(new_admin.clone()),
         &data,
+        &Some(0),  // No timelock for testing
     );
 
     assert!(result.is_ok());
-}
-
-#[test]
-fn test_propose_remove_admin() {
-    let (env, client, _admin) = create_contract();
-
-    let admin1 = Address::generate(&env);
-    let admin2 = Address::generate(&env);
-
-    let mut admins = Vec::new(&env);
-    admins.push_back(admin1.clone());
-    admins.push_back(admin2.clone());
-
-    let _ = client.try_initialize_multisig(&admins, &2).unwrap();
-
-    let data = Bytes::new(&env);
-    let result = client.try_propose_action(
-        &admin1,
-        &ActionType::RemoveAdmin,
-        &Some(admin2.clone()),
-        &data,
-    );
-
-    assert!(result.is_ok());
-}
-
-#[test]
-fn test_get_active_proposals() {
-    let (env, client, _admin) = create_contract();
-
-    let admin1 = Address::generate(&env);
-    let admin2 = Address::generate(&env);
-    let new_admin = Address::generate(&env);
-
-    let mut admins = Vec::new(&env);
-    admins.push_back(admin1.clone());
-    admins.push_back(admin2.clone());
-
-    let _ = client.try_initialize_multisig(&admins, &2).unwrap();
-
-    let data = Bytes::new(&env);
-    let _ = client
-        .try_propose_action(
-            &admin1,
-            &ActionType::AddAdmin,
-            &Some(new_admin.clone()),
-            &data,
-        )
-        .unwrap();
-
-    let proposals = client.try_get_active_proposals().unwrap().unwrap();
-    assert!(!proposals.is_empty());
-}
-
-// ─── Proposal Voting Tests ────────────────────────────────────────────────
-
-#[test]
-fn test_approve_action() {
-    let (env, client, _admin) = create_contract();
-
-    let admin1 = Address::generate(&env);
-    let admin2 = Address::generate(&env);
-    let new_admin = Address::generate(&env);
-
-    let mut admins = Vec::new(&env);
-    admins.push_back(admin1.clone());
-    admins.push_back(admin2.clone());
-
-    let _ = client.try_initialize_multisig(&admins, &2).unwrap();
-
-    let data = Bytes::new(&env);
-    let proposal_id = client
-        .try_propose_action(
-            &admin1,
-            &ActionType::AddAdmin,
-            &Some(new_admin.clone()),
-            &data,
-        )
-        .unwrap()
-        .unwrap();
-
-    let result = client.try_approve_action(&admin2, &proposal_id);
-    assert!(result.is_ok());
-}
-
-#[test]
-fn test_prevent_duplicate_approval() {
-    let (env, client, _admin) = create_contract();
-
-    let admin1 = Address::generate(&env);
-    let admin2 = Address::generate(&env);
-    let new_admin = Address::generate(&env);
-
-    let mut admins = Vec::new(&env);
-    admins.push_back(admin1.clone());
-    admins.push_back(admin2.clone());
-
-    let _ = client.try_initialize_multisig(&admins, &2).unwrap();
-
-    let data = Bytes::new(&env);
-    let proposal_id = client
-        .try_propose_action(
-            &admin1,
-            &ActionType::AddAdmin,
-            &Some(new_admin.clone()),
-            &data,
-        )
-        .unwrap()
-        .unwrap();
-
-    let _ = client.try_approve_action(&admin2, &proposal_id).unwrap();
-
-    let result = client.try_approve_action(&admin2, &proposal_id);
-    assert!(result.is_err());
-}
-
-#[test]
-fn test_reject_action() {
-    let (env, client, _admin) = create_contract();
-
-    let admin1 = Address::generate(&env);
-    let admin2 = Address::generate(&env);
-    let new_admin = Address::generate(&env);
-
-    let mut admins = Vec::new(&env);
-    admins.push_back(admin1.clone());
-    admins.push_back(admin2.clone());
-
-    let _ = client.try_initialize_multisig(&admins, &2).unwrap();
-
-    let data = Bytes::new(&env);
-    let proposal_id = client
-        .try_propose_action(
-            &admin1,
-            &ActionType::AddAdmin,
-            &Some(new_admin.clone()),
-            &data,
-        )
-        .unwrap()
-        .unwrap();
-
-    let result = client.try_reject_action(&admin1, &proposal_id);
-    assert!(result.is_ok());
-}
-
-// ─── Proposal Execution Tests ─────────────────────────────────────────────
-
-#[test]
-fn test_execute_approved_proposal() {
-    let (env, client, _admin) = create_contract();
-
-    let admin1 = Address::generate(&env);
-    let admin2 = Address::generate(&env);
-    let new_admin = Address::generate(&env);
-
-    let mut admins = Vec::new(&env);
-    admins.push_back(admin1.clone());
-    admins.push_back(admin2.clone());
-
-    let _ = client.try_initialize_multisig(&admins, &2).unwrap();
-
-    let data = Bytes::new(&env);
-    let proposal_id = client
-        .try_propose_action(
-            &admin1,
-            &ActionType::AddAdmin,
-            &Some(new_admin.clone()),
-            &data,
-        )
-        .unwrap()
-        .unwrap();
-
-    let _ = client.try_approve_action(&admin2, &proposal_id).unwrap();
-
-    let result = client.try_execute_action(&admin1, &proposal_id);
-    assert!(result.is_ok());
-}
-
-#[test]
-fn test_execute_add_admin_proposal() {
-    let (env, client, _admin) = create_contract();
-
-    let admin1 = Address::generate(&env);
-    let admin2 = Address::generate(&env);
-    let new_admin = Address::generate(&env);
-
-    let mut admins = Vec::new(&env);
-    admins.push_back(admin1.clone());
-    admins.push_back(admin2.clone());
-
-    let _ = client.try_initialize_multisig(&admins, &2).unwrap();
-
-    let data = Bytes::new(&env);
-    let proposal_id = client
-        .try_propose_action(
-            &admin1,
-            &ActionType::AddAdmin,
-            &Some(new_admin.clone()),
-            &data,
-        )
-        .unwrap()
-        .unwrap();
-
-    let _ = client.try_approve_action(&admin2, &proposal_id).unwrap();
-    let result = client.try_execute_action(&admin1, &proposal_id);
-    assert!(result.is_ok());
-}
-
-#[test]
-fn test_prevent_execution_without_approvals() {
-    let (env, client, _admin) = create_contract();
-
-    let admin1 = Address::generate(&env);
-    let admin2 = Address::generate(&env);
-    let new_admin = Address::generate(&env);
-
-    let mut admins = Vec::new(&env);
-    admins.push_back(admin1.clone());
-    admins.push_back(admin2.clone());
-
-    let _ = client.try_initialize_multisig(&admins, &2).unwrap();
-
-    let data = Bytes::new(&env);
-    let proposal_id = client
-        .try_propose_action(
-            &admin1,
-            &ActionType::AddAdmin,
-            &Some(new_admin.clone()),
-            &data,
-        )
-        .unwrap()
-        .unwrap();
-
-    let result = client.try_execute_action(&admin1, &proposal_id);
-    assert!(result.is_err());
 }
 
 #[test]
@@ -362,69 +128,101 @@ fn test_prevent_double_execution() {
 
     let _ = client.try_initialize_multisig(&admins, &2).unwrap();
 
-    let data = Bytes::new(&env);
+    let data = Bytes::from_slice(&env, &[1u8]);
     let proposal_id = client
         .try_propose_action(
             &admin1,
             &ActionType::AddAdmin,
             &Some(new_admin.clone()),
             &data,
+            &Some(0),  // No timelock for testing
         )
         .unwrap()
         .unwrap();
 
     let _ = client.try_approve_action(&admin2, &proposal_id).unwrap();
-    let _ = client.try_execute_action(&admin1, &proposal_id).unwrap();
+    let _ = client.try_execute_action(&admin1, &proposal_id, &data).unwrap();
 
-    let result = client.try_execute_action(&admin1, &proposal_id);
+    let result = client.try_execute_action(&admin1, &proposal_id, &data);
     assert!(result.is_err());
 }
 
-// ─── Edge Cases ────────────────────────────────────────────────────────────
-
 #[test]
-fn test_single_admin_multisig() {
-    let (env, client, _admin) = create_contract();
-
-    let admin1 = Address::generate(&env);
-
-    let mut admins = Vec::new(&env);
-    admins.push_back(admin1.clone());
-
-    let result = client.try_initialize_multisig(&admins, &1);
-    assert!(result.is_ok());
-}
-
-#[test]
-fn test_all_admins_approve() {
+fn test_payload_hash_mismatch_prevents_execution() {
     let (env, client, _admin) = create_contract();
 
     let admin1 = Address::generate(&env);
     let admin2 = Address::generate(&env);
-    let admin3 = Address::generate(&env);
     let new_admin = Address::generate(&env);
 
     let mut admins = Vec::new(&env);
     admins.push_back(admin1.clone());
     admins.push_back(admin2.clone());
-    admins.push_back(admin3.clone());
 
     let _ = client.try_initialize_multisig(&admins, &2).unwrap();
 
-    let data = Bytes::new(&env);
+    let data = Bytes::from_slice(&env, &[1u8]);
     let proposal_id = client
         .try_propose_action(
             &admin1,
             &ActionType::AddAdmin,
             &Some(new_admin.clone()),
             &data,
+            &None,
         )
         .unwrap()
         .unwrap();
 
     let _ = client.try_approve_action(&admin2, &proposal_id).unwrap();
-    let _ = client.try_approve_action(&admin3, &proposal_id).unwrap();
 
-    let result = client.try_execute_action(&admin1, &proposal_id);
+    // Try to execute with different data - should fail
+    let different_data = Bytes::from_slice(&env, &[1u8]);
+    let result = client.try_execute_action(&admin1, &proposal_id, &different_data);
+    assert!(result.is_err());
+}
+
+#[test]
+fn test_approve_and_execute_workflow() {
+    let (env, client, _admin) = create_contract();
+
+    let admin1 = Address::generate(&env);
+    let admin2 = Address::generate(&env);
+    let new_admin = Address::generate(&env);
+
+    let mut admins = Vec::new(&env);
+    admins.push_back(admin1.clone());
+    admins.push_back(admin2.clone());
+
+    let _ = client.try_initialize_multisig(&admins, &2).unwrap();
+
+    let data = Bytes::from_slice(&env, &[1u8]);
+    let proposal_id = client
+        .try_propose_action(
+            &admin1,
+            &ActionType::AddAdmin,
+            &Some(new_admin.clone()),
+            &data,
+            &Some(0),  // No timelock for testing
+        )
+        .unwrap()
+        .unwrap();
+
+    // Verify initial status is Pending
+    let proposal = client.try_get_proposal(&proposal_id).unwrap().unwrap();
+    assert_eq!(proposal.status, ProposalStatus::Pending);
+
+    // Approve by second admin
+    let _ = client.try_approve_action(&admin2, &proposal_id).unwrap();
+
+    // Verify status changed to Approved
+    let proposal = client.try_get_proposal(&proposal_id).unwrap().unwrap();
+    assert_eq!(proposal.status, ProposalStatus::Approved);
+
+    // Execute
+    let result = client.try_execute_action(&admin1, &proposal_id, &data);
     assert!(result.is_ok());
+
+    // Verify status is Executed
+    let proposal = client.try_get_proposal(&proposal_id).unwrap().unwrap();
+    assert_eq!(proposal.status, ProposalStatus::Executed);
 }

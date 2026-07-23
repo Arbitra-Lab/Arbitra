@@ -120,7 +120,7 @@ fn test_propose_action() {
 
     let data = Bytes::new(&env);
     let proposal_id = client
-        .try_propose_action(&admin1, &ActionType::Pause, &None, &data)
+        .try_propose_action(&admin1, &ActionType::Pause, &None, &data, &None)
         .unwrap()
         .unwrap();
 
@@ -130,7 +130,7 @@ fn test_propose_action() {
     assert_eq!(proposal.proposer, admin1);
     assert_eq!(proposal.action_type, ActionType::Pause);
     assert_eq!(proposal.approval_count, 1); // Proposer auto-approves
-    assert!(!proposal.executed);
+    assert_ne!(proposal.status, crate::types::ProposalStatus::Executed);
 }
 
 #[test]
@@ -148,7 +148,7 @@ fn test_propose_action_not_admin() {
     let _ = client.try_initialize_multisig(&admins, &2).unwrap();
 
     let data = Bytes::new(&env);
-    let result = client.try_propose_action(&non_admin, &ActionType::Pause, &None, &data);
+    let result = client.try_propose_action(&non_admin, &ActionType::Pause, &None, &data, &None);
     assert_eq!(result, Err(Ok(AgreementError::Unauthorized)));
 }
 
@@ -169,7 +169,7 @@ fn test_approve_action() {
 
     let data = Bytes::new(&env);
     let proposal_id = client
-        .try_propose_action(&admin1, &ActionType::Pause, &None, &data)
+        .try_propose_action(&admin1, &ActionType::Pause, &None, &data, &None)
         .unwrap()
         .unwrap();
 
@@ -197,7 +197,7 @@ fn test_approve_action_already_approved() {
 
     let data = Bytes::new(&env);
     let proposal_id = client
-        .try_propose_action(&admin1, &ActionType::Pause, &None, &data)
+        .try_propose_action(&admin1, &ActionType::Pause, &None, &data, &None)
         .unwrap()
         .unwrap();
 
@@ -223,7 +223,7 @@ fn test_execute_action_sufficient_approvals() {
 
     let data = Bytes::new(&env);
     let proposal_id = client
-        .try_propose_action(&admin1, &ActionType::Pause, &None, &data)
+        .try_propose_action(&admin1, &ActionType::Pause, &None, &data, &None)
         .unwrap()
         .unwrap();
 
@@ -231,11 +231,11 @@ fn test_execute_action_sufficient_approvals() {
     let _ = client.try_approve_action(&admin2, &proposal_id).unwrap();
 
     // Execute proposal
-    let result = client.try_execute_action(&admin1, &proposal_id);
+    let result = client.try_execute_action(&admin1, &proposal_id, &data);
     assert!(result.is_ok());
 
     let proposal = client.try_get_proposal(&proposal_id).unwrap().unwrap();
-    assert!(proposal.executed);
+    assert!(proposal.status == crate::types::ProposalStatus::Executed);
 }
 
 #[test]
@@ -255,12 +255,12 @@ fn test_execute_action_insufficient_approvals() {
 
     let data = Bytes::new(&env);
     let proposal_id = client
-        .try_propose_action(&admin1, &ActionType::Pause, &None, &data)
+        .try_propose_action(&admin1, &ActionType::Pause, &None, &data, &None)
         .unwrap()
         .unwrap();
 
     // Only 1 approval (proposer)
-    let result = client.try_execute_action(&admin1, &proposal_id);
+    let result = client.try_execute_action(&admin1, &proposal_id, &data);
     assert_eq!(result, Err(Ok(AgreementError::InsufficientApprovals)));
 }
 
@@ -279,15 +279,15 @@ fn test_execute_action_already_executed() {
 
     let data = Bytes::new(&env);
     let proposal_id = client
-        .try_propose_action(&admin1, &ActionType::Pause, &None, &data)
+        .try_propose_action(&admin1, &ActionType::Pause, &None, &data, &None)
         .unwrap()
         .unwrap();
 
     let _ = client.try_approve_action(&admin2, &proposal_id).unwrap();
-    let _ = client.try_execute_action(&admin1, &proposal_id).unwrap();
+    let _ = client.try_execute_action(&admin1, &proposal_id, &data).unwrap();
 
     // Try to execute again
-    let result = client.try_execute_action(&admin1, &proposal_id);
+    let result = client.try_execute_action(&admin1, &proposal_id, &data);
     assert_eq!(result, Err(Ok(AgreementError::ProposalAlreadyExecuted)));
 }
 
@@ -306,12 +306,12 @@ fn test_reject_action() {
 
     let data = Bytes::new(&env);
     let proposal_id = client
-        .try_propose_action(&admin1, &ActionType::Pause, &None, &data)
+        .try_propose_action(&admin1, &ActionType::Pause, &None, &data, &None)
         .unwrap()
         .unwrap();
 
     // Proposer rejects their own proposal
-    let result = client.try_reject_action(&admin1, &proposal_id);
+    let result = client.try_cancel_action(&admin1, &proposal_id);
     assert!(result.is_ok());
 
     // Proposal should no longer exist
@@ -334,12 +334,12 @@ fn test_reject_action_not_proposer() {
 
     let data = Bytes::new(&env);
     let proposal_id = client
-        .try_propose_action(&admin1, &ActionType::Pause, &None, &data)
+        .try_propose_action(&admin1, &ActionType::Pause, &None, &data, &None)
         .unwrap()
         .unwrap();
 
     // Admin2 tries to reject (not the proposer)
-    let result = client.try_reject_action(&admin2, &proposal_id);
+    let result = client.try_cancel_action(&admin2, &proposal_id);
     assert_eq!(result, Err(Ok(AgreementError::Unauthorized)));
 }
 
@@ -359,12 +359,12 @@ fn test_get_active_proposals() {
     let data = Bytes::new(&env);
 
     let proposal_id1 = client
-        .try_propose_action(&admin1, &ActionType::UpdateConfig, &None, &data)
+        .try_propose_action(&admin1, &ActionType::UpdateConfig, &None, &data, &None)
         .unwrap()
         .unwrap();
 
     let _proposal_id2 = client
-        .try_propose_action(&admin1, &ActionType::UpdateConfig, &None, &data)
+        .try_propose_action(&admin1, &ActionType::UpdateConfig, &None, &data, &None)
         .unwrap()
         .unwrap();
 
@@ -401,14 +401,14 @@ fn test_get_proposal_count() {
 
     let data = Bytes::new(&env);
     client
-        .try_propose_action(&admin1, &ActionType::Pause, &None, &data)
+        .try_propose_action(&admin1, &ActionType::Pause, &None, &data, &None)
         .unwrap()
         .unwrap();
 
     assert_eq!(client.get_proposal_count(), 1);
 
     client
-        .try_propose_action(&admin1, &ActionType::Unpause, &None, &data)
+        .try_propose_action(&admin1, &ActionType::Unpause, &None, &data, &None)
         .unwrap()
         .unwrap();
 
@@ -479,14 +479,15 @@ fn test_proposal_workflow_end_to_end() {
     // Step 1: Admin1 proposes an action
     let data = Bytes::new(&env);
     let proposal_id = client
-        .try_propose_action(&admin1, &ActionType::UpdateConfig, &None, &data)
+        .try_propose_action(&admin1, &ActionType::UpdateConfig, &None, &data, &None)
         .unwrap()
         .unwrap();
 
     // Verify proposal created
     let proposal = client.try_get_proposal(&proposal_id).unwrap().unwrap();
     assert_eq!(proposal.approval_count, 1);
-    assert!(!proposal.executed);
+    // Status should be Pending initially
+    assert_eq!(proposal.status, crate::types::ProposalStatus::Pending);
 
     // Step 2: Admin2 approves
     let _ = client.try_approve_action(&admin2, &proposal_id).unwrap();
@@ -496,10 +497,11 @@ fn test_proposal_workflow_end_to_end() {
     assert_eq!(proposal.approval_count, 2);
 
     // Step 3: Execute with sufficient approvals
-    let result = client.try_execute_action(&admin1, &proposal_id);
+    // Need to provide the payload that matches the proposal
+    let result = client.try_execute_action(&admin1, &proposal_id, &data);
     assert!(result.is_ok());
 
-    // Verify execution
+    // Verify execution - status should be Executed
     let proposal = client.try_get_proposal(&proposal_id).unwrap().unwrap();
-    assert!(proposal.executed);
+    assert_eq!(proposal.status, crate::types::ProposalStatus::Executed);
 }

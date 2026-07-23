@@ -116,17 +116,31 @@ pub enum ActionType {
 
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
+pub enum ProposalStatus {
+    Pending,
+    Approved,
+    Executed,
+    Expired,
+    Cancelled,
+}
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct AdminProposal {
     pub id: String,
     pub proposer: Address,
     pub action_type: ActionType,
     pub target: Option<Address>,
     pub data: Bytes,
+    pub payload_hash: Bytes,
     pub approvals: Vec<Address>,
     pub approval_count: u32,
-    pub executed: bool,
+    pub status: ProposalStatus,
+    pub created_ledger: u64,
     pub created_at: u64,
     pub expiry: u64,
+    pub timelock_delay: u64,
+    pub eta: u64,
 }
 
 #[contracttype]

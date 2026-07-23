@@ -73,7 +73,7 @@ pub use types::{
     ActionType, AdminProposal, AgreementExtension, AgreementInput, AgreementStatus, AgreementTerms,
     AgreementWithToken, Attribute, Config, ContractState, ContractUpgradeProposal, ContractVersion,
     ErrorContext, ExtensionHistory, ExtensionStatus, MultiSigConfig, PauseState, PaymentSplit,
-    RateLimitConfig, RateLimitReason, RentAgreement, SupportedToken, TimelockAction,
+    ProposalStatus, RateLimitConfig, RateLimitReason, RentAgreement, SupportedToken, TimelockAction,
     TimelockActionType, TokenExchangeRate, UserCallCount, VersionStatus,
 };
 
@@ -1028,15 +1028,16 @@ impl Contract {
         multi_sig::is_admin(&env, &address)
     }
 
-    /// Propose an admin action (pause, unpause, config update, etc.)
+    /// Propose an admin action with configurable timelock (pause, unpause, config update, etc.)
     pub fn propose_action(
         env: Env,
         proposer: Address,
         action_type: ActionType,
         target: Option<Address>,
         data: soroban_sdk::Bytes,
+        timelock_delay: Option<u64>,
     ) -> Result<String, AgreementError> {
-        multi_sig::propose_action(&env, proposer, action_type, target, data)
+        multi_sig::propose_action(&env, proposer, action_type, target, data, timelock_delay)
     }
 
     /// Approve a pending proposal
@@ -1048,22 +1049,24 @@ impl Contract {
         multi_sig::approve_action(&env, approver, proposal_id)
     }
 
-    /// Execute a proposal that has sufficient approvals
+    /// Execute a proposal that has sufficient approvals and passed timelock
+    /// Must provide the exact payload that matches the stored hash
     pub fn execute_action(
         env: Env,
         executor: Address,
         proposal_id: String,
+        payload: soroban_sdk::Bytes,
     ) -> Result<(), AgreementError> {
-        multi_sig::execute_action(&env, executor, proposal_id)
+        multi_sig::execute_action(&env, executor, proposal_id, payload)
     }
 
-    /// Reject/cancel a proposal (only proposer can do this)
-    pub fn reject_action(
+    /// Cancel a proposal (only proposer can do this before execution)
+    pub fn cancel_action(
         env: Env,
         caller: Address,
         proposal_id: String,
     ) -> Result<(), AgreementError> {
-        multi_sig::reject_action(&env, caller, proposal_id)
+        multi_sig::cancel_action(&env, caller, proposal_id)
     }
 
     /// Add a new admin (must be called through proposal execution)
@@ -1100,6 +1103,14 @@ impl Contract {
     /// Get total proposal count
     pub fn get_proposal_count(env: Env) -> u32 {
         multi_sig::get_proposal_count(&env)
+    }
+
+    /// Get proposal status and check if it's executable
+    pub fn get_proposal_status(
+        env: Env,
+        proposal_id: String,
+    ) -> Result<(ProposalStatus, bool), AgreementError> {
+        multi_sig::get_proposal_status(&env, proposal_id)
     }
 
     // ─── Timelock Functions ───────────────────────────────────────────────────
