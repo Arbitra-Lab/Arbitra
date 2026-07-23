@@ -2,6 +2,11 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { SorobanRpc } from '@stellar/stellar-sdk';
+import { EventReconciliationService } from './event-reconciliation.service';
+import {
+  LedgerEvent,
+  ReconciliationOutcome,
+} from '../interfaces/ledger-event.interface';
 
 export interface BlockchainEvent {
   type: string;
@@ -20,6 +25,7 @@ export class BlockchainEventService implements OnModuleInit {
   constructor(
     private readonly configService: ConfigService,
     private readonly eventEmitter: EventEmitter2,
+    private readonly eventReconciliationService: EventReconciliationService,
   ) {
     const rpcUrl =
       this.configService.get<string>('SOROBAN_RPC_URL') ||
@@ -40,6 +46,27 @@ export class BlockchainEventService implements OnModuleInit {
   async stopListening() {
     this.isListening = false;
     this.logger.log('Stopped listening for blockchain events');
+  }
+
+  /**
+   * Ingestion entry point for a raw ledger event. Routes the event through
+   * the idempotent, confirmation- and reorg-aware reconciliation pipeline
+   * before it is allowed to reach any registered stream handler.
+   */
+  async ingestLedgerEvent(
+    event: LedgerEvent,
+    currentLedger: number,
+  ): Promise<ReconciliationOutcome> {
+    const outcome = await this.eventReconciliationService.process(
+      event,
+      currentLedger,
+    );
+
+    this.logger.debug(
+      `Ingested ${event.streamName}/${event.eventType} (ledger ${event.ledger}): ${outcome.status}`,
+    );
+
+    return outcome;
   }
 
   private emitEvent(event: BlockchainEvent) {

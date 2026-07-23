@@ -35,6 +35,11 @@ import { DisputeContractService } from './services/dispute-contract.service';
 import { DisputeContractEnhancedService } from './services/dispute-contract-enhanced.service';
 import { RentObligationNftService } from './services/rent-obligation-nft.service';
 import { NftEventProcessor } from './services/nft-event-processor.service';
+import { EventReconciliationService } from './services/event-reconciliation.service';
+import { BlockchainEventIdempotency } from './entities/blockchain-event-idempotency.entity';
+import { BlockchainStreamCursor } from './entities/blockchain-stream-cursor.entity';
+import { BlockchainEventDeadLetter } from './entities/blockchain-event-dead-letter.entity';
+import { BlockchainReconciliationController } from './controllers/blockchain-reconciliation.controller';
 import { PaymentProcessingService } from './services/payment-processing.service';
 import { PaymentProcessingController } from './controllers/payment-processing.controller';
 import stellarConfig from './config/stellar.config';
@@ -67,6 +72,9 @@ import { PropertyRegistryService } from './services/property-registry.service';
       StellarPayment,
       PropertyRegistry,
       PropertyHistory,
+      BlockchainEventIdempotency,
+      BlockchainStreamCursor,
+      BlockchainEventDeadLetter,
     ]),
     ScheduleModule.forRoot(),
     EventEmitterModule.forRoot(),
@@ -80,6 +88,7 @@ import { PropertyRegistryService } from './services/property-registry.service';
     DisputeController,
     PaymentProcessingController,
     PropertyRegistryController,
+    BlockchainReconciliationController,
   ],
   providers: [
     StellarService,
@@ -88,6 +97,7 @@ import { PropertyRegistryService } from './services/property-registry.service';
     IndexedTransactionsService,
     ArbitraAgreementContractService,
     BlockchainEventService,
+    EventReconciliationService,
     EscrowContractService,
     DisputeContractService,
     DisputeContractEnhancedService,
@@ -104,6 +114,7 @@ import { PropertyRegistryService } from './services/property-registry.service';
     IndexedTransactionsService,
     ArbitraAgreementContractService,
     BlockchainEventService,
+    EventReconciliationService,
     EscrowContractService,
     DisputeContractService,
     DisputeContractEnhancedService,
