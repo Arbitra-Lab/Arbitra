@@ -10,4 +10,8 @@ pub enum DataKey {
     Transaction(String),
     AgentRating(Address, Address),
     UpgradeProposal(String),
+    Stake(Address),
+    Reputation(Address),
+    StakeConfig,
+    SlashedPool,
 }

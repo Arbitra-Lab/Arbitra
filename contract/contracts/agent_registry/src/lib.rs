@@ -13,12 +13,15 @@ mod upgrade;
 mod tests;
 
 pub use agent::{
-    complete_transaction, get_agent_count, get_agent_info, rate_agent, register_agent,
-    register_transaction, verify_agent,
+    bond, complete_transaction, get_agent_count, get_agent_info, get_effective_score,
+    get_reputation, get_slashed_pool, get_stake, rate_agent, register_agent, register_transaction,
+    request_unbond, reward_agent, set_stake_config, slash_agent, verify_agent, withdraw,
 };
 pub use errors::AgentError;
 pub use storage::DataKey;
-pub use types::{AgentInfo, AgentTransaction, ContractState};
+pub use types::{
+    AgentInfo, AgentTransaction, ContractState, ReputationState, StakeConfig, StakeVault,
+};
 
 #[contract]
 pub struct AgentRegistryContract;
@@ -181,6 +184,124 @@ impl AgentRegistryContract {
         agent: Address,
     ) -> Result<(), AgentError> {
         agent::complete_transaction(&env, transaction_id, agent)
+    }
+
+    // --- Staking, Reputation Decay, Slashing & Rewards ---
+
+    /// Set or update the staking configuration (admin only).
+    ///
+    /// # Arguments
+    /// * `admin` - The admin address
+    /// * `token` - Token used for bonding stake
+    /// * `unbonding_period` - Seconds between an unbond request and withdrawal
+    ///
+    /// # Errors
+    /// * `NotInitialized` - If the contract hasn't been initialized
+    /// * `Unauthorized` - If the caller is not the admin
+    pub fn set_stake_config(
+        env: Env,
+        admin: Address,
+        token: Address,
+        unbonding_period: u64,
+    ) -> Result<(), AgentError> {
+        agent::set_stake_config(&env, admin, token, unbonding_period)
+    }
+
+    /// Get the current staking configuration, if set.
+    pub fn get_stake_config(env: Env) -> Option<StakeConfig> {
+        agent::get_stake_config_opt(&env)
+    }
+
+    /// Bond tokens into the agent's stake vault (slashable balance).
+    ///
+    /// # Errors
+    /// * `NotInitialized` - If the contract hasn't been initialized
+    /// * `InvalidAmount` - If `amount` is not positive
+    /// * `AgentNotFound` - If the agent isn't registered
+    /// * `StakeConfigNotSet` - If staking hasn't been configured
+    pub fn bond(env: Env, agent: Address, amount: i128) -> Result<(), AgentError> {
+        agent::bond(&env, agent, amount)
+    }
+
+    /// Queue live stake for withdrawal after the unbonding period.
+    /// Pending stake remains slashable but stops counting toward the
+    /// effective score. A new request restarts the unbonding clock for the
+    /// whole pending amount.
+    ///
+    /// # Errors
+    /// * `InvalidAmount` - If `amount` is not positive
+    /// * `InsufficientStake` - If `amount` exceeds the live staked balance
+    /// * `StakeConfigNotSet` - If staking hasn't been configured
+    pub fn request_unbond(env: Env, agent: Address, amount: i128) -> Result<(), AgentError> {
+        agent::request_unbond(&env, agent, amount)
+    }
+
+    /// Withdraw the pending stake once the unbonding period has elapsed.
+    ///
+    /// # Errors
+    /// * `NothingToWithdraw` - If there is no pending stake
+    /// * `UnbondingNotElapsed` - If the unbonding period hasn't passed yet
+    pub fn withdraw(env: Env, agent: Address) -> Result<(), AgentError> {
+        agent::withdraw(&env, agent)
+    }
+
+    /// Slash an agent's stake and reputation atomically (admin only).
+    /// Slashes the live balance first, then the pending balance; slashed
+    /// funds accumulate in the contract's slashed pool.
+    ///
+    /// # Errors
+    /// * `Unauthorized` - If the caller is not the admin
+    /// * `AgentNotFound` - If the agent isn't registered
+    /// * `InvalidAmount` - If `stake_amount` is negative
+    /// * `InsufficientStake` - If `stake_amount` exceeds staked + pending
+    pub fn slash_agent(
+        env: Env,
+        admin: Address,
+        agent: Address,
+        stake_amount: i128,
+        rep_points: u32,
+    ) -> Result<(), AgentError> {
+        agent::slash_agent(&env, admin, agent, stake_amount, rep_points)
+    }
+
+    /// Reward an agent with stake (transferred from the admin) and
+    /// reputation points atomically (admin only). Reputation is capped at
+    /// `MAX_REPUTATION_POINTS`.
+    ///
+    /// # Errors
+    /// * `Unauthorized` - If the caller is not the admin
+    /// * `AgentNotFound` - If the agent isn't registered
+    /// * `InvalidAmount` - If `stake_amount` is negative
+    /// * `StakeConfigNotSet` - If staking is used but not configured
+    pub fn reward_agent(
+        env: Env,
+        admin: Address,
+        agent: Address,
+        stake_amount: i128,
+        rep_points: u32,
+    ) -> Result<(), AgentError> {
+        agent::reward_agent(&env, admin, agent, stake_amount, rep_points)
+    }
+
+    /// Get an agent's stake vault (zeroed vault if none exists).
+    pub fn get_stake(env: Env, agent: Address) -> StakeVault {
+        agent::get_stake(&env, agent)
+    }
+
+    /// Get an agent's reputation with decay applied lazily at read time.
+    pub fn get_reputation(env: Env, agent: Address) -> u32 {
+        agent::get_reputation(&env, agent)
+    }
+
+    /// Get the combined ranking score: decayed reputation plus a capped
+    /// live-stake bonus. Used for arbiter ranking/selection.
+    pub fn get_effective_score(env: Env, agent: Address) -> u32 {
+        agent::get_effective_score(&env, agent)
+    }
+
+    /// Get the total amount of stake slashed into the contract's pool.
+    pub fn get_slashed_pool(env: Env) -> i128 {
+        agent::get_slashed_pool(&env)
     }
 
     // --- Upgrade Functions ---
