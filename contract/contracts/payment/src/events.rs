@@ -1,4 +1,4 @@
-use soroban_sdk::{contractevent, Env, String};
+use soroban_sdk::{contractevent, Address, Env, String};
 
 #[contractevent(topics = ["rent_escalation_config_set"])]
 pub struct RentEscalationConfigSet {
@@ -63,6 +63,38 @@ pub(crate) fn late_fee_applied(env: &Env, payment_id: String, amount: i128, days
 
 pub(crate) fn late_fee_waived(env: &Env, payment_id: String, reason: String) {
     LateFeeWaived { payment_id, reason }.publish(env);
+}
+
+#[contractevent(topics = ["fee_quoted"])]
+pub struct FeeQuoted {
+    #[topic]
+    pub payer: Address,
+    pub tier_index: u32,
+    pub gross: i128,
+    pub fee: i128,
+    pub discount: i128,
+    pub net: i128,
+}
+
+#[allow(clippy::too_many_arguments)]
+pub(crate) fn fee_quoted(
+    env: &Env,
+    payer: Address,
+    tier_index: u32,
+    gross: i128,
+    fee: i128,
+    discount: i128,
+    net: i128,
+) {
+    FeeQuoted {
+        payer,
+        tier_index,
+        gross,
+        fee,
+        discount,
+        net,
+    }
+    .publish(env);
 }
 
 #[contractevent(topics = ["recurring_payment_created"])]

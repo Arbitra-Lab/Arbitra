@@ -26,14 +26,17 @@ mod tests_recurring;
 #[cfg(test)]
 mod tests_rate_limit;
 
+#[cfg(test)]
+mod tests_fee_engine;
+
 // Re-export public APIs
 pub use errors::PaymentError;
 pub use payment_impl::{calculate_payment_split, calculate_rent_for_period, create_payment_record};
 pub use storage::DataKey;
 pub use types::{
-    EscalationType, ExecutionStatus, LateFeeConfig, LateFeeRecord, PaymentExecution,
-    PaymentFrequency, PaymentRecord, PaymentSplit, RecurringPayment, RecurringPaymentEvent,
-    RecurringStatus, RentEscalationConfig,
+    EscalationType, ExecutionStatus, FeeQuote, FeeSchedule, FeeTier, LateFeeConfig,
+    LateFeeRecord, PayerDiscount, PaymentExecution, PaymentFrequency, PaymentRecord,
+    PaymentSplit, RecurringPayment, RecurringPaymentEvent, RecurringStatus, RentEscalationConfig,
 };
 
 use crate::errors::PaymentError as Error;
@@ -132,10 +135,14 @@ impl PaymentContract {
             return Err(Error::RecurringPaymentAlreadyCompleted);
         }
 
+        let quote = crate::late_fee::quote_fee(env, recurring.amount, &recurring.payer)?;
+
         let execution = PaymentExecution {
             recurring_id: recurring_id.clone(),
             executed_at: now,
             amount: recurring.amount,
+            fee: quote.fee,
+            net: quote.net,
             status: ExecutionStatus::Success,
             transaction_hash: None,
         };
@@ -174,6 +181,15 @@ impl PaymentContract {
             executed_at: now,
         };
         events::recurring_payment_executed(env, recurring_id.clone(), now);
+        events::fee_quoted(
+            env,
+            recurring.payer.clone(),
+            quote.tier_index,
+            quote.gross,
+            quote.fee,
+            quote.discount,
+            quote.net,
+        );
 
         Ok(())
     }
@@ -302,9 +318,10 @@ impl PaymentContract {
             return Err(Error::PaymentNotDue);
         }
 
-        // Calculate 90/10 split
-        let landlord_amount = (payment_amount * 90) / 100;
-        let platform_amount = payment_amount - landlord_amount;
+        // Fee is resolved through the tiered fee engine — never computed ad-hoc.
+        let quote = crate::late_fee::quote_fee(&env, payment_amount, &from)?;
+        let landlord_amount = quote.net;
+        let platform_amount = quote.fee;
 
         let platform_collector: Address = env
             .storage()
@@ -332,7 +349,19 @@ impl PaymentContract {
         // Interactions: External calls AFTER state updates
         let token_client = token::Client::new(&env, &agreement.payment_token);
         token_client.transfer(&from, &agreement.landlord, &landlord_amount);
-        token_client.transfer(&from, &platform_collector, &platform_amount);
+        if platform_amount > 0 {
+            token_client.transfer(&from, &platform_collector, &platform_amount);
+        }
+
+        events::fee_quoted(
+            &env,
+            from,
+            quote.tier_index,
+            quote.gross,
+            quote.fee,
+            quote.discount,
+            quote.net,
+        );
 
         Ok(())
     }
@@ -637,6 +666,96 @@ impl PaymentContract {
             .persistent()
             .get(&StorageKey::FailedRecurringPayments)
             .unwrap_or_else(|| Vec::new(&env)))
+    }
+
+    // ─── Fee Engine Functions ─────────────────────────────────────────────────
+
+    /// Set (or replace) the global tiered platform fee schedule. Rejected if
+    /// the tiers are not strictly increasing / non-overlapping starting at 0,
+    /// or if any tier's bps exceeds 10_000 (100%).
+    ///
+    /// If a platform fee collector has already been set, only that address
+    /// may call this. Otherwise (bootstrap), any authorized caller may set it.
+    pub fn set_fee_schedule(env: Env, admin: Address, schedule: FeeSchedule) -> Result<(), Error> {
+        admin.require_auth();
+
+        if let Some(collector) = env
+            .storage()
+            .instance()
+            .get::<StorageKey, Address>(&StorageKey::PlatformFeeCollector)
+        {
+            if admin != collector {
+                return Err(Error::NotAuthorized);
+            }
+        }
+
+        crate::late_fee::validate_fee_schedule(&schedule)?;
+
+        env.storage()
+            .instance()
+            .set(&StorageKey::FeeSchedule, &schedule);
+
+        Ok(())
+    }
+
+    /// Get the currently configured tiered platform fee schedule.
+    pub fn get_fee_schedule(env: Env) -> Result<FeeSchedule, Error> {
+        env.storage()
+            .instance()
+            .get(&StorageKey::FeeSchedule)
+            .ok_or(Error::FeeScheduleNotFound)
+    }
+
+    /// Set (or replace) a per-payer fee discount, in basis points. Subject
+    /// to the same admin gating as `set_fee_schedule`.
+    pub fn set_payer_discount(
+        env: Env,
+        admin: Address,
+        payer: Address,
+        discount_bps: u32,
+    ) -> Result<(), Error> {
+        admin.require_auth();
+
+        if let Some(collector) = env
+            .storage()
+            .instance()
+            .get::<StorageKey, Address>(&StorageKey::PlatformFeeCollector)
+        {
+            if admin != collector {
+                return Err(Error::NotAuthorized);
+            }
+        }
+
+        if discount_bps > 10_000 {
+            return Err(Error::InvalidDiscount);
+        }
+
+        env.storage().persistent().set(
+            &StorageKey::PayerDiscount(payer.clone()),
+            &PayerDiscount {
+                payer,
+                discount_bps,
+            },
+        );
+
+        Ok(())
+    }
+
+    /// Get the discount (in basis points) configured for a payer. Returns 0
+    /// if no discount has been set.
+    pub fn get_payer_discount(env: Env, payer: Address) -> u32 {
+        env.storage()
+            .persistent()
+            .get::<StorageKey, PayerDiscount>(&StorageKey::PayerDiscount(payer))
+            .map(|d| d.discount_bps)
+            .unwrap_or(0)
+    }
+
+    /// Quote the fee for `amount` charged to `payer`, without charging it.
+    /// Deterministic and side-effect free: identical on-chain state and
+    /// inputs always yield an identical quote.
+    pub fn quote_fee(env: Env, amount: i128, payer: Address) -> Result<FeeQuote, Error> {
+        crate::late_fee::quote_fee(&env, amount, &payer)
     }
 
     // ─── Late Fee Functions ───────────────────────────────────────────────────
