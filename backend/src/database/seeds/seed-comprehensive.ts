@@ -57,9 +57,17 @@ const ADMIN_FIXTURES = [
 const USER_FIXTURES = [
   { email: 'user.frank@arbitra.local', firstName: 'Frank', lastName: 'Bello' },
   { email: 'user.grace@arbitra.local', firstName: 'Grace', lastName: 'Dike' },
-  { email: 'user.henry@arbitra.local', firstName: 'Henry', lastName: 'Olawale' },
+  {
+    email: 'user.henry@arbitra.local',
+    firstName: 'Henry',
+    lastName: 'Olawale',
+  },
   { email: 'user.iris@arbitra.local', firstName: 'Iris', lastName: 'Chukwu' },
-  { email: 'user.james@arbitra.local', firstName: 'James', lastName: 'Abiodun' },
+  {
+    email: 'user.james@arbitra.local',
+    firstName: 'James',
+    lastName: 'Abiodun',
+  },
 ];
 
 // ─── Property fixtures (20 properties with Unsplash images) ─────────────────

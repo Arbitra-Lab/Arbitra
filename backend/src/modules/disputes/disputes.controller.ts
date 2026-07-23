@@ -70,6 +70,15 @@ export class DisputesController {
     return this.disputesService.findAll(query, req.user.id);
   }
 
+  @Get('sla/overview')
+  @ApiOperation({
+    summary: 'SLA status and time-remaining for every active dispute',
+  })
+  @ApiResponse({ status: 200, description: 'Active disputes SLA overview' })
+  async getSlaOverview() {
+    return this.disputesService.getActiveDisputesSlaStatus();
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get dispute by ID' })
   @ApiParam({ name: 'id' })
@@ -82,6 +91,17 @@ export class DisputesController {
   @Get('dispute/:disputeId')
   async findByDisputeId(@Param('disputeId') disputeId: string) {
     return this.disputesService.findByDisputeId(disputeId);
+  }
+
+  @Get(':disputeId/sla')
+  @ApiOperation({
+    summary: 'SLA status (on-track / at-risk / breached) for one dispute',
+  })
+  @ApiParam({ name: 'disputeId' })
+  @ApiResponse({ status: 200, description: 'Dispute SLA status' })
+  @ApiResponse({ status: 404, description: 'Not found' })
+  async getSlaStatus(@Param('disputeId') disputeId: string) {
+    return this.disputesService.getSlaStatusByDisputeId(disputeId);
   }
 
   @Put(':id')

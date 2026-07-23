@@ -9,6 +9,7 @@ import {
 } from '../entities/dispute.entity';
 import { DisputeEvidence } from '../entities/dispute-evidence.entity';
 import { DisputeComment } from '../entities/dispute-comment.entity';
+import { DisputeEvent } from '../entities/dispute-event.entity';
 import {
   RentAgreement,
   AgreementStatus,
@@ -26,6 +27,8 @@ import {
 } from '../../../common/errors/domain-errors';
 import { LockService } from '../../../common/lock';
 import { IdempotencyService } from '../../../common/idempotency';
+import { DisputeSlaService } from '../dispute-sla.service';
+import { DisputeAssignmentService } from '../dispute-assignment.service';
 
 describe('DisputesService', () => {
   let service: DisputesService;
@@ -109,6 +112,30 @@ describe('DisputesService', () => {
           provide: getRepositoryToken(User),
           useValue: {
             findOne: jest.fn(),
+          },
+        },
+        {
+          provide: getRepositoryToken(DisputeEvent),
+          useValue: {
+            create: jest.fn().mockImplementation((data) => data),
+            save: jest.fn(),
+          },
+        },
+        {
+          provide: DisputeSlaService,
+          useValue: {
+            computeStageDueDate: jest.fn().mockReturnValue(new Date()),
+            stageForStatus: jest.fn(),
+            getSlaStatus: jest
+              .fn()
+              .mockReturnValue({ status: 'on_track', msRemaining: 1000 }),
+            raisePriority: jest.fn(),
+          },
+        },
+        {
+          provide: DisputeAssignmentService,
+          useValue: {
+            assignArbiter: jest.fn().mockResolvedValue(null),
           },
         },
         {
