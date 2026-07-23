@@ -349,9 +349,7 @@ export class DisputeContractService {
     return null;
   }
 
-  private async getDisputeOutcome(
-    caseId: string,
-  ): Promise<DisputeOutcome> {
+  private async getDisputeOutcome(caseId: string): Promise<DisputeOutcome> {
     const dispute = await this.getDispute(caseId);
     if (!dispute || !dispute.outcome) {
       throw new Error('Dispute not resolved');

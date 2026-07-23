@@ -12,6 +12,7 @@ import { RentAgreement } from '../../rent/entities/rent-contract.entity';
 import { User } from '../../users/entities/user.entity';
 import { DisputeEvidence } from './dispute-evidence.entity';
 import { DisputeComment } from './dispute-comment.entity';
+import { Arbiter } from './arbiter.entity';
 
 export enum DisputeType {
   RENT_PAYMENT = 'RENT_PAYMENT',
@@ -28,6 +29,22 @@ export enum DisputeStatus {
   RESOLVED = 'RESOLVED',
   REJECTED = 'REJECTED',
   WITHDRAWN = 'WITHDRAWN',
+}
+
+/**
+ * SLA-tracked lifecycle stage. Maps 1:1 onto the "active" DisputeStatus
+ * values — terminal statuses (RESOLVED/REJECTED/WITHDRAWN) have no stage.
+ */
+export enum DisputeStage {
+  INTAKE = 'INTAKE',
+  ARBITRATION = 'ARBITRATION',
+}
+
+export enum DisputePriority {
+  LOW = 'LOW',
+  NORMAL = 'NORMAL',
+  HIGH = 'HIGH',
+  URGENT = 'URGENT',
 }
 
 @Entity('disputes')
@@ -130,6 +147,39 @@ export class Dispute {
 
   @Column({ name: 'blockchain_synced_at', type: 'timestamp', nullable: true })
   blockchainSyncedAt: Date;
+
+  @Column({
+    type: 'varchar',
+    length: 20,
+    nullable: true,
+  })
+  stage: DisputeStage | null;
+
+  @Column({ name: 'stage_due_at', type: 'timestamp', nullable: true })
+  stageDueAt: Date | null;
+
+  @Column({
+    type: 'varchar',
+    length: 20,
+    default: DisputePriority.NORMAL,
+  })
+  priority: DisputePriority;
+
+  @Column({ name: 'assigned_arbiter_id', nullable: true })
+  assignedArbiterId: number | null;
+
+  @ManyToOne(() => Arbiter, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'assigned_arbiter_id' })
+  assignedArbiter: Arbiter | null;
+
+  @Column({ name: 'escalation_count', default: 0 })
+  escalationCount: number;
+
+  @Column({ name: 'last_escalated_due_at', type: 'timestamp', nullable: true })
+  lastEscalatedDueAt: Date | null;
+
+  @Column({ name: 'sla_breached_at', type: 'timestamp', nullable: true })
+  slaBreachedAt: Date | null;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

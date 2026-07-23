@@ -75,6 +75,20 @@ export class Arbiter {
     [key: string]: any;
   } | null;
 
+  @Column({ name: 'expertise_tags', type: 'jsonb', nullable: true })
+  expertiseTags: string[] | null;
+
+  /**
+   * User IDs this arbiter has declared a conflict of interest with
+   * (e.g. prior representation, personal relationship). Assignment must
+   * always skip an arbiter for these users regardless of load/expertise.
+   */
+  @Column({ name: 'conflict_user_ids', type: 'jsonb', nullable: true })
+  conflictUserIds: string[] | null;
+
+  @Column({ name: 'max_active_disputes', type: 'int', default: 5 })
+  maxActiveDisputes: number;
+
   @OneToMany(() => DisputeVote, (vote) => vote.arbiter)
   votes: DisputeVote[];
 

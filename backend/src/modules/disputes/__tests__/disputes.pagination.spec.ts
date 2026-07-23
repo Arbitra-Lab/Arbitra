@@ -9,11 +9,14 @@ import {
 } from '../entities/dispute.entity';
 import { DisputeEvidence } from '../entities/dispute-evidence.entity';
 import { DisputeComment } from '../entities/dispute-comment.entity';
+import { DisputeEvent } from '../entities/dispute-event.entity';
 import { RentAgreement } from '../../rent/entities/rent-contract.entity';
 import { User } from '../../users/entities/user.entity';
 import { AuditService } from '../../audit/audit.service';
 import { LockService } from '../../../common/lock';
 import { IdempotencyService } from '../../../common/idempotency';
+import { DisputeSlaService } from '../dispute-sla.service';
+import { DisputeAssignmentService } from '../dispute-assignment.service';
 
 describe('DisputesService – Pagination', () => {
   let service: DisputesService;
@@ -70,6 +73,25 @@ describe('DisputesService – Pagination', () => {
           useValue: mockAgreementRepo,
         },
         { provide: getRepositoryToken(User), useValue: mockUserRepo },
+        {
+          provide: getRepositoryToken(DisputeEvent),
+          useValue: { create: jest.fn(), save: jest.fn() },
+        },
+        {
+          provide: DisputeSlaService,
+          useValue: {
+            computeStageDueDate: jest.fn().mockReturnValue(new Date()),
+            stageForStatus: jest.fn(),
+            getSlaStatus: jest
+              .fn()
+              .mockReturnValue({ status: 'on_track', msRemaining: 1000 }),
+            raisePriority: jest.fn(),
+          },
+        },
+        {
+          provide: DisputeAssignmentService,
+          useValue: { assignArbiter: jest.fn().mockResolvedValue(null) },
+        },
         { provide: AuditService, useValue: mockAuditService },
         { provide: DataSource, useValue: mockDataSource },
         { provide: LockService, useValue: mockLockService },
