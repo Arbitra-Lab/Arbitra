@@ -93,6 +93,46 @@ describe('AgreementNftService', () => {
     });
   });
 
+  describe('voidNftForAgreement', () => {
+    it('marks the NFT voided and inactive', async () => {
+      const agreementId = 'agreement-123';
+      const nft = {
+        id: 'nft-id',
+        agreementId,
+        status: 'active',
+        isActive: true,
+      } as RentObligationNft;
+
+      jest.spyOn(nftRepository, 'findOne').mockResolvedValue(nft);
+      jest
+        .spyOn(nftRepository, 'save')
+        .mockImplementation(async (n) => n as RentObligationNft);
+
+      await service.voidNftForAgreement(agreementId, 'activation rolled back');
+
+      expect(nft.status).toBe('voided');
+      expect(nft.isActive).toBe(false);
+      expect(nftRepository.save).toHaveBeenCalledWith(nft);
+    });
+
+    it('is a no-op when no NFT exists for the agreement', async () => {
+      jest.spyOn(nftRepository, 'findOne').mockResolvedValue(null);
+
+      await service.voidNftForAgreement('agreement-123', 'reason');
+
+      expect(nftRepository.save).not.toHaveBeenCalled();
+    });
+
+    it('is a no-op when the NFT is already voided', async () => {
+      const nft = { id: 'nft-id', status: 'voided' } as RentObligationNft;
+      jest.spyOn(nftRepository, 'findOne').mockResolvedValue(nft);
+
+      await service.voidNftForAgreement('agreement-123', 'reason');
+
+      expect(nftRepository.save).not.toHaveBeenCalled();
+    });
+  });
+
   describe('transferNft', () => {
     it('should transfer NFT successfully', async () => {
       const agreementId = 'agreement-123';

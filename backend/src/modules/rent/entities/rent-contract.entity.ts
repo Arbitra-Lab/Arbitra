@@ -18,6 +18,7 @@ export enum AgreementStatus {
   EXPIRED = 'expired',
   TERMINATED = 'terminated',
   DISPUTED = 'disputed',
+  ACTIVATION_FAILED = 'activation_failed',
 }
 
 @Entity('rent_agreements')
@@ -173,6 +174,9 @@ export class RentAgreement {
 
   @Column({ name: 'termination_reason', type: 'text', nullable: true })
   terminationReason: string;
+
+  @Column({ name: 'activation_failure_reason', type: 'text', nullable: true })
+  activationFailureReason: string | null;
 
   // Blockchain Integration
   @Column({ name: 'blockchain_agreement_id', nullable: true })

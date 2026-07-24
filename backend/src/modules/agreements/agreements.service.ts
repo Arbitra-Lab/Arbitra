@@ -30,6 +30,8 @@ import { Idempotent, IdempotencyService } from '../../common/idempotency';
 import { AgreementStateService } from './state-machines/agreement-state-machine.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { AgreementStatusChangedEvent } from './events/agreement-status-changed.event';
+import { AgreementActivationSagaService } from './sagas/agreement-activation-saga.service';
+import { AgreementActivationSaga } from './sagas/agreement-activation-saga.entity';
 
 @Injectable()
 export class AgreementsService {
@@ -51,6 +53,7 @@ export class AgreementsService {
     private readonly idempotencyService: IdempotencyService,
     private readonly stateService: AgreementStateService,
     private readonly eventEmitter: EventEmitter2,
+    private readonly activationSagaService: AgreementActivationSagaService,
   ) {}
 
   @Locked({
@@ -237,6 +240,16 @@ export class AgreementsService {
     }
 
     return saved;
+  }
+
+  /**
+   * Activates an agreement by running the activation saga (NFT mint, escrow
+   * funding, blockchain sync, status transition, notifications). Safe to
+   * call repeatedly for the same agreement: an in-flight saga is resumed,
+   * and a completed one is returned as-is rather than re-run.
+   */
+  async activate(id: string): Promise<AgreementActivationSaga> {
+    return this.activationSagaService.activate(id);
   }
 
   async getFees(id: string, daysPastDue?: number) {

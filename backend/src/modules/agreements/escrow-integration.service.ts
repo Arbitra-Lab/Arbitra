@@ -80,6 +80,49 @@ export class EscrowIntegrationService {
     }
   }
 
+  /**
+   * Looks up the escrow already created for an agreement, if any. Used by the
+   * agreement activation saga to make escrow funding idempotent on retry.
+   */
+  async getEscrowForAgreement(
+    agreementId: string,
+  ): Promise<StellarEscrow | null> {
+    return this.escrowRepository.findOne({
+      where: { rentAgreementId: agreementId },
+    });
+  }
+
+  /**
+   * Compensating action for createEscrowForAgreement, used by the agreement
+   * activation saga to roll back escrow funding when a later step fails.
+   * Marks the escrow CANCELLED locally so a retry of the saga creates a
+   * fresh escrow instead of reusing a cancelled one. On-chain refund of any
+   * funds already deposited is out of scope here and must be handled by an
+   * operator/refund workflow once flagged CANCELLED.
+   */
+  async cancelEscrowForAgreement(
+    agreementId: string,
+    reason: string,
+  ): Promise<void> {
+    const escrow = await this.escrowRepository.findOne({
+      where: { rentAgreementId: agreementId },
+    });
+    if (
+      !escrow ||
+      escrow.status === EscrowStatus.CANCELLED ||
+      escrow.status === EscrowStatus.RELEASED
+    ) {
+      return;
+    }
+
+    escrow.status = EscrowStatus.CANCELLED;
+    await this.escrowRepository.save(escrow);
+
+    this.logger.log(
+      `Cancelled escrow ${escrow.id} for agreement ${agreementId} (compensation): ${reason}`,
+    );
+  }
+
   async approveEscrowRelease(
     escrowId: number,
     _releaseTo: string,
