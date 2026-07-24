@@ -7,7 +7,10 @@ export const AGREEMENT_STATE_TRANSITIONS: Record<
 > = {
   [AgreementStatus.DRAFT]: [AgreementStatus.PENDING_DEPOSIT],
   [AgreementStatus.PENDING_DEPOSIT]: [AgreementStatus.SIGNED],
-  [AgreementStatus.SIGNED]: [AgreementStatus.ACTIVE],
+  [AgreementStatus.SIGNED]: [
+    AgreementStatus.ACTIVE,
+    AgreementStatus.ACTIVATION_FAILED,
+  ],
   [AgreementStatus.ACTIVE]: [
     AgreementStatus.EXPIRED,
     AgreementStatus.TERMINATED,
@@ -19,6 +22,7 @@ export const AGREEMENT_STATE_TRANSITIONS: Record<
     AgreementStatus.ACTIVE,
     AgreementStatus.TERMINATED,
   ],
+  [AgreementStatus.ACTIVATION_FAILED]: [],
 };
 
 @Injectable()

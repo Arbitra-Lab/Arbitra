@@ -49,6 +49,32 @@ export class AgreementNftService {
     return nft;
   }
 
+  /**
+   * Compensating action for mintNftForAgreement, used by the agreement
+   * activation saga to roll back a mint when a later step fails. There is no
+   * on-chain burn call available yet, so this reverses the local bookkeeping
+   * (voids the record) so the saga can safely re-mint on retry; the minted
+   * token itself remains on-chain but is no longer treated as the
+   * agreement's obligation NFT.
+   */
+  async voidNftForAgreement(
+    agreementId: string,
+    reason: string,
+  ): Promise<void> {
+    const nft = await this.nftRepository.findOne({ where: { agreementId } });
+    if (!nft || nft.status === 'voided') {
+      return;
+    }
+
+    nft.status = 'voided';
+    nft.isActive = false;
+    await this.nftRepository.save(nft);
+
+    this.logger.log(
+      `Voided NFT for agreement ${agreementId} (compensation): ${reason}`,
+    );
+  }
+
   async transferNft(
     agreementId: string,
     fromAddress: string,

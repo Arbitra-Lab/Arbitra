@@ -144,6 +144,23 @@ export class AgreementsController {
     return await this.agreementsService.terminate(id, terminateDto);
   }
 
+  @Post(':id/activate')
+  @AuditLog({
+    action: AuditAction.UPDATE,
+    entityType: 'RentAgreement',
+    level: AuditLevel.INFO,
+    includeNewValues: true,
+  })
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Activate agreement',
+    description:
+      'Runs the activation saga (NFT mint, escrow funding, blockchain sync, status transition, notifications). Idempotent: safe to call again while in flight or after completion.',
+  })
+  async activate(@Param('id') id: string) {
+    return await this.agreementsService.activate(id);
+  }
+
   @Post(':id/renew')
   @AuditLog({
     action: AuditAction.UPDATE,
