@@ -80,7 +80,7 @@ export class RentObligationNft {
   transferCount: number;
 
   @Column({ name: 'status', default: 'active' })
-  status: 'active' | 'burned' | 'disputed';
+  status: 'active' | 'burned' | 'disputed' | 'voided';
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
