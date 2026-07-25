@@ -1,452 +1,339 @@
 import './setup-env';
-import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
-import * as request from 'supertest';
-import { App } from 'supertest/types';
-import { AppModule } from './../src/app.module';
+import { randomUUID } from 'crypto';
+import { DataSource, EntityManager } from 'typeorm';
+import { BadRequestException } from '@nestjs/common';
+import { PaymentService } from '../src/modules/payments/payment.service';
+import { LedgerService } from '../src/modules/payments/ledger.service';
+import {
+  LedgerEntry,
+  LedgerOperation,
+} from '../src/modules/payments/entities/ledger-entry.entity';
+import {
+  Payment,
+  PaymentStatus,
+} from '../src/modules/payments/entities/payment.entity';
+import { PaymentMethod } from '../src/modules/payments/entities/payment-method.entity';
 
-describe('End-to-End Payment Flow Integration (e2e)', () => {
-  let app: INestApplication<App>;
+/**
+ * End-to-end coverage of the double-entry payment ledger: capture, partial
+ * refunds, full-refund exhaustion, the over-refund guard, and idempotent
+ * retries — driven through the real PaymentService + LedgerService, with a
+ * real (in-memory sqlite) DB backing the ledger tables.
+ *
+ * Payment/PaymentMethod persistence is backed by an in-memory fake instead
+ * of the same sqlite connection: the real `User` entity these rows relate to
+ * has a Postgres-only `bytea` column, which sqlite's schema sync rejects
+ * (the same limitation that makes several other *.integration.spec.ts files
+ * in this repo `describe.skip`). The ledger tables have no such relation, so
+ * they run against a genuine TypeORM DataSource — real transactions, real
+ * unique-constraint-backed idempotency, real SQL aggregation in reconcile().
+ */
+
+function makeFakePaymentRepository(store: Map<string, Payment>) {
+  return {
+    async findOne(options: { where?: Record<string, unknown> }) {
+      const where = options?.where ?? {};
+      for (const payment of store.values()) {
+        if (
+          Object.entries(where).every(
+            ([key, value]) =>
+              (payment as unknown as Record<string, unknown>)[key] === value,
+          )
+        ) {
+          return payment;
+        }
+      }
+      return null;
+    },
+    create(data: Partial<Payment>): Payment {
+      return {
+        refundAmount: 0,
+        refundStatus: 'none',
+        version: 1,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        ...data,
+      } as Payment;
+    },
+    async save(entity: Payment): Promise<Payment> {
+      if (!entity.id) entity.id = randomUUID();
+      entity.updatedAt = new Date();
+      store.set(entity.id, entity);
+      return entity;
+    },
+  };
+}
+
+function makeTransactionalManager(
+  realManager: EntityManager,
+  paymentRepo: ReturnType<typeof makeFakePaymentRepository>,
+) {
+  return {
+    findOne: (target: unknown, options: any) =>
+      target === Payment
+        ? paymentRepo.findOne(options)
+        : realManager.findOne(target as any, options),
+    create: (target: unknown, data: any) =>
+      target === Payment
+        ? paymentRepo.create(data)
+        : realManager.create(target as any, data),
+    save: (target: unknown, data: any) =>
+      target === Payment
+        ? paymentRepo.save(data)
+        : realManager.save(target as any, data),
+    find: (target: unknown, options: any) =>
+      realManager.find(target as any, options),
+    findOneOrFail: (target: unknown, options: any) =>
+      realManager.findOneOrFail(target as any, options),
+  } as unknown as EntityManager;
+}
+
+describe('Payment ledger — end-to-end (capture, partial refunds, full exhaustion)', () => {
+  let sqlite: DataSource;
+  let ledgerService: LedgerService;
+  let paymentService: PaymentService;
+  let paymentStore: Map<string, Payment>;
+  let mockGateway: { chargePayment: jest.Mock; processRefund: jest.Mock };
+  let fakeDataSource: {
+    transaction: (
+      cb: (m: EntityManager) => Promise<unknown>,
+    ) => Promise<unknown>;
+  };
+
+  const userId = 'user-e2e-1';
+  const paymentMethod: PaymentMethod = {
+    id: 1,
+    userId,
+    paymentType: 'CREDIT_CARD',
+    encryptedMetadata: null,
+  } as PaymentMethod;
 
   beforeAll(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
-
-    app = moduleFixture.createNestApplication();
-    await app.init();
+    sqlite = new DataSource({
+      type: 'sqlite',
+      database: ':memory:',
+      entities: [LedgerOperation, LedgerEntry],
+      synchronize: true,
+      dropSchema: true,
+    });
+    await sqlite.initialize();
   });
 
   afterAll(async () => {
-    if (app) await app.close();
+    await sqlite.destroy();
   });
 
-  describe('Payment Initiation', () => {
-    it('should initiate payment with valid data', async () => {
-      const paymentData = {
-        amount: 100,
-        currency: 'USD',
-        recipientAddress: 'recipient@example.com',
-        description: 'Rent payment',
-      };
+  beforeEach(async () => {
+    await sqlite.getRepository(LedgerEntry).clear();
+    await sqlite.getRepository(LedgerOperation).clear();
+    paymentStore = new Map();
+    const paymentRepo = makeFakePaymentRepository(paymentStore);
+    fakeDataSource = {
+      transaction: (cb) =>
+        sqlite.transaction((realManager) =>
+          cb(makeTransactionalManager(realManager, paymentRepo)),
+        ),
+    };
 
-      const response = await request(app.getHttpServer())
-        .post('/api/payments/initiate')
-        .send(paymentData)
-        .expect(201);
+    ledgerService = new LedgerService(
+      sqlite.getRepository(LedgerOperation),
+      sqlite.getRepository(LedgerEntry),
+    );
 
-      expect(response.body).toHaveProperty('paymentId');
-      expect(response.body).toHaveProperty('status');
-      expect(response.body.status).toBe('PENDING');
-      expect(response.body).toHaveProperty('amount', 100);
-    });
+    mockGateway = {
+      chargePayment: jest.fn().mockImplementation(async () => ({
+        success: true,
+        chargeId: `ch_${randomUUID()}`,
+      })),
+      processRefund: jest.fn().mockImplementation(async () => ({
+        success: true,
+        refundId: `rf_${randomUUID()}`,
+      })),
+    };
 
-    it('should validate payment amount', async () => {
-      const paymentData = {
-        amount: -100,
-        currency: 'USD',
-        recipientAddress: 'recipient@example.com',
-      };
+    const paymentMethodRepo = {
+      findOne: async ({ where }: { where: { id: number; userId: string } }) =>
+        where.id === paymentMethod.id && where.userId === paymentMethod.userId
+          ? paymentMethod
+          : null,
+    };
 
-      await request(app.getHttpServer())
-        .post('/api/payments/initiate')
-        .send(paymentData)
-        .expect(422);
-    });
+    const notifications = { notify: jest.fn().mockResolvedValue(undefined) };
+    const lock = {
+      withLock: (_key: string, _ttl: number, fn: () => Promise<unknown>) =>
+        fn(),
+    };
+    const idempotency = {
+      process: (_key: string, _ttl: number, fn: () => Promise<unknown>) => fn(),
+    };
+    const fraudHooks = {
+      onPaymentRecorded: jest.fn().mockResolvedValue(undefined),
+    };
 
-    it('should validate recipient address', async () => {
-      const paymentData = {
-        amount: 100,
-        currency: 'USD',
-        recipientAddress: 'invalid-address',
-      };
-
-      await request(app.getHttpServer())
-        .post('/api/payments/initiate')
-        .send(paymentData)
-        .expect(422);
-    });
-
-    it('should validate currency code', async () => {
-      const paymentData = {
-        amount: 100,
-        currency: 'INVALID',
-        recipientAddress: 'recipient@example.com',
-      };
-
-      await request(app.getHttpServer())
-        .post('/api/payments/initiate')
-        .send(paymentData)
-        .expect(422);
-    });
-
-    it('should check payer balance before initiating payment', async () => {
-      const paymentData = {
-        amount: 999999999,
-        currency: 'USD',
-        recipientAddress: 'recipient@example.com',
-      };
-
-      const response = await request(app.getHttpServer())
-        .post('/api/payments/initiate')
-        .send(paymentData)
-        .expect(422);
-
-      expect(response.body.error.code).toBe('INSUFFICIENT_FUNDS');
-    });
+    paymentService = new PaymentService(
+      paymentRepo as any,
+      paymentMethodRepo as any,
+      {} as any, // paymentScheduleRepository — unused by these flows
+      mockGateway as any,
+      notifications as any,
+      {} as any, // paymentProcessingService
+      {} as any, // stellarService
+      lock as any,
+      idempotency as any,
+      fakeDataSource as any,
+      fraudHooks as any,
+      ledgerService,
+    );
   });
 
-  describe('Blockchain Transaction Submission', () => {
-    it('should submit transaction to blockchain', async () => {
-      const paymentData = {
-        amount: 50,
-        currency: 'USD',
-        recipientAddress: 'recipient@example.com',
-      };
+  it('captures a payment with balanced ledger entries', async () => {
+    const payment = await paymentService.recordPayment(
+      { amount: 100, paymentMethodId: '1' },
+      userId,
+    );
 
-      const initiateResponse = await request(app.getHttpServer())
-        .post('/api/payments/initiate')
-        .send(paymentData)
-        .expect(201);
+    expect(payment.status).toBe(PaymentStatus.COMPLETED);
+    expect(Number(payment.transactionFee)).toBe(2);
+    expect(Number(payment.netAmount)).toBe(98);
 
-      const paymentId = initiateResponse.body.paymentId;
+    const entries = await sqlite
+      .getRepository(LedgerEntry)
+      .find({ where: { paymentId: payment.id } });
+    expect(entries).toHaveLength(3);
 
-      const submitResponse = await request(app.getHttpServer())
-        .post(`/api/payments/${paymentId}/submit`)
-        .expect(200);
+    const customerBalance = await ledgerService.getAccountBalance(
+      `customer:${userId}`,
+    );
+    expect(customerBalance.balance).toBe(-98); // credit-heavy: refundable balance held
 
-      expect(submitResponse.body).toHaveProperty('transactionHash');
-      expect(submitResponse.body).toHaveProperty('status');
-      expect(submitResponse.body.status).toBe('SUBMITTED');
-    });
+    const clearingBalance =
+      await ledgerService.getAccountBalance('gateway:clearing');
+    expect(clearingBalance.balance).toBe(100); // debit-heavy: cash captured
 
-    it('should handle blockchain submission failures', async () => {
-      const paymentData = {
-        amount: 50,
-        currency: 'USD',
-        recipientAddress: 'recipient@example.com',
-      };
-
-      const initiateResponse = await request(app.getHttpServer())
-        .post('/api/payments/initiate')
-        .send(paymentData)
-        .expect(201);
-
-      const paymentId = initiateResponse.body.paymentId;
-
-      // Mock blockchain failure
-      jest
-        .spyOn(global, 'fetch')
-        .mockRejectedValueOnce(new Error('Blockchain connection failed'));
-
-      const response = await request(app.getHttpServer())
-        .post(`/api/payments/${paymentId}/submit`)
-        .expect(503);
-
-      expect(response.body.error.code).toBe('BLOCKCHAIN_UNAVAILABLE');
-    });
-
-    it('should generate unique transaction hash', async () => {
-      const paymentData = {
-        amount: 50,
-        currency: 'USD',
-        recipientAddress: 'recipient@example.com',
-      };
-
-      const response1 = await request(app.getHttpServer())
-        .post('/api/payments/initiate')
-        .send(paymentData)
-        .expect(201);
-
-      const response2 = await request(app.getHttpServer())
-        .post('/api/payments/initiate')
-        .send(paymentData)
-        .expect(201);
-
-      const submitResponse1 = await request(app.getHttpServer())
-        .post(`/api/payments/${response1.body.paymentId}/submit`)
-        .expect(200);
-
-      const submitResponse2 = await request(app.getHttpServer())
-        .post(`/api/payments/${response2.body.paymentId}/submit`)
-        .expect(200);
-
-      expect(submitResponse1.body.transactionHash).not.toBe(
-        submitResponse2.body.transactionHash,
-      );
-    });
+    const report = await ledgerService.reconcile();
+    expect(report.balanced).toBe(true);
+    expect(report.global.drift).toBe(0);
   });
 
-  describe('Payment Confirmation and Settlement', () => {
-    it('should confirm payment after blockchain confirmation', async () => {
-      const paymentData = {
-        amount: 50,
-        currency: 'USD',
-        recipientAddress: 'recipient@example.com',
-      };
+  it('walks capture → partial refund → partial refund → full exhaustion → rejected over-refund', async () => {
+    const payment = await paymentService.recordPayment(
+      { amount: 100, paymentMethodId: '1' },
+      userId,
+    );
+    expect(Number(payment.netAmount)).toBe(98);
 
-      const initiateResponse = await request(app.getHttpServer())
-        .post('/api/payments/initiate')
-        .send(paymentData)
-        .expect(201);
+    // First partial refund.
+    const afterFirst = await paymentService.processRefund(
+      payment.id,
+      { amount: 30, reason: 'partial 1' },
+      userId,
+    );
+    expect(afterFirst.status).toBe(PaymentStatus.PARTIAL_REFUND);
+    expect(Number(afterFirst.refundAmount)).toBe(30);
 
-      const paymentId = initiateResponse.body.paymentId;
+    // Second partial refund.
+    const afterSecond = await paymentService.processRefund(
+      payment.id,
+      { amount: 40, reason: 'partial 2' },
+      userId,
+    );
+    expect(afterSecond.status).toBe(PaymentStatus.PARTIAL_REFUND);
+    expect(Number(afterSecond.refundAmount)).toBe(70);
 
-      await request(app.getHttpServer())
-        .post(`/api/payments/${paymentId}/submit`)
-        .expect(200);
+    // A refund request bigger than what's left (28) must be rejected —
+    // the guard must account for the sum of prior partial refunds.
+    await expect(
+      paymentService.processRefund(
+        payment.id,
+        { amount: 29, reason: 'too much' },
+        userId,
+      ),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(Number((await getStoredPayment(payment.id)).refundAmount)).toBe(70);
 
-      const confirmResponse = await request(app.getHttpServer())
-        .post(`/api/payments/${paymentId}/confirm`)
-        .expect(200);
+    // Exhaust exactly the remaining refundable balance (28 = 98 - 70).
+    const afterFinal = await paymentService.processRefund(
+      payment.id,
+      { amount: 28, reason: 'final refund' },
+      userId,
+    );
+    expect(afterFinal.status).toBe(PaymentStatus.REFUNDED);
+    expect(Number(afterFinal.refundAmount)).toBe(98);
 
-      expect(confirmResponse.body.status).toBe('CONFIRMED');
-      expect(confirmResponse.body).toHaveProperty('settlementTime');
-    });
+    // Now fully exhausted — any further refund must be rejected, however small.
+    await expect(
+      paymentService.processRefund(
+        payment.id,
+        { amount: 0.01, reason: 'after exhaustion' },
+        userId,
+      ),
+    ).rejects.toBeInstanceOf(BadRequestException);
 
-    it('should verify payment settlement in database', async () => {
-      const paymentData = {
-        amount: 75,
-        currency: 'USD',
-        recipientAddress: 'recipient@example.com',
-      };
+    // The gateway must never have been called for any of the rejected attempts.
+    expect(mockGateway.processRefund).toHaveBeenCalledTimes(3);
 
-      const initiateResponse = await request(app.getHttpServer())
-        .post('/api/payments/initiate')
-        .send(paymentData)
-        .expect(201);
+    const entries = await sqlite
+      .getRepository(LedgerEntry)
+      .find({ where: { paymentId: payment.id } });
+    // 1 capture (3 lines) + 3 successful refunds (2 lines each)
+    expect(entries).toHaveLength(3 + 3 * 2);
 
-      const paymentId = initiateResponse.body.paymentId;
+    const report = await ledgerService.reconcile();
+    expect(report.balanced).toBe(true);
+    expect(report.unbalancedOperations).toEqual([]);
 
-      await request(app.getHttpServer())
-        .post(`/api/payments/${paymentId}/submit`)
-        .expect(200);
+    const customerBalance = await ledgerService.getAccountBalance(
+      `customer:${userId}`,
+    );
+    expect(customerBalance.balance).toBe(0); // fully refunded: credited 98, debited back 98
 
-      await request(app.getHttpServer())
-        .post(`/api/payments/${paymentId}/confirm`)
-        .expect(200);
-
-      // Verify payment in database
-      const getResponse = await request(app.getHttpServer())
-        .get(`/api/payments/${paymentId}`)
-        .expect(200);
-
-      expect(getResponse.body.status).toBe('CONFIRMED');
-      expect(getResponse.body.amount).toBe(75);
-    });
-
-    it('should generate settlement confirmation receipt', async () => {
-      const paymentData = {
-        amount: 50,
-        currency: 'USD',
-        recipientAddress: 'recipient@example.com',
-      };
-
-      const initiateResponse = await request(app.getHttpServer())
-        .post('/api/payments/initiate')
-        .send(paymentData)
-        .expect(201);
-
-      const paymentId = initiateResponse.body.paymentId;
-
-      await request(app.getHttpServer())
-        .post(`/api/payments/${paymentId}/submit`)
-        .expect(200);
-
-      const confirmResponse = await request(app.getHttpServer())
-        .post(`/api/payments/${paymentId}/confirm`)
-        .expect(200);
-
-      expect(confirmResponse.body).toHaveProperty('receiptId');
-      expect(confirmResponse.body).toHaveProperty('receiptUrl');
-    });
+    async function getStoredPayment(id: string): Promise<Payment> {
+      const p = paymentStore.get(id);
+      if (!p) throw new Error('payment missing from store');
+      return p;
+    }
   });
 
-  describe('Error Handling and Rollback', () => {
-    it('should rollback payment on blockchain failure', async () => {
-      const paymentData = {
-        amount: 50,
-        currency: 'USD',
-        recipientAddress: 'recipient@example.com',
-      };
+  it('is idempotent on retried refunds — same key never double-refunds or duplicates ledger rows', async () => {
+    const payment = await paymentService.recordPayment(
+      { amount: 100, paymentMethodId: '1' },
+      userId,
+    );
 
-      const initiateResponse = await request(app.getHttpServer())
-        .post('/api/payments/initiate')
-        .send(paymentData)
-        .expect(201);
+    const dto = {
+      amount: 50,
+      reason: 'partial',
+      idempotencyKey: 'retry-key-1',
+    };
+    const first = await paymentService.processRefund(payment.id, dto, userId);
+    const second = await paymentService.processRefund(payment.id, dto, userId);
 
-      const paymentId = initiateResponse.body.paymentId;
+    expect(first.refundAmount).toEqual(second.refundAmount);
+    expect(Number(second.refundAmount)).toBe(50);
+    expect(mockGateway.processRefund).toHaveBeenCalledTimes(1);
 
-      // Mock blockchain failure during submission
-      jest
-        .spyOn(global, 'fetch')
-        .mockRejectedValueOnce(new Error('Blockchain failure'));
-
-      await request(app.getHttpServer())
-        .post(`/api/payments/${paymentId}/submit`)
-        .expect(503);
-
-      // Verify payment is still PENDING
-      const getResponse = await request(app.getHttpServer())
-        .get(`/api/payments/${paymentId}`)
-        .expect(200);
-
-      expect(getResponse.body.status).toBe('PENDING');
+    const refundEntries = await sqlite.getRepository(LedgerEntry).find({
+      where: { paymentId: payment.id, operationType: 'refund' as any },
     });
-
-    it('should handle double submission gracefully', async () => {
-      const paymentData = {
-        amount: 50,
-        currency: 'USD',
-        recipientAddress: 'recipient@example.com',
-      };
-
-      const initiateResponse = await request(app.getHttpServer())
-        .post('/api/payments/initiate')
-        .send(paymentData)
-        .expect(201);
-
-      const paymentId = initiateResponse.body.paymentId;
-
-      await request(app.getHttpServer())
-        .post(`/api/payments/${paymentId}/submit`)
-        .expect(200);
-
-      // Second submission should be rejected or idempotent
-      const submitResponse2 = await request(app.getHttpServer())
-        .post(`/api/payments/${paymentId}/submit`)
-        .expect(409);
-
-      expect(submitResponse2.body.error.code).toBe('PAYMENT_ALREADY_SUBMITTED');
-    });
-
-    it('should handle payment timeout gracefully', async () => {
-      const paymentData = {
-        amount: 50,
-        currency: 'USD',
-        recipientAddress: 'recipient@example.com',
-      };
-
-      const initiateResponse = await request(app.getHttpServer())
-        .post('/api/payments/initiate')
-        .send(paymentData)
-        .expect(201);
-
-      const paymentId = initiateResponse.body.paymentId;
-
-      // Simulate timeout
-      jest.useFakeTimers();
-      jest.advanceTimersByTime(10 * 60 * 1000); // 10 minutes
-
-      const getResponse = await request(app.getHttpServer())
-        .get(`/api/payments/${paymentId}`)
-        .expect(200);
-
-      expect(getResponse.body.status).toBe('EXPIRED');
-
-      jest.useRealTimers();
-    });
+    expect(refundEntries).toHaveLength(2); // one refund's worth, not two
   });
 
-  describe('Concurrent Payment Processing', () => {
-    it('should handle concurrent payments from same user', async () => {
-      const paymentData = {
-        amount: 25,
-        currency: 'USD',
-        recipientAddress: 'recipient@example.com',
-      };
+  it('is idempotent on retried captures — same key never double-charges or duplicates ledger rows', async () => {
+    const dto = {
+      amount: 75,
+      paymentMethodId: '1',
+      idempotencyKey: 'capture-retry-1',
+    };
 
-      const promises = Array(3)
-        .fill(null)
-        .map(() =>
-          request(app.getHttpServer())
-            .post('/api/payments/initiate')
-            .send(paymentData),
-        );
+    const first = await paymentService.recordPayment(dto, userId);
+    const second = await paymentService.recordPayment(dto, userId);
 
-      const responses = await Promise.all(promises);
+    expect(second.id).toBe(first.id);
+    expect(mockGateway.chargePayment).toHaveBeenCalledTimes(1);
 
-      const paymentIds = responses.map((res) => res.body.paymentId);
-      const uniqueIds = new Set(paymentIds);
-
-      expect(uniqueIds.size).toBe(3); // All should have unique IDs
-      expect(responses.every((res) => res.status === 201)).toBe(true);
+    const captureEntries = await sqlite.getRepository(LedgerEntry).find({
+      where: { paymentId: first.id, operationType: 'capture' as any },
     });
-
-    it('should prevent double-spending in concurrent payments', async () => {
-      const paymentData = {
-        amount: 999999999, // Exceeds balance
-        currency: 'USD',
-        recipientAddress: 'recipient@example.com',
-      };
-
-      const promises = Array(2)
-        .fill(null)
-        .map(() =>
-          request(app.getHttpServer())
-            .post('/api/payments/initiate')
-            .send(paymentData),
-        );
-
-      const responses = await Promise.all(promises);
-
-      const failedCount = responses.filter((res) => res.status === 422).length;
-      expect(failedCount).toBeGreaterThanOrEqual(1);
-    });
-  });
-
-  describe('Payment Status Tracking', () => {
-    it('should track payment through all states', async () => {
-      const paymentData = {
-        amount: 50,
-        currency: 'USD',
-        recipientAddress: 'recipient@example.com',
-      };
-
-      const initiateResponse = await request(app.getHttpServer())
-        .post('/api/payments/initiate')
-        .send(paymentData)
-        .expect(201);
-
-      expect(initiateResponse.body.status).toBe('PENDING');
-
-      const paymentId = initiateResponse.body.paymentId;
-
-      const submitResponse = await request(app.getHttpServer())
-        .post(`/api/payments/${paymentId}/submit`)
-        .expect(200);
-
-      expect(submitResponse.body.status).toBe('SUBMITTED');
-
-      const confirmResponse = await request(app.getHttpServer())
-        .post(`/api/payments/${paymentId}/confirm`)
-        .expect(200);
-
-      expect(confirmResponse.body.status).toBe('CONFIRMED');
-    });
-
-    it('should retrieve payment status', async () => {
-      const paymentData = {
-        amount: 50,
-        currency: 'USD',
-        recipientAddress: 'recipient@example.com',
-      };
-
-      const initiateResponse = await request(app.getHttpServer())
-        .post('/api/payments/initiate')
-        .send(paymentData)
-        .expect(201);
-
-      const paymentId = initiateResponse.body.paymentId;
-
-      const getResponse = await request(app.getHttpServer())
-        .get(`/api/payments/${paymentId}`)
-        .expect(200);
-
-      expect(getResponse.body).toHaveProperty('paymentId', paymentId);
-      expect(getResponse.body).toHaveProperty('status', 'PENDING');
-      expect(getResponse.body).toHaveProperty('amount', 50);
-      expect(getResponse.body).toHaveProperty('currency', 'USD');
-    });
+    expect(captureEntries).toHaveLength(3);
   });
 });

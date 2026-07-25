@@ -23,6 +23,7 @@ import * as StellarSdk from '@stellar/stellar-sdk';
 import { LockService } from '../../common/lock';
 import { IdempotencyService } from '../../common/idempotency';
 import { FraudHooksService } from '../fraud/fraud-hooks.service';
+import { LedgerService } from './ledger.service';
 
 const mockPaymentRepository = () => ({
   findOne: jest.fn(),
@@ -105,6 +106,10 @@ const mockFraudHooksService = {
   onPaymentRecorded: jest.fn().mockResolvedValue(undefined),
 };
 
+const mockLedgerService = {
+  recordOperation: jest.fn().mockResolvedValue({ entries: [], replay: false }),
+};
+
 describe('PaymentService', () => {
   let service: PaymentService;
   let paymentRepository: Repository<Payment>;
@@ -162,6 +167,10 @@ describe('PaymentService', () => {
         {
           provide: FraudHooksService,
           useValue: mockFraudHooksService,
+        },
+        {
+          provide: LedgerService,
+          useValue: mockLedgerService,
         },
       ],
     }).compile();
@@ -221,7 +230,7 @@ describe('PaymentService', () => {
       (paymentRepository.create as jest.Mock).mockImplementation(
         (data: Partial<Payment>) => data as Payment,
       );
-      (paymentRepository.save as jest.Mock).mockResolvedValue({
+      mockEntityManager.save.mockResolvedValue({
         id: 'pay_1',
         amount: 100,
         currency: 'NGN',
@@ -266,7 +275,7 @@ describe('PaymentService', () => {
       (paymentRepository.create as jest.Mock).mockImplementation(
         (data: Partial<Payment>) => data as Payment,
       );
-      (paymentRepository.save as jest.Mock).mockResolvedValue({
+      mockEntityManager.save.mockResolvedValue({
         id: 'pay_fee_1',
         amount: 250,
         currency: 'NGN',
@@ -465,6 +474,114 @@ describe('PaymentService', () => {
       await expect(
         service.processRefund('pay_1', { amount: 1, reason: 'dup' }, 'user_1'),
       ).rejects.toBeInstanceOf(BadRequestException);
+    });
+
+    it('rejects a partial refund that would push cumulative refunds past the net captured amount', async () => {
+      // Two prior partial refunds already consumed 60 of a 98 net-captured payment.
+      const payment = {
+        id: 'pay_1',
+        userId: 'user_1',
+        status: PaymentStatus.COMPLETED,
+        amount: 100,
+        netAmount: 98,
+        refundAmount: 60,
+        currency: 'NGN',
+        metadata: { chargeId: 'charge_1' },
+      } as unknown as Payment;
+
+      mockEntityManager.findOne.mockResolvedValue(payment);
+
+      await expect(
+        service.processRefund(
+          'pay_1',
+          { amount: 40, reason: 'third partial refund' },
+          'user_1',
+        ),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(mockPaymentGateway.processRefund).not.toHaveBeenCalled();
+      expect(mockLedgerService.recordOperation).not.toHaveBeenCalled();
+    });
+
+    it('allows a partial refund that lands exactly on the remaining refundable balance', async () => {
+      const payment = {
+        id: 'pay_1',
+        userId: 'user_1',
+        status: PaymentStatus.COMPLETED,
+        amount: 100,
+        netAmount: 98,
+        refundAmount: 60,
+        currency: 'NGN',
+        metadata: { chargeId: 'charge_1' },
+      } as unknown as Payment;
+
+      mockEntityManager.findOne.mockResolvedValue(payment);
+      mockPaymentGateway.processRefund.mockResolvedValue({
+        success: true,
+        refundId: 'refund_final',
+      });
+      mockEntityManager.save.mockResolvedValue({
+        ...payment,
+        status: PaymentStatus.REFUNDED,
+        refundAmount: 98,
+      });
+
+      const result = await service.processRefund(
+        'pay_1',
+        { amount: 38, reason: 'final partial refund' },
+        'user_1',
+      );
+
+      expect(result.status).toBe(PaymentStatus.REFUNDED);
+      expect(mockLedgerService.recordOperation).toHaveBeenCalledWith(
+        mockEntityManager,
+        expect.objectContaining({
+          operationType: 'refund',
+          paymentId: 'pay_1',
+          lines: [
+            expect.objectContaining({
+              accountId: 'customer:user_1',
+              direction: 'debit',
+              amount: 38,
+            }),
+            expect.objectContaining({
+              accountId: 'gateway:clearing',
+              direction: 'credit',
+              amount: 38,
+            }),
+          ],
+        }),
+      );
+    });
+
+    it('replays an idempotent refund retry instead of refunding a second time', async () => {
+      const payment = {
+        id: 'pay_1',
+        userId: 'user_1',
+        status: PaymentStatus.COMPLETED,
+        amount: 100,
+        netAmount: 100,
+        refundAmount: 50,
+        currency: 'NGN',
+        metadata: { chargeId: 'charge_1' },
+      } as unknown as Payment;
+
+      mockEntityManager.findOne
+        .mockResolvedValueOnce(payment) // pessimistic-locked payment lookup
+        .mockResolvedValueOnce({
+          id: 'op_existing',
+          idempotencyKey: 'refund:user_1:pay_1:retry-key',
+        }); // existing LedgerOperation for this idempotency key
+
+      const result = await service.processRefund(
+        'pay_1',
+        { amount: 50, reason: 'retry', idempotencyKey: 'retry-key' },
+        'user_1',
+      );
+
+      expect(result).toBe(payment);
+      expect(mockPaymentGateway.processRefund).not.toHaveBeenCalled();
+      expect(mockLedgerService.recordOperation).not.toHaveBeenCalled();
+      expect(mockEntityManager.save).not.toHaveBeenCalled();
     });
   });
 

@@ -12,6 +12,8 @@ import { PaymentGatewayService } from './payment-gateway.service';
 import { Payment } from './entities/payment.entity';
 import { PaymentMethod } from './entities/payment-method.entity';
 import { PaymentSchedule } from './entities/payment-schedule.entity';
+import { LedgerOperation, LedgerEntry } from './entities/ledger-entry.entity';
+import { LedgerService } from './ledger.service';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { UsersModule } from '../users/users.module';
 import { StellarModule } from '../stellar/stellar.module';
@@ -23,7 +25,14 @@ import { AuditModule } from '../audit/audit.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Payment, PaymentMethod, PaymentSchedule, User]),
+    TypeOrmModule.forFeature([
+      Payment,
+      PaymentMethod,
+      PaymentSchedule,
+      User,
+      LedgerOperation,
+      LedgerEntry,
+    ]),
     NotificationsModule,
     UsersModule,
     StellarModule,
@@ -38,7 +47,12 @@ import { AuditModule } from '../audit/audit.module';
     PaymentWebhookController,
     AdminRefundsController,
   ],
-  providers: [PaymentService, PaymentGatewayService, AdminRefundsService],
-  exports: [PaymentService, PaymentGatewayService],
+  providers: [
+    PaymentService,
+    PaymentGatewayService,
+    AdminRefundsService,
+    LedgerService,
+  ],
+  exports: [PaymentService, PaymentGatewayService, LedgerService],
 })
 export class PaymentModule {}
