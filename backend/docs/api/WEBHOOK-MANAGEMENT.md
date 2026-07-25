@@ -118,14 +118,15 @@ Arbitra’s signature scheme is documented in:
 
 - `WEBHOOK_SIGNATURE_VERIFICATION.md`
 
-Inbound webhook requests must include:
+Outbound Arbitra webhook requests include:
 
 - `X-Webhook-Timestamp`
+- `X-Webhook-Nonce`
 - `X-Webhook-Signature`
 
 Signature verification requirements:
 
-- compute expected signature from `<timestamp>.<raw-request-body>` using HMAC-SHA256
+- compute expected signature from `<timestamp>.<nonce>.<raw-request-body>` using HMAC-SHA256
 - constant-time compare signatures
 - reject timestamps older than the allowed window (recommended: 5 minutes)
 - reject missing/invalid signature headers
@@ -133,6 +134,9 @@ Signature verification requirements:
 ### Replay protection
 
 - enforce a timestamp window
+- reject a `nonce` that has already been seen within that window (the nonce
+  is monotonically increasing and part of the signed material, so it cannot
+  be stripped or replaced without invalidating the signature)
 - optionally store processed `event.id` values for a TTL to reject duplicates beyond normal idempotency
 
 ### Raw body requirement
@@ -156,28 +160,45 @@ Signature verification must use the **raw request body**, not a re-serialized JS
 
 ## Retries
 
-Webhook delivery must assume transient failures.
+Every delivery attempt is persisted as a `webhook_deliveries` row (payload,
+`payload_hash`, `nonce`, `status`, `attempt_count`, `next_retry_at`), so retry
+state survives process restarts and is fully auditable.
 
-### Retry rules (recommended)
+### Backoff policy (implemented)
 
-- retry on network errors and `5xx`
-- do not retry on `2xx`
-- treat most `4xx` as non-retryable (signature failures, validation errors)
+`computeWebhookBackoffMs` (`webhook-event.ts`) uses exponential backoff with
+equal jitter: the delay for a given attempt is a random value in
+`[50%, 100%]` of `min(30s * 2^(attempt-1), 30min)`. This avoids both a
+thundering herd (pure exponential, no jitter) and an immediate retry
+(full jitter, which can return ~0).
 
-### Backoff policy
+Approximate schedule (midpoint of the jittered range):
 
-Use exponential backoff with jitter.
+| attempt | exponential base | jittered range |
+| --- | --- | --- |
+| 1 | 30s | 15s – 30s |
+| 2 | 60s | 30s – 60s |
+| 3 | 2m | 1m – 2m |
+| 4 | 4m | 2m – 4m |
+| 5 | 8m | 4m – 8m |
+| 6 | 16m | 8m – 16m |
 
-Example schedule:
+After `WEBHOOK_MAX_DELIVERY_ATTEMPTS` (6) failed attempts, the delivery moves
+to `status: 'dead_letter'` (`dead_lettered_at` set, no further automatic
+retries) instead of retrying indefinitely.
 
-- attempt 1: immediate
-- attempt 2: +1 minute
-- attempt 3: +5 minutes
-- attempt 4: +15 minutes
-- attempt 5: +1 hour
-- attempt 6: +6 hours
+A scheduled sweep (`WebhooksService.scheduledRetrySweep`, every minute) calls
+`processDueRetries()`, which re-attempts every delivery with
+`status = 'retrying'` and an elapsed `next_retry_at`.
 
-Stop retrying after a maximum delivery window (for example: 24 hours) and mark the delivery as failed.
+### Dead-letter queue and operator replay
+
+Once a delivery is dead-lettered, an operator can call
+`WebhooksService.replayDeadLetter(deliveryId)`. This re-attempts delivery
+using the **same** `webhook_deliveries` row — it never creates a new event
+record, so replaying does not duplicate the original event. On success the
+row transitions to `delivered`; on failure it returns to `dead_letter` for a
+further manual replay.
 
 ### Idempotency
 
@@ -309,6 +330,7 @@ Handle by:
 - [ ] Retries configured (5xx/network only)
 - [ ] Exponential backoff with jitter
 - [ ] Max retry window and failure state defined
+- [ ] Dead-letter transition after the attempt ceiling, with an operator replay path
 
 ### Security
 

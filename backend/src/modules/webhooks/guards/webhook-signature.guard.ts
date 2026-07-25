@@ -3,6 +3,7 @@ import { Reflector } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import { Request } from 'express';
 import {
+  WEBHOOK_NONCE_HEADER,
   WEBHOOK_SIGNATURE_HEADER,
   WEBHOOK_TIMESTAMP_HEADER,
   WebhookSignatureService,
@@ -29,6 +30,7 @@ export class WebhookSignatureGuard implements CanActivate {
 
     const signature = request.header(WEBHOOK_SIGNATURE_HEADER);
     const timestamp = request.header(WEBHOOK_TIMESTAMP_HEADER);
+    const nonce = request.header(WEBHOOK_NONCE_HEADER);
     const payload = request.rawBody ?? JSON.stringify(request.body ?? {});
     const secret = this.configService.get<string>(secretConfigKey);
 
@@ -37,6 +39,8 @@ export class WebhookSignatureGuard implements CanActivate {
       signature,
       timestamp,
       secret,
+      undefined,
+      nonce,
     );
 
     return true;
