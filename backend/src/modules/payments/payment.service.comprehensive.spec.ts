@@ -25,6 +25,7 @@ import { StellarService } from '../stellar/services/stellar.service';
 import { LockService } from '../../common/lock';
 import { IdempotencyService } from '../../common/idempotency';
 import { FraudHooksService } from '../fraud/fraud-hooks.service';
+import { LedgerService } from './ledger.service';
 
 // ─── Mock Factories (fresh per test) ────────────────────────────────────────
 
@@ -85,12 +86,18 @@ describe('PaymentService – edge cases & isolation', () => {
     getTransactionByHash: jest.Mock;
   };
   let mockPaymentProcessing: { processRentPayment: jest.Mock };
+  let mockLedger: { recordOperation: jest.Mock };
 
   beforeEach(async () => {
     paymentRepo = makePaymentRepo();
     paymentMethodRepo = makePaymentMethodRepo();
     paymentScheduleRepo = makePaymentScheduleRepo();
     entityManager = makeEntityManager();
+    mockLedger = {
+      recordOperation: jest
+        .fn()
+        .mockResolvedValue({ entries: [], replay: false }),
+    };
 
     mockGateway = {
       chargePayment: jest.fn(),
@@ -147,6 +154,7 @@ describe('PaymentService – edge cases & isolation', () => {
           },
         },
         { provide: FraudHooksService, useValue: mockFraud },
+        { provide: LedgerService, useValue: mockLedger },
       ],
     }).compile();
 
@@ -174,7 +182,7 @@ describe('PaymentService – edge cases & isolation', () => {
       paymentRepo.create.mockImplementation(
         (d: Partial<Payment>) => d as Payment,
       );
-      paymentRepo.save.mockResolvedValue({
+      entityManager.save.mockResolvedValue({
         id: 'pay-1',
         amount: 200,
         currency: 'NGN',
@@ -465,7 +473,7 @@ describe('PaymentService – edge cases & isolation', () => {
       paymentRepo.create.mockImplementation(
         (d: Partial<Payment>) => d as Payment,
       );
-      paymentRepo.save.mockResolvedValue({
+      entityManager.save.mockResolvedValue({
         id: 'pay-1',
         amount: 100,
         currency: 'NGN',
@@ -481,11 +489,11 @@ describe('PaymentService – edge cases & isolation', () => {
         'user-1',
       );
 
-      expect(paymentRepo.save).toHaveBeenCalledTimes(1);
+      expect(entityManager.save).toHaveBeenCalledTimes(1);
 
       jest.clearAllMocks();
 
-      expect(paymentRepo.save).toHaveBeenCalledTimes(0);
+      expect(entityManager.save).toHaveBeenCalledTimes(0);
     });
 
     it('concurrent calls do not interfere with each other', async () => {
@@ -503,7 +511,7 @@ describe('PaymentService – edge cases & isolation', () => {
       paymentRepo.create.mockImplementation(
         (d: Partial<Payment>) => d as Payment,
       );
-      paymentRepo.save
+      entityManager.save
         .mockResolvedValueOnce({
           id: 'pay-A',
           amount: 100,

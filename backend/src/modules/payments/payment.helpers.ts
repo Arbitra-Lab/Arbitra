@@ -13,6 +13,57 @@ export function ensureUserId(userId: string): void {
   }
 }
 
+/** Rounds to the nearest cent, avoiding binary-float artifacts like 30.000000000000004. */
+export function roundMoney(value: number): number {
+  return Math.round((value + Number.EPSILON) * 100) / 100;
+}
+
+/**
+ * The amount actually available to a customer once a payment is captured —
+ * net of platform fees. Falls back to the gross amount when netAmount hasn't
+ * been recorded (e.g. legacy rows, or flows with zero fee).
+ */
+export function getNetCapturedAmount(payment: {
+  amount: number;
+  netAmount?: number | null;
+}): number {
+  const net = payment.netAmount;
+  return roundMoney(
+    Number(net === null || net === undefined ? payment.amount : net),
+  );
+}
+
+/** How much of a payment's net captured amount remains eligible for refund. */
+export function getRefundableAmount(payment: {
+  amount: number;
+  netAmount?: number | null;
+  refundAmount?: number | null;
+}): number {
+  const captured = getNetCapturedAmount(payment);
+  const alreadyRefunded = roundMoney(Number(payment.refundAmount ?? 0));
+  return roundMoney(captured - alreadyRefunded);
+}
+
+/**
+ * Refund guard: rejects a refund request that would push total refunds for a
+ * payment past its net captured amount, accounting for prior partial refunds.
+ */
+export function assertRefundWithinLimit(
+  payment: {
+    amount: number;
+    netAmount?: number | null;
+    refundAmount?: number | null;
+  },
+  requestedAmount: number,
+): void {
+  const refundable = getRefundableAmount(payment);
+  if (roundMoney(requestedAmount) > refundable + 0.005) {
+    throw new BadRequestException(
+      `Refund amount ${requestedAmount} exceeds refundable balance ${refundable.toFixed(2)}`,
+    );
+  }
+}
+
 export function getIdempotencyKey(dto: {
   idempotencyKey?: unknown;
 }): string | null {

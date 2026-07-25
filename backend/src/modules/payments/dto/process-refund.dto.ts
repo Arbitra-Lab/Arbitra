@@ -1,4 +1,10 @@
-import { IsNumber, Min, IsString, IsNotEmpty } from 'class-validator';
+import {
+  IsNumber,
+  Min,
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+} from 'class-validator';
 
 export class ProcessRefundDto {
   @IsNumber()
@@ -8,4 +14,9 @@ export class ProcessRefundDto {
   @IsString()
   @IsNotEmpty()
   reason: string;
+
+  /** Client-supplied key so a retried refund request doesn't double-refund. */
+  @IsString()
+  @IsOptional()
+  idempotencyKey?: string;
 }
