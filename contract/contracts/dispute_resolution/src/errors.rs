@@ -32,4 +32,14 @@ pub enum DisputeError {
     InvalidRating = 26,
     RateLimitExceeded = 27,
     CooldownNotMet = 28,
+    // Staked weighted voting (quorum + slashing)
+    InvalidQuorumConfig = 29,
+    InvalidStake = 30,
+    ArbiterNotAssigned = 31,
+    QuorumNotReached = 32,
+    VotingDeadlinePassed = 33,
+    DeadlineNotReached = 34,
+    AlreadyAssigned = 35,
+    AlreadyFinalized = 36,
+    NoArbitersAssigned = 37,
 }

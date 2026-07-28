@@ -242,6 +242,84 @@ pub fn get_vote(env: Env, agreement_id: String, arbiter: Address) -> Option<Vote
 ```
 Returns a specific vote for a dispute.
 
+## Staked Weighted Voting (Quorum & Slashing)
+
+This subsystem weights arbiter votes by economic stake and reputation, snapshots
+those weights at assignment time, enforces a quorum before a dispute can finalize,
+and penalizes assigned arbiters who never vote.
+
+### Voting weight
+
+Each arbiter has a stake profile (`ArbiterStake`) set by the admin via
+`set_arbiter_stake(arbiter, staked_amount, reputation_multiplier)`. The
+`reputation_multiplier` is scaled ×100 (100 = 1.00×, capped at 1000 = 10.00×).
+An arbiter's voting weight is:
+
+```
+weight = staked_amount × reputation_multiplier / 100
+```
+
+### Snapshotting (anti-gaming)
+
+`assign_dispute_arbiters(dispute_id, arbiters, voting_window_seconds)` freezes each
+assigned arbiter's `weight` and `staked_snapshot`, plus the total assigned weight,
+the quorum/slash parameters, and the voting deadline, into the `DisputeAssignment`
+and per-arbiter `AssignedArbiter` records. Because the dispute uses these snapshots,
+**changing an arbiter's stake after assignment has no effect on that dispute.**
+
+### Quorum
+
+`QuorumConfig.quorum_bps` is a fraction of total assigned weight (basis points,
+10000 = 100%; default 6000 = 60%). A dispute cannot finalize until the weight that
+has voted meets or exceeds `quorum_weight_required = total_weight × quorum_bps / 10000`.
+`quorum_bps` must be in `1..=10000`.
+
+### Finalization & outcome
+
+`finalize_dispute(dispute_id)` requires that the voting deadline has passed **and**
+that quorum has been met. The outcome is the side with the greater voted weight;
+ties break toward the earliest-cast vote.
+
+### Slashing rule (documented)
+
+On finalize, every assigned arbiter who did **not** cast a vote before the deadline is
+slashed by `QuorumConfig.slash_bps` (basis points; default 2000 = 20%) of their
+**snapshotted** stake:
+
+```
+slashed_i = staked_snapshot_i × slash_bps / 10000   (capped at the arbiter's available balance)
+```
+
+The entire slashed total is redistributed to the participating (voting) arbiters in
+proportion to their vote weight:
+
+```
+reward_j = total_slashed × weight_j / total_voted_weight
+```
+
+Any integer-division remainder is awarded to the first participant, so totals are
+conserved exactly: **sum(slashed) == sum(redistributed)**.
+
+### Read model
+
+`get_dispute_tally(dispute_id)` returns a `DisputeTally` with the per-side weighted
+tally, total assigned weight, voted weight, quorum requirement, `quorum_reached`,
+`finalized`/`outcome`, and a per-arbiter `participants` list (weight, `voted`, `vote`).
+
+### Methods
+
+| Method | Auth | Description |
+|--------|------|-------------|
+| `set_quorum_config(admin, config)` | admin | Set quorum/slash basis points |
+| `get_quorum_config()` | — | Read quorum/slash config |
+| `set_arbiter_stake(admin, arbiter, staked_amount, reputation_multiplier)` | admin | Set an arbiter's stake profile |
+| `get_arbiter_stake(arbiter)` | — | Read an arbiter's stake profile |
+| `assign_dispute_arbiters(admin, dispute_id, arbiters, voting_window_seconds)` | admin | Assign arbiters and snapshot weights |
+| `cast_staked_vote(arbiter, dispute_id, vote)` | arbiter | Cast a staked-weighted vote |
+| `finalize_dispute(dispute_id)` | — | Finalize (quorum + slashing) after deadline |
+| `get_dispute_tally(dispute_id)` | — | Tally, quorum progress, participation |
+| `get_dispute_assignment(dispute_id)` | — | Assignment metadata |
+
 ## Error Codes
 
 | Code | Error | Description |
@@ -269,6 +347,18 @@ Returns a specific vote for a dispute.
 | 23 | AppealNotCancelable | Appeal cannot be canceled in current state |
 | 24 | TimeoutNotReached | Timeout threshold has not been reached |
 | 25 | InvalidTimeoutConfig | Timeout configuration contains invalid values |
+| 26 | InvalidRating | Arbiter rating out of range (0–100) |
+| 27 | RateLimitExceeded | Rate limit exceeded |
+| 28 | CooldownNotMet | Cooldown between calls not met |
+| 29 | InvalidQuorumConfig | quorum_bps outside 1..=10000 or slash_bps > 10000 |
+| 30 | InvalidStake | Negative stake or reputation multiplier out of range |
+| 31 | ArbiterNotAssigned | Arbiter not assigned to this dispute |
+| 32 | QuorumNotReached | Voted weight below the required quorum |
+| 33 | VotingDeadlinePassed | Vote cast after the voting deadline |
+| 34 | DeadlineNotReached | Finalize attempted before the deadline |
+| 35 | AlreadyAssigned | Dispute already has an assignment (or duplicate arbiter) |
+| 36 | AlreadyFinalized | Dispute assignment already finalized |
+| 37 | NoArbitersAssigned | No arbiters supplied at assignment |
 
 ## Events
 
@@ -301,6 +391,21 @@ Emitted when an appeal is resolved.
 
 ### AppealCancelled
 Emitted when an appeal is canceled.
+
+### ArbitersAssigned
+Emitted when arbiters are assigned to a dispute (includes total weight, quorum requirement, deadline).
+
+### StakedVoteCast
+Emitted when an assigned arbiter casts a staked-weighted vote.
+
+### ArbiterSlashed
+Emitted for each non-voting arbiter slashed at finalization.
+
+### SlashRedistributed
+Emitted for each participant receiving a share of the slashed total.
+
+### DisputeFinalized
+Emitted when a dispute is finalized (includes outcome, voted weight, total slashed).
 
 ## Usage Example
 

@@ -56,6 +56,129 @@ pub enum DisputeOutcome {
     FavorRespondent,
 }
 
+/// A `DisputeOutcome` that may be absent — used in stored `#[contracttype]` structs
+/// where soroban's XDR layer cannot represent `Option<DisputeOutcome>` directly.
+/// `None` means "no vote cast" (participation) or "not yet finalized" (assignment).
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum OptionalOutcome {
+    None,
+    FavorClaimant,
+    FavorRespondent,
+}
+
+impl OptionalOutcome {
+    pub fn from_outcome(outcome: DisputeOutcome) -> Self {
+        match outcome {
+            DisputeOutcome::FavorClaimant => OptionalOutcome::FavorClaimant,
+            DisputeOutcome::FavorRespondent => OptionalOutcome::FavorRespondent,
+        }
+    }
+
+    pub fn to_outcome(&self) -> Option<DisputeOutcome> {
+        match self {
+            OptionalOutcome::None => None,
+            OptionalOutcome::FavorClaimant => Some(DisputeOutcome::FavorClaimant),
+            OptionalOutcome::FavorRespondent => Some(DisputeOutcome::FavorRespondent),
+        }
+    }
+}
+
+// ── Staked Weighted Voting (quorum + slashing) ─────────────────────────────
+
+/// Per-arbiter economic profile used to derive staked voting weight.
+///
+/// `reputation_multiplier` is stored scaled ×100 (100 = 1.00×, 250 = 2.50×).
+/// The voting weight for an arbiter is
+///   `weight = staked_amount × reputation_multiplier / 100`.
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ArbiterStake {
+    /// Amount the arbiter currently has staked.
+    pub staked_amount: i128,
+    /// Reputation multiplier scaled ×100 (100 = 1.00×).
+    pub reputation_multiplier: u32,
+}
+
+/// Governance parameters for quorum gating and non-voter slashing.
+///
+/// Both fields are basis points (10000 = 100%).
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct QuorumConfig {
+    /// Fraction of total assigned weight that must vote before a dispute can finalize.
+    pub quorum_bps: u32,
+    /// Fraction of a non-voter's snapshotted stake that is slashed on finalize.
+    pub slash_bps: u32,
+}
+
+/// Snapshot of one arbiter's assignment to a dispute.
+///
+/// `weight` and `staked_snapshot` are frozen at assignment time so that stake
+/// changes made after assignment cannot alter this dispute's tally or slashing.
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct AssignedArbiter {
+    pub arbiter: Address,
+    /// `staked_amount × reputation_multiplier / 100`, snapshotted at assignment.
+    pub weight: i128,
+    /// `staked_amount` snapshotted at assignment; slashing base for non-voters.
+    pub staked_snapshot: i128,
+    pub voted: bool,
+    /// The cast vote, or `OptionalOutcome::None` until the arbiter votes.
+    pub vote: OptionalOutcome,
+    /// Ledger timestamp of the vote (0 until voted); used for tie-breaking.
+    pub voted_at: u64,
+}
+
+/// Assignment-level snapshot for a dispute's staked-weighted vote.
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct DisputeAssignment {
+    pub dispute_id: String,
+    pub arbiters: Vec<Address>,
+    /// Sum of all assigned arbiters' snapshotted weights.
+    pub total_weight: i128,
+    /// Quorum basis points snapshotted at assignment.
+    pub quorum_bps: u32,
+    /// Slash basis points snapshotted at assignment.
+    pub slash_bps: u32,
+    /// `total_weight × quorum_bps / 10000`, snapshotted at assignment.
+    pub quorum_weight_required: i128,
+    /// Voting window deadline; votes cast after this are rejected.
+    pub deadline: u64,
+    pub assigned_at: u64,
+    pub finalized: bool,
+    /// The finalized outcome, or `OptionalOutcome::None` while still open.
+    pub outcome: OptionalOutcome,
+}
+
+/// Per-arbiter participation row returned by `get_dispute_tally`.
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ArbiterParticipation {
+    pub arbiter: Address,
+    pub weight: i128,
+    pub voted: bool,
+    pub vote: OptionalOutcome,
+}
+
+/// Full tally + quorum progress snapshot returned by `get_dispute_tally`.
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct DisputeTally {
+    pub dispute_id: String,
+    pub w_votes_claimant: i128,
+    pub w_votes_respondent: i128,
+    pub total_assigned_weight: i128,
+    pub voted_weight: i128,
+    pub quorum_weight_required: i128,
+    pub quorum_reached: bool,
+    pub finalized: bool,
+    pub outcome: OptionalOutcome,
+    pub participants: Vec<ArbiterParticipation>,
+}
+
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ContractState {

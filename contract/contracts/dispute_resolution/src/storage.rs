@@ -20,6 +20,11 @@ pub enum DataKey {
     ArbiterStats(Address),
     WeightedVote(String, Address),
     WeightedDisputeVotes(String),
+    // Staked weighted voting (quorum + slashing)
+    ArbiterStake(Address),
+    QuorumConfig,
+    DisputeAssignment(String),
+    AssignedArbiter(String, Address),
     // Rate limiting
     RateLimitConfig,
     UserCallCount(Address, String),
