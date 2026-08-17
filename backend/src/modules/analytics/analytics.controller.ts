@@ -26,6 +26,13 @@ export class AnalyticsController {
     type: Number,
     description: 'Number of days to include in trend data (1-365)',
   })
+  @ApiQuery({
+    name: 'source',
+    required: false,
+    enum: ['auto', 'raw', 'rollup'],
+    description:
+      'Data source: auto (rollup when available), raw (always recompute), rollup (force rollup, falls back to raw)',
+  })
   async getLandlordDashboard(
     @CurrentUser() user: User,
     @Query() query: LandlordAnalyticsQueryDto,
@@ -33,6 +40,7 @@ export class AnalyticsController {
     return this.analyticsService.getLandlordDashboard(
       user.id,
       query.days ?? 30,
+      query.source ?? 'auto',
     );
   }
 }
