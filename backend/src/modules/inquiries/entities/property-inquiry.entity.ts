@@ -48,7 +48,8 @@ export class PropertyInquiry {
   })
   status: PropertyInquiryStatus;
 
-  @Column({ name: 'viewed_at', type: 'timestamp', nullable: true })
+  // `Date` normalizes to TIMESTAMP on postgres and DATETIME on sqlite.
+  @Column({ name: 'viewed_at', type: Date, nullable: true })
   viewedAt: Date | null;
 
   @CreateDateColumn({ name: 'created_at' })
