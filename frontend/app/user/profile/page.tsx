@@ -401,7 +401,9 @@ export default function UserProfilePage() {
                 <span className="font-semibold text-neutral-200/60">
                   Verification Progress
                 </span>
-                <span className="text-brand-accent font-bold">{kyc.progress}%</span>
+                <span className="text-brand-accent font-bold">
+                  {kyc.progress}%
+                </span>
               </div>
               <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
                 <div

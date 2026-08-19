@@ -280,7 +280,9 @@ export function DisputesList({ className = '' }: DisputesListProps) {
         {isLoading ? (
           <div className="p-12 flex items-center justify-center gap-3">
             <Loader2 className="w-6 h-6 animate-spin text-brand-accent" />
-            <span className="text-neutral-200/50">Loading your disputes...</span>
+            <span className="text-neutral-200/50">
+              Loading your disputes...
+            </span>
           </div>
         ) : disputes.length === 0 ? (
           <div className="p-16 text-center">

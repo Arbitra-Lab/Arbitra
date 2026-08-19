@@ -76,7 +76,9 @@ export function PaymentFlowWizard({
             {i > 0 && <ChevronRight size={14} className="shrink-0" />}
             <span
               className={
-                i <= stepIndex ? 'text-brand-accent font-medium' : 'text-slate-600'
+                i <= stepIndex
+                  ? 'text-brand-accent font-medium'
+                  : 'text-slate-600'
               }
             >
               {s === 'amount' ? 'Amount' : s === 'review' ? 'Review' : 'Sign'}

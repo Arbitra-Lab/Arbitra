@@ -137,7 +137,11 @@ export const UserManagementModal: React.FC<UserManagementModalProps> = ({
   };
 
   const roles = [
-    { value: 'user', label: 'User', color: 'bg-brand-accent/10 text-brand-accent' },
+    {
+      value: 'user',
+      label: 'User',
+      color: 'bg-brand-accent/10 text-brand-accent',
+    },
     { value: 'admin', label: 'Admin', color: 'bg-red-100 text-red-700' },
   ];
 

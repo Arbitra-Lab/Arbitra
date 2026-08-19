@@ -79,7 +79,9 @@ export function Sidebar({
                 <div className="flex items-center space-x-3">
                   <Icon
                     size={20}
-                    className={active ? 'text-brand-accent' : 'text-neutral-200/60'}
+                    className={
+                      active ? 'text-brand-accent' : 'text-neutral-200/60'
+                    }
                   />
                   <span>{item.name}</span>
                 </div>

@@ -151,7 +151,9 @@ export default function PwaController() {
       <div className="fixed inset-x-4 bottom-4 z-50 mx-auto max-w-md rounded-2xl border border-brand-accent/30 bg-slate-950/95 p-4 text-white shadow-2xl backdrop-blur">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-sm font-semibold text-brand-accent">Update ready</p>
+            <p className="text-sm font-semibold text-brand-accent">
+              Update ready
+            </p>
             <p className="mt-1 text-sm text-slate-200">
               A newer version of Arbitra is available.
             </p>
