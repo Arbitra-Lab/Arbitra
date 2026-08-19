@@ -62,12 +62,7 @@ fn raise_dispute_success_cross_contract_respondent() {
     let respondent = Address::generate(&env);
 
     let case_id = String::from_str(&env, "agr-respondent-1");
-    let case = sample_case(
-        &case_id,
-        &claimant,
-        &respondent,
-        CaseStatus::Active,
-    );
+    let case = sample_case(&case_id, &claimant, &respondent, CaseStatus::Active);
     put_case(&env, &case_registry, &case);
 
     client.initialize(&admin, &3, &case_registry);
@@ -95,12 +90,7 @@ fn raise_dispute_success_cross_contract_claimant() {
     let respondent = Address::generate(&env);
 
     let case_id = String::from_str(&env, "agr-claimant-1");
-    let case = sample_case(
-        &case_id,
-        &claimant,
-        &respondent,
-        CaseStatus::Active,
-    );
+    let case = sample_case(&case_id, &claimant, &respondent, CaseStatus::Active);
     put_case(&env, &case_registry, &case);
 
     client.initialize(&admin, &3, &case_registry);
@@ -122,12 +112,7 @@ fn raise_dispute_fails_invalid_details_hash() {
     let claimant = Address::generate(&env);
     let respondent = Address::generate(&env);
     let case_id = String::from_str(&env, "agr-empty-details");
-    let case = sample_case(
-        &case_id,
-        &claimant,
-        &respondent,
-        CaseStatus::Active,
-    );
+    let case = sample_case(&case_id, &claimant, &respondent, CaseStatus::Active);
     put_case(&env, &case_registry, &case);
 
     client.initialize(&admin, &3, &case_registry);
@@ -168,12 +153,7 @@ fn raise_dispute_fails_invalid_agreement_state() {
     let claimant = Address::generate(&env);
     let respondent = Address::generate(&env);
     let case_id = String::from_str(&env, "agr-draft");
-    let case = sample_case(
-        &case_id,
-        &claimant,
-        &respondent,
-        CaseStatus::Draft,
-    );
+    let case = sample_case(&case_id, &claimant, &respondent, CaseStatus::Draft);
     put_case(&env, &case_registry, &case);
 
     client.initialize(&admin, &3, &case_registry);
@@ -197,12 +177,7 @@ fn raise_dispute_fails_unauthorized_raiser() {
     let stranger = Address::generate(&env);
 
     let case_id = String::from_str(&env, "agr-stranger");
-    let case = sample_case(
-        &case_id,
-        &claimant,
-        &respondent,
-        CaseStatus::Active,
-    );
+    let case = sample_case(&case_id, &claimant, &respondent, CaseStatus::Active);
     put_case(&env, &case_registry, &case);
 
     client.initialize(&admin, &3, &case_registry);
@@ -224,12 +199,7 @@ fn raise_dispute_fails_when_dispute_already_exists() {
     let claimant = Address::generate(&env);
     let respondent = Address::generate(&env);
     let case_id = String::from_str(&env, "agr-dup");
-    let case = sample_case(
-        &case_id,
-        &claimant,
-        &respondent,
-        CaseStatus::Active,
-    );
+    let case = sample_case(&case_id, &claimant, &respondent, CaseStatus::Active);
     put_case(&env, &case_registry, &case);
 
     client.initialize(&admin, &3, &case_registry);
@@ -256,12 +226,7 @@ fn vote_on_dispute_happy_path_after_raise_dispute() {
     let arbiter = Address::generate(&env);
 
     let case_id = String::from_str(&env, "agr-vote-1");
-    let case = sample_case(
-        &case_id,
-        &claimant,
-        &respondent,
-        CaseStatus::Active,
-    );
+    let case = sample_case(&case_id, &claimant, &respondent, CaseStatus::Active);
     put_case(&env, &case_registry, &case);
 
     client.initialize(&admin, &3, &case_registry);
@@ -295,12 +260,7 @@ fn resolve_dispute_favor_claimant_after_raise_dispute() {
     let a3 = Address::generate(&env);
 
     let case_id = String::from_str(&env, "agr-resolve-ll");
-    let case = sample_case(
-        &case_id,
-        &claimant,
-        &respondent,
-        CaseStatus::Active,
-    );
+    let case = sample_case(&case_id, &claimant, &respondent, CaseStatus::Active);
     put_case(&env, &case_registry, &case);
 
     client.initialize(&admin, &3, &case_registry);
@@ -312,14 +272,8 @@ fn resolve_dispute_favor_claimant_after_raise_dispute() {
     let raise = client.try_raise_dispute(&respondent, &case_id, &details_hash);
     assert_eq!(raise, Ok(Ok(())));
 
-    assert_eq!(
-        client.try_vote_on_dispute(&a1, &case_id, &true),
-        Ok(Ok(()))
-    );
-    assert_eq!(
-        client.try_vote_on_dispute(&a2, &case_id, &true),
-        Ok(Ok(()))
-    );
+    assert_eq!(client.try_vote_on_dispute(&a1, &case_id, &true), Ok(Ok(())));
+    assert_eq!(client.try_vote_on_dispute(&a2, &case_id, &true), Ok(Ok(())));
     assert_eq!(
         client.try_vote_on_dispute(&a3, &case_id, &false),
         Ok(Ok(()))
@@ -343,12 +297,7 @@ fn resolve_dispute_insufficient_votes_after_raise_dispute() {
     let a1 = Address::generate(&env);
 
     let case_id = String::from_str(&env, "agr-resolve-insufficient");
-    let case = sample_case(
-        &case_id,
-        &claimant,
-        &respondent,
-        CaseStatus::Active,
-    );
+    let case = sample_case(&case_id, &claimant, &respondent, CaseStatus::Active);
     put_case(&env, &case_registry, &case);
 
     client.initialize(&admin, &3, &case_registry);
@@ -358,10 +307,7 @@ fn resolve_dispute_insufficient_votes_after_raise_dispute() {
     let raise = client.try_raise_dispute(&respondent, &case_id, &details_hash);
     assert_eq!(raise, Ok(Ok(())));
 
-    assert_eq!(
-        client.try_vote_on_dispute(&a1, &case_id, &true),
-        Ok(Ok(()))
-    );
+    assert_eq!(client.try_vote_on_dispute(&a1, &case_id, &true), Ok(Ok(())));
 
     let resolved = client.try_resolve_dispute(&case_id);
     assert_eq!(resolved, Err(Ok(DisputeError::InsufficientVotes)));

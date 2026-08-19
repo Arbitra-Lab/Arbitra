@@ -245,7 +245,8 @@ fn test_unassigned_arbiter_cannot_vote() {
 
     let outsider = Address::generate(&env);
     client.add_arbiter(&admin, &outsider);
-    let result = client.try_cast_staked_vote(&outsider, &dispute_id, &DisputeOutcome::FavorClaimant);
+    let result =
+        client.try_cast_staked_vote(&outsider, &dispute_id, &DisputeOutcome::FavorClaimant);
     assert_eq!(result, Err(Ok(DisputeError::ArbiterNotAssigned)));
 }
 

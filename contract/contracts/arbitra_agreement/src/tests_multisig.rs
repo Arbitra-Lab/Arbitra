@@ -3,7 +3,10 @@ use crate::{
     types::{ActionType, Config},
     Contract, ContractClient,
 };
-use soroban_sdk::{testutils::Address as _, Address, Bytes, Env, Vec};
+use soroban_sdk::{testutils::Address as _, testutils::Ledger as _, Address, Bytes, Env, Vec};
+
+// Must match multi_sig.rs's DEFAULT_TIMELOCK_DELAY.
+const DEFAULT_TIMELOCK_DELAY: u64 = 2 * 24 * 60 * 60;
 
 fn create_contract() -> (Env, ContractClient<'static>, Address) {
     let env = Env::default();
@@ -118,7 +121,7 @@ fn test_propose_action() {
 
     let _ = client.try_initialize_multisig(&admins, &2).unwrap();
 
-    let data = Bytes::new(&env);
+    let data = Bytes::from_array(&env, &[1, 2, 3]);
     let proposal_id = client
         .try_propose_action(&admin1, &ActionType::Pause, &None, &data, &None)
         .unwrap()
@@ -147,7 +150,7 @@ fn test_propose_action_not_admin() {
 
     let _ = client.try_initialize_multisig(&admins, &2).unwrap();
 
-    let data = Bytes::new(&env);
+    let data = Bytes::from_array(&env, &[1, 2, 3]);
     let result = client.try_propose_action(&non_admin, &ActionType::Pause, &None, &data, &None);
     assert_eq!(result, Err(Ok(AgreementError::Unauthorized)));
 }
@@ -167,7 +170,7 @@ fn test_approve_action() {
 
     let _ = client.try_initialize_multisig(&admins, &2).unwrap();
 
-    let data = Bytes::new(&env);
+    let data = Bytes::from_array(&env, &[1, 2, 3]);
     let proposal_id = client
         .try_propose_action(&admin1, &ActionType::Pause, &None, &data, &None)
         .unwrap()
@@ -195,7 +198,7 @@ fn test_approve_action_already_approved() {
 
     let _ = client.try_initialize_multisig(&admins, &2).unwrap();
 
-    let data = Bytes::new(&env);
+    let data = Bytes::from_array(&env, &[1, 2, 3]);
     let proposal_id = client
         .try_propose_action(&admin1, &ActionType::Pause, &None, &data, &None)
         .unwrap()
@@ -221,7 +224,7 @@ fn test_execute_action_sufficient_approvals() {
 
     let _ = client.try_initialize_multisig(&admins, &2).unwrap();
 
-    let data = Bytes::new(&env);
+    let data = Bytes::from_array(&env, &[1, 2, 3]);
     let proposal_id = client
         .try_propose_action(&admin1, &ActionType::Pause, &None, &data, &None)
         .unwrap()
@@ -229,6 +232,11 @@ fn test_execute_action_sufficient_approvals() {
 
     // Admin2 approves (now we have 2 approvals)
     let _ = client.try_approve_action(&admin2, &proposal_id).unwrap();
+
+    // Advance past the timelock delay before executing.
+    env.ledger().with_mut(|li| {
+        li.timestamp += DEFAULT_TIMELOCK_DELAY + 1;
+    });
 
     // Execute proposal
     let result = client.try_execute_action(&admin1, &proposal_id, &data);
@@ -253,7 +261,7 @@ fn test_execute_action_insufficient_approvals() {
 
     let _ = client.try_initialize_multisig(&admins, &3).unwrap(); // Require all 3
 
-    let data = Bytes::new(&env);
+    let data = Bytes::from_array(&env, &[1, 2, 3]);
     let proposal_id = client
         .try_propose_action(&admin1, &ActionType::Pause, &None, &data, &None)
         .unwrap()
@@ -277,14 +285,22 @@ fn test_execute_action_already_executed() {
 
     let _ = client.try_initialize_multisig(&admins, &2).unwrap();
 
-    let data = Bytes::new(&env);
+    let data = Bytes::from_array(&env, &[1, 2, 3]);
     let proposal_id = client
         .try_propose_action(&admin1, &ActionType::Pause, &None, &data, &None)
         .unwrap()
         .unwrap();
 
     let _ = client.try_approve_action(&admin2, &proposal_id).unwrap();
-    let _ = client.try_execute_action(&admin1, &proposal_id, &data).unwrap();
+
+    // Advance past the timelock delay before executing.
+    env.ledger().with_mut(|li| {
+        li.timestamp += DEFAULT_TIMELOCK_DELAY + 1;
+    });
+
+    let _ = client
+        .try_execute_action(&admin1, &proposal_id, &data)
+        .unwrap();
 
     // Try to execute again
     let result = client.try_execute_action(&admin1, &proposal_id, &data);
@@ -304,7 +320,7 @@ fn test_reject_action() {
 
     let _ = client.try_initialize_multisig(&admins, &2).unwrap();
 
-    let data = Bytes::new(&env);
+    let data = Bytes::from_array(&env, &[1, 2, 3]);
     let proposal_id = client
         .try_propose_action(&admin1, &ActionType::Pause, &None, &data, &None)
         .unwrap()
@@ -314,9 +330,10 @@ fn test_reject_action() {
     let result = client.try_cancel_action(&admin1, &proposal_id);
     assert!(result.is_ok());
 
-    // Proposal should no longer exist
-    let result = client.try_get_proposal(&proposal_id);
-    assert_eq!(result, Err(Ok(AgreementError::ProposalNotFound)));
+    // Proposal record persists (for audit/history) with status Cancelled,
+    // rather than being deleted.
+    let proposal = client.try_get_proposal(&proposal_id).unwrap().unwrap();
+    assert_eq!(proposal.status, crate::types::ProposalStatus::Cancelled);
 }
 
 #[test]
@@ -332,7 +349,7 @@ fn test_reject_action_not_proposer() {
 
     let _ = client.try_initialize_multisig(&admins, &2).unwrap();
 
-    let data = Bytes::new(&env);
+    let data = Bytes::from_array(&env, &[1, 2, 3]);
     let proposal_id = client
         .try_propose_action(&admin1, &ActionType::Pause, &None, &data, &None)
         .unwrap()
@@ -356,7 +373,7 @@ fn test_get_active_proposals() {
 
     let _ = client.try_initialize_multisig(&admins, &2).unwrap();
 
-    let data = Bytes::new(&env);
+    let data = Bytes::from_array(&env, &[1, 2, 3]);
 
     let proposal_id1 = client
         .try_propose_action(&admin1, &ActionType::UpdateConfig, &None, &data, &None)
@@ -399,7 +416,7 @@ fn test_get_proposal_count() {
 
     assert_eq!(client.get_proposal_count(), 0);
 
-    let data = Bytes::new(&env);
+    let data = Bytes::from_array(&env, &[1, 2, 3]);
     client
         .try_propose_action(&admin1, &ActionType::Pause, &None, &data, &None)
         .unwrap()
@@ -477,7 +494,7 @@ fn test_proposal_workflow_end_to_end() {
     let _ = client.try_initialize_multisig(&admins, &2).unwrap();
 
     // Step 1: Admin1 proposes an action
-    let data = Bytes::new(&env);
+    let data = Bytes::from_array(&env, &[1, 2, 3]);
     let proposal_id = client
         .try_propose_action(&admin1, &ActionType::UpdateConfig, &None, &data, &None)
         .unwrap()
@@ -497,7 +514,11 @@ fn test_proposal_workflow_end_to_end() {
     assert_eq!(proposal.approval_count, 2);
 
     // Step 3: Execute with sufficient approvals
-    // Need to provide the payload that matches the proposal
+    // Need to provide the payload that matches the proposal, after the
+    // timelock delay has elapsed.
+    env.ledger().with_mut(|li| {
+        li.timestamp += DEFAULT_TIMELOCK_DELAY + 1;
+    });
     let result = client.try_execute_action(&admin1, &proposal_id, &data);
     assert!(result.is_ok());
 

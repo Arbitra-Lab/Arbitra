@@ -34,9 +34,9 @@ pub use errors::PaymentError;
 pub use payment_impl::{calculate_payment_split, calculate_rent_for_period, create_payment_record};
 pub use storage::DataKey;
 pub use types::{
-    EscalationType, ExecutionStatus, FeeQuote, FeeSchedule, FeeTier, LateFeeConfig,
-    LateFeeRecord, PayerDiscount, PaymentExecution, PaymentFrequency, PaymentRecord,
-    PaymentSplit, RecurringPayment, RecurringPaymentEvent, RecurringStatus, RentEscalationConfig,
+    EscalationType, ExecutionStatus, FeeQuote, FeeSchedule, FeeTier, LateFeeConfig, LateFeeRecord,
+    PayerDiscount, PaymentExecution, PaymentFrequency, PaymentRecord, PaymentSplit,
+    RecurringPayment, RecurringPaymentEvent, RecurringStatus, RentEscalationConfig,
 };
 
 use crate::errors::PaymentError as Error;

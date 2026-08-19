@@ -40,7 +40,11 @@ pub fn get_rate_limit_config(env: &Env) -> RateLimitConfig {
 /// 1. Per-block global rate limiting
 /// 2. Per-user daily rate limiting
 /// 3. Cooldown period enforcement
-pub fn check_rate_limit(env: &Env, user: &Address, function_name: &str) -> Result<(), AgreementError> {
+pub fn check_rate_limit(
+    env: &Env,
+    user: &Address,
+    function_name: &str,
+) -> Result<(), AgreementError> {
     let config = get_rate_limit_config(env);
     let current_block = env.ledger().sequence() as u64;
 

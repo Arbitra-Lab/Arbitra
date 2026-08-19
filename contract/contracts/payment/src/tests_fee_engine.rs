@@ -178,7 +178,7 @@ fn test_quote_fee_zero_discount_matches_undiscounted_tier_rate() {
 fn test_quote_fee_rounds_half_to_even_down() {
     let env = Env::default();
     let schedule = tiers(&env, &[(0, 50)]); // 0.5%
-    // 100 * 50 / 10_000 = 0.5 exactly -> ties to even quotient (0)
+                                            // 100 * 50 / 10_000 = 0.5 exactly -> ties to even quotient (0)
     let quote = quote_fee_with_schedule(&schedule, 0, 100).unwrap();
     assert_eq!(quote.fee, 0);
     assert_eq!(quote.net, 100);
@@ -188,7 +188,7 @@ fn test_quote_fee_rounds_half_to_even_down() {
 fn test_quote_fee_rounds_half_to_even_up() {
     let env = Env::default();
     let schedule = tiers(&env, &[(0, 50)]); // 0.5%
-    // 300 * 50 / 10_000 = 1.5 exactly -> ties to even quotient (2)
+                                            // 300 * 50 / 10_000 = 1.5 exactly -> ties to even quotient (2)
     let quote = quote_fee_with_schedule(&schedule, 0, 300).unwrap();
     assert_eq!(quote.fee, 2);
     assert_eq!(quote.net, 298);
@@ -287,8 +287,14 @@ fn test_pay_rent_routes_through_fee_engine() {
 
     soroban_sdk::token::StellarAssetClient::new(&env, &token).mint(&tenant, &1_000_000);
 
-    let agreement =
-        create_test_agreement(&env, "agr_fee_1", &tenant, &landlord, 100_000, token.clone());
+    let agreement = create_test_agreement(
+        &env,
+        "agr_fee_1",
+        &tenant,
+        &landlord,
+        100_000,
+        token.clone(),
+    );
     seed_agreement(&env, &client, "agr_fee_1", &agreement);
 
     client.set_platform_fee_collector(&platform);
@@ -336,8 +342,14 @@ fn test_recurring_payment_batch_fee_conservation() {
     // Give tenant_c a partial discount to exercise stacking within the batch.
     client.set_payer_discount(&admin, &tenant_c, &20);
 
-    let agreement_a =
-        create_test_agreement(&env, "agr_batch_a", &tenant_a, &landlord_a, 500, token.clone());
+    let agreement_a = create_test_agreement(
+        &env,
+        "agr_batch_a",
+        &tenant_a,
+        &landlord_a,
+        500,
+        token.clone(),
+    );
     let agreement_b = create_test_agreement(
         &env,
         "agr_batch_b",

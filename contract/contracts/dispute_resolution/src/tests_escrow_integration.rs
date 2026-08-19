@@ -33,7 +33,9 @@ fn raise_dispute_against_escrow_case() {
     let beneficiary = Address::generate(&env);
     let arbiter = Address::generate(&env);
     let token_admin = Address::generate(&env);
-    let token = env.register_stellar_asset_contract_v2(token_admin).address();
+    let token = env
+        .register_stellar_asset_contract_v2(token_admin)
+        .address();
 
     // A plain 2-party escrow (freelance/trade-finance style): no platform
     // governance or agent referral cut, funds go entirely to the beneficiary.
@@ -81,7 +83,9 @@ fn raise_dispute_fails_for_unrelated_party() {
     let beneficiary = Address::generate(&env);
     let arbiter = Address::generate(&env);
     let token_admin = Address::generate(&env);
-    let token = env.register_stellar_asset_contract_v2(token_admin).address();
+    let token = env
+        .register_stellar_asset_contract_v2(token_admin)
+        .address();
 
     // A plain 2-party escrow (freelance/trade-finance style): no platform
     // governance or agent referral cut, funds go entirely to the beneficiary.

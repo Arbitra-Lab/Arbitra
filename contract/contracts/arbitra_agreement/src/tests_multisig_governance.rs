@@ -108,7 +108,7 @@ fn test_propose_add_admin() {
         &ActionType::AddAdmin,
         &Some(new_admin.clone()),
         &data,
-        &Some(0),  // No timelock for testing
+        &Some(0), // No timelock for testing
     );
 
     assert!(result.is_ok());
@@ -135,13 +135,15 @@ fn test_prevent_double_execution() {
             &ActionType::AddAdmin,
             &Some(new_admin.clone()),
             &data,
-            &Some(0),  // No timelock for testing
+            &Some(0), // No timelock for testing
         )
         .unwrap()
         .unwrap();
 
     let _ = client.try_approve_action(&admin2, &proposal_id).unwrap();
-    let _ = client.try_execute_action(&admin1, &proposal_id, &data).unwrap();
+    let _ = client
+        .try_execute_action(&admin1, &proposal_id, &data)
+        .unwrap();
 
     let result = client.try_execute_action(&admin1, &proposal_id, &data);
     assert!(result.is_err());
@@ -202,7 +204,7 @@ fn test_approve_and_execute_workflow() {
             &ActionType::AddAdmin,
             &Some(new_admin.clone()),
             &data,
-            &Some(0),  // No timelock for testing
+            &Some(0), // No timelock for testing
         )
         .unwrap()
         .unwrap();

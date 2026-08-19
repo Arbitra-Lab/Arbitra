@@ -121,7 +121,7 @@ pub fn require_admin(env: &Env, caller: &Address) -> Result<(), AgreementError> 
 // ─── Proposal Lifecycle ──────────────────────────────────────────────────
 
 /// Propose an admin action with timelock and payload hash verification
-/// 
+///
 /// Creates a new proposal with:
 /// - Payload hash bound to the proposal
 /// - Configurable timelock delay before execution is allowed
@@ -217,7 +217,7 @@ pub fn propose_action(
 }
 
 /// Approve a proposal
-/// 
+///
 /// Multiple admins must approve before a proposal can be executed. Once
 /// the required signatures are reached, the timelock countdown begins.
 pub fn approve_action(

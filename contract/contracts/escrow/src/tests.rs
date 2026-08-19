@@ -1781,8 +1781,7 @@ fn test_release_rent_no_fees_beneficiary_gets_all() {
     let env = Env::default();
     env.mock_all_auths();
 
-    let (client, depositor, beneficiary, arbiter, _, _, token_address) =
-        setup_test_with_fees(&env);
+    let (client, depositor, beneficiary, arbiter, _, _, token_address) = setup_test_with_fees(&env);
     let amount = 1000i128;
 
     // A plain 2-party escrow (freelance/trade-finance/insurance style): no

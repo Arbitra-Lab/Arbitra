@@ -943,10 +943,7 @@ pub fn resolve_dispute_weighted(
 
     let total_weight = wdisp.w_votes_claimant + wdisp.w_votes_respondent;
 
-    let outcome = match wdisp
-        .w_votes_claimant
-        .cmp(&wdisp.w_votes_respondent)
-    {
+    let outcome = match wdisp.w_votes_claimant.cmp(&wdisp.w_votes_respondent) {
         core::cmp::Ordering::Greater => DisputeOutcome::FavorClaimant,
         core::cmp::Ordering::Less => DisputeOutcome::FavorRespondent,
         core::cmp::Ordering::Equal => {
@@ -1220,7 +1217,9 @@ pub fn assign_dispute_arbiters(
             voted_at: 0,
         };
         env.storage().persistent().set(&aa_key, &assigned);
-        env.storage().persistent().extend_ttl(&aa_key, 500000, 500000);
+        env.storage()
+            .persistent()
+            .extend_ttl(&aa_key, 500000, 500000);
     }
 
     let quorum_weight_required = total_weight * (config.quorum_bps as i128) / BPS_DENOMINATOR;
@@ -1241,7 +1240,13 @@ pub fn assign_dispute_arbiters(
     env.storage().persistent().set(&key, &assignment);
     env.storage().persistent().extend_ttl(&key, 500000, 500000);
 
-    events::arbiters_assigned(env, dispute_id, total_weight, quorum_weight_required, deadline);
+    events::arbiters_assigned(
+        env,
+        dispute_id,
+        total_weight,
+        quorum_weight_required,
+        deadline,
+    );
 
     Ok(())
 }
@@ -1292,7 +1297,9 @@ pub fn cast_staked_vote(
     assigned.voted_at = env.ledger().timestamp();
     let weight = assigned.weight;
     env.storage().persistent().set(&aa_key, &assigned);
-    env.storage().persistent().extend_ttl(&aa_key, 500000, 500000);
+    env.storage()
+        .persistent()
+        .extend_ttl(&aa_key, 500000, 500000);
 
     events::staked_vote_cast(env, dispute_id, arbiter, weight);
 
@@ -1359,7 +1366,10 @@ pub fn finalize_dispute(env: &Env, dispute_id: String) -> Result<DisputeOutcome,
         let assigned: AssignedArbiter = env
             .storage()
             .persistent()
-            .get(&DataKey::AssignedArbiter(dispute_id.clone(), arbiter.clone()))
+            .get(&DataKey::AssignedArbiter(
+                dispute_id.clone(),
+                arbiter.clone(),
+            ))
             .ok_or(DisputeError::ArbiterNotAssigned)?;
         if assigned.voted {
             voted_weight += assigned.weight;
@@ -1392,7 +1402,10 @@ pub fn finalize_dispute(env: &Env, dispute_id: String) -> Result<DisputeOutcome,
         let assigned: AssignedArbiter = env
             .storage()
             .persistent()
-            .get(&DataKey::AssignedArbiter(dispute_id.clone(), arbiter.clone()))
+            .get(&DataKey::AssignedArbiter(
+                dispute_id.clone(),
+                arbiter.clone(),
+            ))
             .ok_or(DisputeError::ArbiterNotAssigned)?;
         if !assigned.voted {
             let slash = assigned.staked_snapshot * (assignment.slash_bps as i128) / BPS_DENOMINATOR;
@@ -1416,7 +1429,10 @@ pub fn finalize_dispute(env: &Env, dispute_id: String) -> Result<DisputeOutcome,
             let assigned: AssignedArbiter = env
                 .storage()
                 .persistent()
-                .get(&DataKey::AssignedArbiter(dispute_id.clone(), arbiter.clone()))
+                .get(&DataKey::AssignedArbiter(
+                    dispute_id.clone(),
+                    arbiter.clone(),
+                ))
                 .ok_or(DisputeError::ArbiterNotAssigned)?;
             if assigned.voted {
                 if first_voter.is_none() {
@@ -1450,11 +1466,7 @@ pub fn finalize_dispute(env: &Env, dispute_id: String) -> Result<DisputeOutcome,
 
     // Mark the underlying dispute resolved for downstream consumers, if present.
     let dispute_key = DataKey::Dispute(dispute_id.clone());
-    if let Some(mut dispute) = env
-        .storage()
-        .persistent()
-        .get::<_, Dispute>(&dispute_key)
-    {
+    if let Some(mut dispute) = env.storage().persistent().get::<_, Dispute>(&dispute_key) {
         if !dispute.resolved {
             dispute.resolved = true;
             dispute.resolved_at = Some(now);
@@ -1465,7 +1477,13 @@ pub fn finalize_dispute(env: &Env, dispute_id: String) -> Result<DisputeOutcome,
         }
     }
 
-    events::dispute_finalized(env, dispute_id, outcome.clone(), voted_weight, total_slashed);
+    events::dispute_finalized(
+        env,
+        dispute_id,
+        outcome.clone(),
+        voted_weight,
+        total_slashed,
+    );
 
     Ok(outcome)
 }
@@ -1488,7 +1506,10 @@ pub fn get_dispute_tally(env: &Env, dispute_id: String) -> Result<DisputeTally, 
         let assigned: AssignedArbiter = env
             .storage()
             .persistent()
-            .get(&DataKey::AssignedArbiter(dispute_id.clone(), arbiter.clone()))
+            .get(&DataKey::AssignedArbiter(
+                dispute_id.clone(),
+                arbiter.clone(),
+            ))
             .ok_or(DisputeError::ArbiterNotAssigned)?;
         if assigned.voted {
             voted_weight += assigned.weight;

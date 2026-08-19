@@ -73,8 +73,8 @@ pub use types::{
     ActionType, AdminProposal, AgreementExtension, AgreementInput, AgreementStatus, AgreementTerms,
     AgreementWithToken, Attribute, Config, ContractState, ContractUpgradeProposal, ContractVersion,
     ErrorContext, ExtensionHistory, ExtensionStatus, MultiSigConfig, PauseState, PaymentSplit,
-    ProposalStatus, RateLimitConfig, RateLimitReason, RentAgreement, SupportedToken, TimelockAction,
-    TimelockActionType, TokenExchangeRate, UserCallCount, VersionStatus,
+    ProposalStatus, RateLimitConfig, RateLimitReason, RentAgreement, SupportedToken,
+    TimelockAction, TimelockActionType, TokenExchangeRate, UserCallCount, VersionStatus,
 };
 
 /// Arbitra rental agreement contract.
@@ -674,7 +674,11 @@ impl Contract {
     /// Freeze escrow funds for a specific agreement.
     ///
     /// Can be called by system admin or a configured multi-sig admin (DAO-voted entity).
-    pub fn freeze_escrow(env: Env, caller: Address, escrow_id: String) -> Result<(), AgreementError> {
+    pub fn freeze_escrow(
+        env: Env,
+        caller: Address,
+        escrow_id: String,
+    ) -> Result<(), AgreementError> {
         caller.require_auth();
         let state = Self::get_state(env.clone()).ok_or(AgreementError::InvalidState)?;
         let is_system_admin = caller == state.admin;
@@ -874,7 +878,10 @@ impl Contract {
         agreement::get_extension_history(&env, agreement_id)
     }
 
-    pub fn get_current_agreement_end(env: Env, agreement_id: String) -> Result<u64, AgreementError> {
+    pub fn get_current_agreement_end(
+        env: Env,
+        agreement_id: String,
+    ) -> Result<u64, AgreementError> {
         agreement::get_current_agreement_end(&env, agreement_id)
     }
 
@@ -1150,7 +1157,10 @@ impl Contract {
     }
 
     /// Retrieve a timelock action by ID.
-    pub fn get_timelock_action(env: Env, action_id: String) -> Result<TimelockAction, AgreementError> {
+    pub fn get_timelock_action(
+        env: Env,
+        action_id: String,
+    ) -> Result<TimelockAction, AgreementError> {
         timelock::get_action(&env, action_id)
     }
 

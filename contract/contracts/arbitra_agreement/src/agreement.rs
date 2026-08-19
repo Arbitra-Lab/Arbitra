@@ -49,7 +49,10 @@ pub fn validate_agreement_params(
 
 /// Create a new rent agreement
 #[allow(clippy::too_many_arguments)]
-pub fn create_agreement(env: &Env, input: crate::types::AgreementInput) -> Result<(), AgreementError> {
+pub fn create_agreement(
+    env: &Env,
+    input: crate::types::AgreementInput,
+) -> Result<(), AgreementError> {
     // Tenant MUST authorize creation
     input.user.require_auth();
 
@@ -146,7 +149,11 @@ fn create_agreement_internal(
 }
 
 /// Sign an agreement as the tenant
-pub fn sign_agreement(env: &Env, user: Address, agreement_id: String) -> Result<(), AgreementError> {
+pub fn sign_agreement(
+    env: &Env,
+    user: Address,
+    agreement_id: String,
+) -> Result<(), AgreementError> {
     // Tenant MUST authorize signing
     user.require_auth();
 
@@ -560,7 +567,11 @@ pub fn release_escrow_with_token(
     Ok(())
 }
 
-pub fn set_escrow_frozen(env: &Env, escrow_id: String, is_frozen: bool) -> Result<(), AgreementError> {
+pub fn set_escrow_frozen(
+    env: &Env,
+    escrow_id: String,
+    is_frozen: bool,
+) -> Result<(), AgreementError> {
     if !env
         .storage()
         .persistent()
@@ -824,7 +835,10 @@ pub fn cancel_extension(
     Ok(())
 }
 
-pub fn get_extension(env: &Env, extension_id: String) -> Result<AgreementExtension, AgreementError> {
+pub fn get_extension(
+    env: &Env,
+    extension_id: String,
+) -> Result<AgreementExtension, AgreementError> {
     env.storage()
         .persistent()
         .get(&DataKey::AgreementExtension(extension_id))

@@ -195,7 +195,10 @@ pub fn quote_fee_with_schedule(
     let effective_bps = tier_bps.saturating_sub(discount_bps);
 
     let full_fee = round_half_even(amount.saturating_mul(tier_bps as i128), BPS_DENOMINATOR);
-    let fee = round_half_even(amount.saturating_mul(effective_bps as i128), BPS_DENOMINATOR);
+    let fee = round_half_even(
+        amount.saturating_mul(effective_bps as i128),
+        BPS_DENOMINATOR,
+    );
     let discount = full_fee - fee;
     let net = amount - fee;
 
