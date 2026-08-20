@@ -29,6 +29,41 @@ pub struct PropertyVerified {
     pub property_id: String,
 }
 
+/// Event emitted when a transfer is proposed
+/// Topics: ["transfer_proposed", property_id: String, current_owner: Address, proposed_new_owner: Address]
+#[contractevent(topics = ["transfer_proposed"])]
+pub struct TransferProposed {
+    #[topic]
+    pub property_id: String,
+    #[topic]
+    pub current_owner: Address,
+    #[topic]
+    pub proposed_new_owner: Address,
+    pub escrow_case_id: Option<String>,
+}
+
+/// Event emitted when a transfer is completed
+/// Topics: ["transfer_completed", property_id: String, previous_owner: Address, new_owner: Address]
+#[contractevent(topics = ["transfer_completed"])]
+pub struct TransferCompleted {
+    #[topic]
+    pub property_id: String,
+    #[topic]
+    pub previous_owner: Address,
+    #[topic]
+    pub new_owner: Address,
+}
+
+/// Event emitted when a transfer proposal is cancelled
+/// Topics: ["transfer_cancelled", property_id: String, proposed_new_owner: Address]
+#[contractevent(topics = ["transfer_cancelled"])]
+pub struct TransferCancelled {
+    #[topic]
+    pub property_id: String,
+    #[topic]
+    pub proposed_new_owner: Address,
+}
+
 /// Helper function to emit contract initialized event
 pub(crate) fn contract_initialized(env: &Env, admin: Address) {
     ContractInitialized { admin }.publish(env);
@@ -52,4 +87,45 @@ pub(crate) fn property_registered(
 /// Helper function to emit property verified event
 pub(crate) fn property_verified(env: &Env, property_id: String, admin: Address) {
     PropertyVerified { admin, property_id }.publish(env);
+}
+
+/// Helper function to emit transfer proposed event
+pub(crate) fn transfer_proposed(
+    env: &Env,
+    property_id: String,
+    current_owner: Address,
+    proposed_new_owner: Address,
+    escrow_case_id: Option<String>,
+) {
+    TransferProposed {
+        property_id,
+        current_owner,
+        proposed_new_owner,
+        escrow_case_id,
+    }
+    .publish(env);
+}
+
+/// Helper function to emit transfer completed event
+pub(crate) fn transfer_completed(
+    env: &Env,
+    property_id: String,
+    previous_owner: Address,
+    new_owner: Address,
+) {
+    TransferCompleted {
+        property_id,
+        previous_owner,
+        new_owner,
+    }
+    .publish(env);
+}
+
+/// Helper function to emit transfer cancelled event
+pub(crate) fn transfer_cancelled(env: &Env, property_id: String, proposed_new_owner: Address) {
+    TransferCancelled {
+        property_id,
+        proposed_new_owner,
+    }
+    .publish(env);
 }

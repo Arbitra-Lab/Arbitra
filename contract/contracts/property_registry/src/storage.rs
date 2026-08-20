@@ -8,4 +8,5 @@ pub enum DataKey {
     Initialized,
     PropertyCount,
     UpgradeProposal(String),
+    TransferProposal(String),
 }
