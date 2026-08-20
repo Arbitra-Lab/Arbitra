@@ -244,6 +244,54 @@ pub enum RecurringPaymentEvent {
     },
 }
 
+// ─── Fee Split Configuration Types ────────────────────────────────────────────
+
+/// A single recipient in a fee split configuration with their basis points allocation
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct FeeSplitRecipient {
+    /// The recipient's address
+    pub address: Address,
+    /// The recipient's allocation in basis points (e.g., 5000 = 50%)
+    pub basis_points: u32,
+}
+
+/// Configuration for splitting fees/payments across multiple recipients
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct FeeSplitConfig {
+    /// Unique identifier for this split configuration
+    pub config_id: String,
+    /// Agreement ID this split configuration applies to
+    pub agreement_id: String,
+    /// List of recipients and their allocations
+    pub recipients: Vec<FeeSplitRecipient>,
+    /// When this configuration was created
+    pub created_at: u64,
+    /// Whether this configuration is active
+    pub active: bool,
+}
+
+/// Record of a single fee split execution during a payment
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct FeeSplitRecord {
+    /// The fee split configuration ID used
+    pub config_id: String,
+    /// The agreement ID
+    pub agreement_id: String,
+    /// The recipient who received funds
+    pub recipient: Address,
+    /// The basis points allocated to this recipient
+    pub basis_points: u32,
+    /// The amount transferred to this recipient
+    pub amount: i128,
+    /// When this split was executed
+    pub timestamp: u64,
+    /// Payment number this split is associated with
+    pub payment_number: u32,
+}
+
 // ─── Rate Limiting Types ──────────────────────────────────────────────────────
 
 #[contracttype]

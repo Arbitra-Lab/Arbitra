@@ -64,4 +64,16 @@ pub enum PaymentError {
     InvalidDiscount = 38,
     /// Caller is not authorized to perform this admin action
     NotAuthorized = 39,
+    /// Fee split config not found
+    FeeSplitConfigNotFound = 40,
+    /// Fee split recipients do not sum to 100% (10000 basis points)
+    InvalidFeeSplitTotal = 41,
+    /// Fee split has no recipients
+    EmptyFeeSplitRecipients = 42,
+    /// Fee split exceeds maximum number of recipients
+    TooManyFeeSplitRecipients = 43,
+    /// Fee split recipient has invalid basis points (> 10000)
+    InvalidRecipientBasisPoints = 44,
+    /// Duplicate recipient in fee split configuration
+    DuplicateFeeSplitRecipient = 45,
 }

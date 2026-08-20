@@ -41,4 +41,10 @@ pub enum DataKey {
     FeeSchedule,
     /// Per-payer fee discount, keyed by payer address
     PayerDiscount(Address),
+    /// Fee split configuration by config ID
+    FeeSplitConfig(String),
+    /// Fee split configuration by agreement ID (currently active split)
+    AgreementFeeSplit(String),
+    /// Fee split record for a payment
+    FeeSplitRecord(String, u32),
 }

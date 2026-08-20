@@ -173,3 +173,59 @@ pub(crate) fn recurring_payment_cancelled(env: &Env, recurring_id: String) {
 pub(crate) fn recurring_payment_failed(env: &Env, recurring_id: String) {
     RecurringPaymentFailed { recurring_id }.publish(env);
 }
+
+#[contractevent(topics = ["fee_split_config_set"])]
+pub struct FeeSplitConfigSet {
+    #[topic]
+    pub config_id: String,
+    #[topic]
+    pub agreement_id: String,
+    pub recipient_count: u32,
+}
+
+#[contractevent(topics = ["fee_split_executed"])]
+pub struct FeeSplitExecuted {
+    #[topic]
+    pub config_id: String,
+    #[topic]
+    pub agreement_id: String,
+    #[topic]
+    pub recipient: Address,
+    pub amount: i128,
+    pub basis_points: u32,
+    pub payment_number: u32,
+}
+
+pub(crate) fn fee_split_config_set(
+    env: &Env,
+    config_id: String,
+    agreement_id: String,
+    recipient_count: u32,
+) {
+    FeeSplitConfigSet {
+        config_id,
+        agreement_id,
+        recipient_count,
+    }
+    .publish(env);
+}
+
+pub(crate) fn fee_split_executed(
+    env: &Env,
+    config_id: String,
+    agreement_id: String,
+    recipient: Address,
+    amount: i128,
+    basis_points: u32,
+    payment_number: u32,
+) {
+    FeeSplitExecuted {
+        config_id,
+        agreement_id,
+        recipient,
+        amount,
+        basis_points,
+        payment_number,
+    }
+    .publish(env);
+}

@@ -1,10 +1,11 @@
 //! Payment processing implementation.
-use soroban_sdk::{Address, Env, String};
+use soroban_sdk::{Address, Env, String, Vec};
 
 use crate::errors::PaymentError;
 use crate::storage::DataKey;
 use crate::types::{
-    AgreementStatus, EscalationType, PaymentRecord, RentAgreement, RentEscalationConfig,
+    AgreementStatus, EscalationType, FeeSplitConfig, FeeSplitRecord, FeeSplitRecipient,
+    PaymentRecord, RentAgreement, RentEscalationConfig,
 };
 use crate::upgrade;
 
@@ -200,4 +201,203 @@ pub fn get_upgrade_proposal(
     proposal_id: String,
 ) -> Result<upgrade::UpgradeProposal, PaymentError> {
     upgrade::get_upgrade_proposal(&env, proposal_id)
+}
+
+// --- Fee Split Configuration Functions ---
+
+/// Validate a fee split configuration
+/// - Recipients list is not empty
+/// - No more than 10 recipients
+/// - No duplicate recipients
+/// - All basis points are <= 10000
+/// - Total basis points equals exactly 10000 (100%)
+pub fn validate_fee_split_config(recipients: &Vec<FeeSplitRecipient>) -> Result<(), PaymentError> {
+    // Check not empty
+    if recipients.is_empty() {
+        return Err(PaymentError::EmptyFeeSplitRecipients);
+    }
+
+    // Check maximum recipients (10)
+    if recipients.len() > 10 {
+        return Err(PaymentError::TooManyFeeSplitRecipients);
+    }
+
+    let mut total_bps: u32 = 0;
+
+    for i in 0..recipients.len() {
+        let recipient = recipients.get(i).unwrap();
+
+        // Check basis points are valid (0-10000)
+        if recipient.basis_points > 10000 {
+            return Err(PaymentError::InvalidRecipientBasisPoints);
+        }
+
+        // Check for duplicates
+        for j in 0..i {
+            let other = recipients.get(j).unwrap();
+            if other.address == recipient.address {
+                return Err(PaymentError::DuplicateFeeSplitRecipient);
+            }
+        }
+
+        // Sum basis points, checking for overflow
+        total_bps = total_bps.checked_add(recipient.basis_points)
+            .ok_or(PaymentError::InvalidFeeSplitTotal)?;
+    }
+
+    // Check that total equals 10000 (100%)
+    if total_bps != 10000 {
+        return Err(PaymentError::InvalidFeeSplitTotal);
+    }
+
+    Ok(())
+}
+
+/// Set or update a fee split configuration for an agreement
+pub fn set_fee_split_config(
+    env: Env,
+    config_id: String,
+    agreement_id: String,
+    recipients: Vec<FeeSplitRecipient>,
+) -> Result<(), PaymentError> {
+    // Validate the configuration
+    validate_fee_split_config(&recipients)?;
+
+    let timestamp = env.ledger().timestamp();
+
+    let config = FeeSplitConfig {
+        config_id: config_id.clone(),
+        agreement_id: agreement_id.clone(),
+        recipients: recipients.clone(),
+        created_at: timestamp,
+        active: true,
+    };
+
+    // Store the fee split configuration
+    env.storage()
+        .persistent()
+        .set(&DataKey::FeeSplitConfig(config_id.clone()), &config);
+
+    // Store as the current active split for this agreement
+    env.storage()
+        .persistent()
+        .set(&DataKey::AgreementFeeSplit(agreement_id.clone()), &config);
+
+    // Emit event
+    crate::events::fee_split_config_set(&env, config_id, agreement_id, recipients.len() as u32);
+
+    Ok(())
+}
+
+/// Get the active fee split configuration for an agreement
+pub fn get_fee_split_config(env: &Env, agreement_id: &String) -> Result<FeeSplitConfig, PaymentError> {
+    env.storage()
+        .persistent()
+        .get(&DataKey::AgreementFeeSplit(agreement_id.clone()))
+        .ok_or(PaymentError::FeeSplitConfigNotFound)
+}
+
+/// Calculate fee splits for a given amount based on configuration
+/// Returns a vector of (recipient_address, amount) tuples
+/// Handles rounding by assigning remainder to the last recipient
+pub fn calculate_fee_splits(
+    env: &Env,
+    amount: &i128,
+    recipients: &Vec<FeeSplitRecipient>,
+) -> Vec<(Address, i128)> {
+    let mut splits: Vec<(Address, i128)> = Vec::new(env);
+    let mut remaining_amount = *amount;
+
+    for index in 0..recipients.len() {
+        let recipient = recipients.get(index).unwrap();
+        let is_last = index == recipients.len() - 1;
+
+        let recipient_amount = if is_last {
+            // Assign remainder to last recipient to ensure exact distribution
+            remaining_amount
+        } else {
+            // Calculate: amount * basis_points / 10000
+            let calculated = (*amount * (recipient.basis_points as i128)) / 10000;
+            remaining_amount -= calculated;
+            calculated
+        };
+
+        splits.push_back((recipient.address.clone(), recipient_amount));
+    }
+
+    splits
+}
+
+/// Execute atomic fee split payment distribution
+/// Transfers funds from payer to all recipients according to the split configuration
+pub fn execute_fee_split_payment(
+    env: Env,
+    agreement_id: String,
+    token: Address,
+    total_amount: i128,
+    payer: Address,
+    payment_number: u32,
+) -> Result<(), PaymentError> {
+    use soroban_sdk::token::Client as TokenClient;
+
+    // Get the active fee split configuration
+    let config = get_fee_split_config(&env, &agreement_id)?;
+
+    // Validate amount is strictly positive
+    if total_amount <= 0 {
+        return Err(PaymentError::InvalidAmount);
+    }
+
+    // Calculate the splits
+    let splits = calculate_fee_splits(&env, &total_amount, &config.recipients);
+
+    // Execute atomic token transfers
+    let token_client = TokenClient::new(&env, &token);
+
+    // Transfer to each recipient
+    for i in 0..splits.len() {
+        let (recipient, amount) = splits.get(i).unwrap();
+        if amount > 0 {
+            token_client.transfer(&payer, recipient.clone(), &amount);
+
+            // Create and store fee split record
+            let record = FeeSplitRecord {
+                config_id: config.config_id.clone(),
+                agreement_id: agreement_id.clone(),
+                recipient: recipient.clone(),
+                basis_points: {
+                    // Find the corresponding basis points from config
+                    let mut bps = 0;
+                    for j in 0..config.recipients.len() {
+                        let rec = config.recipients.get(j).unwrap();
+                        if rec.address == recipient {
+                            bps = rec.basis_points;
+                            break;
+                        }
+                    }
+                    bps
+                },
+                amount,
+                timestamp: env.ledger().timestamp(),
+                payment_number,
+            };
+
+            env.storage()
+                .persistent()
+                .set(&DataKey::FeeSplitRecord(agreement_id.clone(), payment_number), &record);
+
+            // Emit fee split executed event
+            crate::events::fee_split_executed(
+                &env,
+                config.config_id.clone(),
+                agreement_id.clone(),
+                recipient.clone(),
+                amount,
+                record.basis_points,
+                payment_number,
+            );
+        }
+    }
+
+    Ok(())
 }
