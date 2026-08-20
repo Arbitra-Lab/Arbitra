@@ -31,12 +31,17 @@ mod tests_fee_engine;
 
 // Re-export public APIs
 pub use errors::PaymentError;
-pub use payment_impl::{calculate_payment_split, calculate_rent_for_period, create_payment_record};
+pub use payment_impl::{
+    calculate_fee_splits, calculate_payment_split, calculate_rent_for_period,
+    create_payment_record, execute_fee_split_payment, get_fee_split_config,
+    set_fee_split_config, validate_fee_split_config,
+};
 pub use storage::DataKey;
 pub use types::{
-    EscalationType, ExecutionStatus, FeeQuote, FeeSchedule, FeeTier, LateFeeConfig, LateFeeRecord,
-    PayerDiscount, PaymentExecution, PaymentFrequency, PaymentRecord, PaymentSplit,
-    RecurringPayment, RecurringPaymentEvent, RecurringStatus, RentEscalationConfig,
+    EscalationType, ExecutionStatus, FeeQuote, FeeSchedule, FeeSplitConfig, FeeSplitRecipient,
+    FeeSplitRecord, FeeTier, LateFeeConfig, LateFeeRecord, PayerDiscount, PaymentExecution,
+    PaymentFrequency, PaymentRecord, PaymentSplit, RecurringPayment, RecurringPaymentEvent,
+    RecurringStatus, RentEscalationConfig,
 };
 
 use crate::errors::PaymentError as Error;
@@ -1030,5 +1035,67 @@ impl PaymentContract {
             period_number + 1,
             &config,
         ))
+    }
+
+    // ─── Fee Split Configuration Functions ────────────────────────────────────
+
+    /// Set or update a fee split configuration for an agreement.
+    /// Only the landlord of the agreement may call this.
+    /// Recipients must total exactly 100% (10000 basis points).
+    pub fn set_fee_split_config(
+        env: Env,
+        agreement_id: String,
+        recipients: Vec<FeeSplitRecipient>,
+    ) -> Result<(), Error> {
+        let agreement: RentAgreement = env
+            .storage()
+            .persistent()
+            .get(&StorageKey::Agreement(agreement_id.clone()))
+            .ok_or(Error::AgreementNotFound)?;
+
+        agreement.landlord.require_auth();
+
+        let config_id = agreement_id.clone();
+        payment_impl::set_fee_split_config(env, config_id, agreement_id, recipients)
+    }
+
+    /// Get the active fee split configuration for an agreement.
+    pub fn get_fee_split_config(env: Env, agreement_id: String) -> Result<FeeSplitConfig, Error> {
+        payment_impl::get_fee_split_config(&env, &agreement_id)
+    }
+
+    /// Execute a payment with fee split distribution to multiple recipients.
+    /// Performs atomic transfers from payer to all recipients according to the
+    /// configured split. Must authorize the payer.
+    pub fn pay_with_fee_split(
+        env: Env,
+        agreement_id: String,
+        token: Address,
+        total_amount: i128,
+    ) -> Result<(), Error> {
+        // Load agreement to verify it exists and get payer
+        let agreement: RentAgreement = env
+            .storage()
+            .persistent()
+            .get(&StorageKey::Agreement(agreement_id.clone()))
+            .ok_or(Error::AgreementNotFound)?;
+
+        agreement.tenant.require_auth();
+
+        if agreement.status != AgreementStatus::Active {
+            return Err(Error::AgreementNotActive);
+        }
+
+        let payment_number = agreement.payment_history.len() + 1;
+
+        // Execute the fee split payment
+        payment_impl::execute_fee_split_payment(
+            env,
+            agreement_id,
+            token,
+            total_amount,
+            agreement.tenant.clone(),
+            payment_number,
+        )
     }
 }
