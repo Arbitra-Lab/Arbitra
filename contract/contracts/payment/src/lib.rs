@@ -29,6 +29,9 @@ mod tests_rate_limit;
 #[cfg(test)]
 mod tests_fee_engine;
 
+#[cfg(test)]
+mod tests_fee_split;
+
 // Re-export public APIs
 pub use errors::PaymentError;
 pub use payment_impl::{
