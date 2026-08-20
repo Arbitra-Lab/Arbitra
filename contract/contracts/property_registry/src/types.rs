@@ -17,3 +17,13 @@ pub struct ContractState {
     pub admin: Address,
     pub initialized: bool,
 }
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct TransferProposal {
+    pub property_id: String,
+    pub current_owner: Address,
+    pub proposed_new_owner: Address,
+    pub escrow_case_id: Option<String>,
+    pub proposed_at: u64,
+}

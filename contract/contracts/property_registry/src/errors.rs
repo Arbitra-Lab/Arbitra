@@ -12,4 +12,8 @@ pub enum PropertyError {
     AlreadyVerified = 6,
     InvalidPropertyId = 7,
     InvalidMetadata = 8,
+    TransferProposalPending = 9,
+    NoTransferProposal = 10,
+    InvalidNewOwner = 11,
+    EscrowNotSettled = 12,
 }
