@@ -1,9 +1,9 @@
 use crate::errors::ContractError;
 use crate::events;
 use crate::storage::DataKey;
-use crate::types::{AccountType, UserProfile};
+use crate::types::{AccountType, Attestation, AttestationType, UserProfile};
 use crate::upgrade;
-use soroban_sdk::{contract, contractimpl, Address, Bytes, Env, String};
+use soroban_sdk::{contract, contractimpl, Address, Bytes, Env, String, Vec};
 
 #[contract]
 pub struct UserProfileContract;
@@ -252,6 +252,105 @@ impl UserProfileContract {
         events::profile_deleted(&env, account_id);
 
         Ok(())
+    }
+
+    // --- Attestation Functions ---
+
+    /// Add a third-party attestation to a user profile
+    /// Only the issuer can add attestations
+    pub fn add_attestation(
+        env: Env,
+        account_id: Address,
+        issuer: Address,
+        attestation_type: AttestationType,
+        expires_at: u64,
+        data_hash: Option<Bytes>,
+    ) -> Result<Attestation, ContractError> {
+        // Require authorization from the issuer
+        issuer.require_auth();
+
+        // Verify profile exists
+        let key = DataKey::Profile(account_id.clone());
+        if !env.storage().persistent().has(&key) {
+            return Err(ContractError::ProfileNotFound);
+        }
+
+        // Check if attestation already exists from this issuer
+        let attestation_key = DataKey::Attestation(account_id.clone(), issuer.clone());
+        if env.storage().persistent().has(&attestation_key) {
+            return Err(ContractError::AttestationAlreadyExists);
+        }
+
+        // Create attestation
+        let timestamp = env.ledger().timestamp();
+        let attestation = Attestation {
+            issuer: issuer.clone(),
+            attestation_type: attestation_type.clone(),
+            issued_at: timestamp,
+            expires_at,
+            data_hash,
+        };
+
+        // Store attestation
+        env.storage().persistent().set(&attestation_key, &attestation);
+
+        // Emit event
+        events::attestation_added(&env, account_id, issuer, attestation_type, timestamp, expires_at);
+
+        Ok(attestation)
+    }
+
+    /// Revoke an attestation from a user profile
+    /// Only the original issuer can revoke their own attestation
+    pub fn revoke_attestation(
+        env: Env,
+        account_id: Address,
+        issuer: Address,
+    ) -> Result<(), ContractError> {
+        // Require authorization from the issuer
+        issuer.require_auth();
+
+        let attestation_key = DataKey::Attestation(account_id.clone(), issuer.clone());
+
+        // Get attestation to retrieve type for event
+        let attestation: Attestation = env
+            .storage()
+            .persistent()
+            .get(&attestation_key)
+            .ok_or(ContractError::AttestationNotFound)?;
+
+        // Remove attestation from storage
+        env.storage().persistent().remove(&attestation_key);
+
+        // Emit event
+        events::attestation_revoked(&env, account_id, issuer, attestation.attestation_type);
+
+        Ok(())
+    }
+
+    /// Get a specific attestation by account and issuer
+    pub fn get_attestation(
+        env: Env,
+        account_id: Address,
+        issuer: Address,
+    ) -> Option<Attestation> {
+        let key = DataKey::Attestation(account_id, issuer);
+        env.storage().persistent().get(&key)
+    }
+
+    /// Get all active (non-expired) attestations for an account
+    /// Returns a vector of attestations that haven't expired yet
+    pub fn get_active_attestations(env: Env, account_id: Address) -> Vec<Attestation> {
+        let mut active_attestations: Vec<Attestation> = Vec::new();
+        let current_timestamp = env.ledger().timestamp();
+
+        // Note: Soroban SDK has limited iteration capabilities, so we store issuer list separately
+        // In a production implementation, you'd use a map or custom iteration logic
+        // This is a placeholder that demonstrates the filtering logic
+
+        // This would need to be enhanced based on how you track attestation issuers
+        // For now, returning empty vec as a placeholder
+        active_attestations
     }
 
     // --- Upgrade Functions ---

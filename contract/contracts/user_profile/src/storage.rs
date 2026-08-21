@@ -15,4 +15,11 @@ pub enum DataKey {
 
     /// Upgrade proposal
     UpgradeProposal(String),
+
+    /// Attestation keyed by (account_id, issuer) for individual attestations
+    /// Stored as a composite key in persistent storage
+    Attestation(Address, Address),
+
+    /// List of all issuers for an account (used for iteration)
+    AttestationIssuers(Address),
 }
