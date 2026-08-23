@@ -42,8 +42,8 @@ pub struct DisputeResolved {
     pub votes_favor_respondent: u32,
 }
 
-#[contractevent(topics = ["appeal_created"])]
-pub struct AppealCreated {
+#[contractevent(topics = ["appeal_opened"])]
+pub struct AppealOpened {
     #[topic]
     pub appeal_id: String,
     #[topic]
@@ -122,8 +122,8 @@ pub(crate) fn dispute_resolved(
     .publish(env);
 }
 
-pub(crate) fn appeal_created(env: &Env, appeal_id: String, dispute_id: String) {
-    AppealCreated {
+pub(crate) fn appeal_opened(env: &Env, appeal_id: String, dispute_id: String) {
+    AppealOpened {
         appeal_id,
         dispute_id,
     }

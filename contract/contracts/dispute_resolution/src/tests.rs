@@ -203,6 +203,8 @@ fn setup_appeal_ready_dispute(
     let new_arbiter_1 = Address::generate(env);
     let new_arbiter_2 = Address::generate(env);
     let new_arbiter_3 = Address::generate(env);
+    let new_arbiter_4 = Address::generate(env);
+    let new_arbiter_5 = Address::generate(env);
 
     env.mock_all_auths();
     client.initialize(&admin, &3, &Address::generate(env));
@@ -213,6 +215,8 @@ fn setup_appeal_ready_dispute(
     client.add_arbiter(&admin, &new_arbiter_1);
     client.add_arbiter(&admin, &new_arbiter_2);
     client.add_arbiter(&admin, &new_arbiter_3);
+    client.add_arbiter(&admin, &new_arbiter_4);
+    client.add_arbiter(&admin, &new_arbiter_5);
 
     env.ledger().with_mut(|ledger| ledger.timestamp = 1_000_000);
 
@@ -254,17 +258,17 @@ fn test_appeal_creation_selects_new_arbiters_and_charges_fee() {
     let (client, appellant, dispute_id, _, _, _) = setup_appeal_ready_dispute(&env);
 
     let appeal_id = client
-        .try_create_appeal(
+        .try_appeal(
             &appellant,
             &dispute_id,
-            &String::from_str(&env, "appeal reason"),
+            &String::from_str(&env, "appeal reason"), &500,
         )
         .unwrap()
         .unwrap();
 
     let appeal = client.get_appeal(&appeal_id).unwrap();
     assert_eq!(appeal.status, AppealStatus::Pending);
-    assert_eq!(appeal.appeal_arbiters.len(), 3);
+    assert_eq!(appeal.appeal_arbiters.len(), 5);
 
     let dispute = client.get_dispute(&dispute_id).unwrap();
     for arbiter in appeal.appeal_arbiters.iter() {
@@ -275,9 +279,9 @@ fn test_appeal_creation_selects_new_arbiters_and_charges_fee() {
         let fee_paid: i128 = env
             .storage()
             .persistent()
-            .get(&DataKey::AppealFeePaid(appeal_id.clone()))
+            .get(&DataKey::AppealBondPaid(appeal_id.clone()))
             .unwrap();
-        assert_eq!(fee_paid, 100);
+        assert_eq!(fee_paid, 500);
     });
 }
 
@@ -288,10 +292,10 @@ fn test_appeal_voting_and_resolution_approved_refunds_fee() {
         setup_appeal_ready_dispute(&env);
 
     let appeal_id = client
-        .try_create_appeal(
+        .try_appeal(
             &appellant,
             &dispute_id,
-            &String::from_str(&env, "wrong original outcome"),
+            &String::from_str(&env, "wrong original outcome"), &500,
         )
         .unwrap()
         .unwrap();
@@ -316,7 +320,7 @@ fn test_appeal_voting_and_resolution_approved_refunds_fee() {
         let refunded: bool = env
             .storage()
             .persistent()
-            .get(&DataKey::AppealFeeRefunded(appeal_id.clone()))
+            .get(&DataKey::AppealBondRefunded(appeal_id.clone()))
             .unwrap();
         assert!(refunded);
     });
@@ -328,10 +332,10 @@ fn test_appeal_cancellation() {
     let (client, appellant, dispute_id, _, _, _) = setup_appeal_ready_dispute(&env);
 
     let appeal_id = client
-        .try_create_appeal(
+        .try_appeal(
             &appellant,
             &dispute_id,
-            &String::from_str(&env, "cancel this appeal"),
+            &String::from_str(&env, "cancel this appeal"), &500,
         )
         .unwrap()
         .unwrap();
@@ -359,12 +363,16 @@ fn test_appeal_window_expired() {
     let new_arbiter_1 = Address::generate(&env);
     let new_arbiter_2 = Address::generate(&env);
     let new_arbiter_3 = Address::generate(&env);
+    let new_arbiter_4 = Address::generate(&env);
+    let new_arbiter_5 = Address::generate(&env);
     client.add_arbiter(&admin, &old_arbiter_1);
     client.add_arbiter(&admin, &old_arbiter_2);
     client.add_arbiter(&admin, &old_arbiter_3);
     client.add_arbiter(&admin, &new_arbiter_1);
     client.add_arbiter(&admin, &new_arbiter_2);
     client.add_arbiter(&admin, &new_arbiter_3);
+    client.add_arbiter(&admin, &new_arbiter_4);
+    client.add_arbiter(&admin, &new_arbiter_5);
 
     env.ledger().with_mut(|ledger| ledger.timestamp = 2_000_000);
     env.as_contract(&client.address, || {
@@ -389,10 +397,10 @@ fn test_appeal_window_expired() {
             .set(&DataKey::Dispute(dispute_id.clone()), &dispute);
     });
 
-    let result = client.try_create_appeal(
+    let result = client.try_appeal(
         &appellant,
         &dispute_id,
-        &String::from_str(&env, "too late appeal"),
+        &String::from_str(&env, "too late appeal"), &500,
     );
     assert_eq!(result, Err(Ok(DisputeError::AppealWindowExpired)));
 }
@@ -756,3 +764,7 @@ fn test_dispute_timeout_not_reached() {
     let result = client.try_resolve_dispute_on_timeout(&case_id);
     assert_eq!(result, Err(Ok(DisputeError::TimeoutNotReached)));
 }
+
+
+
+

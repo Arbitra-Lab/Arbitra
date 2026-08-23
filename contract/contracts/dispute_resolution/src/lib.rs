@@ -27,7 +27,7 @@ mod tests_staked_voting;
 
 pub use dispute::{
     add_arbiter, assign_dispute_arbiters, calculate_voting_weight, cancel_appeal, cast_staked_vote,
-    create_appeal, finalize_dispute, get_appeal, get_arbiter, get_arbiter_count, get_arbiter_stake,
+    appeal, finalize_dispute, get_appeal, get_arbiter, get_arbiter_count, get_arbiter_stake,
     get_dispute, get_dispute_assignment, get_dispute_tally, get_dispute_votes_weighted,
     get_quorum_config, get_timeout_config, get_vote, get_voting_weight, raise_dispute,
     resolve_appeal, resolve_dispute, resolve_dispute_on_timeout, resolve_dispute_weighted,
@@ -232,13 +232,14 @@ impl DisputeResolutionContract {
         dispute::get_timeout_config(&env)
     }
 
-    pub fn create_appeal(
+    pub fn appeal(
         env: Env,
         appellant: Address,
         dispute_id: String,
         reason: String,
+        bond: i128,
     ) -> Result<String, DisputeError> {
-        dispute::create_appeal(&env, appellant, dispute_id, reason)
+        dispute::appeal(&env, appellant, dispute_id, reason, bond)
     }
 
     pub fn vote_on_appeal(

@@ -12,8 +12,8 @@ use crate::types::{
 };
 
 const APPEAL_WINDOW_SECONDS: u64 = 7 * 24 * 60 * 60;
-const APPEAL_MIN_ARBITERS: u32 = 3;
-const APPEAL_FEE: i128 = 100;
+const APPEAL_MIN_ARBITERS: u32 = 5;
+const MIN_APPEAL_BOND: i128 = 500;
 const DEFAULT_ESCROW_TIMEOUT_DAYS: u64 = 14;
 const DEFAULT_DISPUTE_TIMEOUT_DAYS: u64 = 30;
 const DEFAULT_PAYMENT_TIMEOUT_DAYS: u64 = 7;
@@ -391,17 +391,22 @@ pub fn get_vote(env: &Env, case_id: String, arbiter: Address) -> Option<Vote> {
     env.storage().persistent().get(&key)
 }
 
-pub fn create_appeal(
+pub fn appeal(
     env: &Env,
     appellant: Address,
     dispute_id: String,
     reason: String,
+    bond: i128,
 ) -> Result<String, DisputeError> {
     if !env.storage().persistent().has(&DataKey::Initialized) {
         return Err(DisputeError::NotInitialized);
     }
 
     appellant.require_auth();
+
+    if bond < MIN_APPEAL_BOND {
+        return Err(DisputeError::InvalidStake);
+    }
 
     if reason.is_empty() {
         return Err(DisputeError::InvalidDetailsHash);
@@ -509,12 +514,12 @@ pub fn create_appeal(
 
     env.storage()
         .persistent()
-        .set(&DataKey::AppealFeePaid(appeal_id.clone()), &APPEAL_FEE);
+        .set(&DataKey::AppealBondPaid(appeal_id.clone()), &bond);
     env.storage()
         .persistent()
-        .set(&DataKey::AppealFeeRefunded(appeal_id.clone()), &false);
+        .set(&DataKey::AppealBondRefunded(appeal_id.clone()), &false);
 
-    events::appeal_created(env, appeal_id.clone(), dispute_id);
+    events::appeal_opened(env, appeal_id.clone(), dispute_id);
 
     Ok(appeal_id)
 }
@@ -615,7 +620,7 @@ pub fn resolve_appeal(env: &Env, appeal_id: String) -> Result<(), DisputeError> 
         DisputeOutcome::FavorRespondent
     };
 
-    let dispute: Dispute = env
+    let mut dispute: Dispute = env
         .storage()
         .persistent()
         .get(&DataKey::Dispute(appeal.dispute_id.clone()))
@@ -629,12 +634,24 @@ pub fn resolve_appeal(env: &Env, appeal_id: String) -> Result<(), DisputeError> 
         appeal.status = AppealStatus::Approved;
         env.storage()
             .persistent()
-            .set(&DataKey::AppealFeeRefunded(appeal_id.clone()), &true);
+            .set(&DataKey::AppealBondRefunded(appeal_id.clone()), &true);
+            
+        // Overturn the original ruling
+        if appeal_outcome == DisputeOutcome::FavorClaimant {
+            dispute.votes_favor_claimant = appeal.votes.len();
+            dispute.votes_favor_respondent = 0;
+        } else {
+            dispute.votes_favor_claimant = 0;
+            dispute.votes_favor_respondent = appeal.votes.len();
+        }
+        env.storage()
+            .persistent()
+            .set(&DataKey::Dispute(appeal.dispute_id.clone()), &dispute);
     } else {
         appeal.status = AppealStatus::Rejected;
         env.storage()
             .persistent()
-            .set(&DataKey::AppealFeeRefunded(appeal_id.clone()), &false);
+            .set(&DataKey::AppealBondRefunded(appeal_id.clone()), &false);
     }
 
     appeal.resolved_at = Some(env.ledger().timestamp());
