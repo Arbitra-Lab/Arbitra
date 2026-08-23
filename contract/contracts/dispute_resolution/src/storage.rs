@@ -13,8 +13,8 @@ pub enum DataKey {
     Appeal(String),
     AppealForDispute(String),
     AppealCount,
-    AppealFeePaid(String),
-    AppealFeeRefunded(String),
+    AppealBondPaid(String),
+    AppealBondRefunded(String),
     TimeoutConfig,
     // Weighted voting
     ArbiterStats(Address),
