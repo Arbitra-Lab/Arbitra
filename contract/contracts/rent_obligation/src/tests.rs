@@ -9,6 +9,247 @@ fn create_contract(env: &Env) -> TokenizedRentObligationContractClient<'_> {
     TokenizedRentObligationContractClient::new(env, &contract_id)
 }
 
+const SECS_PER_DAY: u64 = 86400;
+
+fn make_tiers(env: &Env, pairs: &[(u32, i128)]) -> Vec<LateFeeTier> {
+    let mut tiers: Vec<LateFeeTier> = Vec::new(env);
+    for (min_days_overdue, fee_amount) in pairs {
+        tiers.push_back(LateFeeTier {
+            min_days_overdue: *min_days_overdue,
+            fee_amount: *fee_amount,
+        });
+    }
+    tiers
+}
+
+/// Sets up an obligation with a rent schedule due at `due_date = 1000`,
+/// a 3-day grace period, and a 3-tier progressive schedule capped at 300.
+fn setup_schedule(
+    env: &Env,
+    client: &TokenizedRentObligationContractClient<'_>,
+    agreement_id: &String,
+    landlord: &Address,
+) {
+    client.mint_obligation(agreement_id, landlord);
+
+    let tiers = make_tiers(
+        env,
+        &[
+            (0, 50),   // tier 1: 0-2 days over grace
+            (3, 150),  // tier 2: 3-6 days over grace
+            (7, 1000), // tier 3: 7+ days over grace (would exceed cap)
+        ],
+    );
+
+    client.configure_rent_schedule(
+        landlord,
+        agreement_id,
+        &1000i128,           // rent_amount
+        &1000u64,            // due_date
+        &2_592_000u64,       // period_secs (30 days)
+        &(3 * SECS_PER_DAY), // grace_period_secs
+        &tiers,
+        &300i128, // max_late_fee
+    );
+}
+
+#[test]
+fn test_late_fee_zero_within_grace() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let client = create_contract(&env);
+    client.initialize();
+
+    let landlord = Address::generate(&env);
+    let agreement_id = String::from_str(&env, "agreement_001");
+    setup_schedule(&env, &client, &agreement_id, &landlord);
+
+    // Still exactly at the due date: no fee.
+    env.ledger().with_mut(|li| {
+        li.timestamp = 1000;
+    });
+    let fee = client.record_payment(&agreement_id);
+    assert_eq!(fee, 0);
+    let state = client.get_late_fee_state(&agreement_id).unwrap();
+    assert_eq!(state.total_late_fees, 0);
+    assert_eq!(state.last_tier, 0);
+
+    // Exactly at the end of the grace window: still no fee.
+    env.ledger().with_mut(|li| {
+        li.timestamp = 1000 + 3 * SECS_PER_DAY;
+    });
+    let fee = client.record_payment(&agreement_id);
+    assert_eq!(fee, 0);
+
+    let all_events = env.events().all();
+    assert!(all_events.is_empty());
+}
+
+#[test]
+fn test_late_fee_tiered_progression() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let client = create_contract(&env);
+    client.initialize();
+
+    let landlord = Address::generate(&env);
+    let agreement_id = String::from_str(&env, "agreement_001");
+    setup_schedule(&env, &client, &agreement_id, &landlord);
+
+    // 1 day over grace -> tier 1 (fee 50).
+    env.ledger().with_mut(|li| {
+        li.timestamp = 1000 + 3 * SECS_PER_DAY + SECS_PER_DAY;
+    });
+    let fee = client.record_payment(&agreement_id);
+    assert_eq!(fee, 50);
+    assert_eq!(env.events().all().len(), 1);
+    let state = client.get_late_fee_state(&agreement_id).unwrap();
+    assert_eq!(state.last_tier, 1);
+    assert_eq!(state.total_late_fees, 50);
+
+    // 4 days over grace -> tier 2 (fee 150).
+    env.ledger().with_mut(|li| {
+        li.timestamp = 1000 + 3 * SECS_PER_DAY + 4 * SECS_PER_DAY;
+    });
+    let fee = client.record_payment(&agreement_id);
+    assert_eq!(fee, 150);
+    assert_eq!(env.events().all().len(), 1);
+    let state = client.get_late_fee_state(&agreement_id).unwrap();
+    assert_eq!(state.last_tier, 2);
+    assert_eq!(state.total_late_fees, 150);
+}
+
+#[test]
+fn test_late_fee_capped() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let client = create_contract(&env);
+    client.initialize();
+
+    let landlord = Address::generate(&env);
+    let agreement_id = String::from_str(&env, "agreement_001");
+    setup_schedule(&env, &client, &agreement_id, &landlord);
+
+    // 8 days over grace -> tier 3, raw fee 1000, capped at 300.
+    env.ledger().with_mut(|li| {
+        li.timestamp = 1000 + 3 * SECS_PER_DAY + 8 * SECS_PER_DAY;
+    });
+    let fee = client.record_payment(&agreement_id);
+    assert_eq!(fee, 300);
+    let state = client.get_late_fee_state(&agreement_id).unwrap();
+    assert_eq!(state.last_tier, 3);
+    assert_eq!(state.total_late_fees, 300);
+}
+
+#[test]
+fn test_settle_obligation_resets_state() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let client = create_contract(&env);
+    client.initialize();
+
+    let landlord = Address::generate(&env);
+    let agreement_id = String::from_str(&env, "agreement_001");
+    setup_schedule(&env, &client, &agreement_id, &landlord);
+
+    env.ledger().with_mut(|li| {
+        li.timestamp = 1000 + 3 * SECS_PER_DAY + 8 * SECS_PER_DAY;
+    });
+    let fee = client.record_payment(&agreement_id);
+    assert_eq!(fee, 300);
+
+    client.settle_obligation(&agreement_id);
+
+    let state = client.get_late_fee_state(&agreement_id).unwrap();
+    assert_eq!(state.total_late_fees, 0);
+    assert_eq!(state.last_tier, 0);
+
+    let schedule = client.get_rent_schedule(&agreement_id).unwrap();
+    assert_eq!(schedule.due_date, 1000 + 2_592_000);
+
+    // A payment made right at the new due date is on-time again.
+    env.ledger().with_mut(|li| {
+        li.timestamp = schedule.due_date;
+    });
+    let fee = client.record_payment(&agreement_id);
+    assert_eq!(fee, 0);
+}
+
+#[test]
+#[should_panic(expected = "Error(Contract, #11)")]
+fn test_configure_rent_schedule_rejects_non_zero_first_tier() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let client = create_contract(&env);
+    client.initialize();
+
+    let landlord = Address::generate(&env);
+    let agreement_id = String::from_str(&env, "agreement_001");
+    client.mint_obligation(&agreement_id, &landlord);
+
+    let tiers = make_tiers(&env, &[(1, 50)]);
+
+    client.configure_rent_schedule(
+        &landlord,
+        &agreement_id,
+        &1000i128,
+        &1000u64,
+        &2_592_000u64,
+        &(3 * SECS_PER_DAY),
+        &tiers,
+        &300i128,
+    );
+}
+
+#[test]
+#[should_panic(expected = "Error(Contract, #5)")]
+fn test_configure_rent_schedule_requires_owner() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let client = create_contract(&env);
+    client.initialize();
+
+    let landlord = Address::generate(&env);
+    let stranger = Address::generate(&env);
+    let agreement_id = String::from_str(&env, "agreement_001");
+    client.mint_obligation(&agreement_id, &landlord);
+
+    let tiers = make_tiers(&env, &[(0, 50)]);
+
+    client.configure_rent_schedule(
+        &stranger,
+        &agreement_id,
+        &1000i128,
+        &1000u64,
+        &2_592_000u64,
+        &(3 * SECS_PER_DAY),
+        &tiers,
+        &300i128,
+    );
+}
+
+#[test]
+#[should_panic(expected = "Error(Contract, #12)")]
+fn test_record_payment_without_schedule_fails() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let client = create_contract(&env);
+    client.initialize();
+
+    let landlord = Address::generate(&env);
+    let agreement_id = String::from_str(&env, "agreement_001");
+    client.mint_obligation(&agreement_id, &landlord);
+
+    client.record_payment(&agreement_id);
+}
+
 #[test]
 fn test_successful_initialization() {
     let env = Env::default();
