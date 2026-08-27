@@ -1,4 +1,5 @@
 #![no_std]
+#![allow(clippy::too_many_arguments)]
 
 use soroban_sdk::{contract, contractimpl, Address, Env, String, Vec};
 
@@ -13,7 +14,9 @@ mod tests;
 
 pub use errors::ObligationError;
 pub use storage::DataKey;
-pub use types::{BurnRecord, RentObligation};
+pub use types::{BurnRecord, LateFeeState, LateFeeTier, RentObligation, RentSchedule};
+
+const SECONDS_PER_DAY: u64 = 86400;
 
 #[contract]
 pub struct TokenizedRentObligationContract;
@@ -25,6 +28,89 @@ impl TokenizedRentObligationContract {
             || reason == &String::from_str(env, "AgreementTerminated")
             || reason == &String::from_str(env, "DisputeResolved")
             || reason == &String::from_str(env, "UserRequested")
+    }
+
+    /// Validate that a late-fee tier schedule is well-formed: non-empty,
+    /// starting at 0 days overdue, strictly increasing thresholds, and
+    /// non-decreasing (progressive) fee amounts.
+    fn validate_late_fee_tiers(tiers: &Vec<types::LateFeeTier>) -> bool {
+        if tiers.is_empty() {
+            return false;
+        }
+
+        let mut prev_days: Option<u32> = None;
+        let mut prev_fee: i128 = 0;
+
+        for i in 0..tiers.len() {
+            let tier = tiers.get(i).unwrap();
+
+            if tier.fee_amount < 0 {
+                return false;
+            }
+
+            match prev_days {
+                None => {
+                    if tier.min_days_overdue != 0 {
+                        return false;
+                    }
+                }
+                Some(prev) => {
+                    if tier.min_days_overdue <= prev {
+                        return false;
+                    }
+                    if tier.fee_amount < prev_fee {
+                        return false;
+                    }
+                }
+            }
+
+            prev_days = Some(tier.min_days_overdue);
+            prev_fee = tier.fee_amount;
+        }
+
+        true
+    }
+
+    /// Resolve the late-fee tier applicable at `now` against `schedule`.
+    ///
+    /// Returns `(0, 0)` if `now` is still within the due date + grace
+    /// window. Otherwise returns the 1-based tier index and the fee amount
+    /// for the highest tier whose `min_days_overdue` threshold has been
+    /// reached, capped at `schedule.max_late_fee` (0 meaning uncapped).
+    fn resolve_late_fee(schedule: &types::RentSchedule, now: u64) -> (u32, i128) {
+        if now <= schedule.due_date {
+            return (0, 0);
+        }
+
+        let seconds_late = now - schedule.due_date;
+        if seconds_late <= schedule.grace_period_secs {
+            return (0, 0);
+        }
+
+        let seconds_over_grace = seconds_late - schedule.grace_period_secs;
+        let days_over_grace = (seconds_over_grace / SECONDS_PER_DAY) as u32;
+
+        let mut tier_index: u32 = 0;
+        let mut fee: i128 = 0;
+
+        for i in 0..schedule.tiers.len() {
+            let tier = schedule.tiers.get(i).unwrap();
+            if tier.min_days_overdue > days_over_grace {
+                break;
+            }
+            tier_index = i + 1;
+            fee = tier.fee_amount;
+        }
+
+        if tier_index == 0 {
+            return (0, 0);
+        }
+
+        if schedule.max_late_fee > 0 && fee > schedule.max_late_fee {
+            fee = schedule.max_late_fee;
+        }
+
+        (tier_index, fee)
     }
 
     /// Initialize the contract.
@@ -372,6 +458,206 @@ impl TokenizedRentObligationContract {
             .persistent()
             .get(&owner_key)
             .unwrap_or_else(|| Vec::new(&env)))
+    }
+
+    // --- Rent Schedule / Late Fee Functions ---
+
+    /// Configure (or reconfigure) the rent schedule and progressive late-fee
+    /// tiers for an obligation. Only the current obligation owner may call
+    /// this.
+    ///
+    /// # Arguments
+    /// * `agreement_id` - Agreement identifier for the obligation
+    /// * `rent_amount` - Rent amount due each cycle
+    /// * `due_date` - Timestamp the current cycle's rent is due
+    /// * `period_secs` - Length of a rent cycle, used to advance `due_date` on settlement
+    /// * `grace_period_secs` - Grace window after `due_date` before any late fee applies
+    /// * `tiers` - Progressive late-fee tiers, ascending from `min_days_overdue == 0`
+    /// * `max_late_fee` - Cap on the late fee chargeable per cycle (0 = uncapped)
+    ///
+    /// # Errors
+    /// * `NotInitialized` - If contract hasn't been initialized
+    /// * `ObligationNotFound` - If the obligation doesn't exist
+    /// * `Unauthorized` - If the caller is not the current owner
+    /// * `InvalidRentSchedule` - If the rent amount, period, or tiers are invalid
+    pub fn configure_rent_schedule(
+        env: Env,
+        landlord: Address,
+        agreement_id: String,
+        rent_amount: i128,
+        due_date: u64,
+        period_secs: u64,
+        grace_period_secs: u64,
+        tiers: Vec<types::LateFeeTier>,
+        max_late_fee: i128,
+    ) -> Result<(), ObligationError> {
+        if !env.storage().persistent().has(&DataKey::Initialized) {
+            return Err(ObligationError::NotInitialized);
+        }
+
+        landlord.require_auth();
+
+        let obligation_key = DataKey::Obligation(agreement_id.clone());
+        let obligation: RentObligation = env
+            .storage()
+            .persistent()
+            .get(&obligation_key)
+            .ok_or(ObligationError::ObligationNotFound)?;
+
+        if obligation.owner != landlord {
+            return Err(ObligationError::Unauthorized);
+        }
+
+        if rent_amount <= 0 || period_secs == 0 || max_late_fee < 0 {
+            return Err(ObligationError::InvalidRentSchedule);
+        }
+
+        if !Self::validate_late_fee_tiers(&tiers) {
+            return Err(ObligationError::InvalidRentSchedule);
+        }
+
+        let schedule = types::RentSchedule {
+            rent_amount,
+            due_date,
+            period_secs,
+            grace_period_secs,
+            tiers,
+            max_late_fee,
+        };
+
+        let schedule_key = DataKey::RentSchedule(agreement_id.clone());
+        env.storage().persistent().set(&schedule_key, &schedule);
+        env.storage()
+            .persistent()
+            .extend_ttl(&schedule_key, 500000, 500000);
+
+        let state_key = DataKey::LateFeeState(agreement_id);
+        let state = types::LateFeeState {
+            total_late_fees: 0,
+            last_tier: 0,
+        };
+        env.storage().persistent().set(&state_key, &state);
+        env.storage()
+            .persistent()
+            .extend_ttl(&state_key, 500000, 500000);
+
+        Ok(())
+    }
+
+    /// Get the configured rent schedule for an agreement.
+    pub fn get_rent_schedule(env: Env, agreement_id: String) -> Option<types::RentSchedule> {
+        env.storage()
+            .persistent()
+            .get(&DataKey::RentSchedule(agreement_id))
+    }
+
+    /// Get the current late-fee state for an agreement's active cycle.
+    pub fn get_late_fee_state(env: Env, agreement_id: String) -> Option<types::LateFeeState> {
+        env.storage()
+            .persistent()
+            .get(&DataKey::LateFeeState(agreement_id))
+    }
+
+    /// Assess the late fee (if any) for a rent payment made "now", against
+    /// the agreement's configured schedule. Emits `late_fee_applied` when a
+    /// tier is crossed. Returns the late fee amount charged for this cycle
+    /// (0 if the payment is within the grace period).
+    ///
+    /// # Errors
+    /// * `NotInitialized` - If contract hasn't been initialized
+    /// * `ObligationNotFound` - If the obligation doesn't exist
+    /// * `Unauthorized` - If the caller is not the current owner
+    /// * `RentScheduleNotFound` - If no rent schedule has been configured
+    pub fn record_payment(env: Env, agreement_id: String) -> Result<i128, ObligationError> {
+        if !env.storage().persistent().has(&DataKey::Initialized) {
+            return Err(ObligationError::NotInitialized);
+        }
+
+        let obligation_key = DataKey::Obligation(agreement_id.clone());
+        let obligation: RentObligation = env
+            .storage()
+            .persistent()
+            .get(&obligation_key)
+            .ok_or(ObligationError::ObligationNotFound)?;
+
+        obligation.owner.require_auth();
+
+        let schedule_key = DataKey::RentSchedule(agreement_id.clone());
+        let schedule: types::RentSchedule = env
+            .storage()
+            .persistent()
+            .get(&schedule_key)
+            .ok_or(ObligationError::RentScheduleNotFound)?;
+
+        let now = env.ledger().timestamp();
+        let (tier, amount) = Self::resolve_late_fee(&schedule, now);
+
+        let state_key = DataKey::LateFeeState(agreement_id.clone());
+        let state = types::LateFeeState {
+            total_late_fees: amount,
+            last_tier: tier,
+        };
+        env.storage().persistent().set(&state_key, &state);
+        env.storage()
+            .persistent()
+            .extend_ttl(&state_key, 500000, 500000);
+
+        if tier > 0 {
+            events::late_fee_applied(&env, agreement_id, tier, amount, amount);
+        }
+
+        Ok(amount)
+    }
+
+    /// Settle the obligation's current rent cycle: clears any assessed late
+    /// fees and advances the due date by one `period_secs` for the next
+    /// cycle. Only the current obligation owner may call this.
+    ///
+    /// # Errors
+    /// * `NotInitialized` - If contract hasn't been initialized
+    /// * `ObligationNotFound` - If the obligation doesn't exist
+    /// * `Unauthorized` - If the caller is not the current owner
+    /// * `RentScheduleNotFound` - If no rent schedule has been configured
+    pub fn settle_obligation(env: Env, agreement_id: String) -> Result<(), ObligationError> {
+        if !env.storage().persistent().has(&DataKey::Initialized) {
+            return Err(ObligationError::NotInitialized);
+        }
+
+        let obligation_key = DataKey::Obligation(agreement_id.clone());
+        let obligation: RentObligation = env
+            .storage()
+            .persistent()
+            .get(&obligation_key)
+            .ok_or(ObligationError::ObligationNotFound)?;
+
+        obligation.owner.require_auth();
+
+        let schedule_key = DataKey::RentSchedule(agreement_id.clone());
+        let mut schedule: types::RentSchedule = env
+            .storage()
+            .persistent()
+            .get(&schedule_key)
+            .ok_or(ObligationError::RentScheduleNotFound)?;
+
+        schedule.due_date = schedule.due_date.saturating_add(schedule.period_secs);
+        env.storage().persistent().set(&schedule_key, &schedule);
+        env.storage()
+            .persistent()
+            .extend_ttl(&schedule_key, 500000, 500000);
+
+        let state_key = DataKey::LateFeeState(agreement_id.clone());
+        let state = types::LateFeeState {
+            total_late_fees: 0,
+            last_tier: 0,
+        };
+        env.storage().persistent().set(&state_key, &state);
+        env.storage()
+            .persistent()
+            .extend_ttl(&state_key, 500000, 500000);
+
+        events::rent_cycle_settled(&env, agreement_id, schedule.due_date);
+
+        Ok(())
     }
 
     // --- Upgrade Functions ---
