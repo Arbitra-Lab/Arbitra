@@ -3,8 +3,14 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Review } from './review.entity';
 import { containsProhibitedLanguage } from './review-moderation.util';
-import { GuestReview } from './entities/guest-review.entity';
-import { HostReview } from './entities/host-review.entity';
+import {
+  GuestReview,
+  ReviewModerationStatus,
+} from './entities/guest-review.entity';
+import {
+  HostReview,
+  ReviewModerationStatus as HostReviewModerationStatus,
+} from './entities/host-review.entity';
 import { PostGuestReviewDto } from './dto/post-guest-review.dto';
 import { PostHostReviewDto } from './dto/post-host-review.dto';
 import { UpdateReviewDto } from './dto/update-review.dto';
@@ -19,6 +25,7 @@ import {
   BusinessRuleViolationError,
   AgreementNotFoundError,
 } from '../../common/errors/domain-errors';
+import { ReviewModerationService } from './review-moderation.service';
 
 @Injectable()
 export class ReviewsService {
@@ -31,6 +38,7 @@ export class ReviewsService {
     private readonly hostReviewRepository: Repository<HostReview>,
     @InjectRepository(RentAgreement)
     private readonly agreementRepository: Repository<RentAgreement>,
+    private readonly moderationService: ReviewModerationService,
   ) {}
 
   async create(reviewData: Partial<Review>): Promise<Review> {
@@ -81,6 +89,16 @@ export class ReviewsService {
       throw new ValidationError('Review contains prohibited language.');
     }
 
+    // Check rate limit
+    const isRateLimited = await this.moderationService.checkReviewRateLimit(
+      hostId,
+    );
+    if (isRateLimited) {
+      throw new BusinessRuleViolationError(
+        'Rate limit exceeded. Maximum 10 reviews per hour.',
+      );
+    }
+
     const agreement = await this.agreementRepository.findOne({
       where: { id: dto.bookingId },
     });
@@ -105,7 +123,7 @@ export class ReviewsService {
       throw new BusinessRuleViolationError('Review already posted');
     }
 
-    const review = this.guestReviewRepository.create({
+    let review = this.guestReviewRepository.create({
       bookingId: dto.bookingId,
       guestId: agreement.userId,
       hostId,
@@ -116,6 +134,11 @@ export class ReviewsService {
       wouldHostAgain: dto.wouldHostAgain,
     });
 
+    // Process moderation
+    review = await this.moderationService.processModerationForGuestReview(
+      review,
+    );
+
     return this.guestReviewRepository.save(review);
   }
 
@@ -125,6 +148,16 @@ export class ReviewsService {
   ): Promise<HostReview> {
     if (containsProhibitedLanguage(dto.comment ?? '')) {
       throw new ValidationError('Review contains prohibited language.');
+    }
+
+    // Check rate limit
+    const isRateLimited = await this.moderationService.checkReviewRateLimit(
+      guestId,
+    );
+    if (isRateLimited) {
+      throw new BusinessRuleViolationError(
+        'Rate limit exceeded. Maximum 10 reviews per hour.',
+      );
     }
 
     const agreement = await this.agreementRepository.findOne({
@@ -151,7 +184,7 @@ export class ReviewsService {
       throw new BusinessRuleViolationError('Review already posted');
     }
 
-    const review = this.hostReviewRepository.create({
+    let review = this.hostReviewRepository.create({
       bookingId: dto.bookingId,
       guestId,
       hostId: agreement.adminId,
@@ -164,12 +197,17 @@ export class ReviewsService {
       comment: dto.comment,
     });
 
+    // Process moderation
+    review = await this.moderationService.processModerationForHostReview(
+      review,
+    );
+
     return this.hostReviewRepository.save(review);
   }
 
   async getGuestReviews(userId: string, page = 1, limit = 20) {
     const [items, total] = await this.guestReviewRepository.findAndCount({
-      where: { guestId: userId },
+      where: { guestId: userId, moderationStatus: ReviewModerationStatus.APPROVED },
       order: { createdAt: 'DESC' },
       skip: (page - 1) * limit,
       take: limit,
@@ -180,7 +218,7 @@ export class ReviewsService {
 
   async getHostReviews(userId: string, page = 1, limit = 20) {
     const [items, total] = await this.hostReviewRepository.findAndCount({
-      where: { hostId: userId },
+      where: { hostId: userId, moderationStatus: HostReviewModerationStatus.APPROVED },
       order: { createdAt: 'DESC' },
       skip: (page - 1) * limit,
       take: limit,
@@ -191,11 +229,11 @@ export class ReviewsService {
 
   async getReputation(userId: string) {
     const guestReviews = await this.guestReviewRepository.find({
-      where: { hostId: userId },
+      where: { hostId: userId, moderationStatus: ReviewModerationStatus.APPROVED },
     });
 
     const hostReviews = await this.hostReviewRepository.find({
-      where: { guestId: userId },
+      where: { guestId: userId, moderationStatus: HostReviewModerationStatus.APPROVED },
     });
 
     const guestAvg =
