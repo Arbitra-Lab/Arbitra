@@ -57,6 +57,9 @@ pub struct Escrow {
     pub frozen_at: Option<u64>,
     /// Reason for freezing the escrow
     pub freeze_reason: Option<String>,
+    /// Optional timestamp after which beneficiary can claim funds without dispute
+    /// If None, auto-release is disabled. Set to Some(timestamp) to enable.
+    pub auto_release_after: Option<u64>,
 }
 
 /// Contract-level timeout configuration.
