@@ -4,8 +4,9 @@ use crate::errors::AgentError;
 use crate::events;
 use crate::storage::DataKey;
 use crate::types::{
-    AgentInfo, AgentTransaction, ContractState, ReputationState, StakeConfig, StakeVault,
-    MAX_REPUTATION_POINTS, MAX_STAKE_POINTS, REP_POINTS_PER_STAR, STAKE_STROOPS_PER_POINT,
+    AgentInfo, AgentTransaction, ContractState, OutcomePolicy, OutcomeSignal, ReputationState,
+    SlashReason, SlashRecord, StakeConfig, StakeVault, MAX_REPUTATION_POINTS, MAX_STAKE_POINTS,
+    REP_POINTS_PER_STAR, STAKE_STROOPS_PER_POINT,
 };
 
 const TTL_THRESHOLD: u32 = 500000;
@@ -82,6 +83,115 @@ fn save_reputation(env: &Env, agent: &Address, rep: &ReputationState) {
     env.storage()
         .persistent()
         .extend_ttl(&key, TTL_THRESHOLD, TTL_EXTEND_TO);
+}
+
+fn load_history(env: &Env, agent: &Address) -> Vec<SlashRecord> {
+    env.storage()
+        .persistent()
+        .get(&DataKey::SlashHistory(agent.clone()))
+        .unwrap_or_else(|| Vec::new(env))
+}
+
+fn push_history(env: &Env, agent: &Address, record: SlashRecord) {
+    let key = DataKey::SlashHistory(agent.clone());
+    let mut history = load_history(env, agent);
+    history.push_back(record);
+    env.storage().persistent().set(&key, &history);
+    env.storage()
+        .persistent()
+        .extend_ttl(&key, TTL_THRESHOLD, TTL_EXTEND_TO);
+}
+
+/// Apply a slash to an agent's vault and reputation, record it in the agent's
+/// slashing history, and accumulate the removed stake into the slashed pool.
+///
+/// `stake_amount` must be non-negative and no greater than the agent's total
+/// (live + pending) stake; callers are responsible for validating or clamping
+/// it. Stake is drained from the live balance first, then from the pending
+/// (unbonding) balance. Returns `(remaining_total_stake, remaining_reputation)`.
+fn apply_slash(
+    env: &Env,
+    agent: &Address,
+    stake_amount: i128,
+    rep_points: u32,
+    reason: SlashReason,
+    transaction_id: String,
+) -> Result<(i128, u32), AgentError> {
+    let mut vault = load_vault(env, agent);
+    let from_staked = stake_amount.min(vault.staked);
+    vault.staked -= from_staked;
+    vault.pending -= stake_amount - from_staked;
+
+    let now = env.ledger().timestamp();
+    let mut rep = load_reputation(env, agent);
+    rep.settle(now);
+    let rep_before = rep.points;
+    rep.points = rep.points.saturating_sub(rep_points);
+    let rep_reduced = rep_before - rep.points;
+
+    save_vault(env, agent, &vault);
+    save_reputation(env, agent, &rep);
+
+    let pool: i128 = env
+        .storage()
+        .persistent()
+        .get(&DataKey::SlashedPool)
+        .unwrap_or(0);
+    let pool = pool
+        .checked_add(stake_amount)
+        .ok_or(AgentError::MathOverflow)?;
+    env.storage().persistent().set(&DataKey::SlashedPool, &pool);
+    env.storage()
+        .persistent()
+        .extend_ttl(&DataKey::SlashedPool, TTL_THRESHOLD, TTL_EXTEND_TO);
+
+    if stake_amount > 0 || rep_reduced > 0 {
+        push_history(
+            env,
+            agent,
+            SlashRecord {
+                timestamp: now,
+                stake_slashed: stake_amount,
+                reputation_slashed: rep_reduced,
+                reason,
+                transaction_id,
+            },
+        );
+    }
+
+    Ok((vault.staked + vault.pending, rep.points))
+}
+
+fn get_outcome_policy(env: &Env) -> Option<OutcomePolicy> {
+    env.storage().instance().get(&DataKey::OutcomePolicy)
+}
+
+/// Require the caller to be authorized to submit outcome signals: either the
+/// admin or an explicitly allowlisted reporter. Also enforces caller auth.
+fn require_outcome_reporter(env: &Env, caller: &Address) -> Result<(), AgentError> {
+    let state: ContractState = env
+        .storage()
+        .instance()
+        .get(&DataKey::State)
+        .ok_or(AgentError::NotInitialized)?;
+
+    caller.require_auth();
+
+    if *caller == state.admin {
+        return Ok(());
+    }
+
+    let authorized: bool = env
+        .storage()
+        .persistent()
+        .get(&DataKey::OutcomeReporter(caller.clone()))
+        .unwrap_or(false);
+
+    if authorized {
+        Ok(())
+    } else {
+        Err(AgentError::Unauthorized)
+    }
 }
 
 pub fn register_agent(
@@ -495,7 +605,7 @@ pub fn slash_agent(
         return Err(AgentError::InvalidAmount);
     }
 
-    let mut vault = load_vault(env, &agent);
+    let vault = load_vault(env, &agent);
     let total = vault
         .staked
         .checked_add(vault.pending)
@@ -504,30 +614,14 @@ pub fn slash_agent(
         return Err(AgentError::InsufficientStake);
     }
 
-    let from_staked = stake_amount.min(vault.staked);
-    vault.staked -= from_staked;
-    vault.pending -= stake_amount - from_staked;
-
-    let now = env.ledger().timestamp();
-    let mut rep = load_reputation(env, &agent);
-    rep.settle(now);
-    rep.points = rep.points.saturating_sub(rep_points);
-
-    save_vault(env, &agent, &vault);
-    save_reputation(env, &agent, &rep);
-
-    let pool: i128 = env
-        .storage()
-        .persistent()
-        .get(&DataKey::SlashedPool)
-        .unwrap_or(0);
-    let pool = pool
-        .checked_add(stake_amount)
-        .ok_or(AgentError::MathOverflow)?;
-    env.storage().persistent().set(&DataKey::SlashedPool, &pool);
-    env.storage()
-        .persistent()
-        .extend_ttl(&DataKey::SlashedPool, TTL_THRESHOLD, TTL_EXTEND_TO);
+    let (remaining_stake, remaining_rep) = apply_slash(
+        env,
+        &agent,
+        stake_amount,
+        rep_points,
+        SlashReason::AdminAction,
+        String::from_str(env, ""),
+    )?;
 
     events::agent_slashed(
         env,
@@ -535,8 +629,8 @@ pub fn slash_agent(
         admin,
         stake_amount,
         rep_points,
-        vault.staked + vault.pending,
-        rep.points,
+        remaining_stake,
+        remaining_rep,
     );
 
     Ok(())
@@ -632,4 +726,179 @@ pub fn get_slashed_pool(env: &Env) -> i128 {
         .persistent()
         .get(&DataKey::SlashedPool)
         .unwrap_or(0)
+}
+
+// ─── Outcome signals: reputation & slashing on transaction outcomes ──────────
+
+/// Set (or update) the outcome policy governing the reputation reward on
+/// settlement and the reputation penalty / stake slash on a dispute loss.
+/// Admin only.
+pub fn set_outcome_policy(
+    env: &Env,
+    admin: Address,
+    settlement_reward: u32,
+    dispute_rep_penalty: u32,
+    dispute_stake_slash: i128,
+) -> Result<(), AgentError> {
+    require_admin(env, &admin)?;
+
+    if dispute_stake_slash < 0 {
+        return Err(AgentError::InvalidAmount);
+    }
+
+    let policy = OutcomePolicy {
+        settlement_reward,
+        dispute_rep_penalty,
+        dispute_stake_slash,
+    };
+    env.storage()
+        .instance()
+        .set(&DataKey::OutcomePolicy, &policy);
+    env.storage()
+        .instance()
+        .extend_ttl(TTL_THRESHOLD, TTL_EXTEND_TO);
+
+    events::outcome_policy_set(
+        env,
+        admin,
+        settlement_reward,
+        dispute_rep_penalty,
+        dispute_stake_slash,
+    );
+
+    Ok(())
+}
+
+/// Current outcome policy, if configured.
+pub fn get_outcome_policy_opt(env: &Env) -> Option<OutcomePolicy> {
+    get_outcome_policy(env)
+}
+
+/// Authorize `reporter` to submit outcome signals. Admin only.
+pub fn add_outcome_reporter(
+    env: &Env,
+    admin: Address,
+    reporter: Address,
+) -> Result<(), AgentError> {
+    require_admin(env, &admin)?;
+
+    let key = DataKey::OutcomeReporter(reporter.clone());
+    env.storage().persistent().set(&key, &true);
+    env.storage()
+        .persistent()
+        .extend_ttl(&key, TTL_THRESHOLD, TTL_EXTEND_TO);
+
+    events::outcome_reporter_added(env, admin, reporter);
+
+    Ok(())
+}
+
+/// Revoke `reporter`'s authorization to submit outcome signals. Admin only.
+pub fn remove_outcome_reporter(
+    env: &Env,
+    admin: Address,
+    reporter: Address,
+) -> Result<(), AgentError> {
+    require_admin(env, &admin)?;
+
+    env.storage()
+        .persistent()
+        .set(&DataKey::OutcomeReporter(reporter.clone()), &false);
+
+    events::outcome_reporter_removed(env, admin, reporter);
+
+    Ok(())
+}
+
+/// Whether `reporter` is currently authorized to submit outcome signals.
+/// The admin is always authorized and is not tracked in this allowlist.
+pub fn is_outcome_reporter(env: &Env, reporter: Address) -> bool {
+    env.storage()
+        .persistent()
+        .get(&DataKey::OutcomeReporter(reporter))
+        .unwrap_or(false)
+}
+
+/// Submit an outcome signal for an agent after a transaction concludes.
+///
+/// Callable only by the admin or an authorized reporter. A `Settlement`
+/// accrues `settlement_reward` reputation (capped at `MAX_REPUTATION_POINTS`);
+/// a `DisputeLoss` removes `dispute_rep_penalty` reputation and slashes up to
+/// `dispute_stake_slash` stroops of the agent's bonded stake (clamped to what
+/// is available), recording the slash in the agent's history. Atomic.
+///
+/// # Errors
+/// * `NotInitialized` - If the contract hasn't been initialized
+/// * `Unauthorized` - If the caller is not the admin or an authorized reporter
+/// * `AgentNotFound` - If the agent isn't registered
+/// * `OutcomePolicyNotSet` - If the outcome policy hasn't been configured
+pub fn submit_outcome(
+    env: &Env,
+    caller: Address,
+    agent: Address,
+    transaction_id: String,
+    outcome: OutcomeSignal,
+) -> Result<(), AgentError> {
+    require_initialized(env)?;
+    require_outcome_reporter(env, &caller)?;
+    require_registered(env, &agent)?;
+
+    let policy = get_outcome_policy(env).ok_or(AgentError::OutcomePolicyNotSet)?;
+    let now = env.ledger().timestamp();
+
+    match outcome {
+        OutcomeSignal::Settlement => {
+            let mut rep = load_reputation(env, &agent);
+            rep.settle(now);
+            rep.points = rep
+                .points
+                .saturating_add(policy.settlement_reward)
+                .min(MAX_REPUTATION_POINTS);
+            save_reputation(env, &agent, &rep);
+
+            events::outcome_reported(
+                env,
+                agent,
+                caller,
+                OutcomeSignal::Settlement,
+                transaction_id,
+                0,
+                rep.points,
+            );
+        }
+        OutcomeSignal::DisputeLoss => {
+            let vault = load_vault(env, &agent);
+            let total = vault
+                .staked
+                .checked_add(vault.pending)
+                .ok_or(AgentError::MathOverflow)?;
+            let stake_slashed = policy.dispute_stake_slash.min(total);
+
+            let (_remaining_stake, remaining_rep) = apply_slash(
+                env,
+                &agent,
+                stake_slashed,
+                policy.dispute_rep_penalty,
+                SlashReason::DisputeLoss,
+                transaction_id.clone(),
+            )?;
+
+            events::outcome_reported(
+                env,
+                agent,
+                caller,
+                OutcomeSignal::DisputeLoss,
+                transaction_id,
+                stake_slashed,
+                remaining_rep,
+            );
+        }
+    }
+
+    Ok(())
+}
+
+/// An agent's full slashing history, oldest first.
+pub fn get_slashing_history(env: &Env, agent: Address) -> Vec<SlashRecord> {
+    load_history(env, &agent)
 }
