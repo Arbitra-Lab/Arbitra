@@ -13,14 +13,17 @@ mod upgrade;
 mod tests;
 
 pub use agent::{
-    bond, complete_transaction, get_agent_count, get_agent_info, get_effective_score,
-    get_reputation, get_slashed_pool, get_stake, rate_agent, register_agent, register_transaction,
-    request_unbond, reward_agent, set_stake_config, slash_agent, verify_agent, withdraw,
+    add_outcome_reporter, bond, complete_transaction, get_agent_count, get_agent_info,
+    get_effective_score, get_reputation, get_slashed_pool, get_slashing_history, get_stake,
+    is_outcome_reporter, rate_agent, register_agent, register_transaction, remove_outcome_reporter,
+    request_unbond, reward_agent, set_outcome_policy, set_stake_config, slash_agent, submit_outcome,
+    verify_agent, withdraw,
 };
 pub use errors::AgentError;
 pub use storage::DataKey;
 pub use types::{
-    AgentInfo, AgentTransaction, ContractState, ReputationState, StakeConfig, StakeVault,
+    AgentInfo, AgentTransaction, ContractState, OutcomePolicy, OutcomeSignal, ReputationState,
+    SlashReason, SlashRecord, StakeConfig, StakeVault,
 };
 
 #[contract]
@@ -302,6 +305,87 @@ impl AgentRegistryContract {
     /// Get the total amount of stake slashed into the contract's pool.
     pub fn get_slashed_pool(env: Env) -> i128 {
         agent::get_slashed_pool(&env)
+    }
+
+    // --- Outcome Signals: Reputation & Slashing on Transaction Outcomes ---
+
+    /// Set or update the outcome policy (admin only): the reputation reward on
+    /// settlement and the reputation penalty / stake slash on a dispute loss.
+    ///
+    /// # Errors
+    /// * `Unauthorized` - If the caller is not the admin
+    /// * `InvalidAmount` - If `dispute_stake_slash` is negative
+    pub fn set_outcome_policy(
+        env: Env,
+        admin: Address,
+        settlement_reward: u32,
+        dispute_rep_penalty: u32,
+        dispute_stake_slash: i128,
+    ) -> Result<(), AgentError> {
+        agent::set_outcome_policy(
+            &env,
+            admin,
+            settlement_reward,
+            dispute_rep_penalty,
+            dispute_stake_slash,
+        )
+    }
+
+    /// Get the current outcome policy, if configured.
+    pub fn get_outcome_policy(env: Env) -> Option<OutcomePolicy> {
+        agent::get_outcome_policy_opt(&env)
+    }
+
+    /// Authorize an address to submit outcome signals (admin only).
+    ///
+    /// # Errors
+    /// * `Unauthorized` - If the caller is not the admin
+    pub fn add_outcome_reporter(
+        env: Env,
+        admin: Address,
+        reporter: Address,
+    ) -> Result<(), AgentError> {
+        agent::add_outcome_reporter(&env, admin, reporter)
+    }
+
+    /// Revoke an address's authorization to submit outcome signals (admin only).
+    ///
+    /// # Errors
+    /// * `Unauthorized` - If the caller is not the admin
+    pub fn remove_outcome_reporter(
+        env: Env,
+        admin: Address,
+        reporter: Address,
+    ) -> Result<(), AgentError> {
+        agent::remove_outcome_reporter(&env, admin, reporter)
+    }
+
+    /// Whether an address is currently an authorized outcome reporter.
+    pub fn is_outcome_reporter(env: Env, reporter: Address) -> bool {
+        agent::is_outcome_reporter(&env, reporter)
+    }
+
+    /// Submit an outcome signal for an agent (admin or authorized reporter).
+    /// A settlement accrues reputation; a dispute loss lowers reputation and
+    /// slashes the agent's bond per the outcome policy, recording the slash.
+    ///
+    /// # Errors
+    /// * `Unauthorized` - If the caller is not the admin or an authorized reporter
+    /// * `AgentNotFound` - If the agent isn't registered
+    /// * `OutcomePolicyNotSet` - If the outcome policy hasn't been configured
+    pub fn submit_outcome(
+        env: Env,
+        caller: Address,
+        agent: Address,
+        transaction_id: String,
+        outcome: OutcomeSignal,
+    ) -> Result<(), AgentError> {
+        agent::submit_outcome(&env, caller, agent, transaction_id, outcome)
+    }
+
+    /// Get an agent's slashing history (oldest first).
+    pub fn get_slashing_history(env: Env, agent: Address) -> Vec<SlashRecord> {
+        agent::get_slashing_history(&env, agent)
     }
 
     // --- Upgrade Functions ---

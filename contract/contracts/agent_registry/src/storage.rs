@@ -14,4 +14,10 @@ pub enum DataKey {
     Reputation(Address),
     StakeConfig,
     SlashedPool,
+    /// Policy governing outcome-signal consequences (set by admin).
+    OutcomePolicy,
+    /// Allowlist flag for an address authorized to submit outcome signals.
+    OutcomeReporter(Address),
+    /// Per-agent list of slashing events.
+    SlashHistory(Address),
 }

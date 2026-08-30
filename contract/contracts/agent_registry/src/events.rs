@@ -1,5 +1,7 @@
 use soroban_sdk::{contractevent, Address, Env, String};
 
+use crate::types::OutcomeSignal;
+
 #[contractevent(topics = ["initialized"])]
 pub struct ContractInitialized {
     #[topic]
@@ -91,6 +93,43 @@ pub struct AgentRewarded {
     pub reputation_rewarded: u32,
     pub total_stake: i128,
     pub total_reputation: u32,
+}
+
+#[contractevent(topics = ["outcome_policy_set"])]
+pub struct OutcomePolicySet {
+    #[topic]
+    pub admin: Address,
+    pub settlement_reward: u32,
+    pub dispute_rep_penalty: u32,
+    pub dispute_stake_slash: i128,
+}
+
+#[contractevent(topics = ["outcome_reporter_added"])]
+pub struct OutcomeReporterAdded {
+    #[topic]
+    pub admin: Address,
+    #[topic]
+    pub reporter: Address,
+}
+
+#[contractevent(topics = ["outcome_reporter_removed"])]
+pub struct OutcomeReporterRemoved {
+    #[topic]
+    pub admin: Address,
+    #[topic]
+    pub reporter: Address,
+}
+
+#[contractevent(topics = ["outcome_reported"])]
+pub struct OutcomeReported {
+    #[topic]
+    pub agent: Address,
+    #[topic]
+    pub reporter: Address,
+    pub outcome: OutcomeSignal,
+    pub transaction_id: String,
+    pub stake_slashed: i128,
+    pub reputation: u32,
 }
 
 pub(crate) fn contract_initialized(env: &Env, admin: Address) {
@@ -195,6 +234,50 @@ pub(crate) fn agent_rewarded(
         reputation_rewarded,
         total_stake,
         total_reputation,
+    }
+    .publish(env);
+}
+
+pub(crate) fn outcome_policy_set(
+    env: &Env,
+    admin: Address,
+    settlement_reward: u32,
+    dispute_rep_penalty: u32,
+    dispute_stake_slash: i128,
+) {
+    OutcomePolicySet {
+        admin,
+        settlement_reward,
+        dispute_rep_penalty,
+        dispute_stake_slash,
+    }
+    .publish(env);
+}
+
+pub(crate) fn outcome_reporter_added(env: &Env, admin: Address, reporter: Address) {
+    OutcomeReporterAdded { admin, reporter }.publish(env);
+}
+
+pub(crate) fn outcome_reporter_removed(env: &Env, admin: Address, reporter: Address) {
+    OutcomeReporterRemoved { admin, reporter }.publish(env);
+}
+
+pub(crate) fn outcome_reported(
+    env: &Env,
+    agent: Address,
+    reporter: Address,
+    outcome: OutcomeSignal,
+    transaction_id: String,
+    stake_slashed: i128,
+    reputation: u32,
+) {
+    OutcomeReported {
+        agent,
+        reporter,
+        outcome,
+        transaction_id,
+        stake_slashed,
+        reputation,
     }
     .publish(env);
 }
