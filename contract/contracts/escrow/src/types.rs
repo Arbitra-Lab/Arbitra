@@ -37,8 +37,12 @@ pub struct Escrow {
     /// Optional agent/referral address receiving a cut on `release_rent`.
     /// When `None`, no referral cut is taken.
     pub agent_referral: Option<Address>,
-    /// Amount of funds in the escrow
+    /// Amount of funds currently remaining in the escrow.
+    /// Decremented as partial/milestone tranches are released.
     pub amount: i128,
+    /// Cumulative amount released across all partial/milestone tranches.
+    /// Invariant: `amount + total_released` always equals the originally funded total.
+    pub total_released: i128,
     /// Token contract address (USDC, XLM, etc.)
     pub token: Address,
     /// Current status of the escrow

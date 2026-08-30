@@ -79,6 +79,7 @@ impl EscrowContract {
             platform_governance,
             agent_referral,
             amount,
+            total_released: 0,
             token,
             status: EscrowStatus::Pending,
             created_at: now,
@@ -547,9 +548,8 @@ impl EscrowContract {
             return Err(EscrowError::NotAuthorized);
         }
 
-        // EFFECTS: Update escrow amount
-        escrow.amount -= amount;
-        EscrowStorage::save(&env, &escrow);
+        // EFFECTS: Update running released/remaining accounting
+        EscrowStorage::apply_partial_release(&env, &mut escrow, amount);
 
         // Record release in history
         let release_record = ReleaseRecord {
@@ -576,9 +576,126 @@ impl EscrowContract {
         token_client.transfer(&env.current_contract_address(), &recipient, &amount);
 
         // Emit event
-        events::partial_release(&env, escrow_id, amount, recipient);
+        events::partial_release(
+            &env,
+            escrow_id,
+            amount,
+            recipient,
+            escrow.total_released,
+            escrow.amount,
+        );
 
         Ok(())
+    }
+
+    /// Release a milestone tranche directly to the beneficiary as work is accepted.
+    ///
+    /// This is the incremental, milestone-based counterpart to the full-release
+    /// flow. Unlike `release_escrow_partial` (which gates each tranche behind a
+    /// 2-of-3 multi-sig), this is a single-authority release: only the payer
+    /// (depositor) or the arbiter (as a dispute ruling) may release a tranche.
+    /// Running released/remaining accounting is kept on the escrow so sequential
+    /// tranches always sum to the originally funded total, and any attempt to
+    /// release more than the remaining balance is rejected.
+    ///
+    /// CHECKS:
+    /// - Escrow must exist and be in Funded state
+    /// - Escrow must not be frozen
+    /// - Caller must be the depositor (payer) or arbiter
+    /// - Amount must be positive and must not exceed the remaining balance
+    ///
+    /// EFFECTS:
+    /// - Decrement the remaining balance and increment the cumulative released total
+    /// - When the remaining balance reaches zero, mark the escrow Released
+    /// - Record the tranche in release history
+    /// - Emit a partial_release event with running accounting
+    ///
+    /// INTERACTIONS:
+    /// - Token transfer of `amount` to the beneficiary after all state updates
+    pub fn release_partial(
+        env: Env,
+        escrow_id: BytesN<32>,
+        caller: Address,
+        amount: i128,
+    ) -> Result<(), EscrowError> {
+        // CHECKS: Get and validate escrow
+        let mut escrow = EscrowStorage::get(&env, &escrow_id).ok_or(EscrowError::EscrowNotFound)?;
+
+        // Check if escrow is frozen
+        AccessControl::require_not_frozen(&escrow)?;
+
+        // Verify escrow is in Funded state
+        if escrow.status != EscrowStatus::Funded {
+            return Err(EscrowError::InvalidState);
+        }
+
+        // Authorization: only the payer (depositor) or the arbiter may release a
+        // tranche. This preserves milestone semantics (payer accepts work) while
+        // still allowing an arbiter ruling to force incremental release.
+        let is_depositor = AccessControl::is_depositor(&escrow, &caller).is_ok();
+        let is_arbiter = AccessControl::is_arbiter(&escrow, &caller).is_ok();
+        if !is_depositor && !is_arbiter {
+            return Err(EscrowError::NotAuthorized);
+        }
+
+        // Authorize the release
+        caller.require_auth();
+
+        // Validate amount is positive
+        if amount <= 0 {
+            return Err(EscrowError::InvalidAmount);
+        }
+
+        // Reject over-release against the remaining balance
+        if amount > escrow.amount {
+            return Err(EscrowError::InsufficientFunds);
+        }
+
+        let recipient = escrow.beneficiary.clone();
+
+        // EFFECTS: Update running released/remaining accounting
+        EscrowStorage::apply_partial_release(&env, &mut escrow, amount);
+
+        // When the escrow is fully drained, transition to Released so full-release
+        // and refund paths can no longer act on the (now empty) remaining balance.
+        if escrow.amount == 0 {
+            escrow.status = EscrowStatus::Released;
+            EscrowStorage::save(&env, &escrow);
+        }
+
+        // Record release in history
+        let release_record = ReleaseRecord {
+            escrow_id: escrow_id.clone(),
+            amount,
+            recipient: recipient.clone(),
+            released_at: env.ledger().timestamp(),
+            reason: soroban_sdk::String::from_str(&env, "Milestone tranche release"),
+        };
+        EscrowStorage::add_release_record(&env, &escrow_id, release_record);
+
+        // INTERACTIONS: Token transfer of the tranche to the beneficiary
+        let token_client = token::Client::new(&env, &escrow.token);
+        token_client.transfer(&env.current_contract_address(), &recipient, &amount);
+
+        // Emit event with running accounting
+        events::partial_release(
+            &env,
+            escrow_id,
+            amount,
+            recipient,
+            escrow.total_released,
+            escrow.amount,
+        );
+
+        Ok(())
+    }
+
+    /// Get the cumulative amount released across all tranches for an escrow.
+    /// The remaining balance is available via `get_escrow(...).amount`.
+    pub fn get_total_released(env: Env, escrow_id: BytesN<32>) -> Result<i128, EscrowError> {
+        // Verify escrow exists
+        EscrowStorage::get(&env, &escrow_id).ok_or(EscrowError::EscrowNotFound)?;
+        Ok(EscrowStorage::get_total_released(&env, &escrow_id))
     }
 
     /// Release escrow with damage deduction.
