@@ -92,11 +92,20 @@ describe('WebhookSignatureService', () => {
   // ── createSignedHeaders ────────────────────────────────────────────────────
 
   describe('createSignedHeaders', () => {
-    it('returns Content-Type, X-Webhook-Timestamp, and X-Webhook-Signature', () => {
+    it('returns Content-Type, X-Webhook-Timestamp, X-Webhook-Nonce, and X-Webhook-Signature', () => {
       const headers = service.createSignedHeaders(PAYLOAD, SECRET);
       expect(headers['Content-Type']).toBe('application/json');
       expect(headers['X-Webhook-Timestamp']).toBeDefined();
+      expect(headers['X-Webhook-Nonce']).toBeDefined();
       expect(headers['X-Webhook-Signature']).toBeDefined();
+    });
+
+    it('nonce is monotonically increasing across successive calls', () => {
+      const h1 = service.createSignedHeaders(PAYLOAD, SECRET);
+      const h2 = service.createSignedHeaders(PAYLOAD, SECRET);
+      expect(BigInt(h2['X-Webhook-Nonce'])).toBeGreaterThan(
+        BigInt(h1['X-Webhook-Nonce']),
+      );
     });
 
     it('timestamp is a recent Unix ms string', () => {
@@ -108,7 +117,21 @@ describe('WebhookSignatureService', () => {
       expect(ts).toBeLessThanOrEqual(after);
     });
 
-    it('signature is valid and verifiable', () => {
+    it('signature is valid and verifiable when the nonce is included', () => {
+      const headers = service.createSignedHeaders(PAYLOAD, SECRET);
+      expect(() =>
+        service.verifySignature(
+          PAYLOAD,
+          headers['X-Webhook-Signature'],
+          headers['X-Webhook-Timestamp'],
+          SECRET,
+          undefined,
+          headers['X-Webhook-Nonce'],
+        ),
+      ).not.toThrow();
+    });
+
+    it('signature fails verification if the nonce is dropped (nonce is part of the signed material)', () => {
       const headers = service.createSignedHeaders(PAYLOAD, SECRET);
       expect(() =>
         service.verifySignature(
@@ -117,7 +140,7 @@ describe('WebhookSignatureService', () => {
           headers['X-Webhook-Timestamp'],
           SECRET,
         ),
-      ).not.toThrow();
+      ).toThrow('Invalid webhook signature');
     });
 
     it('produces different signatures on successive calls (fresh timestamp)', async () => {
@@ -273,6 +296,47 @@ describe('WebhookSignatureService', () => {
       expect(() =>
         service.verifySignature(PAYLOAD, almostSig, ts, SECRET),
       ).toThrow('Invalid webhook signature');
+    });
+  });
+
+  // ── nonce replay protection ────────────────────────────────────────────────
+
+  describe('nonce replay protection', () => {
+    it('accepts the first use of a nonce', () => {
+      const ts = buildTimestamp();
+      const nonce = service.generateNonce();
+      const sig = service.generateSignature(PAYLOAD, ts, SECRET, nonce);
+      expect(() =>
+        service.verifySignature(PAYLOAD, sig, ts, SECRET, undefined, nonce),
+      ).not.toThrow();
+    });
+
+    it('rejects a replayed nonce within the tolerance window', () => {
+      const ts = buildTimestamp();
+      const nonce = service.generateNonce();
+      const sig = service.generateSignature(PAYLOAD, ts, SECRET, nonce);
+
+      service.verifySignature(PAYLOAD, sig, ts, SECRET, undefined, nonce);
+
+      expect(() =>
+        service.verifySignature(PAYLOAD, sig, ts, SECRET, undefined, nonce),
+      ).toThrow('Webhook nonce already used');
+    });
+
+    it('does not enforce replay protection when no nonce is supplied', () => {
+      const ts = buildTimestamp();
+      const sig = service.generateSignature(PAYLOAD, ts, SECRET);
+      service.verifySignature(PAYLOAD, sig, ts, SECRET);
+      expect(() =>
+        service.verifySignature(PAYLOAD, sig, ts, SECRET),
+      ).not.toThrow();
+    });
+
+    it('generateNonce produces strictly increasing values', () => {
+      const nonces = Array.from({ length: 50 }, () => service.generateNonce());
+      for (let i = 1; i < nonces.length; i++) {
+        expect(BigInt(nonces[i])).toBeGreaterThan(BigInt(nonces[i - 1]));
+      }
     });
   });
 

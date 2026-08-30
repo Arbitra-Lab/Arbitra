@@ -40,6 +40,7 @@ impl EscrowContract {
         agent_referral: Option<Address>,
         amount: i128,
         token: Address,
+        auto_release_days: Option<u64>,
     ) -> Result<BytesN<32>, EscrowError> {
         // CHECKS: Validate inputs
         if amount <= 0 {
@@ -62,6 +63,13 @@ impl EscrowContract {
 
         let escrow_id: BytesN<32> = env.crypto().sha256(&data).into();
 
+        // Calculate auto_release_after timestamp if auto_release_days is provided
+        let now = env.ledger().timestamp();
+        let auto_release_after = auto_release_days.map(|days| {
+            let timeout_seconds = days.saturating_mul(86_400);
+            now.saturating_add(timeout_seconds)
+        });
+
         // EFFECTS: Create and save escrow
         let escrow = Escrow {
             id: escrow_id.clone(),
@@ -71,15 +79,17 @@ impl EscrowContract {
             platform_governance,
             agent_referral,
             amount,
+            total_released: 0,
             token,
             status: EscrowStatus::Pending,
-            created_at: env.ledger().timestamp(),
+            created_at: now,
             timeout_days: EscrowStorage::get_timeout_config(&env).escrow_timeout_days,
             disputed_at: None,
             dispute_reason: None,
             is_frozen: false,
             frozen_at: None,
             freeze_reason: None,
+            auto_release_after,
         };
 
         EscrowStorage::save(&env, &escrow);
@@ -291,6 +301,89 @@ impl EscrowContract {
         DisputeHandler::resolve_dispute_on_timeout(env, escrow_id)
     }
 
+    /// Auto-release funds to beneficiary after the auto-release deadline.
+    /// Implements deadman switch: payee can claim funds after deadline if no dispute is active.
+    ///
+    /// CHECKS:
+    /// - Escrow must exist
+    /// - Escrow must be in Funded state
+    /// - Caller must be the beneficiary (payee)
+    /// - Auto-release must be enabled (auto_release_after is Some)
+    /// - Current time must be >= auto_release_after deadline
+    /// - No active dispute must exist
+    /// - Escrow must not be frozen
+    ///
+    /// EFFECTS:
+    /// - Update escrow status to Released
+    /// - Clear approvals
+    /// - Emit AutoReleased event
+    ///
+    /// INTERACTIONS:
+    /// - Token transfer from escrow to beneficiary
+    pub fn claim_after_timeout(
+        env: Env,
+        escrow_id: BytesN<32>,
+        caller: Address,
+    ) -> Result<(), EscrowError> {
+        // CHECKS: Get and validate escrow
+        let mut escrow = EscrowStorage::get(&env, &escrow_id).ok_or(EscrowError::EscrowNotFound)?;
+
+        // Verify caller is the beneficiary (payee)
+        AccessControl::is_beneficiary(&escrow, &caller)?;
+
+        // Verify escrow is in Funded state
+        if escrow.status != EscrowStatus::Funded {
+            return Err(EscrowError::InvalidState);
+        }
+
+        // Verify auto-release is enabled
+        let auto_release_after = escrow.auto_release_after.ok_or(EscrowError::InvalidState)?;
+
+        // Check if deadline has passed
+        let now = env.ledger().timestamp();
+        if now < auto_release_after {
+            return Err(EscrowError::TimeoutNotReached);
+        }
+
+        // Verify no active dispute exists
+        if escrow.status == EscrowStatus::Disputed || escrow.disputed_at.is_some() {
+            return Err(EscrowError::DisputeActive);
+        }
+
+        // Check if escrow is frozen
+        AccessControl::require_not_frozen(&escrow)?;
+
+        // Require authorization from beneficiary
+        caller.require_auth();
+
+        // EFFECTS: Update escrow status to Released
+        escrow.status = EscrowStatus::Released;
+        EscrowStorage::save(&env, &escrow);
+
+        // Clear approvals
+        EscrowStorage::clear_approvals(&env, &escrow_id);
+        let targets = [escrow.beneficiary.clone(), escrow.depositor.clone()];
+        let signers = [
+            escrow.depositor.clone(),
+            escrow.beneficiary.clone(),
+            escrow.arbiter.clone(),
+        ];
+        EscrowStorage::clear_approval_counts(&env, &escrow_id, &targets, &signers);
+
+        // INTERACTIONS: Token transfer from escrow contract to beneficiary
+        let token_client = token::Client::new(&env, &escrow.token);
+        token_client.transfer(
+            &env.current_contract_address(),
+            &escrow.beneficiary,
+            &escrow.amount,
+        );
+
+        // Emit AutoReleased event
+        events::auto_released(&env, escrow_id, escrow.beneficiary, escrow.amount);
+
+        Ok(())
+    }
+
     /// Set contract-level timeout config.
     pub fn set_timeout_config(
         env: Env,
@@ -455,9 +548,8 @@ impl EscrowContract {
             return Err(EscrowError::NotAuthorized);
         }
 
-        // EFFECTS: Update escrow amount
-        escrow.amount -= amount;
-        EscrowStorage::save(&env, &escrow);
+        // EFFECTS: Update running released/remaining accounting
+        EscrowStorage::apply_partial_release(&env, &mut escrow, amount);
 
         // Record release in history
         let release_record = ReleaseRecord {
@@ -484,9 +576,126 @@ impl EscrowContract {
         token_client.transfer(&env.current_contract_address(), &recipient, &amount);
 
         // Emit event
-        events::partial_release(&env, escrow_id, amount, recipient);
+        events::partial_release(
+            &env,
+            escrow_id,
+            amount,
+            recipient,
+            escrow.total_released,
+            escrow.amount,
+        );
 
         Ok(())
+    }
+
+    /// Release a milestone tranche directly to the beneficiary as work is accepted.
+    ///
+    /// This is the incremental, milestone-based counterpart to the full-release
+    /// flow. Unlike `release_escrow_partial` (which gates each tranche behind a
+    /// 2-of-3 multi-sig), this is a single-authority release: only the payer
+    /// (depositor) or the arbiter (as a dispute ruling) may release a tranche.
+    /// Running released/remaining accounting is kept on the escrow so sequential
+    /// tranches always sum to the originally funded total, and any attempt to
+    /// release more than the remaining balance is rejected.
+    ///
+    /// CHECKS:
+    /// - Escrow must exist and be in Funded state
+    /// - Escrow must not be frozen
+    /// - Caller must be the depositor (payer) or arbiter
+    /// - Amount must be positive and must not exceed the remaining balance
+    ///
+    /// EFFECTS:
+    /// - Decrement the remaining balance and increment the cumulative released total
+    /// - When the remaining balance reaches zero, mark the escrow Released
+    /// - Record the tranche in release history
+    /// - Emit a partial_release event with running accounting
+    ///
+    /// INTERACTIONS:
+    /// - Token transfer of `amount` to the beneficiary after all state updates
+    pub fn release_partial(
+        env: Env,
+        escrow_id: BytesN<32>,
+        caller: Address,
+        amount: i128,
+    ) -> Result<(), EscrowError> {
+        // CHECKS: Get and validate escrow
+        let mut escrow = EscrowStorage::get(&env, &escrow_id).ok_or(EscrowError::EscrowNotFound)?;
+
+        // Check if escrow is frozen
+        AccessControl::require_not_frozen(&escrow)?;
+
+        // Verify escrow is in Funded state
+        if escrow.status != EscrowStatus::Funded {
+            return Err(EscrowError::InvalidState);
+        }
+
+        // Authorization: only the payer (depositor) or the arbiter may release a
+        // tranche. This preserves milestone semantics (payer accepts work) while
+        // still allowing an arbiter ruling to force incremental release.
+        let is_depositor = AccessControl::is_depositor(&escrow, &caller).is_ok();
+        let is_arbiter = AccessControl::is_arbiter(&escrow, &caller).is_ok();
+        if !is_depositor && !is_arbiter {
+            return Err(EscrowError::NotAuthorized);
+        }
+
+        // Authorize the release
+        caller.require_auth();
+
+        // Validate amount is positive
+        if amount <= 0 {
+            return Err(EscrowError::InvalidAmount);
+        }
+
+        // Reject over-release against the remaining balance
+        if amount > escrow.amount {
+            return Err(EscrowError::InsufficientFunds);
+        }
+
+        let recipient = escrow.beneficiary.clone();
+
+        // EFFECTS: Update running released/remaining accounting
+        EscrowStorage::apply_partial_release(&env, &mut escrow, amount);
+
+        // When the escrow is fully drained, transition to Released so full-release
+        // and refund paths can no longer act on the (now empty) remaining balance.
+        if escrow.amount == 0 {
+            escrow.status = EscrowStatus::Released;
+            EscrowStorage::save(&env, &escrow);
+        }
+
+        // Record release in history
+        let release_record = ReleaseRecord {
+            escrow_id: escrow_id.clone(),
+            amount,
+            recipient: recipient.clone(),
+            released_at: env.ledger().timestamp(),
+            reason: soroban_sdk::String::from_str(&env, "Milestone tranche release"),
+        };
+        EscrowStorage::add_release_record(&env, &escrow_id, release_record);
+
+        // INTERACTIONS: Token transfer of the tranche to the beneficiary
+        let token_client = token::Client::new(&env, &escrow.token);
+        token_client.transfer(&env.current_contract_address(), &recipient, &amount);
+
+        // Emit event with running accounting
+        events::partial_release(
+            &env,
+            escrow_id,
+            amount,
+            recipient,
+            escrow.total_released,
+            escrow.amount,
+        );
+
+        Ok(())
+    }
+
+    /// Get the cumulative amount released across all tranches for an escrow.
+    /// The remaining balance is available via `get_escrow(...).amount`.
+    pub fn get_total_released(env: Env, escrow_id: BytesN<32>) -> Result<i128, EscrowError> {
+        // Verify escrow exists
+        EscrowStorage::get(&env, &escrow_id).ok_or(EscrowError::EscrowNotFound)?;
+        Ok(EscrowStorage::get_total_released(&env, &escrow_id))
     }
 
     /// Release escrow with damage deduction.

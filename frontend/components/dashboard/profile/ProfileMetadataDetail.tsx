@@ -49,7 +49,9 @@ export function ProfileMetadataDetail({
       <div className="flex items-start justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-white">{field.label}</h2>
-          <p className="text-neutral-200/60 mt-1 font-mono text-sm">{field.key}</p>
+          <p className="text-neutral-200/60 mt-1 font-mono text-sm">
+            {field.key}
+          </p>
         </div>
         <button
           onClick={handleTogglePublic}

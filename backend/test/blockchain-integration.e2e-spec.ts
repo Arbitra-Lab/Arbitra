@@ -45,9 +45,10 @@ describe('Blockchain Integration (e2e)', () => {
 
     _agreementsService =
       moduleFixture.get<AgreementsService>(AgreementsService);
-    _arbitraAgreementContract = moduleFixture.get<ArbitraAgreementContractService>(
-      ArbitraAgreementContractService,
-    );
+    _arbitraAgreementContract =
+      moduleFixture.get<ArbitraAgreementContractService>(
+        ArbitraAgreementContractService,
+      );
   });
 
   afterAll(async () => {

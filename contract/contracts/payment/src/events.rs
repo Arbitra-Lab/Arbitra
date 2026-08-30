@@ -1,4 +1,4 @@
-use soroban_sdk::{contractevent, Env, String};
+use soroban_sdk::{contractevent, Address, Env, String};
 
 #[contractevent(topics = ["rent_escalation_config_set"])]
 pub struct RentEscalationConfigSet {
@@ -63,6 +63,38 @@ pub(crate) fn late_fee_applied(env: &Env, payment_id: String, amount: i128, days
 
 pub(crate) fn late_fee_waived(env: &Env, payment_id: String, reason: String) {
     LateFeeWaived { payment_id, reason }.publish(env);
+}
+
+#[contractevent(topics = ["fee_quoted"])]
+pub struct FeeQuoted {
+    #[topic]
+    pub payer: Address,
+    pub tier_index: u32,
+    pub gross: i128,
+    pub fee: i128,
+    pub discount: i128,
+    pub net: i128,
+}
+
+#[allow(clippy::too_many_arguments)]
+pub(crate) fn fee_quoted(
+    env: &Env,
+    payer: Address,
+    tier_index: u32,
+    gross: i128,
+    fee: i128,
+    discount: i128,
+    net: i128,
+) {
+    FeeQuoted {
+        payer,
+        tier_index,
+        gross,
+        fee,
+        discount,
+        net,
+    }
+    .publish(env);
 }
 
 #[contractevent(topics = ["recurring_payment_created"])]
@@ -140,4 +172,60 @@ pub(crate) fn recurring_payment_cancelled(env: &Env, recurring_id: String) {
 
 pub(crate) fn recurring_payment_failed(env: &Env, recurring_id: String) {
     RecurringPaymentFailed { recurring_id }.publish(env);
+}
+
+#[contractevent(topics = ["fee_split_config_set"])]
+pub struct FeeSplitConfigSet {
+    #[topic]
+    pub config_id: String,
+    #[topic]
+    pub agreement_id: String,
+    pub recipient_count: u32,
+}
+
+#[contractevent(topics = ["fee_split_executed"])]
+pub struct FeeSplitExecuted {
+    #[topic]
+    pub config_id: String,
+    #[topic]
+    pub agreement_id: String,
+    #[topic]
+    pub recipient: Address,
+    pub amount: i128,
+    pub basis_points: u32,
+    pub payment_number: u32,
+}
+
+pub(crate) fn fee_split_config_set(
+    env: &Env,
+    config_id: String,
+    agreement_id: String,
+    recipient_count: u32,
+) {
+    FeeSplitConfigSet {
+        config_id,
+        agreement_id,
+        recipient_count,
+    }
+    .publish(env);
+}
+
+pub(crate) fn fee_split_executed(
+    env: &Env,
+    config_id: String,
+    agreement_id: String,
+    recipient: Address,
+    amount: i128,
+    basis_points: u32,
+    payment_number: u32,
+) {
+    FeeSplitExecuted {
+        config_id,
+        agreement_id,
+        recipient,
+        amount,
+        basis_points,
+        payment_number,
+    }
+    .publish(env);
 }

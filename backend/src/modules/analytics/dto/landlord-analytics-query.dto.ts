@@ -1,5 +1,6 @@
 import { Type } from 'class-transformer';
-import { IsInt, IsOptional, Max, Min } from 'class-validator';
+import { IsIn, IsInt, IsOptional, Max, Min } from 'class-validator';
+import { AnalyticsDataSource } from '../analytics.service';
 
 export class LandlordAnalyticsQueryDto {
   @IsOptional()
@@ -8,4 +9,8 @@ export class LandlordAnalyticsQueryDto {
   @Min(1)
   @Max(365)
   days?: number;
+
+  @IsOptional()
+  @IsIn(['auto', 'raw', 'rollup'])
+  source?: AnalyticsDataSource;
 }

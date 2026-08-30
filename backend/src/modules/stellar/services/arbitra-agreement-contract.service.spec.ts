@@ -29,7 +29,9 @@ describe('ArbitraAgreementContractService', () => {
       ],
     }).compile();
 
-    service = module.get<ArbitraAgreementContractService>(ArbitraAgreementContractService);
+    service = module.get<ArbitraAgreementContractService>(
+      ArbitraAgreementContractService,
+    );
   });
 
   it('should be defined', () => {

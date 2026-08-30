@@ -25,4 +25,13 @@ pub enum ContractError {
 
     /// Access denied: caller is not the owner
     AccessDenied = 7,
+
+    /// Attestation not found
+    AttestationNotFound = 8,
+
+    /// Attestation already exists from this issuer
+    AttestationAlreadyExists = 9,
+
+    /// Not authorized to revoke: caller is not the issuer
+    NotAttestationIssuer = 10,
 }

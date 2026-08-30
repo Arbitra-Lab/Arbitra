@@ -30,12 +30,21 @@ import { UpdatePaymentScheduleDto } from './dto/update-payment-schedule.dto';
 import { NotificationsService } from '../notifications/notifications.service';
 import {
   addDays,
+  assertRefundWithinLimit,
   calculateNextRunAt,
   decryptMetadata,
   encryptMetadata,
   ensureUserId,
   getIdempotencyKey,
+  getNetCapturedAmount,
+  roundMoney,
 } from './payment.helpers';
+import {
+  LedgerDirection,
+  LedgerOperation,
+  LedgerOperationType,
+} from './entities/ledger-entry.entity';
+import { LedgerService } from './ledger.service';
 import { PaymentProcessingService } from '../stellar/services/payment-processing.service';
 import { StellarService } from '../stellar/services/stellar.service';
 import * as StellarSdk from '@stellar/stellar-sdk';
@@ -69,6 +78,7 @@ export class PaymentService {
     private readonly idempotencyService: IdempotencyService,
     private readonly dataSource: DataSource,
     private readonly fraudHooksService: FraudHooksService,
+    private readonly ledgerService: LedgerService,
   ) {}
 
   @Locked({
@@ -110,8 +120,8 @@ export class PaymentService {
     }
 
     // Calculate fees (mock: 2% fee)
-    const transactionFee = dto.amount * 0.02;
-    const netAmount = dto.amount - transactionFee;
+    const transactionFee = roundMoney(dto.amount * 0.02);
+    const netAmount = roundMoney(dto.amount - transactionFee);
 
     // Note: In production, fetch actual user email from UsersService.findById(userId)
     // For now, using userId as fallback since UsersService has unrelated type issues
@@ -176,7 +186,47 @@ export class PaymentService {
       idempotencyKey,
     });
 
-    const savedPayment = await this.paymentRepository.save(payment);
+    // Persist the payment and its balanced capture ledger entries as one
+    // DB transaction, so a captured payment always has matching debit/credit
+    // rows — never one without the other.
+    const savedPayment = await this.dataSource.transaction(async (manager) => {
+      const saved = await manager.save(Payment, payment);
+
+      const ledgerLines = [
+        {
+          accountId: 'gateway:clearing',
+          direction: LedgerDirection.DEBIT,
+          amount: dto.amount,
+          description: 'Payment captured via gateway',
+        },
+        {
+          accountId: `customer:${userId}`,
+          direction: LedgerDirection.CREDIT,
+          amount: netAmount,
+          description: 'Customer refundable balance',
+        },
+      ];
+      if (transactionFee > 0) {
+        ledgerLines.push({
+          accountId: 'fees:revenue',
+          direction: LedgerDirection.CREDIT,
+          amount: transactionFee,
+          description: 'Platform fee revenue',
+        });
+      }
+
+      await this.ledgerService.recordOperation(manager, {
+        operationType: LedgerOperationType.CAPTURE,
+        paymentId: saved.id,
+        currency: 'NGN',
+        idempotencyKey: idempotencyKey
+          ? `capture:${userId}:${idempotencyKey}`
+          : `capture:payment:${saved.id}`,
+        lines: ledgerLines,
+      });
+
+      return saved;
+    });
     this.logger.log(`Payment recorded: ${savedPayment.id}`);
 
     void this.fraudHooksService.onPaymentRecorded({
@@ -215,15 +265,35 @@ export class PaymentService {
         throw new NotFoundException('Payment not found');
       }
 
-      if (payment.status !== PaymentStatus.COMPLETED) {
+      const ledgerIdempotencyKey = dto.idempotencyKey
+        ? `refund:${userId}:${paymentId}:${dto.idempotencyKey}`
+        : null;
+
+      if (ledgerIdempotencyKey) {
+        const existingOperation = await manager.findOne(LedgerOperation, {
+          where: { idempotencyKey: ledgerIdempotencyKey },
+        });
+        if (existingOperation) {
+          // Already processed by a prior attempt with the same key — return
+          // the current state instead of refunding (and charging the
+          // gateway) a second time.
+          return payment;
+        }
+      }
+
+      // A payment already sitting at PARTIAL_REFUND still has refundable
+      // balance left — only a fully COMPLETED capture or an earlier partial
+      // refund can accept another refund; REFUNDED/FAILED/PENDING cannot.
+      if (
+        payment.status !== PaymentStatus.COMPLETED &&
+        payment.status !== PaymentStatus.PARTIAL_REFUND
+      ) {
         throw new BadRequestException(
-          'Only completed payments can be refunded',
+          'Only completed or partially refunded payments can be refunded',
         );
       }
 
-      if (dto.amount > payment.amount - payment.refundAmount) {
-        throw new BadRequestException('Refund amount exceeds available amount');
-      }
+      assertRefundWithinLimit(payment, dto.amount);
 
       const chargeId = payment.metadata?.chargeId;
       if (!chargeId) {
@@ -238,11 +308,12 @@ export class PaymentService {
         throw new BadRequestException('Refund processing failed');
       }
 
-      payment.refundAmount += dto.amount;
+      const netCaptured = getNetCapturedAmount(payment);
+      payment.refundAmount = roundMoney(payment.refundAmount + dto.amount);
       payment.refundReason = dto.reason;
       payment.refundStatus = 'completed';
       payment.status =
-        payment.refundAmount >= payment.amount
+        payment.refundAmount >= netCaptured
           ? PaymentStatus.REFUNDED
           : PaymentStatus.PARTIAL_REFUND;
       payment.metadata = {
@@ -251,6 +322,28 @@ export class PaymentService {
       };
 
       const updatedPayment = await manager.save(Payment, payment);
+
+      await this.ledgerService.recordOperation(manager, {
+        operationType: LedgerOperationType.REFUND,
+        paymentId,
+        currency: payment.currency,
+        idempotencyKey: ledgerIdempotencyKey,
+        lines: [
+          {
+            accountId: `customer:${userId}`,
+            direction: LedgerDirection.DEBIT,
+            amount: dto.amount,
+            description: 'Refund issued to customer',
+          },
+          {
+            accountId: 'gateway:clearing',
+            direction: LedgerDirection.CREDIT,
+            amount: dto.amount,
+            description: 'Refund paid out via gateway',
+          },
+        ],
+      });
+
       this.logger.log(`Refund processed for payment: ${paymentId}`);
 
       await this.notificationsService.notify(

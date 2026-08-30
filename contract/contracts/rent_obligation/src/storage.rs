@@ -11,4 +11,6 @@ pub enum DataKey {
     BurnedNfts(String),
     BurnCount,
     UpgradeProposal(String),
+    RentSchedule(String),
+    LateFeeState(String),
 }

@@ -14,10 +14,11 @@ mod tests;
 
 pub use errors::PropertyError;
 pub use property::{
-    get_property, get_property_count, has_property, register_property, verify_property,
+    accept_transfer, cancel_transfer, get_property, get_property_count, get_transfer_proposal,
+    has_property, propose_transfer, register_property, verify_property,
 };
 pub use storage::DataKey;
-pub use types::{ContractState, PropertyDetails};
+pub use types::{ContractState, PropertyDetails, TransferProposal};
 
 #[contract]
 pub struct PropertyRegistryContract;
@@ -102,6 +103,69 @@ impl PropertyRegistryContract {
         property_id: String,
     ) -> Result<(), PropertyError> {
         property::verify_property(&env, admin, property_id)
+    }
+
+    /// Propose a transfer of property ownership (two-step process).
+    /// The current owner calls this to propose a new owner.
+    ///
+    /// # Arguments
+    /// * `property_id` - The ID of the property to transfer
+    /// * `new_owner` - The address of the proposed new owner
+    /// * `escrow_case_id` - Optional escrow case ID that must settle before transfer
+    ///
+    /// # Errors
+    /// * `NotInitialized` - If the contract hasn't been initialized
+    /// * `PropertyNotFound` - If the property doesn't exist
+    /// * `Unauthorized` - If the caller is not the current owner
+    /// * `TransferProposalPending` - If a transfer proposal is already pending
+    /// * `InvalidNewOwner` - If the new owner is the same as current owner
+    pub fn propose_transfer(
+        env: Env,
+        property_id: String,
+        new_owner: Address,
+        escrow_case_id: Option<String>,
+    ) -> Result<(), PropertyError> {
+        property::propose_transfer(&env, property_id, new_owner, escrow_case_id)
+    }
+
+    /// Accept a proposed transfer of property ownership.
+    /// The proposed new owner calls this to finalize the transfer.
+    ///
+    /// # Arguments
+    /// * `property_id` - The ID of the property to accept transfer for
+    ///
+    /// # Errors
+    /// * `NotInitialized` - If the contract hasn't been initialized
+    /// * `NoTransferProposal` - If there's no pending transfer proposal
+    /// * `PropertyNotFound` - If the property doesn't exist
+    /// * `Unauthorized` - If the caller is not the proposed new owner
+    pub fn accept_transfer(env: Env, property_id: String) -> Result<(), PropertyError> {
+        property::accept_transfer(&env, property_id)
+    }
+
+    /// Cancel a pending transfer proposal.
+    /// Only the current owner (proposer) can cancel.
+    ///
+    /// # Arguments
+    /// * `property_id` - The ID of the property to cancel transfer for
+    ///
+    /// # Errors
+    /// * `NotInitialized` - If the contract hasn't been initialized
+    /// * `NoTransferProposal` - If there's no pending transfer proposal
+    /// * `Unauthorized` - If the caller is not the current owner
+    pub fn cancel_transfer(env: Env, property_id: String) -> Result<(), PropertyError> {
+        property::cancel_transfer(&env, property_id)
+    }
+
+    /// Get a pending transfer proposal for a property.
+    ///
+    /// # Arguments
+    /// * `property_id` - The ID of the property
+    ///
+    /// # Returns
+    /// * `Option<TransferProposal>` - The transfer proposal if one exists
+    pub fn get_transfer_proposal(env: Env, property_id: String) -> Option<TransferProposal> {
+        property::get_transfer_proposal(&env, property_id)
     }
 
     /// Get details of a registered property.

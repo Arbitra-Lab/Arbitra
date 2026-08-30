@@ -18,6 +18,7 @@ import { PDFGenerationService } from './pdf-generation.service';
 import { LockService } from '../../common/lock';
 import { IdempotencyService } from '../../common/idempotency';
 import { AgreementStateService } from './state-machines/agreement-state-machine.service';
+import { AgreementActivationSagaService } from './sagas/agreement-activation-saga.service';
 
 describe('AgreementsService (lease extensions)', () => {
   let service: AgreementsService;
@@ -128,6 +129,10 @@ describe('AgreementsService (lease extensions)', () => {
           },
         },
         { provide: EventEmitter2, useValue: {} },
+        {
+          provide: AgreementActivationSagaService,
+          useValue: { activate: jest.fn() },
+        },
       ],
     }).compile();
 

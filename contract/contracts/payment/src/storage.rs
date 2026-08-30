@@ -1,5 +1,5 @@
 //! Storage key definitions for the Payment contract.
-use soroban_sdk::{contracttype, String};
+use soroban_sdk::{contracttype, Address, String};
 
 /// Storage key variants for persistent storage.
 #[contracttype]
@@ -37,4 +37,14 @@ pub enum DataKey {
     RentEscalationConfig(String),
     /// Upgrade proposal
     UpgradeProposal(String),
+    /// Global tiered platform fee schedule
+    FeeSchedule,
+    /// Per-payer fee discount, keyed by payer address
+    PayerDiscount(Address),
+    /// Fee split configuration by config ID
+    FeeSplitConfig(String),
+    /// Fee split configuration by agreement ID (currently active split)
+    AgreementFeeSplit(String),
+    /// Fee split record for a payment
+    FeeSplitRecord(String, u32),
 }

@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { ReviewsService } from './reviews.service';
+import { ReviewModerationService } from './review-moderation.service';
 import { Review } from './review.entity';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -23,7 +24,10 @@ import { UpdateReviewDto } from './dto/update-review.dto';
 @Controller('reviews')
 @UseGuards(JwtAuthGuard)
 export class ReviewsController {
-  constructor(private readonly reviewsService: ReviewsService) {}
+  constructor(
+    private readonly reviewsService: ReviewsService,
+    private readonly moderationService: ReviewModerationService,
+  ) {}
 
   @Post()
   @ApiOperation({
@@ -81,6 +85,10 @@ export class ReviewsController {
   }
 
   @Post('guest')
+  @ApiOperation({
+    summary: 'Post a guest review',
+    description: 'Submit a review from host about a guest. Review enters moderation queue.',
+  })
   async postGuestReview(
     @Body() dto: PostGuestReviewDto,
     @Req() req: { user?: { id: string } },
@@ -89,6 +97,10 @@ export class ReviewsController {
   }
 
   @Post('host')
+  @ApiOperation({
+    summary: 'Post a host review',
+    description: 'Submit a review from guest about a host. Review enters moderation queue.',
+  })
   async postHostReview(
     @Body() dto: PostHostReviewDto,
     @Req() req: { user?: { id: string } },
@@ -125,6 +137,46 @@ export class ReviewsController {
   @Get('reputation/:userId')
   async getReputation(@Param('userId') userId: string) {
     return this.reviewsService.getReputation(userId);
+  }
+
+  @Get('moderation/queue/:page')
+  @ApiOperation({
+    summary: 'Get moderation queue (Admin only)',
+    description: 'Retrieve reviews pending moderation for admin review.',
+  })
+  @ApiParam({ name: 'page', description: 'Page number' })
+  async getModerationQueue(@Param('page') page = 1) {
+    return this.moderationService.getPendingModerationQueue(Number(page), 20);
+  }
+
+  @Post('moderation/approve/:reviewId/:type')
+  @ApiOperation({
+    summary: 'Approve a review (Admin only)',
+    description: 'Approve a pending review to make it public.',
+  })
+  @ApiParam({ name: 'reviewId', description: 'Review ID' })
+  @ApiParam({ name: 'type', description: 'Review type (guest or host)' })
+  async approveReview(
+    @Param('reviewId') reviewId: string,
+    @Param('type') type: 'guest' | 'host',
+  ) {
+    await this.moderationService.approveReview(reviewId, type);
+    return { success: true };
+  }
+
+  @Post('moderation/reject/:reviewId/:type')
+  @ApiOperation({
+    summary: 'Reject a review (Admin only)',
+    description: 'Reject a pending review.',
+  })
+  @ApiParam({ name: 'reviewId', description: 'Review ID' })
+  @ApiParam({ name: 'type', description: 'Review type (guest or host)' })
+  async rejectReview(
+    @Param('reviewId') reviewId: string,
+    @Param('type') type: 'guest' | 'host',
+  ) {
+    await this.moderationService.rejectReview(reviewId, type);
+    return { success: true };
   }
 
   @Patch(':id')

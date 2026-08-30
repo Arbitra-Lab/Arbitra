@@ -565,3 +565,435 @@ fn test_property_count_accuracy() {
         assert_eq!(client.get_property_count(), (i + 1) as u32);
     }
 }
+
+// ─── Issue #649: Two-Step Transfer Tests ─────────────────────────────────────────
+
+#[test]
+fn test_propose_transfer_success() {
+    let env = Env::default();
+    let client = create_contract(&env);
+
+    let admin = Address::generate(&env);
+    let owner = Address::generate(&env);
+    let new_owner = Address::generate(&env);
+
+    env.mock_all_auths();
+
+    client.initialize(&admin);
+
+    let property_id = String::from_str(&env, "PROP-TRANSFER-001");
+    let metadata_hash = String::from_str(&env, "QmTransfer001");
+
+    client.register_property(&owner, &property_id, &metadata_hash);
+
+    let result = client.try_propose_transfer(&property_id, &new_owner, &None);
+    assert!(result.is_ok());
+
+    let proposal = client.get_transfer_proposal(&property_id).unwrap();
+    assert_eq!(proposal.property_id, property_id);
+    assert_eq!(proposal.current_owner, owner);
+    assert_eq!(proposal.proposed_new_owner, new_owner);
+    assert!(proposal.escrow_case_id.is_none());
+
+    // Owner should not change yet
+    let property = client.get_property(&property_id).unwrap();
+    assert_eq!(property.landlord, owner);
+}
+
+#[test]
+#[should_panic]
+fn test_propose_transfer_fails_without_owner_auth() {
+    let env = Env::default();
+    let client = create_contract(&env);
+
+    let admin = Address::generate(&env);
+    let owner = Address::generate(&env);
+    let new_owner = Address::generate(&env);
+
+    env.mock_all_auths();
+
+    client.initialize(&admin);
+
+    let property_id = String::from_str(&env, "PROP-TRANSFER-001");
+    let metadata_hash = String::from_str(&env, "QmTransfer001");
+
+    client.register_property(&owner, &property_id, &metadata_hash);
+
+    env.mock_auths(&[]);
+
+    client.propose_transfer(&property_id, &new_owner, &None);
+}
+
+#[test]
+#[should_panic(expected = "Error(Contract, #4)")]
+fn test_propose_transfer_fails_if_property_not_found() {
+    let env = Env::default();
+    let client = create_contract(&env);
+
+    let admin = Address::generate(&env);
+    let _owner = Address::generate(&env);
+    let new_owner = Address::generate(&env);
+
+    env.mock_all_auths();
+
+    client.initialize(&admin);
+
+    let property_id = String::from_str(&env, "PROP-NONEXISTENT");
+
+    client.propose_transfer(&property_id, &new_owner, &None);
+}
+
+#[test]
+#[should_panic(expected = "Error(Contract, #11)")]
+fn test_propose_transfer_fails_if_new_owner_same_as_current() {
+    let env = Env::default();
+    let client = create_contract(&env);
+
+    let admin = Address::generate(&env);
+    let owner = Address::generate(&env);
+
+    env.mock_all_auths();
+
+    client.initialize(&admin);
+
+    let property_id = String::from_str(&env, "PROP-TRANSFER-001");
+    let metadata_hash = String::from_str(&env, "QmTransfer001");
+
+    client.register_property(&owner, &property_id, &metadata_hash);
+
+    client.propose_transfer(&property_id, &owner, &None);
+}
+
+#[test]
+#[should_panic(expected = "Error(Contract, #9)")]
+fn test_propose_transfer_fails_if_proposal_pending() {
+    let env = Env::default();
+    let client = create_contract(&env);
+
+    let admin = Address::generate(&env);
+    let owner = Address::generate(&env);
+    let new_owner = Address::generate(&env);
+
+    env.mock_all_auths();
+
+    client.initialize(&admin);
+
+    let property_id = String::from_str(&env, "PROP-TRANSFER-001");
+    let metadata_hash = String::from_str(&env, "QmTransfer001");
+
+    client.register_property(&owner, &property_id, &metadata_hash);
+
+    client.propose_transfer(&property_id, &new_owner, &None);
+    client.propose_transfer(&property_id, &new_owner, &None);
+}
+
+#[test]
+fn test_accept_transfer_success() {
+    let env = Env::default();
+    let client = create_contract(&env);
+
+    let admin = Address::generate(&env);
+    let owner = Address::generate(&env);
+    let new_owner = Address::generate(&env);
+
+    env.mock_all_auths();
+
+    client.initialize(&admin);
+
+    let property_id = String::from_str(&env, "PROP-TRANSFER-001");
+    let metadata_hash = String::from_str(&env, "QmTransfer001");
+
+    client.register_property(&owner, &property_id, &metadata_hash);
+    client.propose_transfer(&property_id, &new_owner, &None);
+
+    // Verify proposal exists before acceptance
+    let proposal_before = client.get_transfer_proposal(&property_id);
+    assert!(proposal_before.is_some());
+
+    // New owner accepts the transfer
+    let result = client.try_accept_transfer(&property_id);
+    assert!(result.is_ok());
+
+    // Proposal should be cleared
+    let proposal_after = client.get_transfer_proposal(&property_id);
+    assert!(proposal_after.is_none());
+
+    // Owner should be updated
+    let property = client.get_property(&property_id).unwrap();
+    assert_eq!(property.landlord, new_owner);
+}
+
+#[test]
+fn test_accept_transfer_unaccepted_doesnt_change_owner() {
+    let env = Env::default();
+    let client = create_contract(&env);
+
+    let admin = Address::generate(&env);
+    let owner = Address::generate(&env);
+    let new_owner = Address::generate(&env);
+
+    env.mock_all_auths();
+
+    client.initialize(&admin);
+
+    let property_id = String::from_str(&env, "PROP-TRANSFER-001");
+    let metadata_hash = String::from_str(&env, "QmTransfer001");
+
+    client.register_property(&owner, &property_id, &metadata_hash);
+    client.propose_transfer(&property_id, &new_owner, &None);
+
+    // Before acceptance, owner should still be the original owner
+    let property_before = client.get_property(&property_id).unwrap();
+    assert_eq!(property_before.landlord, owner);
+}
+
+#[test]
+#[should_panic]
+fn test_accept_transfer_fails_without_new_owner_auth() {
+    let env = Env::default();
+    let client = create_contract(&env);
+
+    let admin = Address::generate(&env);
+    let owner = Address::generate(&env);
+    let new_owner = Address::generate(&env);
+
+    env.mock_all_auths();
+
+    client.initialize(&admin);
+
+    let property_id = String::from_str(&env, "PROP-TRANSFER-001");
+    let metadata_hash = String::from_str(&env, "QmTransfer001");
+
+    client.register_property(&owner, &property_id, &metadata_hash);
+    client.propose_transfer(&property_id, &new_owner, &None);
+
+    env.mock_auths(&[]);
+
+    client.accept_transfer(&property_id);
+}
+
+#[test]
+#[should_panic(expected = "Error(Contract, #10)")]
+fn test_accept_transfer_fails_if_no_proposal() {
+    let env = Env::default();
+    let client = create_contract(&env);
+
+    let admin = Address::generate(&env);
+    let owner = Address::generate(&env);
+    let _new_owner = Address::generate(&env);
+
+    env.mock_all_auths();
+
+    client.initialize(&admin);
+
+    let property_id = String::from_str(&env, "PROP-TRANSFER-001");
+    let metadata_hash = String::from_str(&env, "QmTransfer001");
+
+    client.register_property(&owner, &property_id, &metadata_hash);
+
+    // Try to accept without proposing
+    client.accept_transfer(&property_id);
+}
+
+#[test]
+fn test_cancel_transfer_success() {
+    let env = Env::default();
+    let client = create_contract(&env);
+
+    let admin = Address::generate(&env);
+    let owner = Address::generate(&env);
+    let new_owner = Address::generate(&env);
+
+    env.mock_all_auths();
+
+    client.initialize(&admin);
+
+    let property_id = String::from_str(&env, "PROP-TRANSFER-001");
+    let metadata_hash = String::from_str(&env, "QmTransfer001");
+
+    client.register_property(&owner, &property_id, &metadata_hash);
+    client.propose_transfer(&property_id, &new_owner, &None);
+
+    // Verify proposal exists
+    let proposal_before = client.get_transfer_proposal(&property_id);
+    assert!(proposal_before.is_some());
+
+    // Owner cancels the transfer
+    let result = client.try_cancel_transfer(&property_id);
+    assert!(result.is_ok());
+
+    // Proposal should be cleared
+    let proposal_after = client.get_transfer_proposal(&property_id);
+    assert!(proposal_after.is_none());
+
+    // Owner should remain the same
+    let property = client.get_property(&property_id).unwrap();
+    assert_eq!(property.landlord, owner);
+}
+
+#[test]
+#[should_panic]
+fn test_cancel_transfer_fails_without_owner_auth() {
+    let env = Env::default();
+    let client = create_contract(&env);
+
+    let admin = Address::generate(&env);
+    let owner = Address::generate(&env);
+    let new_owner = Address::generate(&env);
+
+    env.mock_all_auths();
+
+    client.initialize(&admin);
+
+    let property_id = String::from_str(&env, "PROP-TRANSFER-001");
+    let metadata_hash = String::from_str(&env, "QmTransfer001");
+
+    client.register_property(&owner, &property_id, &metadata_hash);
+    client.propose_transfer(&property_id, &new_owner, &None);
+
+    env.mock_auths(&[]);
+
+    client.cancel_transfer(&property_id);
+}
+
+#[test]
+#[should_panic(expected = "Error(Contract, #10)")]
+fn test_cancel_transfer_fails_if_no_proposal() {
+    let env = Env::default();
+    let client = create_contract(&env);
+
+    let admin = Address::generate(&env);
+    let owner = Address::generate(&env);
+
+    env.mock_all_auths();
+
+    client.initialize(&admin);
+
+    let property_id = String::from_str(&env, "PROP-TRANSFER-001");
+    let metadata_hash = String::from_str(&env, "QmTransfer001");
+
+    client.register_property(&owner, &property_id, &metadata_hash);
+
+    // Try to cancel without proposing
+    client.cancel_transfer(&property_id);
+}
+
+#[test]
+fn test_propose_transfer_with_escrow_case() {
+    let env = Env::default();
+    let client = create_contract(&env);
+
+    let admin = Address::generate(&env);
+    let owner = Address::generate(&env);
+    let new_owner = Address::generate(&env);
+
+    env.mock_all_auths();
+
+    client.initialize(&admin);
+
+    let property_id = String::from_str(&env, "PROP-TRANSFER-001");
+    let metadata_hash = String::from_str(&env, "QmTransfer001");
+    let escrow_case_id = String::from_str(&env, "ESCROW-123");
+
+    client.register_property(&owner, &property_id, &metadata_hash);
+
+    let result =
+        client.try_propose_transfer(&property_id, &new_owner, &Some(escrow_case_id.clone()));
+    assert!(result.is_ok());
+
+    let proposal = client.get_transfer_proposal(&property_id).unwrap();
+    assert_eq!(proposal.escrow_case_id, Some(escrow_case_id));
+}
+
+#[test]
+fn test_transfer_proposal_blocks_direct_overwrite() {
+    let env = Env::default();
+    let client = create_contract(&env);
+
+    let admin = Address::generate(&env);
+    let owner = Address::generate(&env);
+    let new_owner = Address::generate(&env);
+    let another_owner = Address::generate(&env);
+
+    env.mock_all_auths();
+
+    client.initialize(&admin);
+
+    let property_id = String::from_str(&env, "PROP-TRANSFER-001");
+    let metadata_hash = String::from_str(&env, "QmTransfer001");
+
+    client.register_property(&owner, &property_id, &metadata_hash);
+    client.propose_transfer(&property_id, &new_owner, &None);
+
+    // Now owner has proposed a transfer. Trying to propose another transfer should fail.
+    let result = client.try_propose_transfer(&property_id, &another_owner, &None);
+    assert!(result.is_err());
+}
+
+#[test]
+fn test_multiple_properties_can_have_concurrent_transfers() {
+    let env = Env::default();
+    let client = create_contract(&env);
+
+    let admin = Address::generate(&env);
+    let owner1 = Address::generate(&env);
+    let owner2 = Address::generate(&env);
+    let new_owner1 = Address::generate(&env);
+    let new_owner2 = Address::generate(&env);
+
+    env.mock_all_auths();
+
+    client.initialize(&admin);
+
+    let property_id_1 = String::from_str(&env, "PROP-001");
+    let property_id_2 = String::from_str(&env, "PROP-002");
+    let metadata_hash = String::from_str(&env, "QmMetadata");
+
+    client.register_property(&owner1, &property_id_1, &metadata_hash);
+    client.register_property(&owner2, &property_id_2, &metadata_hash);
+
+    // Both can have concurrent transfer proposals
+    client.propose_transfer(&property_id_1, &new_owner1, &None);
+    client.propose_transfer(&property_id_2, &new_owner2, &None);
+
+    let proposal_1 = client.get_transfer_proposal(&property_id_1).unwrap();
+    let proposal_2 = client.get_transfer_proposal(&property_id_2).unwrap();
+
+    assert_eq!(proposal_1.proposed_new_owner, new_owner1);
+    assert_eq!(proposal_2.proposed_new_owner, new_owner2);
+}
+
+#[test]
+fn test_cancel_then_propose_new_transfer() {
+    let env = Env::default();
+    let client = create_contract(&env);
+
+    let admin = Address::generate(&env);
+    let owner = Address::generate(&env);
+    let new_owner_1 = Address::generate(&env);
+    let new_owner_2 = Address::generate(&env);
+
+    env.mock_all_auths();
+
+    client.initialize(&admin);
+
+    let property_id = String::from_str(&env, "PROP-TRANSFER-001");
+    let metadata_hash = String::from_str(&env, "QmTransfer001");
+
+    client.register_property(&owner, &property_id, &metadata_hash);
+
+    // First transfer proposal
+    client.propose_transfer(&property_id, &new_owner_1, &None);
+    let proposal_1 = client.get_transfer_proposal(&property_id).unwrap();
+    assert_eq!(proposal_1.proposed_new_owner, new_owner_1);
+
+    // Cancel it
+    client.cancel_transfer(&property_id);
+    let proposal_after_cancel = client.get_transfer_proposal(&property_id);
+    assert!(proposal_after_cancel.is_none());
+
+    // Propose a new transfer to a different owner
+    client.propose_transfer(&property_id, &new_owner_2, &None);
+    let proposal_2 = client.get_transfer_proposal(&property_id).unwrap();
+    assert_eq!(proposal_2.proposed_new_owner, new_owner_2);
+}

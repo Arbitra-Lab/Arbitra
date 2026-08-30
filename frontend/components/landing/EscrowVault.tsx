@@ -16,7 +16,8 @@ interface Stage {
 const STAGES: Stage[] = [
   {
     label: 'Mutual approval',
-    detail: 'Depositor and beneficiary both sign off — funds release instantly.',
+    detail:
+      'Depositor and beneficiary both sign off — funds release instantly.',
     active: ['depositor', 'beneficiary'],
     accent: 'teal',
   },
@@ -28,7 +29,8 @@ const STAGES: Stage[] = [
   },
   {
     label: 'Timeout release',
-    detail: 'No response after the window closes — funds release automatically.',
+    detail:
+      'No response after the window closes — funds release automatically.',
     active: [],
     accent: 'neutral',
   },
@@ -88,7 +90,9 @@ export default function EscrowVault() {
         </div>
         <div className="text-right">
           <div className="text-2xl font-bold text-white">1,250.00 USDC</div>
-          <div className="text-xs text-neutral-200/50">held in 2-of-3 multi-sig</div>
+          <div className="text-xs text-neutral-200/50">
+            held in 2-of-3 multi-sig
+          </div>
         </div>
       </div>
 
@@ -114,7 +118,9 @@ export default function EscrowVault() {
                 strokeOpacity={isActive ? 0.9 : 0.12}
                 strokeWidth={isActive ? 0.8 : 0.5}
                 strokeLinecap="round"
-                style={{ transition: 'stroke 0.5s ease, stroke-opacity 0.5s ease' }}
+                style={{
+                  transition: 'stroke 0.5s ease, stroke-opacity 0.5s ease',
+                }}
               />
             );
           })}
@@ -123,22 +129,37 @@ export default function EscrowVault() {
         {/* Vault */}
         <div
           className="absolute flex flex-col items-center"
-          style={{ left: `${VAULT.x}%`, top: `${VAULT.y}%`, transform: 'translate(-50%, -50%)' }}
+          style={{
+            left: `${VAULT.x}%`,
+            top: `${VAULT.y}%`,
+            transform: 'translate(-50%, -50%)',
+          }}
         >
           <motion.div
             animate={
               prefersReducedMotion
                 ? undefined
-                : { boxShadow: [`0 0 0 0 ${accentHex}55`, `0 0 0 14px ${accentHex}00`] }
+                : {
+                    boxShadow: [
+                      `0 0 0 0 ${accentHex}55`,
+                      `0 0 0 14px ${accentHex}00`,
+                    ],
+                  }
             }
             transition={{ duration: 1.8, repeat: Infinity, ease: 'easeOut' }}
             className="flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl border border-white/15 bg-neutral-900"
             style={{ borderColor: `${accentHex}55` }}
           >
             {stage.accent === 'neutral' ? (
-              <Clock3 className="h-7 w-7 sm:h-8 sm:w-8" style={{ color: accentHex }} />
+              <Clock3
+                className="h-7 w-7 sm:h-8 sm:w-8"
+                style={{ color: accentHex }}
+              />
             ) : (
-              <Lock className="h-7 w-7 sm:h-8 sm:w-8" style={{ color: accentHex }} />
+              <Lock
+                className="h-7 w-7 sm:h-8 sm:w-8"
+                style={{ color: accentHex }}
+              />
             )}
           </motion.div>
         </div>
@@ -152,7 +173,11 @@ export default function EscrowVault() {
             <div
               key={id}
               className="absolute flex flex-col items-center gap-1.5"
-              style={{ left: `${node.x}%`, top: `${node.y}%`, transform: 'translate(-50%, -50%)' }}
+              style={{
+                left: `${node.x}%`,
+                top: `${node.y}%`,
+                transform: 'translate(-50%, -50%)',
+              }}
             >
               <div
                 className="flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-full border bg-neutral-900/80 transition-colors duration-500"

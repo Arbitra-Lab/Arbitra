@@ -1,7 +1,21 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Dispute, DisputeStatus } from './entities/dispute.entity';
+import {
+  Dispute,
+  DisputePriority,
+  DisputeStatus,
+} from './entities/dispute.entity';
+import { Arbiter } from './entities/arbiter.entity';
 import { User } from '../users/entities/user.entity';
 import { RentAgreement } from '../rent/entities/rent-contract.entity';
+
+export interface DisputeSlaEscalationData {
+  dispute: Dispute;
+  previousPriority: DisputePriority;
+  newPriority: DisputePriority;
+  previousArbiterId: number | null;
+  newArbiter: Arbiter | null;
+  dueAt: Date | null;
+}
 
 export interface DisputeNotificationData {
   dispute: Dispute;
@@ -165,6 +179,34 @@ export class DisputeNotificationService {
           agreementId: agreement.id,
           resolution: dispute.resolution,
           resolvedBy: initiator.firstName || initiator.email,
+        },
+      });
+    }
+  }
+
+  /**
+   * Notify admins (and the newly assigned arbiter, if any) that a dispute
+   * breached its stage SLA and was escalated.
+   */
+  async notifySlaEscalation(data: DisputeSlaEscalationData): Promise<void> {
+    const { dispute, previousPriority, newPriority, newArbiter, dueAt } = data;
+
+    await this.notifyAdmins(
+      dispute,
+      'DISPUTE_SLA_BREACHED',
+      `SLA breached (due ${dueAt?.toISOString()}) — priority raised from ${previousPriority} to ${newPriority}`,
+    );
+
+    if (newArbiter?.userId) {
+      await this.sendNotification({
+        userId: String(newArbiter.userId),
+        type: 'DISPUTE_REASSIGNED_ESCALATION',
+        title: 'Dispute Reassigned After SLA Breach',
+        message: `You have been assigned dispute ${dispute.disputeId} after it breached its SLA.`,
+        data: {
+          disputeId: dispute.disputeId,
+          priority: newPriority,
+          dueAt,
         },
       });
     }

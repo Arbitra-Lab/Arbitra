@@ -339,7 +339,9 @@ export function ProfileMetadataManagement({
             </>
           ) : (
             <div className="bg-white/5 backdrop-blur-sm rounded-3xl p-6 border border-white/10 flex items-center justify-center min-h-[400px]">
-              <p className="text-neutral-200/60">Select a field to view details</p>
+              <p className="text-neutral-200/60">
+                Select a field to view details
+              </p>
             </div>
           )}
         </div>

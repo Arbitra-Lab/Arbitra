@@ -23,4 +23,5 @@ pub enum AgentError {
     NothingToWithdraw = 17,
     UnbondingNotElapsed = 18,
     MathOverflow = 19,
+    OutcomePolicyNotSet = 20,
 }

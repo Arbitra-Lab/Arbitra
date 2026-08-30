@@ -125,7 +125,9 @@ const Navbar = ({ theme = 'dark' }: NavbarProps) => {
                   href={link.href}
                   onClick={() => setIsMobileMenuOpen(false)}
                   className={`text-lg font-medium transition-colors ${
-                    active ? 'text-white' : 'text-neutral-200/80 hover:text-white'
+                    active
+                      ? 'text-white'
+                      : 'text-neutral-200/80 hover:text-white'
                   }`}
                 >
                   {link.name}

@@ -7,7 +7,7 @@ use crate::rate_limit;
 use crate::storage::DataKey;
 use crate::types::{
     AgreementExtension, AgreementStatus, ExtensionHistory, ExtensionStatus, PaymentSplit,
-    RentAgreement,
+    RentAgreement, RenewalProposal, RenewalStatus, RenewalHistory,
 };
 
 const TTL_THRESHOLD: u32 = 500000;
@@ -49,7 +49,10 @@ pub fn validate_agreement_params(
 
 /// Create a new rent agreement
 #[allow(clippy::too_many_arguments)]
-pub fn create_agreement(env: &Env, input: crate::types::AgreementInput) -> Result<(), AgreementError> {
+pub fn create_agreement(
+    env: &Env,
+    input: crate::types::AgreementInput,
+) -> Result<(), AgreementError> {
     // Tenant MUST authorize creation
     input.user.require_auth();
 
@@ -146,7 +149,11 @@ fn create_agreement_internal(
 }
 
 /// Sign an agreement as the tenant
-pub fn sign_agreement(env: &Env, user: Address, agreement_id: String) -> Result<(), AgreementError> {
+pub fn sign_agreement(
+    env: &Env,
+    user: Address,
+    agreement_id: String,
+) -> Result<(), AgreementError> {
     // Tenant MUST authorize signing
     user.require_auth();
 
@@ -560,7 +567,11 @@ pub fn release_escrow_with_token(
     Ok(())
 }
 
-pub fn set_escrow_frozen(env: &Env, escrow_id: String, is_frozen: bool) -> Result<(), AgreementError> {
+pub fn set_escrow_frozen(
+    env: &Env,
+    escrow_id: String,
+    is_frozen: bool,
+) -> Result<(), AgreementError> {
     if !env
         .storage()
         .persistent()
@@ -824,7 +835,10 @@ pub fn cancel_extension(
     Ok(())
 }
 
-pub fn get_extension(env: &Env, extension_id: String) -> Result<AgreementExtension, AgreementError> {
+pub fn get_extension(
+    env: &Env,
+    extension_id: String,
+) -> Result<AgreementExtension, AgreementError> {
     env.storage()
         .persistent()
         .get(&DataKey::AgreementExtension(extension_id))
@@ -849,4 +863,369 @@ pub fn get_current_agreement_end(env: &Env, agreement_id: String) -> Result<u64,
         .ok_or(AgreementError::AgreementNotFound)?;
 
     Ok(agreement.end_date)
+}
+
+// ─── Agreement Renewal Functions ──────────────────────────────────────────────
+
+/// Helper function to calculate hash of agreement terms
+fn compute_term_hash(env: &Env, _rent: i128, _deposit: i128, _end_date: u64) -> String {
+    // Create a simple string representation of the terms for hashing
+    // In production, use proper hashing
+    String::from_str(env, "renewal_hash")
+}
+
+/// Propose renewal of an agreement with new terms
+/// Requires caller to be either landlord (admin) or tenant (user)
+/// Guards against renewing terminated or disputed agreements
+pub fn propose_renewal(
+    env: &Env,
+    caller: Address,
+    agreement_id: String,
+    new_end_date: u64,
+    new_monthly_rent: Option<i128>,
+    new_security_deposit: Option<i128>,
+) -> Result<String, AgreementError> {
+    caller.require_auth();
+
+    let agreement: RentAgreement = env
+        .storage()
+        .persistent()
+        .get(&DataKey::Agreement(agreement_id.clone()))
+        .ok_or(AgreementError::AgreementNotFound)?;
+
+    // Guard against renewing terminated or disputed agreements
+    if agreement.status == AgreementStatus::Terminated {
+        return Err(AgreementError::Expired);
+    }
+
+    if agreement.status == AgreementStatus::Disputed {
+        return Err(AgreementError::InvalidState);
+    }
+
+    // Only landlord or tenant can propose renewal
+    if caller != agreement.admin && caller != agreement.user {
+        return Err(AgreementError::Unauthorized);
+    }
+
+    // Agreement must be active or completed to renew
+    if agreement.status != AgreementStatus::Active && agreement.status != AgreementStatus::Completed {
+        return Err(AgreementError::AgreementNotActive);
+    }
+
+    // New end date must be after current end date
+    if new_end_date <= agreement.end_date {
+        return Err(AgreementError::InvalidAmount);
+    }
+
+    // Check that new terms are valid
+    let new_rent = new_monthly_rent.unwrap_or(agreement.monthly_rent);
+    let new_deposit = new_security_deposit.unwrap_or(agreement.security_deposit);
+
+    if new_rent <= 0 || new_deposit < 0 {
+        return Err(AgreementError::InvalidAmount);
+    }
+
+    // Check if renewal already exists for this agreement
+    if env
+        .storage()
+        .persistent()
+        .has(&DataKey::RenewalProposal(agreement_id.clone()))
+    {
+        return Err(AgreementError::AgreementAlreadyExists);
+    }
+
+    // Compute term hashes for verification
+    let old_term_hash = compute_term_hash(env, agreement.monthly_rent, agreement.security_deposit, agreement.end_date);
+    let new_term_hash = compute_term_hash(env, new_rent, new_deposit, new_end_date);
+
+    let renewal_id = agreement_id.clone();
+    let renewal = RenewalProposal {
+        id: renewal_id.clone(),
+        agreement_id: agreement_id.clone(),
+        new_end_date,
+        new_monthly_rent: new_rent,
+        new_security_deposit: new_deposit,
+        status: RenewalStatus::Proposed,
+        created_at: env.ledger().timestamp(),
+        proposed_by: caller.clone(),
+        landlord_accepted: caller == agreement.admin,
+        tenant_accepted: caller == agreement.user,
+        old_term_hash: old_term_hash.clone(),
+        new_term_hash: new_term_hash.clone(),
+        activation_date: None,
+        rejection_reason: None,
+    };
+
+    env.storage().persistent().set(
+        &DataKey::RenewalProposal(renewal_id.clone()),
+        &renewal,
+    );
+    env.storage().persistent().extend_ttl(
+        &DataKey::RenewalProposal(renewal_id.clone()),
+        TTL_THRESHOLD,
+        TTL_BUMP,
+    );
+
+    // Update renewal history
+    let mut history =
+        get_renewal_history(env, agreement_id.clone()).unwrap_or(RenewalHistory {
+            agreement_id: agreement_id.clone(),
+            renewals: Vec::new(env),
+            total_renewals: 0,
+        });
+    history.renewals.push_back(renewal.clone());
+    history.total_renewals += 1;
+
+    env.storage()
+        .persistent()
+        .set(&DataKey::RenewalHistory(agreement_id.clone()), &history);
+    env.storage().persistent().extend_ttl(
+        &DataKey::RenewalHistory(agreement_id.clone()),
+        TTL_THRESHOLD,
+        TTL_BUMP,
+    );
+
+    events::renewal_proposed(
+        env,
+        renewal_id.clone(),
+        agreement_id,
+        new_end_date,
+        old_term_hash,
+        new_term_hash,
+    );
+
+    Ok(renewal_id)
+}
+
+/// Accept a renewal proposal
+/// Both landlord and tenant must accept before renewal can be activated
+pub fn accept_renewal(
+    env: &Env,
+    caller: Address,
+    renewal_id: String,
+) -> Result<(), AgreementError> {
+    caller.require_auth();
+
+    let mut renewal: RenewalProposal = env
+        .storage()
+        .persistent()
+        .get(&DataKey::RenewalProposal(renewal_id.clone()))
+        .ok_or(AgreementError::AgreementNotFound)?;
+
+    if renewal.status != RenewalStatus::Proposed {
+        return Err(AgreementError::InvalidState);
+    }
+
+    let agreement: RentAgreement = env
+        .storage()
+        .persistent()
+        .get(&DataKey::Agreement(renewal.agreement_id.clone()))
+        .ok_or(AgreementError::AgreementNotFound)?;
+
+    // Only landlord or tenant can accept
+    if caller == agreement.admin {
+        if renewal.landlord_accepted {
+            return Err(AgreementError::InvalidState);
+        }
+        renewal.landlord_accepted = true;
+    } else if caller == agreement.user {
+        if renewal.tenant_accepted {
+            return Err(AgreementError::InvalidState);
+        }
+        renewal.tenant_accepted = true;
+    } else {
+        return Err(AgreementError::Unauthorized);
+    }
+
+    // Move to Accepted status once both parties accept
+    if renewal.landlord_accepted && renewal.tenant_accepted {
+        renewal.status = RenewalStatus::Accepted;
+    }
+
+    env.storage()
+        .persistent()
+        .set(&DataKey::RenewalProposal(renewal_id.clone()), &renewal);
+
+    events::renewal_accepted(env, renewal_id, caller);
+
+    Ok(())
+}
+
+/// Activate an accepted renewal proposal
+/// This applies the new terms to the agreement
+/// Only landlord (admin) can activate the renewal
+pub fn activate_renewal(
+    env: &Env,
+    caller: Address,
+    renewal_id: String,
+) -> Result<(), AgreementError> {
+    caller.require_auth();
+
+    let mut renewal: RenewalProposal = env
+        .storage()
+        .persistent()
+        .get(&DataKey::RenewalProposal(renewal_id.clone()))
+        .ok_or(AgreementError::AgreementNotFound)?;
+
+    if renewal.status != RenewalStatus::Accepted {
+        return Err(AgreementError::InvalidState);
+    }
+
+    let mut agreement: RentAgreement = env
+        .storage()
+        .persistent()
+        .get(&DataKey::Agreement(renewal.agreement_id.clone()))
+        .ok_or(AgreementError::AgreementNotFound)?;
+
+    // Only landlord can activate
+    if caller != agreement.admin {
+        return Err(AgreementError::Unauthorized);
+    }
+
+    // Guard: cannot activate if agreement is terminated or disputed
+    if agreement.status == AgreementStatus::Terminated
+        || agreement.status == AgreementStatus::Disputed
+    {
+        return Err(AgreementError::InvalidState);
+    }
+
+    // Update agreement with new terms
+    agreement.end_date = renewal.new_end_date;
+    agreement.monthly_rent = renewal.new_monthly_rent;
+    agreement.security_deposit = renewal.new_security_deposit;
+
+    // Set activation date and mark renewal as active
+    renewal.activation_date = Some(env.ledger().timestamp());
+    renewal.status = RenewalStatus::Active;
+
+    env.storage().persistent().set(
+        &DataKey::Agreement(renewal.agreement_id.clone()),
+        &agreement,
+    );
+    env.storage().persistent().set(
+        &DataKey::RenewalProposal(renewal_id.clone()),
+        &renewal,
+    );
+
+    events::renewal_activated(
+        env,
+        renewal_id,
+        renewal.agreement_id,
+        renewal.new_end_date,
+        renewal.new_monthly_rent,
+    );
+
+    Ok(())
+}
+
+/// Reject a renewal proposal
+/// Either landlord or tenant can reject
+pub fn reject_renewal(
+    env: &Env,
+    caller: Address,
+    renewal_id: String,
+    reason: String,
+) -> Result<(), AgreementError> {
+    caller.require_auth();
+
+    let mut renewal: RenewalProposal = env
+        .storage()
+        .persistent()
+        .get(&DataKey::RenewalProposal(renewal_id.clone()))
+        .ok_or(AgreementError::AgreementNotFound)?;
+
+    if renewal.status != RenewalStatus::Proposed {
+        return Err(AgreementError::InvalidState);
+    }
+
+    let agreement: RentAgreement = env
+        .storage()
+        .persistent()
+        .get(&DataKey::Agreement(renewal.agreement_id.clone()))
+        .ok_or(AgreementError::AgreementNotFound)?;
+
+    // Only landlord or tenant can reject
+    if caller != agreement.admin && caller != agreement.user {
+        return Err(AgreementError::Unauthorized);
+    }
+
+    renewal.status = RenewalStatus::Rejected;
+    renewal.rejection_reason = Some(reason);
+
+    env.storage()
+        .persistent()
+        .set(&DataKey::RenewalProposal(renewal_id.clone()), &renewal);
+
+    events::renewal_rejected(env, renewal_id, caller);
+
+    Ok(())
+}
+
+/// Cancel a renewal proposal
+/// Can be cancelled in Proposed or Accepted states
+pub fn cancel_renewal(
+    env: &Env,
+    caller: Address,
+    renewal_id: String,
+    reason: String,
+) -> Result<(), AgreementError> {
+    caller.require_auth();
+
+    let mut renewal: RenewalProposal = env
+        .storage()
+        .persistent()
+        .get(&DataKey::RenewalProposal(renewal_id.clone()))
+        .ok_or(AgreementError::AgreementNotFound)?;
+
+    let agreement: RentAgreement = env
+        .storage()
+        .persistent()
+        .get(&DataKey::Agreement(renewal.agreement_id.clone()))
+        .ok_or(AgreementError::AgreementNotFound)?;
+
+    // Only landlord or tenant can cancel
+    if caller != agreement.admin && caller != agreement.user {
+        return Err(AgreementError::Unauthorized);
+    }
+
+    // Can only cancel if not already active, completed, or rejected
+    if renewal.status == RenewalStatus::Active
+        || renewal.status == RenewalStatus::Completed
+        || renewal.status == RenewalStatus::Rejected
+    {
+        return Err(AgreementError::InvalidState);
+    }
+
+    renewal.status = RenewalStatus::Cancelled;
+    renewal.rejection_reason = Some(reason);
+
+    env.storage()
+        .persistent()
+        .set(&DataKey::RenewalProposal(renewal_id.clone()), &renewal);
+
+    events::renewal_cancelled(env, renewal_id);
+
+    Ok(())
+}
+
+/// Get renewal proposal details
+pub fn get_renewal(
+    env: &Env,
+    renewal_id: String,
+) -> Result<RenewalProposal, AgreementError> {
+    env.storage()
+        .persistent()
+        .get(&DataKey::RenewalProposal(renewal_id))
+        .ok_or(AgreementError::AgreementNotFound)
+}
+
+/// Get renewal history for an agreement
+pub fn get_renewal_history(
+    env: &Env,
+    agreement_id: String,
+) -> Result<RenewalHistory, AgreementError> {
+    env.storage()
+        .persistent()
+        .get(&DataKey::RenewalHistory(agreement_id))
+        .ok_or(AgreementError::AgreementNotFound)
 }

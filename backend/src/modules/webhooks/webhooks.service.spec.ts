@@ -6,7 +6,7 @@ import { WebhooksService } from './webhooks.service';
 import { WebhookEndpoint } from './entities/webhook-endpoint.entity';
 import { WebhookDelivery } from './entities/webhook-delivery.entity';
 import { WebhookSignatureService } from './webhook-signature.service';
-import { WebhookEvent } from './webhook-event';
+import { WebhookEvent, WEBHOOK_MAX_DELIVERY_ATTEMPTS } from './webhook-event';
 
 jest.mock('axios');
 const mockedAxios = axios as jest.Mocked<typeof axios>;
@@ -49,6 +49,8 @@ describe('WebhooksService', () => {
       save: jest
         .fn()
         .mockImplementation((d) => Promise.resolve({ ...d, id: 'delivery-1' })),
+      findOne: jest.fn(),
+      find: jest.fn(),
     };
 
     configService = {
@@ -279,6 +281,242 @@ describe('WebhooksService', () => {
       await service.deliverEvent(endpoint, 'payment.failed', {});
 
       expect(deliveryRepository.save).toHaveBeenCalledTimes(1);
+    });
+
+    it('schedules a retry with a future nextRetryAt when a first attempt fails', async () => {
+      const endpoint = mockEndpoint();
+      (mockedAxios.post as jest.Mock).mockRejectedValue(new Error('timeout'));
+      mockedAxios.isAxiosError.mockReturnValue(false);
+
+      const result = await service.deliverEvent(endpoint, 'payment.failed', {});
+
+      expect(result.status).toBe('retrying');
+      expect(result.nextRetryAt).toBeInstanceOf(Date);
+      expect(result.nextRetryAt!.getTime()).toBeGreaterThan(Date.now());
+      expect(result.deadLetteredAt).toBeFalsy();
+    });
+
+    it('computes a payload hash for the delivery record', async () => {
+      const endpoint = mockEndpoint();
+      (mockedAxios.post as jest.Mock).mockResolvedValue({
+        status: 200,
+        data: '',
+      });
+
+      const result = await service.deliverEvent(endpoint, 'payment.received', {
+        amount: 1,
+      });
+
+      expect(result.payloadHash).toMatch(/^[0-9a-f]{64}$/);
+    });
+
+    it('sends a nonce header derived signature with every delivery', async () => {
+      const endpoint = mockEndpoint();
+      (mockedAxios.post as jest.Mock).mockResolvedValue({
+        status: 200,
+        data: '',
+      });
+
+      await service.deliverEvent(endpoint, 'payment.received', {});
+
+      const headers = (mockedAxios.post as jest.Mock).mock.calls[0][2]
+        .headers as Record<string, string>;
+      expect(headers['X-Webhook-Nonce']).toBeDefined();
+    });
+  });
+
+  // ── backoff and dead-letter transition ──────────────────────────────────────
+
+  describe('dead-letter transition', () => {
+    it('moves to dead_letter once attemptCount reaches the max ceiling', async () => {
+      const endpoint = mockEndpoint();
+      const delivery = mockDelivery({
+        status: 'retrying',
+        attemptCount: WEBHOOK_MAX_DELIVERY_ATTEMPTS - 1,
+      });
+      deliveryRepository.findOne.mockResolvedValue(delivery);
+      endpointRepository.findOne.mockResolvedValue(endpoint);
+      (mockedAxios.post as jest.Mock).mockRejectedValue(
+        new Error('still down'),
+      );
+      mockedAxios.isAxiosError.mockReturnValue(false);
+
+      const result = await service.retryDelivery('delivery-1');
+
+      expect(result.attemptCount).toBe(WEBHOOK_MAX_DELIVERY_ATTEMPTS);
+      expect(result.status).toBe('dead_letter');
+      expect(result.deadLetteredAt).toBeInstanceOf(Date);
+      expect(result.nextRetryAt).toBeFalsy();
+    });
+
+    it('does not dead-letter while attemptCount remains under the ceiling', async () => {
+      const endpoint = mockEndpoint();
+      const delivery = mockDelivery({
+        status: 'retrying',
+        attemptCount: 2,
+      });
+      deliveryRepository.findOne.mockResolvedValue(delivery);
+      endpointRepository.findOne.mockResolvedValue(endpoint);
+      (mockedAxios.post as jest.Mock).mockRejectedValue(new Error('flapping'));
+      mockedAxios.isAxiosError.mockReturnValue(false);
+
+      const result = await service.retryDelivery('delivery-1');
+
+      expect(result.attemptCount).toBe(3);
+      expect(result.status).toBe('retrying');
+      expect(result.nextRetryAt).toBeInstanceOf(Date);
+    });
+  });
+
+  // ── retryDelivery ────────────────────────────────────────────────────────────
+
+  describe('retryDelivery', () => {
+    it('throws when the delivery does not exist', async () => {
+      deliveryRepository.findOne.mockResolvedValue(null);
+      await expect(service.retryDelivery('missing')).rejects.toThrow(
+        'Webhook delivery missing not found',
+      );
+    });
+
+    it('is a no-op for a delivery that is not currently retrying', async () => {
+      const delivery = mockDelivery({ status: 'delivered', successful: true });
+      deliveryRepository.findOne.mockResolvedValue(delivery);
+
+      const result = await service.retryDelivery('delivery-1');
+
+      expect(result).toBe(delivery);
+      expect(mockedAxios.post).not.toHaveBeenCalled();
+    });
+
+    it('marks the delivery delivered on a successful retry', async () => {
+      const endpoint = mockEndpoint();
+      const delivery = mockDelivery({ status: 'retrying', attemptCount: 2 });
+      deliveryRepository.findOne.mockResolvedValue(delivery);
+      endpointRepository.findOne.mockResolvedValue(endpoint);
+      (mockedAxios.post as jest.Mock).mockResolvedValue({
+        status: 200,
+        data: 'ok',
+      });
+
+      const result = await service.retryDelivery('delivery-1');
+
+      expect(result.successful).toBe(true);
+      expect(result.status).toBe('delivered');
+      expect(result.attemptCount).toBe(3);
+    });
+
+    it('dead-letters immediately if the endpoint has since been removed', async () => {
+      const delivery = mockDelivery({ status: 'retrying', attemptCount: 2 });
+      deliveryRepository.findOne.mockResolvedValue(delivery);
+      endpointRepository.findOne.mockResolvedValue(null);
+
+      const result = await service.retryDelivery('delivery-1');
+
+      expect(result.status).toBe('dead_letter');
+      expect(mockedAxios.post).not.toHaveBeenCalled();
+    });
+  });
+
+  // ── processDueRetries ────────────────────────────────────────────────────────
+
+  describe('processDueRetries', () => {
+    it('retries only deliveries returned as due and reports their outcomes', async () => {
+      const endpoint = mockEndpoint();
+      const due = [
+        mockDelivery({ id: 'delivery-a', status: 'retrying', attemptCount: 1 }),
+        mockDelivery({ id: 'delivery-b', status: 'retrying', attemptCount: 1 }),
+      ];
+      deliveryRepository.find.mockResolvedValue(due);
+      deliveryRepository.findOne.mockImplementation(({ where: { id } }) =>
+        Promise.resolve(due.find((d) => d.id === id) ?? null),
+      );
+      endpointRepository.findOne.mockResolvedValue(endpoint);
+      (mockedAxios.post as jest.Mock).mockResolvedValue({
+        status: 200,
+        data: '',
+      });
+
+      const results = await service.processDueRetries();
+
+      expect(deliveryRepository.find).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ status: 'retrying' }),
+        }),
+      );
+      expect(results).toHaveLength(2);
+      expect(mockedAxios.post).toHaveBeenCalledTimes(2);
+    });
+
+    it('continues processing remaining due deliveries if one throws', async () => {
+      const dueA = mockDelivery({ id: 'delivery-a', status: 'retrying' });
+      deliveryRepository.find.mockResolvedValue([dueA]);
+      deliveryRepository.findOne.mockRejectedValueOnce(new Error('db blip'));
+
+      await expect(service.processDueRetries()).resolves.toEqual([]);
+    });
+  });
+
+  // ── replayDeadLetter ─────────────────────────────────────────────────────────
+
+  describe('replayDeadLetter', () => {
+    it('throws when the delivery does not exist', async () => {
+      deliveryRepository.findOne.mockResolvedValue(null);
+      await expect(service.replayDeadLetter('missing')).rejects.toThrow(
+        'Webhook delivery missing not found',
+      );
+    });
+
+    it('throws when the delivery is not currently dead-lettered', async () => {
+      const delivery = mockDelivery({ status: 'retrying' });
+      deliveryRepository.findOne.mockResolvedValue(delivery);
+
+      await expect(service.replayDeadLetter('delivery-1')).rejects.toThrow(
+        'is not in the dead-letter queue',
+      );
+    });
+
+    it('re-attempts delivery and clears dead-letter state on success without creating a new record', async () => {
+      const endpoint = mockEndpoint();
+      const delivery = mockDelivery({
+        status: 'dead_letter',
+        attemptCount: WEBHOOK_MAX_DELIVERY_ATTEMPTS,
+        deadLetteredAt: new Date(),
+      });
+      deliveryRepository.findOne.mockResolvedValue(delivery);
+      endpointRepository.findOne.mockResolvedValue(endpoint);
+      (mockedAxios.post as jest.Mock).mockResolvedValue({
+        status: 200,
+        data: 'ok',
+      });
+
+      const result = await service.replayDeadLetter('delivery-1');
+
+      expect(result.status).toBe('delivered');
+      expect(result.successful).toBe(true);
+      expect(result.deadLetteredAt).toBeFalsy();
+      expect(result.attemptCount).toBe(WEBHOOK_MAX_DELIVERY_ATTEMPTS + 1);
+      expect(deliveryRepository.create).not.toHaveBeenCalled();
+      expect(deliveryRepository.save).toHaveBeenCalledTimes(1);
+    });
+
+    it('moves back to dead_letter if the replay attempt also fails', async () => {
+      const endpoint = mockEndpoint();
+      const delivery = mockDelivery({
+        status: 'dead_letter',
+        attemptCount: WEBHOOK_MAX_DELIVERY_ATTEMPTS,
+        deadLetteredAt: new Date(),
+      });
+      deliveryRepository.findOne.mockResolvedValue(delivery);
+      endpointRepository.findOne.mockResolvedValue(endpoint);
+      (mockedAxios.post as jest.Mock).mockRejectedValue(
+        new Error('still down'),
+      );
+      mockedAxios.isAxiosError.mockReturnValue(false);
+
+      const result = await service.replayDeadLetter('delivery-1');
+
+      expect(result.status).toBe('dead_letter');
+      expect(result.deadLetteredAt).toBeInstanceOf(Date);
     });
   });
 

@@ -22,18 +22,25 @@ mod tests_rate_limit;
 #[cfg(test)]
 mod tests_escrow_integration;
 
+#[cfg(test)]
+mod tests_staked_voting;
+
 pub use dispute::{
-    add_arbiter, calculate_voting_weight, cancel_appeal, create_appeal, get_appeal, get_arbiter,
-    get_arbiter_count, get_dispute, get_dispute_votes_weighted, get_timeout_config, get_vote,
-    get_voting_weight, raise_dispute, resolve_appeal, resolve_dispute, resolve_dispute_on_timeout,
-    resolve_dispute_weighted, set_arbiter_stats, set_timeout_config, vote_on_appeal,
+    add_arbiter, assign_dispute_arbiters, calculate_voting_weight, cancel_appeal, cast_staked_vote,
+    appeal, finalize_dispute, get_appeal, get_arbiter, get_arbiter_count, get_arbiter_stake,
+    get_dispute, get_dispute_assignment, get_dispute_tally, get_dispute_votes_weighted,
+    get_quorum_config, get_timeout_config, get_vote, get_voting_weight, raise_dispute,
+    resolve_appeal, resolve_dispute, resolve_dispute_on_timeout, resolve_dispute_weighted,
+    set_arbiter_stake, set_arbiter_stats, set_quorum_config, set_timeout_config, vote_on_appeal,
     vote_on_dispute, vote_on_dispute_weighted,
 };
 pub use errors::DisputeError;
 pub use storage::DataKey;
 pub use types::{
-    AppealStatus, AppealVote, Arbiter, ArbiterStats, ContractState, Dispute, DisputeAppeal,
-    DisputeOutcome, TimeoutConfig, Vote, VotingWeight, WeightedDisputeVotes, WeightedVote,
+    AppealStatus, AppealVote, Arbiter, ArbiterParticipation, ArbiterStake, ArbiterStats,
+    AssignedArbiter, ContractState, Dispute, DisputeAppeal, DisputeAssignment, DisputeOutcome,
+    DisputeTally, OptionalOutcome, QuorumConfig, TimeoutConfig, Vote, VotingWeight,
+    WeightedDisputeVotes, WeightedVote,
 };
 
 #[contract]
@@ -225,13 +232,14 @@ impl DisputeResolutionContract {
         dispute::get_timeout_config(&env)
     }
 
-    pub fn create_appeal(
+    pub fn appeal(
         env: Env,
         appellant: Address,
         dispute_id: String,
         reason: String,
+        bond: i128,
     ) -> Result<String, DisputeError> {
-        dispute::create_appeal(&env, appellant, dispute_id, reason)
+        dispute::appeal(&env, appellant, dispute_id, reason, bond)
     }
 
     pub fn vote_on_appeal(
@@ -301,6 +309,79 @@ impl DisputeResolutionContract {
         dispute_id: String,
     ) -> Result<Vec<WeightedVote>, DisputeError> {
         dispute::get_dispute_votes_weighted(&env, dispute_id)
+    }
+
+    // ── Staked Weighted Voting: quorum + slashing ──────────────────────────
+
+    /// Read the current quorum/slash configuration (basis points).
+    pub fn get_quorum_config(env: Env) -> QuorumConfig {
+        dispute::get_quorum_config(&env)
+    }
+
+    /// Set the quorum/slash configuration (admin only). Both values are basis
+    /// points; `quorum_bps` must be in 1..=10000 and `slash_bps` in 0..=10000.
+    pub fn set_quorum_config(
+        env: Env,
+        admin: Address,
+        config: QuorumConfig,
+    ) -> Result<(), DisputeError> {
+        dispute::set_quorum_config(&env, admin, config)
+    }
+
+    /// Set an arbiter's stake and reputation multiplier (admin only).
+    /// `reputation_multiplier` is scaled ×100 (100 = 1.00×).
+    pub fn set_arbiter_stake(
+        env: Env,
+        admin: Address,
+        arbiter: Address,
+        staked_amount: i128,
+        reputation_multiplier: u32,
+    ) -> Result<(), DisputeError> {
+        dispute::set_arbiter_stake(&env, admin, arbiter, staked_amount, reputation_multiplier)
+    }
+
+    /// Read an arbiter's stake profile.
+    pub fn get_arbiter_stake(env: Env, arbiter: Address) -> ArbiterStake {
+        dispute::get_arbiter_stake(&env, arbiter)
+    }
+
+    /// Assign arbiters to a dispute, snapshotting their stake-derived weights and
+    /// the quorum/slash parameters (admin only). Pass `voting_window_seconds = 0`
+    /// to use the default window.
+    pub fn assign_dispute_arbiters(
+        env: Env,
+        admin: Address,
+        dispute_id: String,
+        arbiters: Vec<Address>,
+        voting_window_seconds: u64,
+    ) -> Result<(), DisputeError> {
+        dispute::assign_dispute_arbiters(&env, admin, dispute_id, arbiters, voting_window_seconds)
+    }
+
+    /// Cast a staked-weighted vote on an assigned dispute (assigned arbiters only).
+    pub fn cast_staked_vote(
+        env: Env,
+        arbiter: Address,
+        dispute_id: String,
+        vote: DisputeOutcome,
+    ) -> Result<(), DisputeError> {
+        dispute::cast_staked_vote(&env, arbiter, dispute_id, vote)
+    }
+
+    /// Finalize a dispute once the deadline has passed and quorum has voted,
+    /// slashing non-voters and redistributing to participants.
+    pub fn finalize_dispute(env: Env, dispute_id: String) -> Result<DisputeOutcome, DisputeError> {
+        dispute::finalize_dispute(&env, dispute_id)
+    }
+
+    /// Return the tally, quorum progress, and per-arbiter participation for a dispute.
+    pub fn get_dispute_tally(env: Env, dispute_id: String) -> Result<DisputeTally, DisputeError> {
+        dispute::get_dispute_tally(&env, dispute_id)
+    }
+
+    /// Read the assignment metadata for a dispute, if any.
+    pub fn get_dispute_assignment(env: Env, dispute_id: String) -> Option<DisputeAssignment> {
+        dispute::get_dispute_assignment(&env, dispute_id)
     }
 
     // --- Upgrade Functions ---

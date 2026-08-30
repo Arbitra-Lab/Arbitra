@@ -1,5 +1,8 @@
 use super::*;
-use crate::types::{DECAY_GRACE_SECS, DECAY_PER_DAY_POINTS, MAX_REPUTATION_POINTS, SECS_PER_DAY};
+use crate::types::{
+    OutcomeSignal, SlashReason, DECAY_GRACE_SECS, DECAY_PER_DAY_POINTS, MAX_REPUTATION_POINTS,
+    SECS_PER_DAY,
+};
 use soroban_sdk::testutils::Ledger;
 use soroban_sdk::{testutils::Address as _, token, vec, Address, Env, String};
 
@@ -1225,4 +1228,232 @@ fn test_integration_register_bond_decay_slash() {
     // in the contract's pool.
     assert_eq!(token_client.balance(&agent), 940 * XLM);
     assert_eq!(token_client.balance(&client.address), 60 * XLM);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Outcome signals: reputation & slashing on transaction outcomes
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Configure a standard outcome policy: +50 rep on settlement, -100 rep and a
+/// 10 XLM stake slash on a dispute loss.
+fn set_standard_outcome_policy(client: &AgentRegistryContractClient, admin: &Address) {
+    client.set_outcome_policy(admin, &50, &100, &(10 * XLM));
+}
+
+#[test]
+fn test_settlement_outcome_raises_reputation() {
+    let env = Env::default();
+    let client = create_contract(&env);
+    let (admin, agent, _token) = setup_staking(&env, &client);
+    set_standard_outcome_policy(&client, &admin);
+
+    give_five_star_rating(&env, &client, &admin, &agent);
+    assert_eq!(client.get_reputation(&agent), 100);
+
+    // Admin is always an authorized reporter.
+    let txn_id = String::from_str(&env, "TXN-OUT-1");
+    client.submit_outcome(&admin, &agent, &txn_id, &OutcomeSignal::Settlement);
+
+    assert_eq!(client.get_reputation(&agent), 150);
+    // A settlement is not a slash: history stays empty.
+    assert_eq!(client.get_slashing_history(&agent).len(), 0);
+}
+
+#[test]
+fn test_settlement_reputation_capped_at_max() {
+    let env = Env::default();
+    let client = create_contract(&env);
+    let (admin, agent, _token) = setup_staking(&env, &client);
+    client.set_outcome_policy(&admin, &MAX_REPUTATION_POINTS, &0, &0);
+
+    let txn_id = String::from_str(&env, "TXN-OUT-CAP");
+    client.submit_outcome(&admin, &agent, &txn_id, &OutcomeSignal::Settlement);
+    client.submit_outcome(&admin, &agent, &txn_id, &OutcomeSignal::Settlement);
+
+    assert_eq!(client.get_reputation(&agent), MAX_REPUTATION_POINTS);
+}
+
+#[test]
+fn test_dispute_loss_lowers_reputation_and_slashes_bond() {
+    let env = Env::default();
+    let client = create_contract(&env);
+    let (admin, agent, _token) = setup_staking(&env, &client);
+    set_standard_outcome_policy(&client, &admin);
+
+    give_five_star_rating(&env, &client, &admin, &agent);
+    client.bond(&agent, &(50 * XLM));
+    assert_eq!(client.get_reputation(&agent), 100);
+    assert_eq!(client.get_effective_score(&agent), 150);
+
+    let txn_id = String::from_str(&env, "TXN-DISPUTE-1");
+    client.submit_outcome(&admin, &agent, &txn_id, &OutcomeSignal::DisputeLoss);
+
+    // Reputation down 100 → 0, stake down 10 XLM, slash pool up 10 XLM.
+    assert_eq!(client.get_reputation(&agent), 0);
+    let vault = client.get_stake(&agent);
+    assert_eq!(vault.staked, 40 * XLM);
+    assert_eq!(client.get_slashed_pool(), 10 * XLM);
+    assert_eq!(client.get_effective_score(&agent), 40);
+
+    // The dispute loss is recorded in the agent's slashing history.
+    let history = client.get_slashing_history(&agent);
+    assert_eq!(history.len(), 1);
+    let record = history.get(0).unwrap();
+    assert_eq!(record.stake_slashed, 10 * XLM);
+    assert_eq!(record.reputation_slashed, 100);
+    assert_eq!(record.reason, SlashReason::DisputeLoss);
+    assert_eq!(record.transaction_id, txn_id);
+}
+
+#[test]
+fn test_dispute_loss_clamps_slash_to_available_stake() {
+    let env = Env::default();
+    let client = create_contract(&env);
+    let (admin, agent, _token) = setup_staking(&env, &client);
+    set_standard_outcome_policy(&client, &admin);
+
+    // Only 3 XLM bonded; the policy wants to slash 10 XLM.
+    client.bond(&agent, &(3 * XLM));
+
+    let txn_id = String::from_str(&env, "TXN-DISPUTE-CLAMP");
+    client.submit_outcome(&admin, &agent, &txn_id, &OutcomeSignal::DisputeLoss);
+
+    // Slash is clamped to what exists; the vault empties and never goes negative.
+    let vault = client.get_stake(&agent);
+    assert_eq!(vault.staked, 0);
+    assert_eq!(client.get_slashed_pool(), 3 * XLM);
+
+    let record = client.get_slashing_history(&agent).get(0).unwrap();
+    assert_eq!(record.stake_slashed, 3 * XLM);
+}
+
+#[test]
+fn test_authorized_reporter_can_submit_outcome() {
+    let env = Env::default();
+    let client = create_contract(&env);
+    let (admin, agent, _token) = setup_staking(&env, &client);
+    set_standard_outcome_policy(&client, &admin);
+    client.bond(&agent, &(50 * XLM));
+
+    // A non-admin reporter (e.g. the arbitration contract) is authorized.
+    let reporter = Address::generate(&env);
+    assert!(!client.is_outcome_reporter(&reporter));
+    client.add_outcome_reporter(&admin, &reporter);
+    assert!(client.is_outcome_reporter(&reporter));
+
+    let txn_id = String::from_str(&env, "TXN-DISPUTE-REP");
+    client.submit_outcome(&reporter, &agent, &txn_id, &OutcomeSignal::DisputeLoss);
+
+    let vault = client.get_stake(&agent);
+    assert_eq!(vault.staked, 40 * XLM);
+    assert_eq!(client.get_slashing_history(&agent).len(), 1);
+}
+
+#[test]
+#[should_panic(expected = "Error(Contract, #5)")]
+fn test_unauthorized_caller_cannot_submit_outcome() {
+    let env = Env::default();
+    let client = create_contract(&env);
+    let (admin, agent, _token) = setup_staking(&env, &client);
+    set_standard_outcome_policy(&client, &admin);
+
+    // A random address that was never authorized as a reporter.
+    let stranger = Address::generate(&env);
+    let txn_id = String::from_str(&env, "TXN-DISPUTE-BAD");
+    client.submit_outcome(&stranger, &agent, &txn_id, &OutcomeSignal::DisputeLoss);
+}
+
+#[test]
+fn test_revoked_reporter_cannot_submit_outcome() {
+    let env = Env::default();
+    let client = create_contract(&env);
+    let (admin, agent, _token) = setup_staking(&env, &client);
+    set_standard_outcome_policy(&client, &admin);
+
+    let reporter = Address::generate(&env);
+    client.add_outcome_reporter(&admin, &reporter);
+    client.remove_outcome_reporter(&admin, &reporter);
+    assert!(!client.is_outcome_reporter(&reporter));
+
+    let txn_id = String::from_str(&env, "TXN-DISPUTE-REVOKED");
+    let result = client.try_submit_outcome(&reporter, &agent, &txn_id, &OutcomeSignal::DisputeLoss);
+    assert!(result.is_err());
+}
+
+#[test]
+#[should_panic(expected = "Error(Contract, #5)")]
+fn test_add_outcome_reporter_requires_admin() {
+    let env = Env::default();
+    let client = create_contract(&env);
+    let (_admin, _agent, _token) = setup_staking(&env, &client);
+
+    let non_admin = Address::generate(&env);
+    let reporter = Address::generate(&env);
+    client.add_outcome_reporter(&non_admin, &reporter);
+}
+
+#[test]
+fn test_submit_outcome_fails_without_policy() {
+    let env = Env::default();
+    let client = create_contract(&env);
+    let (admin, agent, _token) = setup_staking(&env, &client);
+
+    // No outcome policy configured yet.
+    let txn_id = String::from_str(&env, "TXN-NO-POLICY");
+    let result = client.try_submit_outcome(&admin, &agent, &txn_id, &OutcomeSignal::Settlement);
+    assert!(result.is_err());
+    assert_eq!(result.err().unwrap().unwrap(), AgentError::OutcomePolicyNotSet);
+}
+
+#[test]
+fn test_submit_outcome_fails_for_unregistered_agent() {
+    let env = Env::default();
+    let client = create_contract(&env);
+    let (admin, _agent, _token) = setup_staking(&env, &client);
+    set_standard_outcome_policy(&client, &admin);
+
+    let stranger = Address::generate(&env);
+    let txn_id = String::from_str(&env, "TXN-NO-AGENT");
+    let result = client.try_submit_outcome(&admin, &stranger, &txn_id, &OutcomeSignal::Settlement);
+    assert!(result.is_err());
+    assert_eq!(result.err().unwrap().unwrap(), AgentError::AgentNotFound);
+}
+
+#[test]
+fn test_repeated_dispute_losses_accumulate_history() {
+    let env = Env::default();
+    let client = create_contract(&env);
+    let (admin, agent, _token) = setup_staking(&env, &client);
+    set_standard_outcome_policy(&client, &admin);
+    client.bond(&agent, &(50 * XLM));
+
+    let txn1 = String::from_str(&env, "TXN-A");
+    let txn2 = String::from_str(&env, "TXN-B");
+    client.submit_outcome(&admin, &agent, &txn1, &OutcomeSignal::DisputeLoss);
+    client.submit_outcome(&admin, &agent, &txn2, &OutcomeSignal::DisputeLoss);
+
+    let history = client.get_slashing_history(&agent);
+    assert_eq!(history.len(), 2);
+    assert_eq!(history.get(0).unwrap().transaction_id, txn1);
+    assert_eq!(history.get(1).unwrap().transaction_id, txn2);
+    assert_eq!(client.get_slashed_pool(), 20 * XLM);
+}
+
+#[test]
+fn test_admin_slash_recorded_in_history() {
+    let env = Env::default();
+    let client = create_contract(&env);
+    let (admin, agent, _token) = setup_staking(&env, &client);
+
+    give_five_star_rating(&env, &client, &admin, &agent);
+    client.bond(&agent, &(50 * XLM));
+    client.slash_agent(&admin, &agent, &(10 * XLM), &30);
+
+    let history = client.get_slashing_history(&agent);
+    assert_eq!(history.len(), 1);
+    let record = history.get(0).unwrap();
+    assert_eq!(record.stake_slashed, 10 * XLM);
+    assert_eq!(record.reputation_slashed, 30);
+    assert_eq!(record.reason, SlashReason::AdminAction);
+    assert_eq!(record.transaction_id, String::from_str(&env, ""));
 }

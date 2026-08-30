@@ -13,7 +13,10 @@ export default function ResourceDetail({ slug: _slug }: { slug: string }) {
 
   return (
     <div className="space-y-8">
-      <Link href="/resources" className="text-brand-accent hover:text-brand-accent">
+      <Link
+        href="/resources"
+        className="text-brand-accent hover:text-brand-accent"
+      >
         ← Back to Resources
       </Link>
 

@@ -1,7 +1,16 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { DataSource, FindOperator } from 'typeorm';
 import { StellarService } from '../src/modules/stellar/services/stellar.service';
+import { EventReconciliationService } from '../src/modules/stellar/services/event-reconciliation.service';
+import { BlockchainEventIdempotency } from '../src/modules/stellar/entities/blockchain-event-idempotency.entity';
+import { BlockchainStreamCursor } from '../src/modules/stellar/entities/blockchain-stream-cursor.entity';
+import { BlockchainEventDeadLetter } from '../src/modules/stellar/entities/blockchain-event-dead-letter.entity';
+import {
+  EventHandler,
+  LedgerEvent,
+} from '../src/modules/stellar/interfaces/ledger-event.interface';
 import {
   StellarTransaction,
   TransactionStatus,
@@ -365,5 +374,359 @@ describe('Blockchain Transaction Integration (e2e)', () => {
       expect(results).toHaveLength(10);
       expect(mockTransactionRepository.save).toHaveBeenCalledTimes(10);
     });
+  });
+});
+
+/**
+ * A tiny in-memory relational store that mimics just enough TypeORM
+ * transaction semantics (buffered writes, committed or discarded as a unit)
+ * to exercise EventReconciliationService end-to-end without a live database:
+ * duplicate delivery, confirmation-depth gating, and reorg rollback all have
+ * to converge on the same final state a real Postgres transaction would
+ * produce.
+ */
+class FakeReconciliationStore {
+  idempotency = new Map<string, BlockchainEventIdempotency>();
+  cursors = new Map<string, BlockchainStreamCursor>();
+  deadLetters = new Map<string, BlockchainEventDeadLetter>();
+  obligations = new Map<
+    string,
+    { agreementId: string; owner: string; transferCount: number }
+  >();
+}
+
+function tableFor(store: FakeReconciliationStore, entity: unknown) {
+  if (entity === BlockchainEventIdempotency) return store.idempotency;
+  if (entity === BlockchainStreamCursor) return store.cursors;
+  if (entity === BlockchainEventDeadLetter) return store.deadLetters;
+  throw new Error(`No fake table for entity ${String(entity)}`);
+}
+
+function matchesWhere(row: any, where: Record<string, unknown>): boolean {
+  return Object.entries(where).every(([key, value]) => {
+    if (value instanceof FindOperator) {
+      if (value.type === 'moreThanOrEqual') return row[key] >= value.value;
+      throw new Error(
+        `Unsupported FindOperator type in fake store: ${value.type}`,
+      );
+    }
+    return row[key] === value;
+  });
+}
+
+let fakeIdCounter = 0;
+
+/** `getSnapshot` is re-resolved on every call so the manager always targets
+ * whichever store (buffered transaction snapshot, or the base store) is
+ * currently active, while a single manager instance is reused for the
+ * lifetime of a query runner. */
+function createFakeManager(getSnapshot: () => FakeReconciliationStore) {
+  return {
+    findOne: async (
+      entity: unknown,
+      opts: { where: Record<string, unknown> },
+    ) => {
+      const table = tableFor(getSnapshot(), entity);
+      for (const row of table.values()) {
+        if (matchesWhere(row, opts.where)) return row;
+      }
+      return null;
+    },
+    create: (_entity: unknown, data: Record<string, unknown>) => ({ ...data }),
+    save: async (entity: unknown, data: any) => {
+      const table = tableFor(getSnapshot(), entity);
+      const key =
+        entity === BlockchainStreamCursor
+          ? data.streamName
+          : (data.id ?? (data.id = `row-${++fakeIdCounter}`));
+      table.set(key, data);
+      return data;
+    },
+    delete: async () => {
+      throw new Error('not used by this test');
+    },
+  };
+}
+
+/**
+ * Only the tables the fake manager actually writes through (idempotency,
+ * cursors, dead letters) are buffered per-transaction. `obligations` is the
+ * simulated side effect: FakeObligationHandler mutates it directly (mirroring
+ * how a real handler's DB writes go through the manager and thus the
+ * transaction) rather than through this snapshot, so it must NOT be cloned
+ * or restored here — doing so would discard the handler's mutation the
+ * moment the transaction commits.
+ */
+function cloneStore(store: FakeReconciliationStore): FakeReconciliationStore {
+  const clone = new FakeReconciliationStore();
+  clone.idempotency = new Map(
+    Array.from(store.idempotency, ([k, v]) => [k, { ...v }]),
+  );
+  clone.cursors = new Map(
+    Array.from(store.cursors, ([k, v]) => [
+      k,
+      { ...v, ancestry: [...(v.ancestry ?? [])] },
+    ]),
+  );
+  clone.deadLetters = new Map(
+    Array.from(store.deadLetters, ([k, v]) => [k, { ...v }]),
+  );
+  return clone;
+}
+
+function applyClone(
+  store: FakeReconciliationStore,
+  clone: FakeReconciliationStore,
+) {
+  store.idempotency = clone.idempotency;
+  store.cursors = clone.cursors;
+  store.deadLetters = clone.deadLetters;
+}
+
+describe('Blockchain event reconciliation pipeline (e2e): dedup + reorg', () => {
+  let module: TestingModule;
+  let service: EventReconciliationService;
+  let store: FakeReconciliationStore;
+
+  const STREAM = 'obligation-transfer';
+
+  /** Fake handler standing in for NftEventProcessor's apply/rollback contract. */
+  class FakeObligationHandler implements EventHandler {
+    constructor(private readonly getStore: () => FakeReconciliationStore) {}
+
+    async apply(_manager: unknown, event: LedgerEvent) {
+      const store = this.getStore();
+      const data = event.data as { agreementId: string; owner: string };
+      const existing = store.obligations.get(data.agreementId);
+      const previousOwner = existing?.owner ?? null;
+      const previousTransferCount = existing?.transferCount ?? 0;
+
+      store.obligations.set(data.agreementId, {
+        agreementId: data.agreementId,
+        owner: data.owner,
+        transferCount: previousTransferCount + 1,
+      });
+
+      return { previousOwner, previousTransferCount };
+    }
+
+    async rollback(
+      _manager: unknown,
+      event: LedgerEvent,
+      compensationData: Record<string, unknown> | null,
+    ) {
+      const store = this.getStore();
+      const data = event.data as { agreementId: string };
+      if (!compensationData?.previousOwner) {
+        store.obligations.delete(data.agreementId);
+        return;
+      }
+      store.obligations.set(data.agreementId, {
+        agreementId: data.agreementId,
+        owner: compensationData.previousOwner as string,
+        transferCount: compensationData.previousTransferCount as number,
+      });
+    }
+  }
+
+  const buildEvent = (overrides: Partial<LedgerEvent> = {}): LedgerEvent => ({
+    streamName: STREAM,
+    eventType: 'obligation.owner-set',
+    ledger: 100,
+    ledgerHash: 'h100',
+    parentLedgerHash: 'h99',
+    txHash: 'tx-100',
+    eventIndex: 0,
+    data: { agreementId: 'agreement-e2e', owner: 'GOWNER_A' },
+    ...overrides,
+  });
+
+  beforeEach(async () => {
+    store = new FakeReconciliationStore();
+
+    const mockDataSource = {
+      createQueryRunner: () => {
+        let snapshot: FakeReconciliationStore | null = null;
+        const manager = createFakeManager(() => snapshot ?? store);
+        return {
+          connect: async () => {},
+          startTransaction: async () => {
+            snapshot = cloneStore(store);
+          },
+          commitTransaction: async () => {
+            if (snapshot) applyClone(store, snapshot);
+            snapshot = null;
+          },
+          rollbackTransaction: async () => {
+            snapshot = null;
+          },
+          release: async () => {},
+          manager,
+        };
+      },
+    };
+
+    const repoFor = <T extends { id?: string }>(
+      table: () => Map<string, T>,
+    ) => ({
+      find: async (opts?: {
+        where?: Record<string, unknown>;
+        order?: Record<string, 'ASC' | 'DESC'>;
+      }) => {
+        let rows = Array.from(table().values()).filter((row) =>
+          opts?.where ? matchesWhere(row, opts.where) : true,
+        );
+        if (opts?.order) {
+          const orderEntries = Object.entries(opts.order);
+          rows = [...rows].sort((a, b) => {
+            for (const [key, dir] of orderEntries) {
+              const av = (a as any)[key];
+              const bv = (b as any)[key];
+              if (av === bv) continue;
+              const cmp = av > bv ? 1 : -1;
+              return dir === 'DESC' ? -cmp : cmp;
+            }
+            return 0;
+          });
+        }
+        return rows.map((row) => ({ ...row }));
+      },
+      findOne: async (opts: { where: Record<string, unknown> }) => {
+        const row = Array.from(table().values()).find((r) =>
+          matchesWhere(r, opts.where),
+        );
+        return row ? { ...row } : null;
+      },
+      create: (data: Partial<T>) => ({ ...data }) as T,
+      save: async (data: T) => {
+        const key = (data as any).id ?? (data as any).dedupKey;
+        table().set(key, data);
+        return data;
+      },
+    });
+
+    module = await Test.createTestingModule({
+      providers: [
+        EventReconciliationService,
+        { provide: DataSource, useValue: mockDataSource },
+        {
+          provide: ConfigService,
+          useValue: { get: () => undefined },
+        },
+        {
+          provide: getRepositoryToken(BlockchainStreamCursor),
+          useValue: {
+            findOne: async (opts: { where: Record<string, unknown> }) => {
+              const row = Array.from(store.cursors.values()).find((r) =>
+                matchesWhere(r, opts.where),
+              );
+              return row
+                ? { ...row, ancestry: [...(row.ancestry ?? [])] }
+                : null;
+            },
+          },
+        },
+        {
+          provide: getRepositoryToken(BlockchainEventIdempotency),
+          useValue: repoFor(() => store.idempotency),
+        },
+        {
+          provide: getRepositoryToken(BlockchainEventDeadLetter),
+          useValue: repoFor(() => store.deadLetters),
+        },
+      ],
+    }).compile();
+
+    service = module.get(EventReconciliationService);
+    service.registerHandler(STREAM, new FakeObligationHandler(() => store));
+  });
+
+  afterEach(async () => {
+    if (module) await module.close();
+  });
+
+  it('applies a duplicated event exactly once', async () => {
+    const event = buildEvent();
+
+    const first = await service.process(event, 200);
+    const second = await service.process(event, 200);
+    const third = await service.process(event, 200);
+
+    expect(first.status).toBe('applied');
+    expect(second.status).toBe('duplicate');
+    expect(third.status).toBe('duplicate');
+    expect(store.obligations.get('agreement-e2e')).toEqual(
+      expect.objectContaining({ owner: 'GOWNER_A', transferCount: 1 }),
+    );
+  });
+
+  it('withholds application until the confirmation depth is reached', async () => {
+    const event = buildEvent({ ledger: 100 });
+
+    const tooEarly = await service.process(event, 100); // 0 confirmations
+    expect(tooEarly.status).toBe('pending-confirmation');
+    expect(store.obligations.has('agreement-e2e')).toBe(false);
+
+    const confirmed = await service.process(event, 101); // 1 confirmation
+    expect(confirmed.status).toBe('applied');
+    expect(store.obligations.get('agreement-e2e')?.owner).toBe('GOWNER_A');
+  });
+
+  it('rolls back an orphaned event on reorg and converges to the canonical chain', async () => {
+    // Ledger 100 confirmed with the "wrong" (soon-to-be-orphaned) fork.
+    const orphanEvent = buildEvent({
+      ledger: 100,
+      ledgerHash: 'orphan-h100',
+      parentLedgerHash: 'h99',
+      txHash: 'orphan-tx',
+      data: { agreementId: 'agreement-e2e', owner: 'GOWNER_ORPHAN' },
+    });
+    const orphanOutcome = await service.process(orphanEvent, 200);
+    expect(orphanOutcome.status).toBe('applied');
+    expect(store.obligations.get('agreement-e2e')?.owner).toBe('GOWNER_ORPHAN');
+
+    // Ledger 101 on the same (orphaned) fork.
+    const orphanChild = buildEvent({
+      ledger: 101,
+      ledgerHash: 'orphan-h101',
+      parentLedgerHash: 'orphan-h100',
+      txHash: 'orphan-tx-2',
+      eventIndex: 0,
+      data: { agreementId: 'agreement-e2e', owner: 'GOWNER_ORPHAN_2' },
+    });
+    await service.process(orphanChild, 200);
+    expect(store.obligations.get('agreement-e2e')?.owner).toBe(
+      'GOWNER_ORPHAN_2',
+    );
+
+    // A reorg replaces ledger 100 with the canonical block: same ledger
+    // number, different hash and parent hash than what we'd recorded.
+    const canonicalEvent = buildEvent({
+      ledger: 100,
+      ledgerHash: 'canonical-h100',
+      parentLedgerHash: 'h99',
+      txHash: 'canonical-tx',
+      data: { agreementId: 'agreement-e2e', owner: 'GOWNER_CANONICAL' },
+    });
+    const canonicalOutcome = await service.process(canonicalEvent, 200);
+
+    expect(canonicalOutcome.status).toBe('applied');
+    // Both orphaned events (ledger 100 and 101) must have been rolled back,
+    // converging state to the canonical chain's effect.
+    expect(store.obligations.get('agreement-e2e')?.owner).toBe(
+      'GOWNER_CANONICAL',
+    );
+    expect(
+      Array.from(store.idempotency.values()).filter(
+        (r) => r.status === 'rolled_back',
+      ),
+    ).toHaveLength(2);
+
+    // Replaying the canonical event again must still be a no-op.
+    const replay = await service.process(canonicalEvent, 200);
+    expect(replay.status).toBe('duplicate');
+    expect(store.obligations.get('agreement-e2e')?.owner).toBe(
+      'GOWNER_CANONICAL',
+    );
   });
 });

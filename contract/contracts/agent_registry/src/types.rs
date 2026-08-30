@@ -147,3 +147,63 @@ pub struct StakeConfig {
     /// Seconds between an unbond request and withdrawal eligibility.
     pub unbonding_period: u64,
 }
+
+// ─── Outcome signals, slashing history & policy ──────────────────────────────
+//
+// Agents accrue or lose reputation from the outcome of the transactions they
+// arbitrate. Authorized reporters (e.g. an escrow/arbitration contract) submit
+// an `OutcomeSignal` once a transaction concludes: a clean `Settlement` earns
+// reputation, while a `DisputeLoss` (adverse ruling) both lowers reputation and
+// slashes a portion of the agent's staked bond. Consequences are governed by an
+// admin-set `OutcomePolicy`, and every slash is appended to the agent's
+// on-chain `SlashRecord` history.
+
+/// Outcome of a concluded transaction, submitted by an authorized reporter.
+#[contracttype]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum OutcomeSignal {
+    /// The transaction settled cleanly in the agent's favor.
+    Settlement,
+    /// The agent lost a dispute (adverse ruling).
+    DisputeLoss,
+}
+
+/// Why an agent's stake/reputation was slashed.
+#[contracttype]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum SlashReason {
+    /// Direct administrative slash via `slash_agent`.
+    AdminAction,
+    /// Adverse dispute ruling reported through an outcome signal.
+    DisputeLoss,
+}
+
+/// A single slashing event in an agent's history.
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct SlashRecord {
+    /// Ledger timestamp at which the slash was applied.
+    pub timestamp: u64,
+    /// Stake (stroops) removed from the vault into the slashed pool.
+    pub stake_slashed: i128,
+    /// Reputation points actually removed (after flooring at zero).
+    pub reputation_slashed: u32,
+    /// What triggered the slash.
+    pub reason: SlashReason,
+    /// Associated transaction id, empty for a direct admin slash.
+    pub transaction_id: String,
+}
+
+/// Consequences applied when an outcome signal is submitted. Admin-set.
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct OutcomePolicy {
+    /// Reputation points awarded on a successful settlement (capped at
+    /// `MAX_REPUTATION_POINTS`).
+    pub settlement_reward: u32,
+    /// Reputation points removed on a lost dispute (floored at zero).
+    pub dispute_rep_penalty: u32,
+    /// Stake (stroops) slashed on a lost dispute, clamped to the agent's
+    /// available stake.
+    pub dispute_stake_slash: i128,
+}

@@ -98,12 +98,24 @@ export class AdminRefundsService {
       throw new NotFoundException('Refund request not found');
     }
 
+    const metadata = (payment.metadata ?? {}) as PaymentMetadataRecord;
+
+    if (
+      dto.idempotencyKey &&
+      metadata.adminRefundIdempotencyKey === dto.idempotencyKey
+    ) {
+      // Same decision, retried (e.g. a double-submitted click or a client
+      // retry after a dropped response) — return the current state instead
+      // of appending a duplicate history entry or re-applying the decision.
+      const userById = await this.loadUsersMap([payment.userId]);
+      return this.toDetail(payment, userById);
+    }
+
     const currentStatus = this.toAdminStatus(payment);
     if (currentStatus === 'COMPLETED' || currentStatus === 'REJECTED') {
       throw new BadRequestException('Refund already finalized');
     }
 
-    const metadata = (payment.metadata ?? {}) as PaymentMetadataRecord;
     const now = new Date().toISOString();
     const history = this.getHistory(metadata);
 
@@ -132,6 +144,7 @@ export class AdminRefundsService {
       adminRefundDecision: dto.action,
       adminRefundNotes: dto.notes,
       adminRefundDecidedAt: now,
+      adminRefundIdempotencyKey: dto.idempotencyKey ?? null,
     };
 
     await this.paymentRepository.save(payment);

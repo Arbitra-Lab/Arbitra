@@ -1,9 +1,18 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource, In } from 'typeorm';
-import { Dispute, DisputeStatus } from './entities/dispute.entity';
+import {
+  Dispute,
+  DisputeStatus,
+  DisputeStage,
+  DisputePriority,
+} from './entities/dispute.entity';
 import { DisputeEvidence } from './entities/dispute-evidence.entity';
 import { DisputeComment } from './entities/dispute-comment.entity';
+import {
+  DisputeEvent,
+  DisputeEventType,
+} from './entities/dispute-event.entity';
 import {
   RentAgreement,
   AgreementStatus,
@@ -29,9 +38,24 @@ import {
   DisputeNotFoundError,
   ValidationError,
 } from '../../common/errors/domain-errors';
+import { DisputeSlaService, DisputeSlaState } from './dispute-sla.service';
+import { DisputeAssignmentService } from './dispute-assignment.service';
+
+export interface DisputeSlaStatusDto {
+  disputeId: string;
+  stage: DisputeStage | null;
+  status: DisputeSlaState;
+  dueAt: Date | null;
+  msRemainingMs: number | null;
+  priority: DisputePriority;
+  escalationCount: number;
+  assignedArbiterId: number | null;
+}
 
 @Injectable()
 export class DisputesService {
+  private readonly logger = new Logger(DisputesService.name);
+
   constructor(
     @InjectRepository(Dispute)
     private readonly disputeRepository: Repository<Dispute>,
@@ -39,6 +63,8 @@ export class DisputesService {
     private readonly evidenceRepository: Repository<DisputeEvidence>,
     @InjectRepository(DisputeComment)
     private readonly commentRepository: Repository<DisputeComment>,
+    @InjectRepository(DisputeEvent)
+    private readonly eventRepository: Repository<DisputeEvent>,
     @InjectRepository(RentAgreement)
     private readonly agreementRepository: Repository<RentAgreement>,
     @InjectRepository(User)
@@ -47,6 +73,8 @@ export class DisputesService {
     private readonly dataSource: DataSource,
     private readonly lockService: LockService,
     private readonly idempotencyService: IdempotencyService,
+    private readonly slaService: DisputeSlaService,
+    private readonly assignmentService: DisputeAssignmentService,
   ) {}
 
   /**
@@ -123,6 +151,7 @@ export class DisputesService {
       }
 
       // Create dispute
+      const initialStage = DisputeStage.INTAKE;
       const dispute = queryRunner.manager.create(Dispute, {
         disputeId: randomUUID(),
         agreement: agreement,
@@ -131,6 +160,10 @@ export class DisputesService {
         requestedAmount: createDisputeDto.requestedAmount,
         description: createDisputeDto.description,
         status: DisputeStatus.OPEN,
+        stage: initialStage,
+        stageDueAt: this.slaService.computeStageDueDate(initialStage),
+        priority: DisputePriority.NORMAL,
+        escalationCount: 0,
         metadata: createDisputeDto.metadata
           ? JSON.parse(createDisputeDto.metadata)
           : null,
@@ -145,6 +178,10 @@ export class DisputesService {
 
       await queryRunner.commitTransaction();
 
+      // Auto-assign an arbiter (best-effort — creation must not fail if no
+      // eligible arbiter is available).
+      await this.tryAutoAssignArbiter(savedDispute.id);
+
       // Return dispute with relations
       return this.findOne(savedDispute.id);
     } catch (error) {
@@ -152,6 +189,38 @@ export class DisputesService {
       throw error;
     } finally {
       await queryRunner.release();
+    }
+  }
+
+  /**
+   * Weighted auto-assignment for a freshly created dispute. Never throws —
+   * failing to find an eligible arbiter simply leaves the dispute
+   * unassigned for manual/reconciler follow-up.
+   */
+  private async tryAutoAssignArbiter(disputeId: number): Promise<void> {
+    try {
+      const dispute = await this.findOne(disputeId);
+      const arbiter = await this.assignmentService.assignArbiter(dispute);
+      if (!arbiter) return;
+
+      await this.disputeRepository.update(dispute.id, {
+        assignedArbiterId: arbiter.id,
+      });
+
+      await this.recordDisputeEvent(
+        dispute,
+        DisputeEventType.ARBITER_ASSIGNED,
+        {
+          arbiterId: arbiter.id,
+          reason: 'auto_assignment_on_create',
+        },
+      );
+    } catch (error) {
+      this.logger.warn(
+        `Auto-assignment failed for dispute ${disputeId}: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
     }
   }
 
@@ -298,7 +367,28 @@ export class DisputesService {
       );
     }
 
+    const previousStatus = dispute.status;
     Object.assign(dispute, updateDisputeDto);
+
+    if (updateDisputeDto.status && updateDisputeDto.status !== previousStatus) {
+      const newStage = this.slaService.stageForStatus(updateDisputeDto.status);
+      dispute.stage = newStage;
+      dispute.stageDueAt = newStage
+        ? this.slaService.computeStageDueDate(newStage)
+        : null;
+
+      await this.recordDisputeEvent(
+        dispute,
+        DisputeEventType.STAGE_TRANSITIONED,
+        {
+          from: previousStatus,
+          to: updateDisputeDto.status,
+          stage: dispute.stage,
+          dueAt: dispute.stageDueAt,
+        },
+      );
+    }
+
     return this.disputeRepository.save(dispute);
   }
 
@@ -406,6 +496,8 @@ export class DisputesService {
         resolution: resolveDisputeDto.resolution,
         resolvedBy: parseInt(userId),
         resolvedAt: new Date(),
+        stage: null,
+        stageDueAt: null,
       });
 
       // Update agreement status if needed
@@ -460,6 +552,62 @@ export class DisputesService {
       relations: ['initiator', 'resolver', 'evidence', 'comments'],
       order: { createdAt: 'DESC' },
     });
+  }
+
+  /**
+   * SLA status (on-track / at-risk / breached) and time remaining for a
+   * single dispute.
+   */
+  getDisputeSlaStatus(dispute: Dispute): DisputeSlaStatusDto {
+    const result = this.slaService.getSlaStatus(
+      dispute.stageDueAt,
+      dispute.stage,
+    );
+
+    return {
+      disputeId: dispute.disputeId,
+      stage: dispute.stage,
+      status: result.status,
+      dueAt: dispute.stageDueAt,
+      msRemainingMs: result.msRemaining,
+      priority: dispute.priority,
+      escalationCount: dispute.escalationCount,
+      assignedArbiterId: dispute.assignedArbiterId,
+    };
+  }
+
+  async getSlaStatusByDisputeId(
+    disputeId: string,
+  ): Promise<DisputeSlaStatusDto> {
+    const dispute = await this.findByDisputeId(disputeId);
+    return this.getDisputeSlaStatus(dispute);
+  }
+
+  /**
+   * SLA status and time-remaining for every active (non-terminal) dispute.
+   */
+  async getActiveDisputesSlaStatus(): Promise<DisputeSlaStatusDto[]> {
+    const disputes = await this.disputeRepository.find({
+      where: { status: In([DisputeStatus.OPEN, DisputeStatus.UNDER_REVIEW]) },
+    });
+
+    return disputes.map((dispute) => this.getDisputeSlaStatus(dispute));
+  }
+
+  private async recordDisputeEvent(
+    dispute: Dispute,
+    eventType: DisputeEventType,
+    eventData: Record<string, any>,
+  ): Promise<void> {
+    const event = this.eventRepository.create({
+      disputeId: dispute.disputeId,
+      eventType,
+      eventData,
+      timestamp: new Date(),
+      triggeredBy: 'system',
+    });
+
+    await this.eventRepository.save(event);
   }
 
   /**

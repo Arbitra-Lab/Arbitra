@@ -69,6 +69,7 @@ fn test_escrow_lifecycle() {
         &Some(agent_referral.clone()),
         &amount,
         &token_address,
+        &None,
     );
     let escrow = client.get_escrow(&escrow_id);
     assert_eq!(escrow.status, EscrowStatus::Pending);
@@ -134,6 +135,7 @@ fn test_dispute_resolution() {
         &Some(agent_referral.clone()),
         &amount,
         &token_address,
+        &None,
     );
 
     let token_admin = TokenAdminClient::new(&env, &token_address);
@@ -181,6 +183,7 @@ fn test_unauthorized_funding() {
         &Some(agent_referral.clone()),
         &amount,
         &token_address,
+        &None,
     );
 
     // Try to fund from beneficiary (should fail since only depositor can fund)
@@ -218,6 +221,7 @@ fn test_unique_escrow_ids() {
                 Some(agent_referral.clone()),
                 1000,
                 token.clone(),
+                None,
             )
         })
         .unwrap();
@@ -235,6 +239,7 @@ fn test_unique_escrow_ids() {
                 Some(agent_referral.clone()),
                 1000,
                 token.clone(),
+                None,
             )
         })
         .unwrap();
@@ -283,6 +288,7 @@ fn test_duplicate_approval_rejected() {
         &Some(agent_referral.clone()),
         &amount,
         &token_address,
+        &None,
     );
 
     let token_admin = TokenAdminClient::new(&env, &token_address);
@@ -325,6 +331,7 @@ fn test_approval_count_tracks_per_target() {
         &Some(agent_referral.clone()),
         &amount,
         &token_address,
+        &None,
     );
 
     let token_admin = TokenAdminClient::new(&env, &token_address);
@@ -381,6 +388,7 @@ fn test_release_escrow_on_timeout_refunds_depositor() {
         &Some(agent_referral.clone()),
         &amount,
         &token_address,
+        &None,
     );
     let token_admin = TokenAdminClient::new(&env, &token_address);
     token_admin.mint(&depositor, &amount);
@@ -427,6 +435,7 @@ fn test_release_escrow_on_timeout_before_deadline_fails() {
         &Some(agent_referral.clone()),
         &amount,
         &token_address,
+        &None,
     );
     let token_admin = TokenAdminClient::new(&env, &token_address);
     token_admin.mint(&depositor, &amount);
@@ -460,6 +469,7 @@ fn test_resolve_dispute_on_timeout_refunds_depositor() {
         &Some(agent_referral.clone()),
         &amount,
         &token_address,
+        &None,
     );
     let token_admin = TokenAdminClient::new(&env, &token_address);
     token_admin.mint(&depositor, &amount);
@@ -513,6 +523,7 @@ fn test_partial_release_success() {
         &Some(agent_referral.clone()),
         &amount,
         &token_address,
+        &None,
     );
     let token_admin = TokenAdminClient::new(&env, &token_address);
     token_admin.mint(&depositor, &amount);
@@ -573,6 +584,7 @@ fn test_partial_release_insufficient_approvals() {
         &Some(agent_referral.clone()),
         &amount,
         &token_address,
+        &None,
     );
     let token_admin = TokenAdminClient::new(&env, &token_address);
     token_admin.mint(&depositor, &amount);
@@ -615,6 +627,7 @@ fn test_partial_release_exceeds_balance() {
         &Some(agent_referral.clone()),
         &amount,
         &token_address,
+        &None,
     );
     let token_admin = TokenAdminClient::new(&env, &token_address);
     token_admin.mint(&depositor, &amount);
@@ -657,6 +670,7 @@ fn test_multiple_partial_releases() {
         &Some(agent_referral.clone()),
         &amount,
         &token_address,
+        &None,
     );
     let token_admin = TokenAdminClient::new(&env, &token_address);
     token_admin.mint(&depositor, &amount);
@@ -722,6 +736,7 @@ fn test_damage_deduction_success() {
         &Some(agent_referral.clone()),
         &amount,
         &token_address,
+        &None,
     );
     let token_admin = TokenAdminClient::new(&env, &token_address);
     token_admin.mint(&depositor, &amount);
@@ -777,6 +792,7 @@ fn test_damage_deduction_full_amount() {
         &Some(agent_referral.clone()),
         &amount,
         &token_address,
+        &None,
     );
     let token_admin = TokenAdminClient::new(&env, &token_address);
     token_admin.mint(&depositor, &amount);
@@ -828,6 +844,7 @@ fn test_damage_deduction_no_damage() {
         &Some(agent_referral.clone()),
         &amount,
         &token_address,
+        &None,
     );
     let token_admin = TokenAdminClient::new(&env, &token_address);
     token_admin.mint(&depositor, &amount);
@@ -875,6 +892,7 @@ fn test_damage_deduction_exceeds_balance() {
         &Some(agent_referral.clone()),
         &amount,
         &token_address,
+        &None,
     );
     let token_admin = TokenAdminClient::new(&env, &token_address);
     token_admin.mint(&depositor, &amount);
@@ -917,6 +935,7 @@ fn test_damage_deduction_insufficient_approvals() {
         &Some(agent_referral.clone()),
         &amount,
         &token_address,
+        &None,
     );
     let token_admin = TokenAdminClient::new(&env, &token_address);
     token_admin.mint(&depositor, &amount);
@@ -958,6 +977,7 @@ fn test_partial_release_invalid_recipient() {
         &Some(agent_referral.clone()),
         &amount,
         &token_address,
+        &None,
     );
     let token_admin = TokenAdminClient::new(&env, &token_address);
     token_admin.mint(&depositor, &amount);
@@ -995,6 +1015,7 @@ fn test_partial_release_empty_reason() {
         &Some(agent_referral.clone()),
         &amount,
         &token_address,
+        &None,
     );
     let token_admin = TokenAdminClient::new(&env, &token_address);
     token_admin.mint(&depositor, &amount);
@@ -1038,6 +1059,7 @@ fn test_is_depositor_correct_address() {
         &Some(agent_referral.clone()),
         &amount,
         &token_address,
+        &None,
     );
     let escrow = client.get_escrow(&escrow_id);
 
@@ -1069,6 +1091,7 @@ fn test_is_depositor_incorrect_address() {
         &Some(agent_referral.clone()),
         &amount,
         &token_address,
+        &None,
     );
     let escrow = client.get_escrow(&escrow_id);
 
@@ -1099,6 +1122,7 @@ fn test_is_beneficiary_correct_address() {
         &Some(agent_referral.clone()),
         &amount,
         &token_address,
+        &None,
     );
     let escrow = client.get_escrow(&escrow_id);
 
@@ -1130,6 +1154,7 @@ fn test_is_beneficiary_incorrect_address() {
         &Some(agent_referral.clone()),
         &amount,
         &token_address,
+        &None,
     );
     let escrow = client.get_escrow(&escrow_id);
 
@@ -1160,6 +1185,7 @@ fn test_is_arbiter_correct_address() {
         &Some(agent_referral.clone()),
         &amount,
         &token_address,
+        &None,
     );
     let escrow = client.get_escrow(&escrow_id);
 
@@ -1191,6 +1217,7 @@ fn test_is_arbiter_incorrect_address() {
         &Some(agent_referral.clone()),
         &amount,
         &token_address,
+        &None,
     );
     let escrow = client.get_escrow(&escrow_id);
 
@@ -1221,6 +1248,7 @@ fn test_is_party_depositor() {
         &Some(agent_referral.clone()),
         &amount,
         &token_address,
+        &None,
     );
     let escrow = client.get_escrow(&escrow_id);
 
@@ -1256,6 +1284,7 @@ fn test_is_party_beneficiary() {
         &Some(agent_referral.clone()),
         &amount,
         &token_address,
+        &None,
     );
     let escrow = client.get_escrow(&escrow_id);
 
@@ -1291,6 +1320,7 @@ fn test_is_party_arbiter() {
         &Some(agent_referral.clone()),
         &amount,
         &token_address,
+        &None,
     );
     let escrow = client.get_escrow(&escrow_id);
 
@@ -1325,6 +1355,7 @@ fn test_is_party_non_party() {
         &Some(agent_referral.clone()),
         &amount,
         &token_address,
+        &None,
     );
     let escrow = client.get_escrow(&escrow_id);
 
@@ -1358,6 +1389,7 @@ fn test_authorization_fund_escrow_depositor_only() {
         &Some(agent_referral.clone()),
         &amount,
         &token_address,
+        &None,
     );
 
     // Only depositor can fund
@@ -1391,6 +1423,7 @@ fn test_authorization_fund_escrow_beneficiary_fails() {
         &Some(agent_referral.clone()),
         &amount,
         &token_address,
+        &None,
     );
 
     // Beneficiary cannot fund
@@ -1420,6 +1453,7 @@ fn test_authorization_fund_escrow_arbiter_fails() {
         &Some(agent_referral.clone()),
         &amount,
         &token_address,
+        &None,
     );
 
     // Arbiter cannot fund
@@ -1451,6 +1485,7 @@ fn test_authorization_initiate_dispute_beneficiary() {
         &Some(agent_referral.clone()),
         &amount,
         &token_address,
+        &None,
     );
     let token_admin = TokenAdminClient::new(&env, &token_address);
     token_admin.mint(&depositor, &amount);
@@ -1486,6 +1521,7 @@ fn test_authorization_initiate_dispute_depositor() {
         &Some(agent_referral.clone()),
         &amount,
         &token_address,
+        &None,
     );
     let token_admin = TokenAdminClient::new(&env, &token_address);
     token_admin.mint(&depositor, &amount);
@@ -1521,6 +1557,7 @@ fn test_authorization_initiate_dispute_arbiter_fails() {
         &Some(agent_referral.clone()),
         &amount,
         &token_address,
+        &None,
     );
     let token_admin = TokenAdminClient::new(&env, &token_address);
     token_admin.mint(&depositor, &amount);
@@ -1556,6 +1593,7 @@ fn test_authorization_resolve_dispute_arbiter_only() {
         &Some(agent_referral.clone()),
         &amount,
         &token_address,
+        &None,
     );
     let token_admin = TokenAdminClient::new(&env, &token_address);
     token_admin.mint(&depositor, &amount);
@@ -1595,6 +1633,7 @@ fn test_authorization_resolve_dispute_depositor_fails() {
         &Some(agent_referral.clone()),
         &amount,
         &token_address,
+        &None,
     );
     let token_admin = TokenAdminClient::new(&env, &token_address);
     token_admin.mint(&depositor, &amount);
@@ -1634,6 +1673,7 @@ fn test_authorization_resolve_dispute_beneficiary_fails() {
         &Some(agent_referral.clone()),
         &amount,
         &token_address,
+        &None,
     );
     let token_admin = TokenAdminClient::new(&env, &token_address);
     token_admin.mint(&depositor, &amount);
@@ -1716,6 +1756,7 @@ fn test_release_rent_splits_90_5_5() {
         &Some(agent_referral.clone()),
         &amount,
         &token_address,
+        &None,
     );
 
     let token_admin = TokenAdminClient::new(&env, &token_address);
@@ -1761,6 +1802,7 @@ fn test_release_rent_rounding_remainder_goes_to_agent() {
         &Some(agent_referral.clone()),
         &amount,
         &token_address,
+        &None,
     );
 
     let token_admin = TokenAdminClient::new(&env, &token_address);
@@ -1781,8 +1823,7 @@ fn test_release_rent_no_fees_beneficiary_gets_all() {
     let env = Env::default();
     env.mock_all_auths();
 
-    let (client, depositor, beneficiary, arbiter, _, _, token_address) =
-        setup_test_with_fees(&env);
+    let (client, depositor, beneficiary, arbiter, _, _, token_address) = setup_test_with_fees(&env);
     let amount = 1000i128;
 
     // A plain 2-party escrow (freelance/trade-finance/insurance style): no
@@ -1795,6 +1836,7 @@ fn test_release_rent_no_fees_beneficiary_gets_all() {
         &None,
         &amount,
         &token_address,
+        &None,
     );
 
     let token_admin = TokenAdminClient::new(&env, &token_address);
@@ -1825,6 +1867,7 @@ fn test_release_rent_governance_only_splits_95_5() {
         &None,
         &amount,
         &token_address,
+        &None,
     );
 
     let token_admin = TokenAdminClient::new(&env, &token_address);
@@ -1863,6 +1906,7 @@ fn test_release_rent_only_arbiter_can_call() {
         &Some(agent_referral.clone()),
         &amount,
         &token_address,
+        &None,
     );
 
     let token_admin = TokenAdminClient::new(&env, &token_address);
@@ -1900,6 +1944,7 @@ fn test_release_rent_blocked_when_disputed() {
         &Some(agent_referral.clone()),
         &amount,
         &token_address,
+        &None,
     );
 
     let token_admin = TokenAdminClient::new(&env, &token_address);
@@ -1940,6 +1985,7 @@ fn test_withdraw_safety_deposit_success_after_timeout() {
         &Some(agent_referral.clone()),
         &amount,
         &token_address,
+        &None,
     );
 
     let token_admin = TokenAdminClient::new(&env, &token_address);
@@ -1987,6 +2033,7 @@ fn test_withdraw_safety_deposit_blocked_before_timeout() {
         &Some(agent_referral.clone()),
         &amount,
         &token_address,
+        &None,
     );
 
     let token_admin = TokenAdminClient::new(&env, &token_address);
@@ -2021,6 +2068,7 @@ fn test_withdraw_safety_deposit_blocked_when_disputed() {
         &Some(agent_referral.clone()),
         &amount,
         &token_address,
+        &None,
     );
 
     let token_admin = TokenAdminClient::new(&env, &token_address);
@@ -2067,6 +2115,7 @@ fn test_withdraw_safety_deposit_only_depositor_can_call() {
         &Some(agent_referral.clone()),
         &amount,
         &token_address,
+        &None,
     );
 
     let token_admin = TokenAdminClient::new(&env, &token_address);
@@ -2081,4 +2130,736 @@ fn test_withdraw_safety_deposit_only_depositor_can_call() {
 
     let result = client.try_withdraw_safety_deposit(&escrow_id, &beneficiary);
     assert!(result.is_err());
+}
+
+// ─── Issue #90: Auto-Release Timeout (Deadman Switch) Tests ───────────────
+
+#[test]
+fn test_auto_release_disabled_by_default() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let (
+        client,
+        depositor,
+        beneficiary,
+        arbiter,
+        platform_governance,
+        agent_referral,
+        token_address,
+    ) = setup_test(&env);
+    let amount = 1000i128;
+
+    // Create escrow without auto_release_days (None by default)
+    let escrow_id = client.create(
+        &depositor,
+        &beneficiary,
+        &arbiter,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
+        &amount,
+        &token_address,
+        &None, // auto_release_days is None (disabled)
+    );
+
+    let escrow = client.get_escrow(&escrow_id);
+    assert_eq!(escrow.auto_release_after, None);
+}
+
+#[test]
+fn test_auto_release_enabled_with_days() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let (
+        client,
+        depositor,
+        beneficiary,
+        arbiter,
+        platform_governance,
+        agent_referral,
+        token_address,
+    ) = setup_test(&env);
+    let amount = 1000i128;
+    let initial_timestamp = env.ledger().timestamp();
+
+    // Create escrow with 7-day auto-release
+    let escrow_id = client.create(
+        &depositor,
+        &beneficiary,
+        &arbiter,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
+        &amount,
+        &token_address,
+        &Some(7u64), // auto_release_days = 7
+    );
+
+    let escrow = client.get_escrow(&escrow_id);
+    let expected_deadline = initial_timestamp + (7 * 86_400);
+    assert_eq!(escrow.auto_release_after, Some(expected_deadline));
+}
+
+#[test]
+fn test_claim_after_timeout_succeeds_after_deadline() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let (
+        client,
+        depositor,
+        beneficiary,
+        arbiter,
+        platform_governance,
+        agent_referral,
+        token_address,
+    ) = setup_test(&env);
+    let amount = 1000i128;
+
+    // Create escrow with 1-day auto-release
+    let escrow_id = client.create(
+        &depositor,
+        &beneficiary,
+        &arbiter,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
+        &amount,
+        &token_address,
+        &Some(1u64),
+    );
+
+    // Fund the escrow
+    let token_admin = TokenAdminClient::new(&env, &token_address);
+    token_admin.mint(&depositor, &amount);
+    client.fund_escrow(&escrow_id, &depositor);
+
+    // Advance time past the deadline (2 days)
+    env.ledger().with_mut(|li| li.timestamp += 2 * 86_400);
+
+    // Beneficiary claims after timeout
+    client.claim_after_timeout(&escrow_id, &beneficiary);
+
+    // Verify escrow is released
+    let escrow = client.get_escrow(&escrow_id);
+    assert_eq!(escrow.status, EscrowStatus::Released);
+
+    // Verify tokens transferred to beneficiary
+    let token_client = TokenClient::new(&env, &token_address);
+    assert_eq!(token_client.balance(&beneficiary), amount);
+    assert_eq!(token_client.balance(&client.address), 0);
+}
+
+#[test]
+fn test_claim_after_timeout_fails_before_deadline() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let (
+        client,
+        depositor,
+        beneficiary,
+        arbiter,
+        platform_governance,
+        agent_referral,
+        token_address,
+    ) = setup_test(&env);
+    let amount = 1000i128;
+
+    // Create escrow with 5-day auto-release
+    let escrow_id = client.create(
+        &depositor,
+        &beneficiary,
+        &arbiter,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
+        &amount,
+        &token_address,
+        &Some(5u64),
+    );
+
+    // Fund the escrow
+    let token_admin = TokenAdminClient::new(&env, &token_address);
+    token_admin.mint(&depositor, &amount);
+    client.fund_escrow(&escrow_id, &depositor);
+
+    // Advance time but NOT past deadline (only 1 day)
+    env.ledger().with_mut(|li| li.timestamp += 86_400);
+
+    // Attempt to claim before deadline should fail
+    let result = client.try_claim_after_timeout(&escrow_id, &beneficiary);
+    assert!(result.is_err());
+
+    // Escrow should still be Funded
+    let escrow = client.get_escrow(&escrow_id);
+    assert_eq!(escrow.status, EscrowStatus::Funded);
+
+    // Tokens should still be in contract
+    let token_client = TokenClient::new(&env, &token_address);
+    assert_eq!(token_client.balance(&beneficiary), 0);
+    assert_eq!(token_client.balance(&client.address), amount);
+}
+
+#[test]
+fn test_claim_after_timeout_blocked_when_disputed() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let (
+        client,
+        depositor,
+        beneficiary,
+        arbiter,
+        platform_governance,
+        agent_referral,
+        token_address,
+    ) = setup_test(&env);
+    let amount = 1000i128;
+
+    // Create escrow with 1-day auto-release
+    let escrow_id = client.create(
+        &depositor,
+        &beneficiary,
+        &arbiter,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
+        &amount,
+        &token_address,
+        &Some(1u64),
+    );
+
+    // Fund the escrow
+    let token_admin = TokenAdminClient::new(&env, &token_address);
+    token_admin.mint(&depositor, &amount);
+    client.fund_escrow(&escrow_id, &depositor);
+
+    // Raise a dispute
+    let reason = soroban_sdk::String::from_str(&env, "Service not delivered");
+    client.initiate_dispute(&escrow_id, &depositor, &reason);
+
+    // Advance time past the deadline
+    env.ledger().with_mut(|li| li.timestamp += 2 * 86_400);
+
+    // Attempt to claim while disputed should fail
+    let result = client.try_claim_after_timeout(&escrow_id, &beneficiary);
+    assert!(result.is_err());
+
+    // Escrow should still be Disputed
+    let escrow = client.get_escrow(&escrow_id);
+    assert_eq!(escrow.status, EscrowStatus::Disputed);
+
+    // Tokens should still be in contract
+    let token_client = TokenClient::new(&env, &token_address);
+    assert_eq!(token_client.balance(&beneficiary), 0);
+    assert_eq!(token_client.balance(&client.address), amount);
+}
+
+#[test]
+fn test_claim_after_timeout_only_beneficiary_can_claim() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let (
+        client,
+        depositor,
+        beneficiary,
+        arbiter,
+        platform_governance,
+        agent_referral,
+        token_address,
+    ) = setup_test(&env);
+    let amount = 1000i128;
+
+    // Create escrow with 1-day auto-release
+    let escrow_id = client.create(
+        &depositor,
+        &beneficiary,
+        &arbiter,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
+        &amount,
+        &token_address,
+        &Some(1u64),
+    );
+
+    // Fund the escrow
+    let token_admin = TokenAdminClient::new(&env, &token_address);
+    token_admin.mint(&depositor, &amount);
+    client.fund_escrow(&escrow_id, &depositor);
+
+    // Advance time past the deadline
+    env.ledger().with_mut(|li| li.timestamp += 2 * 86_400);
+
+    // Depositor attempts to claim (should fail - only beneficiary can claim)
+    let result = client.try_claim_after_timeout(&escrow_id, &depositor);
+    assert!(result.is_err());
+
+    // Arbiter attempts to claim (should fail)
+    let result = client.try_claim_after_timeout(&escrow_id, &arbiter);
+    assert!(result.is_err());
+
+    // Beneficiary claims successfully
+    client.claim_after_timeout(&escrow_id, &beneficiary);
+
+    let escrow = client.get_escrow(&escrow_id);
+    assert_eq!(escrow.status, EscrowStatus::Released);
+}
+
+#[test]
+fn test_claim_after_timeout_fails_without_auto_release() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let (
+        client,
+        depositor,
+        beneficiary,
+        arbiter,
+        platform_governance,
+        agent_referral,
+        token_address,
+    ) = setup_test(&env);
+    let amount = 1000i128;
+
+    // Create escrow WITHOUT auto-release
+    let escrow_id = client.create(
+        &depositor,
+        &beneficiary,
+        &arbiter,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
+        &amount,
+        &token_address,
+        &None, // No auto-release
+    );
+
+    // Fund the escrow
+    let token_admin = TokenAdminClient::new(&env, &token_address);
+    token_admin.mint(&depositor, &amount);
+    client.fund_escrow(&escrow_id, &depositor);
+
+    // Advance time significantly (100 days)
+    env.ledger().with_mut(|li| li.timestamp += 100 * 86_400);
+
+    // Attempt to claim without auto-release enabled should fail
+    let result = client.try_claim_after_timeout(&escrow_id, &beneficiary);
+    assert!(result.is_err());
+
+    // Escrow should still be Funded
+    let escrow = client.get_escrow(&escrow_id);
+    assert_eq!(escrow.status, EscrowStatus::Funded);
+}
+
+#[test]
+fn test_claim_after_timeout_blocked_when_frozen() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let (
+        client,
+        depositor,
+        beneficiary,
+        arbiter,
+        platform_governance,
+        agent_referral,
+        token_address,
+    ) = setup_test(&env);
+    let amount = 1000i128;
+
+    // Initialize admin
+    let admin = Address::generate(&env);
+    client.initialize_admin(&admin);
+
+    // Create escrow with 1-day auto-release
+    let escrow_id = client.create(
+        &depositor,
+        &beneficiary,
+        &arbiter,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
+        &amount,
+        &token_address,
+        &Some(1u64),
+    );
+
+    // Fund the escrow
+    let token_admin = TokenAdminClient::new(&env, &token_address);
+    token_admin.mint(&depositor, &amount);
+    client.fund_escrow(&escrow_id, &depositor);
+
+    // Freeze the escrow
+    let reason = soroban_sdk::String::from_str(&env, "Security investigation");
+    client.freeze_escrow(&escrow_id, &admin, &reason);
+
+    // Advance time past the deadline
+    env.ledger().with_mut(|li| li.timestamp += 2 * 86_400);
+
+    // Attempt to claim while frozen should fail
+    let result = client.try_claim_after_timeout(&escrow_id, &beneficiary);
+    assert!(result.is_err());
+
+    // Escrow should still be Funded and frozen
+    let escrow = client.get_escrow(&escrow_id);
+    assert_eq!(escrow.status, EscrowStatus::Funded);
+    assert!(escrow.is_frozen);
+
+    // Tokens should still be in contract
+    let token_client = TokenClient::new(&env, &token_address);
+    assert_eq!(token_client.balance(&beneficiary), 0);
+    assert_eq!(token_client.balance(&client.address), amount);
+}
+
+#[test]
+fn test_claim_after_timeout_at_exact_deadline() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let (
+        client,
+        depositor,
+        beneficiary,
+        arbiter,
+        platform_governance,
+        agent_referral,
+        token_address,
+    ) = setup_test(&env);
+    let amount = 1000i128;
+    let initial_timestamp = env.ledger().timestamp();
+
+    // Create escrow with 3-day auto-release
+    let escrow_id = client.create(
+        &depositor,
+        &beneficiary,
+        &arbiter,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
+        &amount,
+        &token_address,
+        &Some(3u64),
+    );
+
+    // Fund the escrow
+    let token_admin = TokenAdminClient::new(&env, &token_address);
+    token_admin.mint(&depositor, &amount);
+    client.fund_escrow(&escrow_id, &depositor);
+
+    // Advance time to exactly the deadline (3 * 86400 seconds)
+    let deadline_offset = 3 * 86_400;
+    env.ledger()
+        .with_mut(|li| li.timestamp = initial_timestamp + deadline_offset);
+
+    // Claim at exact deadline should succeed
+    client.claim_after_timeout(&escrow_id, &beneficiary);
+
+    // Verify escrow is released
+    let escrow = client.get_escrow(&escrow_id);
+    assert_eq!(escrow.status, EscrowStatus::Released);
+
+    // Verify tokens transferred
+    let token_client = TokenClient::new(&env, &token_address);
+    assert_eq!(token_client.balance(&beneficiary), amount);
+}
+
+// ─── Milestone-based partial release (release_partial) ─────────────────────
+
+#[test]
+fn test_release_partial_sequential_sums_to_total() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let (
+        client,
+        depositor,
+        beneficiary,
+        arbiter,
+        platform_governance,
+        agent_referral,
+        token_address,
+    ) = setup_test(&env);
+    let amount = 1000i128;
+
+    let escrow_id = client.create(
+        &depositor,
+        &beneficiary,
+        &arbiter,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
+        &amount,
+        &token_address,
+        &None,
+    );
+    let token_admin = TokenAdminClient::new(&env, &token_address);
+    token_admin.mint(&depositor, &amount);
+    client.fund_escrow(&escrow_id, &depositor);
+
+    // Release three milestone tranches that sum to the escrow total. The payer
+    // (depositor) authorizes each tranche as work is accepted.
+    client.release_partial(&escrow_id, &depositor, &400i128);
+    let escrow = client.get_escrow(&escrow_id);
+    assert_eq!(escrow.amount, 600i128); // remaining
+    assert_eq!(escrow.total_released, 400i128); // running released
+    assert_eq!(escrow.status, EscrowStatus::Funded);
+    assert_eq!(client.get_total_released(&escrow_id), 400i128);
+
+    client.release_partial(&escrow_id, &depositor, &350i128);
+    let escrow = client.get_escrow(&escrow_id);
+    assert_eq!(escrow.amount, 250i128);
+    assert_eq!(escrow.total_released, 750i128);
+    assert_eq!(escrow.status, EscrowStatus::Funded);
+
+    // Final tranche drains the escrow -> status transitions to Released.
+    client.release_partial(&escrow_id, &depositor, &250i128);
+    let escrow = client.get_escrow(&escrow_id);
+    assert_eq!(escrow.amount, 0i128);
+    assert_eq!(escrow.total_released, amount);
+    assert_eq!(escrow.status, EscrowStatus::Released);
+
+    // The tranches sum exactly to the funded total.
+    assert_eq!(escrow.amount + escrow.total_released, amount);
+
+    // Beneficiary received the full amount incrementally; contract is drained.
+    let token_client = TokenClient::new(&env, &token_address);
+    assert_eq!(token_client.balance(&beneficiary), amount);
+    assert_eq!(token_client.balance(&client.address), 0i128);
+
+    // Each tranche is recorded in history.
+    let history = client.get_release_history(&escrow_id);
+    assert_eq!(history.len(), 3);
+}
+
+#[test]
+fn test_release_partial_over_release_rejected() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let (
+        client,
+        depositor,
+        beneficiary,
+        arbiter,
+        platform_governance,
+        agent_referral,
+        token_address,
+    ) = setup_test(&env);
+    let amount = 1000i128;
+
+    let escrow_id = client.create(
+        &depositor,
+        &beneficiary,
+        &arbiter,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
+        &amount,
+        &token_address,
+        &None,
+    );
+    let token_admin = TokenAdminClient::new(&env, &token_address);
+    token_admin.mint(&depositor, &amount);
+    client.fund_escrow(&escrow_id, &depositor);
+
+    // Release 600, leaving 400 remaining.
+    client.release_partial(&escrow_id, &depositor, &600i128);
+
+    // Attempting to release more than the remaining balance must fail.
+    let result = client.try_release_partial(&escrow_id, &depositor, &500i128);
+    assert!(result.is_err());
+
+    // Accounting is unchanged by the rejected over-release.
+    let escrow = client.get_escrow(&escrow_id);
+    assert_eq!(escrow.amount, 400i128);
+    assert_eq!(escrow.total_released, 600i128);
+    assert_eq!(escrow.status, EscrowStatus::Funded);
+
+    // Only the accepted tranche moved funds.
+    let token_client = TokenClient::new(&env, &token_address);
+    assert_eq!(token_client.balance(&beneficiary), 600i128);
+    assert_eq!(token_client.balance(&client.address), 400i128);
+}
+
+#[test]
+fn test_release_partial_zero_or_negative_rejected() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let (
+        client,
+        depositor,
+        beneficiary,
+        arbiter,
+        platform_governance,
+        agent_referral,
+        token_address,
+    ) = setup_test(&env);
+    let amount = 1000i128;
+
+    let escrow_id = client.create(
+        &depositor,
+        &beneficiary,
+        &arbiter,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
+        &amount,
+        &token_address,
+        &None,
+    );
+    let token_admin = TokenAdminClient::new(&env, &token_address);
+    token_admin.mint(&depositor, &amount);
+    client.fund_escrow(&escrow_id, &depositor);
+
+    let _ = beneficiary;
+    let _ = arbiter;
+
+    assert!(client.try_release_partial(&escrow_id, &depositor, &0i128).is_err());
+    assert!(client
+        .try_release_partial(&escrow_id, &depositor, &(-100i128))
+        .is_err());
+}
+
+#[test]
+fn test_release_partial_authorization() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let (
+        client,
+        depositor,
+        beneficiary,
+        arbiter,
+        platform_governance,
+        agent_referral,
+        token_address,
+    ) = setup_test(&env);
+    let amount = 1000i128;
+
+    let escrow_id = client.create(
+        &depositor,
+        &beneficiary,
+        &arbiter,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
+        &amount,
+        &token_address,
+        &None,
+    );
+    let token_admin = TokenAdminClient::new(&env, &token_address);
+    token_admin.mint(&depositor, &amount);
+    client.fund_escrow(&escrow_id, &depositor);
+
+    // The beneficiary (payee) cannot release a tranche to themselves.
+    let result = client.try_release_partial(&escrow_id, &beneficiary, &100i128);
+    assert!(result.is_err());
+
+    // A non-party cannot release either.
+    let stranger = Address::generate(&env);
+    let result = client.try_release_partial(&escrow_id, &stranger, &100i128);
+    assert!(result.is_err());
+
+    // The payer (depositor) can release a tranche.
+    client.release_partial(&escrow_id, &depositor, &100i128);
+    assert_eq!(client.get_total_released(&escrow_id), 100i128);
+
+    // The arbiter can also release a tranche (e.g. as a dispute ruling).
+    client.release_partial(&escrow_id, &arbiter, &200i128);
+    assert_eq!(client.get_total_released(&escrow_id), 300i128);
+
+    let escrow = client.get_escrow(&escrow_id);
+    assert_eq!(escrow.amount, 700i128);
+}
+
+#[test]
+fn test_release_partial_full_release_invariant_after_tranches() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let (
+        client,
+        depositor,
+        beneficiary,
+        arbiter,
+        platform_governance,
+        agent_referral,
+        token_address,
+    ) = setup_test(&env);
+    let amount = 1000i128;
+
+    let escrow_id = client.create(
+        &depositor,
+        &beneficiary,
+        &arbiter,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
+        &amount,
+        &token_address,
+        &None,
+    );
+    let token_admin = TokenAdminClient::new(&env, &token_address);
+    token_admin.mint(&depositor, &amount);
+    client.fund_escrow(&escrow_id, &depositor);
+
+    // Partially release 300, then finish via the full 2-of-3 release path.
+    client.release_partial(&escrow_id, &depositor, &300i128);
+
+    // Full release should only move the remaining 700 balance, not the original.
+    client.approve_release(&escrow_id, &depositor, &beneficiary);
+    client.approve_release(&escrow_id, &arbiter, &beneficiary);
+
+    let escrow = client.get_escrow(&escrow_id);
+    assert_eq!(escrow.status, EscrowStatus::Released);
+
+    let token_client = TokenClient::new(&env, &token_address);
+    assert_eq!(token_client.balance(&beneficiary), amount); // 300 + 700
+    assert_eq!(token_client.balance(&client.address), 0i128);
+}
+
+#[test]
+fn test_release_partial_refund_invariant_after_tranches() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let (
+        client,
+        depositor,
+        beneficiary,
+        arbiter,
+        platform_governance,
+        agent_referral,
+        token_address,
+    ) = setup_test(&env);
+    let amount = 1000i128;
+
+    let cfg = TimeoutConfig {
+        escrow_timeout_days: 1,
+        dispute_timeout_days: 30,
+        payment_timeout_days: 7,
+    };
+    client.set_timeout_config(&depositor, &cfg);
+
+    let escrow_id = client.create(
+        &depositor,
+        &beneficiary,
+        &arbiter,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
+        &amount,
+        &token_address,
+        &None,
+    );
+    let token_admin = TokenAdminClient::new(&env, &token_address);
+    token_admin.mint(&depositor, &amount);
+    client.fund_escrow(&escrow_id, &depositor);
+
+    // Release a 400 tranche to the beneficiary, leaving 600 remaining.
+    client.release_partial(&escrow_id, &depositor, &400i128);
+
+    // After the timeout, the refund path should return only the remaining 600
+    // to the depositor (not the original 1000).
+    env.ledger().with_mut(|li| li.timestamp += 2 * 86_400);
+    client.release_escrow_on_timeout(&escrow_id);
+
+    let escrow = client.get_escrow(&escrow_id);
+    assert_eq!(escrow.status, EscrowStatus::Refunded);
+
+    let token_client = TokenClient::new(&env, &token_address);
+    assert_eq!(token_client.balance(&beneficiary), 400i128);
+    assert_eq!(token_client.balance(&depositor), 600i128);
+    assert_eq!(token_client.balance(&client.address), 0i128);
 }

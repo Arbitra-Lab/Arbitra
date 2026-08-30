@@ -67,8 +67,8 @@ export default function ForWho() {
             Built for Everyone
           </h2>
           <p className="text-xl text-neutral-200/80 max-w-2xl mx-auto">
-            Whether you&apos;re depositing, arbitrating, or managing
-            agreements, we&apos;ve got you covered
+            Whether you&apos;re depositing, arbitrating, or managing agreements,
+            we&apos;ve got you covered
           </p>
         </motion.div>
 

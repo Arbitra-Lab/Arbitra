@@ -14,4 +14,6 @@ pub enum ObligationError {
     BurnRecordNotFound = 8,
     CannotBurnActiveObligation = 9,
     InvalidBurnReason = 10,
+    InvalidRentSchedule = 11,
+    RentScheduleNotFound = 12,
 }

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { FindOptionsWhere, In, MoreThan, Repository } from 'typeorm';
 import {
   Property,
   ListingStatus,
@@ -9,11 +9,10 @@ import {
   PropertyInquiry,
   PropertyInquiryStatus,
 } from '../inquiries/entities/property-inquiry.entity';
-import {
-  AnalyticsRollupService,
-  DisputeCohortReport,
-} from './analytics-rollup.service';
-import { DisputeCohortQueryDto } from './dto/dispute-cohort-query.dto';
+import { AnalyticsRollupService } from './analytics-rollup.service';
+import { AnalyticsInquiryRollupDaily } from './entities/analytics-inquiry-rollup-daily.entity';
+
+export type AnalyticsDataSource = 'auto' | 'raw' | 'rollup';
 
 export interface CityAggregate {
   city: string;
@@ -24,6 +23,25 @@ export interface CityAggregate {
   averageViewsPerProperty: number;
 }
 
+interface InquiryAggregates {
+  totalInquiries: number;
+  viewedInquiries: number;
+  inquiriesByProperty: Map<string, number>;
+  inquiryTrend: Array<{ date: string; inquiries: number }>;
+}
+
+type InquirySlice = Pick<
+  PropertyInquiry,
+  'propertyId' | 'status' | 'createdAt'
+>;
+
+const INQUIRY_SELECT: Array<keyof PropertyInquiry> = [
+  'id',
+  'propertyId',
+  'status',
+  'createdAt',
+];
+
 @Injectable()
 export class AnalyticsService {
   constructor(
@@ -31,10 +49,16 @@ export class AnalyticsService {
     private readonly propertyRepository: Repository<Property>,
     @InjectRepository(PropertyInquiry)
     private readonly inquiryRepository: Repository<PropertyInquiry>,
+    @InjectRepository(AnalyticsInquiryRollupDaily)
+    private readonly rollupRepository: Repository<AnalyticsInquiryRollupDaily>,
     private readonly rollupService: AnalyticsRollupService,
   ) {}
 
-  async getLandlordDashboard(ownerId: string, days = 30) {
+  async getLandlordDashboard(
+    ownerId: string,
+    days = 30,
+    source: AnalyticsDataSource = 'auto',
+  ) {
     const normalizedDays = this.normalizeDays(days);
     const endDate = new Date();
     const startDate = new Date(endDate);
@@ -54,16 +78,32 @@ export class AnalyticsService {
     });
 
     const propertyIds = properties.map((property) => property.id);
-    const inquiries = propertyIds.length
-      ? await this.inquiryRepository.find({
-          where: {
-            propertyId: In(propertyIds),
-            toUserId: ownerId,
-          },
-          select: ['id', 'propertyId', 'status', 'createdAt'],
-          order: { createdAt: 'ASC' },
-        })
-      : [];
+
+    const watermark = await this.rollupService.getWatermark();
+    const useRollup =
+      (source === 'rollup' || source === 'auto') && watermark !== null;
+
+    const aggregates = useRollup
+      ? await this.loadRollupAggregates(
+          ownerId,
+          propertyIds,
+          watermark,
+          normalizedDays,
+          startDate,
+        )
+      : await this.loadRawAggregates(
+          ownerId,
+          propertyIds,
+          normalizedDays,
+          startDate,
+        );
+
+    const {
+      totalInquiries,
+      viewedInquiries,
+      inquiriesByProperty,
+      inquiryTrend,
+    } = aggregates;
 
     const totalProperties = properties.length;
     const publishedProperties = properties.filter(
@@ -78,18 +118,6 @@ export class AnalyticsService {
       (sum, property) => sum + Number(property.favoriteCount ?? 0),
       0,
     );
-    const totalInquiries = inquiries.length;
-    const viewedInquiries = inquiries.filter(
-      (inquiry) => inquiry.status === PropertyInquiryStatus.VIEWED,
-    ).length;
-
-    const inquiriesByProperty = new Map<string, number>();
-    inquiries.forEach((inquiry) => {
-      inquiriesByProperty.set(
-        inquiry.propertyId,
-        (inquiriesByProperty.get(inquiry.propertyId) ?? 0) + 1,
-      );
-    });
 
     const topPerformingProperties = properties
       .map((property) => {
@@ -122,13 +150,6 @@ export class AnalyticsService {
         conversionRate: property.conversionRate,
       }));
 
-    const inquiryTrend = this.buildInquiryTrend(
-      inquiries,
-      normalizedDays,
-      startDate,
-      endDate,
-    );
-
     const listingStatusDistribution = this.buildStatusDistribution(properties);
     const cityTrends = this.buildCityTrends(properties, inquiriesByProperty);
 
@@ -138,6 +159,10 @@ export class AnalyticsService {
         days: normalizedDays,
         startDate: startDate.toISOString(),
         endDate: endDate.toISOString(),
+      },
+      meta: {
+        dataSource: useRollup ? ('rollup' as const) : ('raw' as const),
+        watermark: watermark ? watermark.toISOString() : null,
       },
       summary: {
         totalProperties,
@@ -165,20 +190,114 @@ export class AnalyticsService {
     };
   }
 
-  /**
-   * Returns pre-aggregated dispute-outcome cohort metrics.
-   *
-   * Delegates to AnalyticsRollupService which performs the heavy aggregation
-   * so this method stays thin and the rollup can be called independently
-   * by a scheduler (nightly job) or on demand (backfill).
-   */
-  async getDisputeCohortMetrics(
-    query: DisputeCohortQueryDto = {},
-  ): Promise<DisputeCohortReport> {
-    if (query.backfill) {
-      return this.rollupService.backfill();
-    }
-    return this.rollupService.computeDisputeCohortReport(query);
+  private async loadRawAggregates(
+    ownerId: string,
+    propertyIds: string[],
+    days: number,
+    startDate: Date,
+  ): Promise<InquiryAggregates> {
+    const inquiries = propertyIds.length
+      ? await this.inquiryRepository.find({
+          where: {
+            propertyId: In(propertyIds),
+            toUserId: ownerId,
+          },
+          select: INQUIRY_SELECT,
+          order: { createdAt: 'ASC' },
+        })
+      : [];
+
+    const inquiriesByProperty = new Map<string, number>();
+    let viewedInquiries = 0;
+
+    inquiries.forEach((inquiry) => {
+      if (inquiry.status === PropertyInquiryStatus.VIEWED) {
+        viewedInquiries += 1;
+      }
+
+      inquiriesByProperty.set(
+        inquiry.propertyId,
+        (inquiriesByProperty.get(inquiry.propertyId) ?? 0) + 1,
+      );
+    });
+
+    const trend = this.seedTrendBuckets(days, startDate);
+    this.addInquiriesToTrend(trend, inquiries);
+
+    return {
+      totalInquiries: inquiries.length,
+      viewedInquiries,
+      inquiriesByProperty,
+      inquiryTrend: this.toTrendArray(trend),
+    };
+  }
+
+  // Rollup buckets carry everything folded up to the watermark; the tail query
+  // adds inquiries that landed after the last rollup run.
+  private async loadRollupAggregates(
+    ownerId: string,
+    propertyIds: string[],
+    watermark: Date,
+    days: number,
+    startDate: Date,
+  ): Promise<InquiryAggregates> {
+    const buckets = await this.rollupRepository.find({ where: { ownerId } });
+
+    const tailWhere: FindOptionsWhere<PropertyInquiry> = {
+      propertyId: In(propertyIds),
+      toUserId: ownerId,
+      createdAt: MoreThan(watermark),
+    };
+    const tail = propertyIds.length
+      ? await this.inquiryRepository.find({
+          where: tailWhere,
+          select: INQUIRY_SELECT,
+          order: { createdAt: 'ASC' },
+        })
+      : [];
+
+    const inquiriesByProperty = new Map<string, number>();
+    const trend = this.seedTrendBuckets(days, startDate);
+    let totalInquiries = 0;
+    let viewedInquiries = 0;
+
+    buckets.forEach((bucket) => {
+      const inquiryCount = Number(bucket.inquiryCount ?? 0);
+
+      totalInquiries += inquiryCount;
+      viewedInquiries += Number(bucket.viewedInquiryCount ?? 0);
+      inquiriesByProperty.set(
+        bucket.propertyId,
+        (inquiriesByProperty.get(bucket.propertyId) ?? 0) + inquiryCount,
+      );
+
+      const key = this.toBucketDateKey(bucket.bucketDate);
+      if (trend.has(key)) {
+        trend.set(key, (trend.get(key) ?? 0) + inquiryCount);
+      }
+    });
+
+    tail.forEach((inquiry) => {
+      totalInquiries += 1;
+
+      if (inquiry.status === PropertyInquiryStatus.VIEWED) {
+        viewedInquiries += 1;
+      }
+
+      inquiriesByProperty.set(
+        inquiry.propertyId,
+        (inquiriesByProperty.get(inquiry.propertyId) ?? 0) + 1,
+      );
+    });
+
+    this.addInquiriesToTrend(trend, tail);
+
+    return {
+      totalInquiries,
+      viewedInquiries,
+      inquiriesByProperty,
+      inquiryTrend: this.toTrendArray(trend),
+    };
   }
 
   private normalizeDays(days: number): number {
@@ -205,30 +324,35 @@ export class AnalyticsService {
     return Number(((part / whole) * 100).toFixed(2));
   }
 
-  private buildInquiryTrend(
-    inquiries: Array<Pick<PropertyInquiry, 'createdAt'>>,
-    days: number,
-    startDate: Date,
-    endDate: Date,
-  ) {
+  private seedTrendBuckets(days: number, startDate: Date): Map<string, number> {
     const buckets = new Map<string, number>();
 
     for (let offset = 0; offset < days; offset += 1) {
       const day = new Date(startDate);
       day.setDate(startDate.getDate() + offset);
-      const key = this.toDateKey(day);
-      buckets.set(key, 0);
+      buckets.set(this.toDateKey(day), 0);
     }
 
+    return buckets;
+  }
+
+  // Trend buckets are whole UTC days; membership in the seeded range decides
+  // inclusion so raw and rollup paths agree on the oldest bucket.
+  private addInquiriesToTrend(
+    buckets: Map<string, number>,
+    inquiries: InquirySlice[],
+  ): void {
     inquiries.forEach((inquiry) => {
-      if (inquiry.createdAt < startDate || inquiry.createdAt > endDate) {
+      const key = this.toDateKey(inquiry.createdAt);
+      if (!buckets.has(key)) {
         return;
       }
 
-      const key = this.toDateKey(inquiry.createdAt);
       buckets.set(key, (buckets.get(key) ?? 0) + 1);
     });
+  }
 
+  private toTrendArray(buckets: Map<string, number>) {
     return Array.from(buckets.entries()).map(([date, count]) => ({
       date,
       inquiries: count,
@@ -294,6 +418,12 @@ export class AnalyticsService {
       }))
       .sort((a, b) => b.totalViews - a.totalViews)
       .slice(0, 8);
+  }
+
+  private toBucketDateKey(value: string | Date): string {
+    return value instanceof Date
+      ? this.toDateKey(value)
+      : String(value).slice(0, 10);
   }
 
   private toDateKey(value: Date): string {

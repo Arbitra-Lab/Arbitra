@@ -34,11 +34,12 @@ pub enum AgreementError {
     PaymentFailed = 203,
     PaymentInvalidAmount = 204,
 
-    // Timelock errors (reusing range 301-304, replacing unused dispute codes)
+    // Timelock errors (reusing range 301-305)
     TimelockNotFound = 301,
     TimelockAlreadyExecuted = 302,
     TimelockAlreadyCancelled = 303,
     TimelockEtaNotReached = 304,
+    TimelockDelayTooShort = 305,
 
     // Escrow errors
     EscrowNotFound = 401,
@@ -57,7 +58,6 @@ pub enum AgreementError {
     RateLimitExceeded = 801,
     CooldownNotMet = 802,
     InternalError = 901,
-    TimelockDelayTooShort = 902,
 
     // Multi-sig errors (using range 1100-1105 only)
     MultiSigNotInitialized = 1100,
@@ -88,7 +88,9 @@ impl AgreementError {
                 "Contract or agreement state is invalid for this operation."
             }
             AgreementError::Expired => "The agreement or operation has expired.",
-            AgreementError::ContractPaused => "Operations are currently paused by the administrator.",
+            AgreementError::ContractPaused => {
+                "Operations are currently paused by the administrator."
+            }
             AgreementError::TokenNotSupported => "The specified payment token is not supported.",
             AgreementError::RateNotFound => "Exchange rate for the given token pair not found.",
             AgreementError::ConversionError => {
@@ -104,7 +106,9 @@ impl AgreementError {
                 "Insufficient funds. Please ensure you have enough balance."
             }
             AgreementError::PaymentAlreadyProcessed => "This payment has already been processed.",
-            AgreementError::PaymentFailed => "Payment transfer failed. Check permissions and balance.",
+            AgreementError::PaymentFailed => {
+                "Payment transfer failed. Check permissions and balance."
+            }
             AgreementError::PaymentInvalidAmount => "The payment amount is invalid or zero.",
 
             AgreementError::TimelockNotFound => "Timelock action not found.",
@@ -115,6 +119,9 @@ impl AgreementError {
                 "This timelock action has already been cancelled."
             }
             AgreementError::TimelockEtaNotReached => "The timelock ETA has not been reached yet.",
+            AgreementError::TimelockDelayTooShort => {
+                "The specified delay is below the minimum required for this action type."
+            }
 
             AgreementError::EscrowNotFound => "Escrow account not found for this agreement.",
             AgreementError::EscrowAlreadyReleased => "Escrow funds have already been released.",
@@ -131,13 +138,11 @@ impl AgreementError {
             AgreementError::InvalidInput => "Invalid input data provided to the function.",
             AgreementError::InvalidAddress => "A provided address is invalid or malformed.",
 
-            AgreementError::RateLimitExceeded => "Rate limit exceeded. Please wait before retrying.",
+            AgreementError::RateLimitExceeded => {
+                "Rate limit exceeded. Please wait before retrying."
+            }
             AgreementError::CooldownNotMet => "Operation cooldown period has not yet met.",
             AgreementError::InternalError => "An unexpected internal error occurred.",
-            AgreementError::TimelockDelayTooShort => {
-                "The specified delay is below the minimum required for this action type."
-            }
-
             AgreementError::MultiSigNotInitialized => {
                 "Multi-sig has not been initialized for this contract."
             }

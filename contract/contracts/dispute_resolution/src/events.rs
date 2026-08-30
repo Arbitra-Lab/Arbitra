@@ -42,8 +42,8 @@ pub struct DisputeResolved {
     pub votes_favor_respondent: u32,
 }
 
-#[contractevent(topics = ["appeal_created"])]
-pub struct AppealCreated {
+#[contractevent(topics = ["appeal_opened"])]
+pub struct AppealOpened {
     #[topic]
     pub appeal_id: String,
     #[topic]
@@ -122,8 +122,8 @@ pub(crate) fn dispute_resolved(
     .publish(env);
 }
 
-pub(crate) fn appeal_created(env: &Env, appeal_id: String, dispute_id: String) {
-    AppealCreated {
+pub(crate) fn appeal_opened(env: &Env, appeal_id: String, dispute_id: String) {
+    AppealOpened {
         appeal_id,
         dispute_id,
     }
@@ -184,6 +184,112 @@ pub(crate) fn dispute_resolved_by_weight(
         dispute_id,
         outcome,
         total_weight,
+    }
+    .publish(env);
+}
+
+// ── Staked Weighted Voting Events (quorum + slashing) ──────────────────────
+
+#[contractevent(topics = ["arbiters_assigned"])]
+pub struct ArbitersAssigned {
+    #[topic]
+    pub dispute_id: String,
+    pub total_weight: i128,
+    pub quorum_weight_required: i128,
+    pub deadline: u64,
+}
+
+#[contractevent(topics = ["staked_vote_cast"])]
+pub struct StakedVoteCast {
+    #[topic]
+    pub dispute_id: String,
+    #[topic]
+    pub arbiter: Address,
+    pub weight: i128,
+}
+
+#[contractevent(topics = ["arbiter_slashed"])]
+pub struct ArbiterSlashed {
+    #[topic]
+    pub dispute_id: String,
+    #[topic]
+    pub arbiter: Address,
+    pub amount: i128,
+}
+
+#[contractevent(topics = ["slash_redistributed"])]
+pub struct SlashRedistributed {
+    #[topic]
+    pub dispute_id: String,
+    #[topic]
+    pub arbiter: Address,
+    pub amount: i128,
+}
+
+#[contractevent(topics = ["dispute_finalized"])]
+pub struct DisputeFinalized {
+    #[topic]
+    pub dispute_id: String,
+    pub outcome: DisputeOutcome,
+    pub voted_weight: i128,
+    pub total_slashed: i128,
+}
+
+pub(crate) fn arbiters_assigned(
+    env: &Env,
+    dispute_id: String,
+    total_weight: i128,
+    quorum_weight_required: i128,
+    deadline: u64,
+) {
+    ArbitersAssigned {
+        dispute_id,
+        total_weight,
+        quorum_weight_required,
+        deadline,
+    }
+    .publish(env);
+}
+
+pub(crate) fn staked_vote_cast(env: &Env, dispute_id: String, arbiter: Address, weight: i128) {
+    StakedVoteCast {
+        dispute_id,
+        arbiter,
+        weight,
+    }
+    .publish(env);
+}
+
+pub(crate) fn arbiter_slashed(env: &Env, dispute_id: String, arbiter: Address, amount: i128) {
+    ArbiterSlashed {
+        dispute_id,
+        arbiter,
+        amount,
+    }
+    .publish(env);
+}
+
+pub(crate) fn slash_redistributed(env: &Env, dispute_id: String, arbiter: Address, amount: i128) {
+    SlashRedistributed {
+        dispute_id,
+        arbiter,
+        amount,
+    }
+    .publish(env);
+}
+
+pub(crate) fn dispute_finalized(
+    env: &Env,
+    dispute_id: String,
+    outcome: DisputeOutcome,
+    voted_weight: i128,
+    total_slashed: i128,
+) {
+    DisputeFinalized {
+        dispute_id,
+        outcome,
+        voted_weight,
+        total_slashed,
     }
     .publish(env);
 }

@@ -55,4 +55,25 @@ pub enum PaymentError {
     PaymentNotLate = 34,
     /// Caller is not the landlord
     NotLandlord = 35,
+    /// Fee schedule not found / not configured
+    FeeScheduleNotFound = 36,
+    /// Fee schedule is invalid: tiers must start at threshold 0, be strictly
+    /// increasing and non-overlapping, and each bps must be <= 10_000
+    InvalidFeeSchedule = 37,
+    /// Discount basis points out of valid range (must be <= 10_000)
+    InvalidDiscount = 38,
+    /// Caller is not authorized to perform this admin action
+    NotAuthorized = 39,
+    /// Fee split config not found
+    FeeSplitConfigNotFound = 40,
+    /// Fee split recipients do not sum to 100% (10000 basis points)
+    InvalidFeeSplitTotal = 41,
+    /// Fee split has no recipients
+    EmptyFeeSplitRecipients = 42,
+    /// Fee split exceeds maximum number of recipients
+    TooManyFeeSplitRecipients = 43,
+    /// Fee split recipient has invalid basis points (> 10000)
+    InvalidRecipientBasisPoints = 44,
+    /// Duplicate recipient in fee split configuration
+    DuplicateFeeSplitRecipient = 45,
 }

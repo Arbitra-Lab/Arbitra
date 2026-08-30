@@ -17,6 +17,7 @@ import {
 import { UserKycStatusService } from '../users/user-kyc-status.service';
 import { KycStatus } from './kyc-status.enum';
 import { NotificationsService } from '../notifications/notifications.service';
+import { calculateKycExpiryDate } from './kyc-config';
 
 @Injectable()
 export class KycService {
@@ -95,6 +96,14 @@ export class KycService {
     });
     if (!kyc) return;
     kyc.status = dto.status;
+
+    // Set expiry date when KYC is approved
+    if (dto.status === KycStatus.APPROVED) {
+      kyc.expiresAt = calculateKycExpiryDate();
+      kyc.isExpired = false;
+      kyc.needsReVerification = false;
+    }
+
     await this.kycRepository.save(kyc);
     await this.userKycStatusService.setStatus(kyc.userId, dto.status);
 

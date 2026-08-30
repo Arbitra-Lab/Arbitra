@@ -36,6 +36,11 @@ pub enum DataKey {
     UpgradeProposal(String),
     UpgradeProposalCount,
     ActiveUpgradeProposals,
+    // Renewal keys
+    RenewalProposal(String),
+    RenewalHistory(String),
+    RenewalCount,
+    ActiveRenewals,
     // Gas optimisation metrics (keyed by operation name string)
     GasMetrics(String),
 }

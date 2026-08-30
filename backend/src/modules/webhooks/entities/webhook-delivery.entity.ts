@@ -7,7 +7,7 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { WebhookEndpoint } from './webhook-endpoint.entity';
-import { WebhookEvent } from '../webhook-event';
+import { WebhookDeliveryStatus, WebhookEvent } from '../webhook-event';
 
 @Entity('webhook_deliveries')
 export class WebhookDelivery {
@@ -29,6 +29,15 @@ export class WebhookDelivery {
   @Column({ type: 'simple-json' })
   payload: Record<string, unknown>;
 
+  @Column({ name: 'payload_hash', type: 'varchar', nullable: true })
+  payloadHash?: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  nonce?: string | null;
+
+  @Column({ type: 'varchar', default: 'pending' })
+  status: WebhookDeliveryStatus;
+
   @Column({ name: 'response_status', type: 'int', nullable: true })
   responseStatus?: number | null;
 
@@ -43,6 +52,9 @@ export class WebhookDelivery {
 
   @Column({ name: 'next_retry_at', type: 'timestamp', nullable: true })
   nextRetryAt?: Date | null;
+
+  @Column({ name: 'dead_lettered_at', type: 'timestamp', nullable: true })
+  deadLetteredAt?: Date | null;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

@@ -28,7 +28,10 @@ export class SorobanClientService {
       'https://soroban-testnet.stellar.org',
     );
     this.server = new SorobanRpc.Server(rpcUrl);
-    this.contractId = this.configService.get<string>('ARBITRA_AGREEMENT_CONTRACT_ID', '');
+    this.contractId = this.configService.get<string>(
+      'ARBITRA_AGREEMENT_CONTRACT_ID',
+      '',
+    );
     this.networkPassphrase = this.getNetworkPassphrase();
 
     if (!this.contractId) {

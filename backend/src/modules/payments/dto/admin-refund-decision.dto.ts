@@ -1,4 +1,4 @@
-import { IsIn, IsString, MinLength } from 'class-validator';
+import { IsIn, IsOptional, IsString, MinLength } from 'class-validator';
 
 export class AdminRefundDecisionDto {
   @IsIn(['approve', 'reject'])
@@ -7,4 +7,9 @@ export class AdminRefundDecisionDto {
   @IsString()
   @MinLength(2)
   notes: string;
+
+  /** Client-supplied key so a retried decision submission doesn't apply twice. */
+  @IsString()
+  @IsOptional()
+  idempotencyKey?: string;
 }

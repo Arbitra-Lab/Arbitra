@@ -1,4 +1,4 @@
-use crate::types::AccountType;
+use crate::types::{AccountType, AttestationType};
 use soroban_sdk::{contractevent, Address, Bytes, Env};
 
 #[contractevent(topics = ["profile", "created"])]
@@ -89,4 +89,58 @@ pub fn profile_deleted(env: &Env, account_id: Address) {
 /// Contract initialized event
 pub fn initialized(env: &Env, admin: Address) {
     Initialized { admin }.publish(env);
+}
+
+#[contractevent(topics = ["attestation", "added"])]
+pub struct AttestationAdded {
+    #[topic]
+    pub account_id: Address,
+    #[topic]
+    pub issuer: Address,
+    pub attestation_type: AttestationType,
+    pub issued_at: u64,
+    pub expires_at: u64,
+}
+
+#[contractevent(topics = ["attestation", "revoked"])]
+pub struct AttestationRevoked {
+    #[topic]
+    pub account_id: Address,
+    #[topic]
+    pub issuer: Address,
+    pub attestation_type: AttestationType,
+}
+
+/// Attestation added event
+pub fn attestation_added(
+    env: &Env,
+    account_id: Address,
+    issuer: Address,
+    attestation_type: AttestationType,
+    issued_at: u64,
+    expires_at: u64,
+) {
+    AttestationAdded {
+        account_id,
+        issuer,
+        attestation_type,
+        issued_at,
+        expires_at,
+    }
+    .publish(env);
+}
+
+/// Attestation revoked event
+pub fn attestation_revoked(
+    env: &Env,
+    account_id: Address,
+    issuer: Address,
+    attestation_type: AttestationType,
+) {
+    AttestationRevoked {
+        account_id,
+        issuer,
+        attestation_type,
+    }
+    .publish(env);
 }

@@ -69,7 +69,7 @@ export class Payment {
     scale: 2,
     nullable: true,
   })
-  netAmount: number;
+  netAmount: number | null;
 
   @Column({ length: 3, default: 'NGN' })
   currency: string;
