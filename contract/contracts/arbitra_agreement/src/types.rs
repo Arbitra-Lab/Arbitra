@@ -75,6 +75,44 @@ pub struct ExtensionHistory {
 
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
+pub enum RenewalStatus {
+    Proposed,
+    Accepted,
+    Rejected,
+    Active,
+    Completed,
+    Cancelled,
+}
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct RenewalProposal {
+    pub id: String,
+    pub agreement_id: String,
+    pub new_end_date: u64,
+    pub new_monthly_rent: i128,
+    pub new_security_deposit: i128,
+    pub status: RenewalStatus,
+    pub created_at: u64,
+    pub proposed_by: Address,
+    pub landlord_accepted: bool,
+    pub tenant_accepted: bool,
+    pub old_term_hash: String,
+    pub new_term_hash: String,
+    pub activation_date: Option<u64>,
+    pub rejection_reason: Option<String>,
+}
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct RenewalHistory {
+    pub agreement_id: String,
+    pub renewals: Vec<RenewalProposal>,
+    pub total_renewals: u32,
+}
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ContractUpgradeProposal {
     pub id: String,
     pub proposer: Address,
