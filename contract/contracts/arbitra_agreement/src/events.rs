@@ -595,6 +595,103 @@ pub(crate) fn extension_cancelled(env: &Env, extension_id: String) {
     ExtensionCancelled { extension_id }.publish(env);
 }
 
+// ─── Agreement Renewal Events ────────────────────────────────────────────────
+
+#[contractevent(topics = ["renewal_proposed"])]
+pub struct RenewalProposed {
+    #[topic]
+    pub renewal_id: String,
+    pub agreement_id: String,
+    pub new_end_date: u64,
+    pub old_term_hash: String,
+    pub new_term_hash: String,
+}
+
+#[contractevent(topics = ["renewal_accepted"])]
+pub struct RenewalAccepted {
+    #[topic]
+    pub renewal_id: String,
+    #[topic]
+    pub accepted_by: Address,
+}
+
+#[contractevent(topics = ["renewal_activated"])]
+pub struct RenewalActivated {
+    #[topic]
+    pub renewal_id: String,
+    pub agreement_id: String,
+    pub new_end_date: u64,
+    pub new_monthly_rent: i128,
+}
+
+#[contractevent(topics = ["renewal_rejected"])]
+pub struct RenewalRejected {
+    #[topic]
+    pub renewal_id: String,
+    #[topic]
+    pub rejected_by: Address,
+}
+
+#[contractevent(topics = ["renewal_cancelled"])]
+pub struct RenewalCancelled {
+    #[topic]
+    pub renewal_id: String,
+}
+
+pub(crate) fn renewal_proposed(
+    env: &Env,
+    renewal_id: String,
+    agreement_id: String,
+    new_end_date: u64,
+    old_term_hash: String,
+    new_term_hash: String,
+) {
+    RenewalProposed {
+        renewal_id,
+        agreement_id,
+        new_end_date,
+        old_term_hash,
+        new_term_hash,
+    }
+    .publish(env);
+}
+
+pub(crate) fn renewal_accepted(env: &Env, renewal_id: String, accepted_by: Address) {
+    RenewalAccepted {
+        renewal_id,
+        accepted_by,
+    }
+    .publish(env);
+}
+
+pub(crate) fn renewal_activated(
+    env: &Env,
+    renewal_id: String,
+    agreement_id: String,
+    new_end_date: u64,
+    new_monthly_rent: i128,
+) {
+    RenewalActivated {
+        renewal_id,
+        agreement_id,
+        new_end_date,
+        new_monthly_rent,
+    }
+    .publish(env);
+}
+
+pub(crate) fn renewal_rejected(env: &Env, renewal_id: String, rejected_by: Address) {
+    RenewalRejected {
+        renewal_id,
+        rejected_by,
+    }
+    .publish(env);
+}
+
+pub(crate) fn renewal_cancelled(env: &Env, renewal_id: String) {
+    RenewalCancelled { renewal_id }.publish(env);
+}
+
 // ─── Contract Upgrade Events ────────────────────────────────────────────────
 
 #[contractevent(topics = ["upgrade_proposed"])]
