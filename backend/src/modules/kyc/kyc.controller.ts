@@ -14,6 +14,7 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { KycService } from './kyc.service';
+import { KycExpiryService } from './kyc-expiry.service';
 import { SubmitKycDto, KycWebhookDto, KycStatusResponseDto } from './kyc.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AuditLog } from '../audit/decorators/audit-log.decorator';
@@ -27,7 +28,10 @@ import { WebhookSecret } from '../webhooks/decorators/webhook-secret.decorator';
 @Controller('kyc')
 @UseInterceptors(AuditLogInterceptor)
 export class KycController {
-  constructor(private readonly kycService: KycService) {}
+  constructor(
+    private readonly kycService: KycService,
+    private readonly kycExpiryService: KycExpiryService,
+  ) {}
 
   @UseGuards(JwtAuthGuard)
   @Post('submit')
@@ -69,6 +73,43 @@ export class KycController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getKycStatus(@Req() req: { user: { id: string } }) {
     return this.kycService.getKycStatus(req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('expiry-info')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: 'Get KYC expiry information',
+    description:
+      'Returns expiry date and status for the authenticated user\'s KYC.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'KYC expiry information',
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async getKycExpiryInfo(@Req() req: { user: { id: string } }) {
+    return this.kycExpiryService.getKycExpiryInfo(req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('re-verify')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: 'Initiate KYC re-verification',
+    description:
+      'Triggers re-verification process for the authenticated user\'s KYC.',
+  })
+  @ApiResponse({ status: 200, description: 'Re-verification initiated' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @AuditLog({
+    action: AuditAction.UPDATE,
+    entityType: 'Kyc',
+    level: AuditLevel.SECURITY,
+    includeNewValues: true,
+  })
+  async initiateReVerification(@Req() req: { user: { id: string } }) {
+    return this.kycExpiryService.initiateReVerification(req.user.id);
   }
 
   @Post('webhook')

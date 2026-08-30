@@ -30,6 +30,19 @@ export class Kyc {
   @Column({ type: 'text', nullable: true })
   providerReference: string | null;
 
+  @Column({ type: 'timestamp', nullable: true })
+  expiresAt: Date | null;
+
+  @Column({ type: 'boolean', default: false })
+  isExpired: boolean;
+
+  @Column({ type: 'timestamp', nullable: true })
+  lastReminderSentAt: Date | null;
+
+  @Index()
+  @Column({ type: 'boolean', default: false })
+  needsReVerification: boolean;
+
   @CreateDateColumn()
   createdAt: Date;
 
