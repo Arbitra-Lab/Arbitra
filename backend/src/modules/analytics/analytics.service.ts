@@ -9,6 +9,11 @@ import {
   PropertyInquiry,
   PropertyInquiryStatus,
 } from '../inquiries/entities/property-inquiry.entity';
+import {
+  AnalyticsRollupService,
+  DisputeCohortReport,
+} from './analytics-rollup.service';
+import { DisputeCohortQueryDto } from './dto/dispute-cohort-query.dto';
 
 export interface CityAggregate {
   city: string;
@@ -26,6 +31,7 @@ export class AnalyticsService {
     private readonly propertyRepository: Repository<Property>,
     @InjectRepository(PropertyInquiry)
     private readonly inquiryRepository: Repository<PropertyInquiry>,
+    private readonly rollupService: AnalyticsRollupService,
   ) {}
 
   async getLandlordDashboard(ownerId: string, days = 30) {
@@ -157,6 +163,22 @@ export class AnalyticsService {
         cityTrends,
       },
     };
+  }
+
+  /**
+   * Returns pre-aggregated dispute-outcome cohort metrics.
+   *
+   * Delegates to AnalyticsRollupService which performs the heavy aggregation
+   * so this method stays thin and the rollup can be called independently
+   * by a scheduler (nightly job) or on demand (backfill).
+   */
+  async getDisputeCohortMetrics(
+    query: DisputeCohortQueryDto = {},
+  ): Promise<DisputeCohortReport> {
+    if (query.backfill) {
+      return this.rollupService.backfill();
+    }
+    return this.rollupService.computeDisputeCohortReport(query);
   }
 
   private normalizeDays(days: number): number {

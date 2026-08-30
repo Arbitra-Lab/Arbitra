@@ -11,6 +11,11 @@ describe('AnalyticsService', () => {
     find: jest.fn(),
   };
 
+  const rollupService = {
+    computeDisputeCohortReport: jest.fn(),
+    backfill: jest.fn(),
+  };
+
   let service: AnalyticsService;
 
   beforeEach(() => {
@@ -18,6 +23,7 @@ describe('AnalyticsService', () => {
     service = new AnalyticsService(
       propertyRepository as any,
       inquiryRepository as any,
+      rollupService as any,
     );
   });
 
