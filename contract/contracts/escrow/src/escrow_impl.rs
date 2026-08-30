@@ -40,6 +40,7 @@ impl EscrowContract {
         agent_referral: Option<Address>,
         amount: i128,
         token: Address,
+        auto_release_days: Option<u64>,
     ) -> Result<BytesN<32>, EscrowError> {
         // CHECKS: Validate inputs
         if amount <= 0 {
@@ -62,6 +63,13 @@ impl EscrowContract {
 
         let escrow_id: BytesN<32> = env.crypto().sha256(&data).into();
 
+        // Calculate auto_release_after timestamp if auto_release_days is provided
+        let now = env.ledger().timestamp();
+        let auto_release_after = auto_release_days.map(|days| {
+            let timeout_seconds = days.saturating_mul(86_400);
+            now.saturating_add(timeout_seconds)
+        });
+
         // EFFECTS: Create and save escrow
         let escrow = Escrow {
             id: escrow_id.clone(),
@@ -73,13 +81,14 @@ impl EscrowContract {
             amount,
             token,
             status: EscrowStatus::Pending,
-            created_at: env.ledger().timestamp(),
+            created_at: now,
             timeout_days: EscrowStorage::get_timeout_config(&env).escrow_timeout_days,
             disputed_at: None,
             dispute_reason: None,
             is_frozen: false,
             frozen_at: None,
             freeze_reason: None,
+            auto_release_after,
         };
 
         EscrowStorage::save(&env, &escrow);
@@ -289,6 +298,89 @@ impl EscrowContract {
     /// Resolve disputed escrow on timeout by auto-refunding the depositor.
     pub fn resolve_dispute_on_timeout(env: Env, escrow_id: BytesN<32>) -> Result<(), EscrowError> {
         DisputeHandler::resolve_dispute_on_timeout(env, escrow_id)
+    }
+
+    /// Auto-release funds to beneficiary after the auto-release deadline.
+    /// Implements deadman switch: payee can claim funds after deadline if no dispute is active.
+    ///
+    /// CHECKS:
+    /// - Escrow must exist
+    /// - Escrow must be in Funded state
+    /// - Caller must be the beneficiary (payee)
+    /// - Auto-release must be enabled (auto_release_after is Some)
+    /// - Current time must be >= auto_release_after deadline
+    /// - No active dispute must exist
+    /// - Escrow must not be frozen
+    ///
+    /// EFFECTS:
+    /// - Update escrow status to Released
+    /// - Clear approvals
+    /// - Emit AutoReleased event
+    ///
+    /// INTERACTIONS:
+    /// - Token transfer from escrow to beneficiary
+    pub fn claim_after_timeout(
+        env: Env,
+        escrow_id: BytesN<32>,
+        caller: Address,
+    ) -> Result<(), EscrowError> {
+        // CHECKS: Get and validate escrow
+        let mut escrow = EscrowStorage::get(&env, &escrow_id).ok_or(EscrowError::EscrowNotFound)?;
+
+        // Verify caller is the beneficiary (payee)
+        AccessControl::is_beneficiary(&escrow, &caller)?;
+
+        // Verify escrow is in Funded state
+        if escrow.status != EscrowStatus::Funded {
+            return Err(EscrowError::InvalidState);
+        }
+
+        // Verify auto-release is enabled
+        let auto_release_after = escrow.auto_release_after.ok_or(EscrowError::InvalidState)?;
+
+        // Check if deadline has passed
+        let now = env.ledger().timestamp();
+        if now < auto_release_after {
+            return Err(EscrowError::TimeoutNotReached);
+        }
+
+        // Verify no active dispute exists
+        if escrow.status == EscrowStatus::Disputed || escrow.disputed_at.is_some() {
+            return Err(EscrowError::DisputeActive);
+        }
+
+        // Check if escrow is frozen
+        AccessControl::require_not_frozen(&escrow)?;
+
+        // Require authorization from beneficiary
+        caller.require_auth();
+
+        // EFFECTS: Update escrow status to Released
+        escrow.status = EscrowStatus::Released;
+        EscrowStorage::save(&env, &escrow);
+
+        // Clear approvals
+        EscrowStorage::clear_approvals(&env, &escrow_id);
+        let targets = [escrow.beneficiary.clone(), escrow.depositor.clone()];
+        let signers = [
+            escrow.depositor.clone(),
+            escrow.beneficiary.clone(),
+            escrow.arbiter.clone(),
+        ];
+        EscrowStorage::clear_approval_counts(&env, &escrow_id, &targets, &signers);
+
+        // INTERACTIONS: Token transfer from escrow contract to beneficiary
+        let token_client = token::Client::new(&env, &escrow.token);
+        token_client.transfer(
+            &env.current_contract_address(),
+            &escrow.beneficiary,
+            &escrow.amount,
+        );
+
+        // Emit AutoReleased event
+        events::auto_released(&env, escrow_id, escrow.beneficiary, escrow.amount);
+
+        Ok(())
     }
 
     /// Set contract-level timeout config.

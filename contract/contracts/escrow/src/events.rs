@@ -123,6 +123,14 @@ pub struct SafetyDepositWithdrawn {
     pub amount: i128,
 }
 
+#[contractevent(topics = ["auto_released"])]
+pub struct AutoReleased {
+    #[topic]
+    pub escrow_id: BytesN<32>,
+    pub beneficiary: Address,
+    pub amount: i128,
+}
+
 pub(crate) fn rent_released(
     env: &Env,
     escrow_id: BytesN<32>,
@@ -141,4 +149,13 @@ pub(crate) fn rent_released(
 
 pub(crate) fn safety_deposit_withdrawn(env: &Env, escrow_id: BytesN<32>, amount: i128) {
     SafetyDepositWithdrawn { escrow_id, amount }.publish(env);
+}
+
+pub(crate) fn auto_released(env: &Env, escrow_id: BytesN<32>, beneficiary: Address, amount: i128) {
+    AutoReleased {
+        escrow_id,
+        beneficiary,
+        amount,
+    }
+    .publish(env);
 }

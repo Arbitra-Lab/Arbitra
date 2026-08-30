@@ -64,6 +64,7 @@ fn funded_escrow(
         agent_referral,
         &amount,
         token,
+        &None,
     );
 
     let token_admin_client = TokenAdminClient::new(env, token);
@@ -337,6 +338,7 @@ fn test_depositor_can_fund_escrow() {
         &Some(agent_referral.clone()),
         &amount,
         &token,
+        &None,
     );
 
     let token_admin_client = TokenAdminClient::new(&env, &token);
@@ -365,6 +367,7 @@ fn test_beneficiary_cannot_fund_escrow() {
         &Some(agent_referral.clone()),
         &amount,
         &token,
+        &None,
     );
 
     let token_admin_client = TokenAdminClient::new(&env, &token);
