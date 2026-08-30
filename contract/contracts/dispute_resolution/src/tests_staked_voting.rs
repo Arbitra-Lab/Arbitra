@@ -4,7 +4,7 @@
 use super::*;
 use soroban_sdk::{
     contract, contractimpl,
-    testutils::{Address as _, Ledger},
+    testutils::{Address as _, Events, Ledger},
     Address, Env, String, Vec,
 };
 
@@ -311,6 +311,7 @@ fn test_slashing_and_redistribution_conserved() {
         &QuorumConfig {
             quorum_bps: 6000,
             slash_bps: 2000,
+            min_voters: 1,
         },
     );
 
@@ -419,6 +420,7 @@ fn test_invalid_quorum_config_rejected() {
         &QuorumConfig {
             quorum_bps: 0,
             slash_bps: 2000,
+            min_voters: 1,
         },
     );
     assert_eq!(r, Err(Ok(DisputeError::InvalidQuorumConfig)));
@@ -429,6 +431,18 @@ fn test_invalid_quorum_config_rejected() {
         &QuorumConfig {
             quorum_bps: 6000,
             slash_bps: 10001,
+            min_voters: 1,
+        },
+    );
+    assert_eq!(r, Err(Ok(DisputeError::InvalidQuorumConfig)));
+
+    // min_voters == 0 is invalid
+    let r = client.try_set_quorum_config(
+        &admin,
+        &QuorumConfig {
+            quorum_bps: 6000,
+            slash_bps: 2000,
+            min_voters: 0,
         },
     );
     assert_eq!(r, Err(Ok(DisputeError::InvalidQuorumConfig)));
@@ -520,4 +534,168 @@ fn test_full_flow_raise_assign_vote_finalize() {
         .find(|p| p.arbiter == a3)
         .unwrap();
     assert!(!a3_row.voted);
+}
+
+// ── Min-voter-count quorum ───────────────────────────────────────────────────
+
+#[test]
+fn test_min_voter_count_blocks_finalize_despite_weight_quorum() {
+    let env = Env::default();
+    env.ledger().with_mut(|l| l.timestamp = 100);
+    let client = create_contract(&env);
+    let admin = Address::generate(&env);
+    let dispute_id = String::from_str(&env, "staked-min-voters-1");
+
+    env.mock_all_auths();
+    client.initialize(&admin, &1, &Address::generate(&env));
+    // Require at least 3 distinct voters, independent of weight.
+    client.set_quorum_config(
+        &admin,
+        &QuorumConfig {
+            quorum_bps: 6000,
+            slash_bps: 2000,
+            min_voters: 3,
+        },
+    );
+
+    let a1 = Address::generate(&env);
+    let a2 = Address::generate(&env);
+    let a3 = Address::generate(&env);
+    let a4 = Address::generate(&env);
+    client.add_arbiter(&admin, &a1);
+    client.add_arbiter(&admin, &a2);
+    client.add_arbiter(&admin, &a3);
+    client.add_arbiter(&admin, &a4);
+    // a1 alone dwarfs everyone else's weight.
+    client.set_arbiter_stake(&admin, &a1, &10_000, &100); // weight 10000
+    client.set_arbiter_stake(&admin, &a2, &100, &100); // weight 100
+    client.set_arbiter_stake(&admin, &a3, &100, &100); // weight 100
+    client.set_arbiter_stake(&admin, &a4, &100, &100); // weight 100
+
+    inject_open_dispute(&env, &client, &dispute_id);
+    let mut arbiters = Vec::new(&env);
+    arbiters.push_back(a1.clone());
+    arbiters.push_back(a2.clone());
+    arbiters.push_back(a3.clone());
+    arbiters.push_back(a4.clone());
+    // total weight 10300, 60% quorum = 6180 — a1 alone clears this.
+    client.assign_dispute_arbiters(&admin, &dispute_id, &arbiters, &1000);
+
+    client.cast_staked_vote(&a1, &dispute_id, &DisputeOutcome::FavorClaimant);
+
+    let tally = client.get_dispute_tally(&dispute_id);
+    assert!(tally.voted_weight >= tally.quorum_weight_required);
+    assert_eq!(tally.voter_count, 1);
+    assert!(!tally.quorum_reached); // voter-count gate not met
+
+    env.ledger().with_mut(|l| l.timestamp = 100 + 2000);
+    let result = client.try_finalize_dispute(&dispute_id);
+    assert_eq!(result, Err(Ok(DisputeError::QuorumNotReached)));
+
+    // Two more (low-weight) votes satisfy the voter-count gate.
+    env.ledger().with_mut(|l| l.timestamp = 100);
+    client.cast_staked_vote(&a2, &dispute_id, &DisputeOutcome::FavorClaimant);
+    client.cast_staked_vote(&a3, &dispute_id, &DisputeOutcome::FavorClaimant);
+
+    let tally = client.get_dispute_tally(&dispute_id);
+    assert_eq!(tally.voter_count, 3);
+    assert!(tally.quorum_reached);
+
+    env.ledger().with_mut(|l| l.timestamp = 100 + 2000);
+    let outcome = client.finalize_dispute(&dispute_id);
+    assert_eq!(outcome, DisputeOutcome::FavorClaimant);
+}
+
+#[test]
+fn test_assignment_rejects_unreachable_min_voters() {
+    let env = Env::default();
+    let client = create_contract(&env);
+    let admin = Address::generate(&env);
+    let dispute_id = String::from_str(&env, "staked-min-voters-unreachable");
+
+    env.mock_all_auths();
+    client.initialize(&admin, &1, &Address::generate(&env));
+    client.set_quorum_config(
+        &admin,
+        &QuorumConfig {
+            quorum_bps: 6000,
+            slash_bps: 2000,
+            min_voters: 5,
+        },
+    );
+
+    let a1 = Address::generate(&env);
+    let a2 = Address::generate(&env);
+    client.add_arbiter(&admin, &a1);
+    client.add_arbiter(&admin, &a2);
+    client.set_arbiter_stake(&admin, &a1, &1000, &100);
+    client.set_arbiter_stake(&admin, &a2, &1000, &100);
+
+    inject_open_dispute(&env, &client, &dispute_id);
+    let mut arbiters = Vec::new(&env);
+    arbiters.push_back(a1.clone());
+    arbiters.push_back(a2.clone());
+
+    // Only 2 arbiters assigned but 5 voters are required — can never reach quorum.
+    let result = client.try_assign_dispute_arbiters(&admin, &dispute_id, &arbiters, &1000);
+    assert_eq!(result, Err(Ok(DisputeError::QuorumUnreachable)));
+}
+
+// ── `quorum_reached` event ───────────────────────────────────────────────────
+
+#[test]
+fn test_quorum_reached_event_emitted_once_on_crossing_vote() {
+    let env = Env::default();
+    env.ledger().with_mut(|l| l.timestamp = 100);
+    let client = create_contract(&env);
+    let admin = Address::generate(&env);
+    let dispute_id = String::from_str(&env, "staked-quorum-event-1");
+
+    env.mock_all_auths();
+    client.initialize(&admin, &1, &Address::generate(&env));
+    let (a1, a2, a3) = setup_three_equal_arbiters(&env, &client, &admin, &dispute_id);
+    // total weight 3000, 60% quorum = 1800; default min_voters = 1.
+
+    // First vote (weight 1000) does not cross the 1800 threshold — no event.
+    // (`env.events().all()` reflects only the most recent top-level call.)
+    client.cast_staked_vote(&a1, &dispute_id, &DisputeOutcome::FavorClaimant);
+    assert_eq!(env.events().all().len(), 1); // only staked_vote_cast
+    assert!(!client.get_dispute_tally(&dispute_id).quorum_reached);
+
+    // Second vote (weight 2000 total) crosses quorum — emits quorum_reached
+    // in addition to staked_vote_cast.
+    client.cast_staked_vote(&a2, &dispute_id, &DisputeOutcome::FavorClaimant);
+    assert_eq!(env.events().all().len(), 2);
+    assert!(client.get_dispute_tally(&dispute_id).quorum_reached);
+
+    // Third vote: quorum was already crossed, so no additional quorum_reached.
+    client.cast_staked_vote(&a3, &dispute_id, &DisputeOutcome::FavorRespondent);
+    assert_eq!(env.events().all().len(), 1); // only staked_vote_cast
+
+    // The at-quorum ruling finalizes cleanly once the deadline passes.
+    env.ledger().with_mut(|l| l.timestamp = 100 + 2000);
+    let outcome = client.finalize_dispute(&dispute_id);
+    assert_eq!(outcome, DisputeOutcome::FavorClaimant);
+}
+
+#[test]
+fn test_below_quorum_finalization_fails_and_no_quorum_event() {
+    let env = Env::default();
+    env.ledger().with_mut(|l| l.timestamp = 100);
+    let client = create_contract(&env);
+    let admin = Address::generate(&env);
+    let dispute_id = String::from_str(&env, "staked-quorum-event-below");
+
+    env.mock_all_auths();
+    client.initialize(&admin, &1, &Address::generate(&env));
+    let (a1, _a2, _a3) = setup_three_equal_arbiters(&env, &client, &admin, &dispute_id);
+
+    // Only one of three votes: 1000 < 1800 required — quorum never crosses.
+    client.cast_staked_vote(&a1, &dispute_id, &DisputeOutcome::FavorClaimant);
+    assert_eq!(env.events().all().len(), 1); // only staked_vote_cast, no quorum_reached
+
+    env.ledger().with_mut(|l| l.timestamp = 100 + 2000);
+    let result = client.try_finalize_dispute(&dispute_id);
+    assert_eq!(result, Err(Ok(DisputeError::QuorumNotReached)));
+    assert!(!client.get_dispute_tally(&dispute_id).quorum_reached);
 }

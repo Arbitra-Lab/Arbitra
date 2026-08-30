@@ -42,4 +42,5 @@ pub enum DisputeError {
     AlreadyAssigned = 35,
     AlreadyFinalized = 36,
     NoArbitersAssigned = 37,
+    QuorumUnreachable = 38,
 }

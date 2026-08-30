@@ -226,6 +226,16 @@ pub struct SlashRedistributed {
     pub amount: i128,
 }
 
+#[contractevent(topics = ["quorum_reached"])]
+pub struct QuorumReached {
+    #[topic]
+    pub dispute_id: String,
+    pub voted_weight: i128,
+    pub voter_count: u32,
+    pub quorum_weight_required: i128,
+    pub min_voters_required: u32,
+}
+
 #[contractevent(topics = ["dispute_finalized"])]
 pub struct DisputeFinalized {
     #[topic]
@@ -274,6 +284,24 @@ pub(crate) fn slash_redistributed(env: &Env, dispute_id: String, arbiter: Addres
         dispute_id,
         arbiter,
         amount,
+    }
+    .publish(env);
+}
+
+pub(crate) fn quorum_reached(
+    env: &Env,
+    dispute_id: String,
+    voted_weight: i128,
+    voter_count: u32,
+    quorum_weight_required: i128,
+    min_voters_required: u32,
+) {
+    QuorumReached {
+        dispute_id,
+        voted_weight,
+        voter_count,
+        quorum_weight_required,
+        min_voters_required,
     }
     .publish(env);
 }

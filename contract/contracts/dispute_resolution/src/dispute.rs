@@ -1031,6 +1031,9 @@ const BPS_DENOMINATOR: i128 = 10_000;
 const DEFAULT_QUORUM_BPS: u32 = 6_000;
 /// Default slash: 20% of a non-voter's snapshotted stake is slashed.
 const DEFAULT_SLASH_BPS: u32 = 2_000;
+/// Default minimum number of distinct assigned arbiters that must vote before
+/// a dispute can finalize, regardless of how much weight they carry.
+const DEFAULT_MIN_VOTERS: u32 = 1;
 /// Default voting window if none is supplied at assignment (3 days).
 const DEFAULT_VOTING_WINDOW_SECONDS: u64 = 3 * 24 * 60 * 60;
 /// Default reputation multiplier (×100) for an arbiter with no stake profile set.
@@ -1046,6 +1049,7 @@ pub fn get_quorum_config(env: &Env) -> QuorumConfig {
         .unwrap_or(QuorumConfig {
             quorum_bps: DEFAULT_QUORUM_BPS,
             slash_bps: DEFAULT_SLASH_BPS,
+            min_voters: DEFAULT_MIN_VOTERS,
         })
 }
 
@@ -1053,7 +1057,9 @@ pub fn get_quorum_config(env: &Env) -> QuorumConfig {
 ///
 /// `quorum_bps` must be in `1..=10000` (a zero quorum would allow finalizing with
 /// no participation, leaving slashed stake with no one to redistribute to).
-/// `slash_bps` must be in `0..=10000`.
+/// `slash_bps` must be in `0..=10000`. `min_voters` must be at least 1 (mirrors
+/// `quorum_bps`: a zero voter-count requirement would allow finalizing with no
+/// participation).
 pub fn set_quorum_config(
     env: &Env,
     admin: Address,
@@ -1073,6 +1079,7 @@ pub fn set_quorum_config(
     if config.quorum_bps == 0
         || config.quorum_bps > BPS_DENOMINATOR as u32
         || config.slash_bps > BPS_DENOMINATOR as u32
+        || config.min_voters == 0
     {
         return Err(DisputeError::InvalidQuorumConfig);
     }
@@ -1196,6 +1203,12 @@ pub fn assign_dispute_arbiters(
     }
 
     let config = get_quorum_config(env);
+    if config.min_voters > arbiters.len() {
+        // Quorum could never be reached with fewer assigned arbiters than the
+        // required voter count.
+        return Err(DisputeError::QuorumUnreachable);
+    }
+
     let now = env.ledger().timestamp();
     let window = if voting_window_seconds == 0 {
         DEFAULT_VOTING_WINDOW_SECONDS
@@ -1248,10 +1261,12 @@ pub fn assign_dispute_arbiters(
         quorum_bps: config.quorum_bps,
         slash_bps: config.slash_bps,
         quorum_weight_required,
+        min_voters_required: config.min_voters,
         deadline,
         assigned_at: now,
         finalized: false,
         outcome: OptionalOutcome::None,
+        quorum_crossed: false,
     };
     let key = DataKey::DisputeAssignment(dispute_id.clone());
     env.storage().persistent().set(&key, &assignment);
@@ -1268,8 +1283,35 @@ pub fn assign_dispute_arbiters(
     Ok(())
 }
 
+/// Sum the voted weight and count of distinct voters among a dispute's
+/// assigned arbiters, as of the current storage state.
+fn compute_voted_progress(
+    env: &Env,
+    dispute_id: &String,
+    arbiters: &soroban_sdk::Vec<Address>,
+) -> (i128, u32) {
+    let mut voted_weight: i128 = 0;
+    let mut voter_count: u32 = 0;
+    for arbiter in arbiters.iter() {
+        if let Some(assigned) = env
+            .storage()
+            .persistent()
+            .get::<_, AssignedArbiter>(&DataKey::AssignedArbiter(dispute_id.clone(), arbiter))
+        {
+            if assigned.voted {
+                voted_weight += assigned.weight;
+                voter_count += 1;
+            }
+        }
+    }
+    (voted_weight, voter_count)
+}
+
 /// Cast a staked-weighted vote on an assigned dispute (assigned arbiters only,
 /// before the voting deadline). Uses the arbiter's snapshotted weight.
+///
+/// If this vote is the one that pushes the dispute's participation over both
+/// the weight and voter-count quorum thresholds, emits `quorum_reached` once.
 pub fn cast_staked_vote(
     env: &Env,
     arbiter: Address,
@@ -1284,10 +1326,11 @@ pub fn cast_staked_vote(
 
     rate_limit::check_rate_limit(env, &arbiter, "cast_staked_vote")?;
 
+    let assignment_key = DataKey::DisputeAssignment(dispute_id.clone());
     let assignment: DisputeAssignment = env
         .storage()
         .persistent()
-        .get(&DataKey::DisputeAssignment(dispute_id.clone()))
+        .get(&assignment_key)
         .ok_or(DisputeError::DisputeNotFound)?;
 
     if assignment.finalized {
@@ -1317,6 +1360,31 @@ pub fn cast_staked_vote(
     env.storage()
         .persistent()
         .extend_ttl(&aa_key, 500000, 500000);
+
+    if !assignment.quorum_crossed {
+        let (voted_weight, voter_count) =
+            compute_voted_progress(env, &dispute_id, &assignment.arbiters);
+        if voted_weight >= assignment.quorum_weight_required
+            && voter_count >= assignment.min_voters_required
+        {
+            let mut updated_assignment = assignment;
+            updated_assignment.quorum_crossed = true;
+            env.storage()
+                .persistent()
+                .set(&assignment_key, &updated_assignment);
+            env.storage()
+                .persistent()
+                .extend_ttl(&assignment_key, 500000, 500000);
+            events::quorum_reached(
+                env,
+                dispute_id.clone(),
+                voted_weight,
+                voter_count,
+                updated_assignment.quorum_weight_required,
+                updated_assignment.min_voters_required,
+            );
+        }
+    }
 
     events::staked_vote_cast(env, dispute_id, arbiter, weight);
 
@@ -1374,6 +1442,7 @@ pub fn finalize_dispute(env: &Env, dispute_id: String) -> Result<DisputeOutcome,
 
     // ── Tally voted weight, per-outcome weight, and earliest vote ──────────
     let mut voted_weight: i128 = 0;
+    let mut voter_count: u32 = 0;
     let mut w_claimant: i128 = 0;
     let mut w_respondent: i128 = 0;
     let mut earliest_vote: Option<DisputeOutcome> = None;
@@ -1390,6 +1459,7 @@ pub fn finalize_dispute(env: &Env, dispute_id: String) -> Result<DisputeOutcome,
             .ok_or(DisputeError::ArbiterNotAssigned)?;
         if assigned.voted {
             voted_weight += assigned.weight;
+            voter_count += 1;
             match assigned.vote {
                 OptionalOutcome::FavorClaimant => w_claimant += assigned.weight,
                 OptionalOutcome::FavorRespondent => w_respondent += assigned.weight,
@@ -1402,7 +1472,8 @@ pub fn finalize_dispute(env: &Env, dispute_id: String) -> Result<DisputeOutcome,
         }
     }
 
-    if voted_weight < assignment.quorum_weight_required {
+    if voted_weight < assignment.quorum_weight_required || voter_count < assignment.min_voters_required
+    {
         return Err(DisputeError::QuorumNotReached);
     }
 
@@ -1515,6 +1586,7 @@ pub fn get_dispute_tally(env: &Env, dispute_id: String) -> Result<DisputeTally, 
         .ok_or(DisputeError::DisputeNotFound)?;
 
     let mut voted_weight: i128 = 0;
+    let mut voter_count: u32 = 0;
     let mut w_claimant: i128 = 0;
     let mut w_respondent: i128 = 0;
     let mut participants = soroban_sdk::Vec::new(env);
@@ -1530,6 +1602,7 @@ pub fn get_dispute_tally(env: &Env, dispute_id: String) -> Result<DisputeTally, 
             .ok_or(DisputeError::ArbiterNotAssigned)?;
         if assigned.voted {
             voted_weight += assigned.weight;
+            voter_count += 1;
             match assigned.vote {
                 OptionalOutcome::FavorClaimant => w_claimant += assigned.weight,
                 OptionalOutcome::FavorRespondent => w_respondent += assigned.weight,
@@ -1551,7 +1624,10 @@ pub fn get_dispute_tally(env: &Env, dispute_id: String) -> Result<DisputeTally, 
         total_assigned_weight: assignment.total_weight,
         voted_weight,
         quorum_weight_required: assignment.quorum_weight_required,
-        quorum_reached: voted_weight >= assignment.quorum_weight_required,
+        voter_count,
+        min_voters_required: assignment.min_voters_required,
+        quorum_reached: voted_weight >= assignment.quorum_weight_required
+            && voter_count >= assignment.min_voters_required,
         finalized: assignment.finalized,
         outcome: assignment.outcome,
         participants,
