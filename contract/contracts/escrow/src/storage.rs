@@ -165,6 +165,26 @@ impl EscrowStorage {
         }
     }
 
+    /// Get the cumulative amount released across all tranches for an escrow.
+    /// Returns 0 if the escrow does not exist.
+    pub fn get_total_released(env: &Env, escrow_id: &BytesN<32>) -> i128 {
+        Self::get(env, escrow_id)
+            .map(|escrow| escrow.total_released)
+            .unwrap_or(0)
+    }
+
+    /// Apply a partial release tranche to an escrow's running accounting:
+    /// move `amount` from the remaining balance into the cumulative released
+    /// total and persist the escrow. Callers MUST have already validated that
+    /// `amount` is positive and does not exceed `escrow.amount`, so the
+    /// remaining balance can never go negative and the
+    /// `amount + total_released` invariant is preserved.
+    pub fn apply_partial_release(env: &Env, escrow: &mut Escrow, amount: i128) {
+        escrow.amount -= amount;
+        escrow.total_released += amount;
+        Self::save(env, escrow);
+    }
+
     /// Add a new release record to the history.
     /// Appends to existing release history list.
     pub fn add_release_record(env: &Env, escrow_id: &BytesN<32>, record: ReleaseRecord) {

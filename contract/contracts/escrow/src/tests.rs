@@ -2558,3 +2558,308 @@ fn test_claim_after_timeout_at_exact_deadline() {
     let token_client = TokenClient::new(&env, &token_address);
     assert_eq!(token_client.balance(&beneficiary), amount);
 }
+
+// ─── Milestone-based partial release (release_partial) ─────────────────────
+
+#[test]
+fn test_release_partial_sequential_sums_to_total() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let (
+        client,
+        depositor,
+        beneficiary,
+        arbiter,
+        platform_governance,
+        agent_referral,
+        token_address,
+    ) = setup_test(&env);
+    let amount = 1000i128;
+
+    let escrow_id = client.create(
+        &depositor,
+        &beneficiary,
+        &arbiter,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
+        &amount,
+        &token_address,
+        &None,
+    );
+    let token_admin = TokenAdminClient::new(&env, &token_address);
+    token_admin.mint(&depositor, &amount);
+    client.fund_escrow(&escrow_id, &depositor);
+
+    // Release three milestone tranches that sum to the escrow total. The payer
+    // (depositor) authorizes each tranche as work is accepted.
+    client.release_partial(&escrow_id, &depositor, &400i128);
+    let escrow = client.get_escrow(&escrow_id);
+    assert_eq!(escrow.amount, 600i128); // remaining
+    assert_eq!(escrow.total_released, 400i128); // running released
+    assert_eq!(escrow.status, EscrowStatus::Funded);
+    assert_eq!(client.get_total_released(&escrow_id), 400i128);
+
+    client.release_partial(&escrow_id, &depositor, &350i128);
+    let escrow = client.get_escrow(&escrow_id);
+    assert_eq!(escrow.amount, 250i128);
+    assert_eq!(escrow.total_released, 750i128);
+    assert_eq!(escrow.status, EscrowStatus::Funded);
+
+    // Final tranche drains the escrow -> status transitions to Released.
+    client.release_partial(&escrow_id, &depositor, &250i128);
+    let escrow = client.get_escrow(&escrow_id);
+    assert_eq!(escrow.amount, 0i128);
+    assert_eq!(escrow.total_released, amount);
+    assert_eq!(escrow.status, EscrowStatus::Released);
+
+    // The tranches sum exactly to the funded total.
+    assert_eq!(escrow.amount + escrow.total_released, amount);
+
+    // Beneficiary received the full amount incrementally; contract is drained.
+    let token_client = TokenClient::new(&env, &token_address);
+    assert_eq!(token_client.balance(&beneficiary), amount);
+    assert_eq!(token_client.balance(&client.address), 0i128);
+
+    // Each tranche is recorded in history.
+    let history = client.get_release_history(&escrow_id);
+    assert_eq!(history.len(), 3);
+}
+
+#[test]
+fn test_release_partial_over_release_rejected() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let (
+        client,
+        depositor,
+        beneficiary,
+        arbiter,
+        platform_governance,
+        agent_referral,
+        token_address,
+    ) = setup_test(&env);
+    let amount = 1000i128;
+
+    let escrow_id = client.create(
+        &depositor,
+        &beneficiary,
+        &arbiter,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
+        &amount,
+        &token_address,
+        &None,
+    );
+    let token_admin = TokenAdminClient::new(&env, &token_address);
+    token_admin.mint(&depositor, &amount);
+    client.fund_escrow(&escrow_id, &depositor);
+
+    // Release 600, leaving 400 remaining.
+    client.release_partial(&escrow_id, &depositor, &600i128);
+
+    // Attempting to release more than the remaining balance must fail.
+    let result = client.try_release_partial(&escrow_id, &depositor, &500i128);
+    assert!(result.is_err());
+
+    // Accounting is unchanged by the rejected over-release.
+    let escrow = client.get_escrow(&escrow_id);
+    assert_eq!(escrow.amount, 400i128);
+    assert_eq!(escrow.total_released, 600i128);
+    assert_eq!(escrow.status, EscrowStatus::Funded);
+
+    // Only the accepted tranche moved funds.
+    let token_client = TokenClient::new(&env, &token_address);
+    assert_eq!(token_client.balance(&beneficiary), 600i128);
+    assert_eq!(token_client.balance(&client.address), 400i128);
+}
+
+#[test]
+fn test_release_partial_zero_or_negative_rejected() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let (
+        client,
+        depositor,
+        beneficiary,
+        arbiter,
+        platform_governance,
+        agent_referral,
+        token_address,
+    ) = setup_test(&env);
+    let amount = 1000i128;
+
+    let escrow_id = client.create(
+        &depositor,
+        &beneficiary,
+        &arbiter,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
+        &amount,
+        &token_address,
+        &None,
+    );
+    let token_admin = TokenAdminClient::new(&env, &token_address);
+    token_admin.mint(&depositor, &amount);
+    client.fund_escrow(&escrow_id, &depositor);
+
+    let _ = beneficiary;
+    let _ = arbiter;
+
+    assert!(client.try_release_partial(&escrow_id, &depositor, &0i128).is_err());
+    assert!(client
+        .try_release_partial(&escrow_id, &depositor, &(-100i128))
+        .is_err());
+}
+
+#[test]
+fn test_release_partial_authorization() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let (
+        client,
+        depositor,
+        beneficiary,
+        arbiter,
+        platform_governance,
+        agent_referral,
+        token_address,
+    ) = setup_test(&env);
+    let amount = 1000i128;
+
+    let escrow_id = client.create(
+        &depositor,
+        &beneficiary,
+        &arbiter,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
+        &amount,
+        &token_address,
+        &None,
+    );
+    let token_admin = TokenAdminClient::new(&env, &token_address);
+    token_admin.mint(&depositor, &amount);
+    client.fund_escrow(&escrow_id, &depositor);
+
+    // The beneficiary (payee) cannot release a tranche to themselves.
+    let result = client.try_release_partial(&escrow_id, &beneficiary, &100i128);
+    assert!(result.is_err());
+
+    // A non-party cannot release either.
+    let stranger = Address::generate(&env);
+    let result = client.try_release_partial(&escrow_id, &stranger, &100i128);
+    assert!(result.is_err());
+
+    // The payer (depositor) can release a tranche.
+    client.release_partial(&escrow_id, &depositor, &100i128);
+    assert_eq!(client.get_total_released(&escrow_id), 100i128);
+
+    // The arbiter can also release a tranche (e.g. as a dispute ruling).
+    client.release_partial(&escrow_id, &arbiter, &200i128);
+    assert_eq!(client.get_total_released(&escrow_id), 300i128);
+
+    let escrow = client.get_escrow(&escrow_id);
+    assert_eq!(escrow.amount, 700i128);
+}
+
+#[test]
+fn test_release_partial_full_release_invariant_after_tranches() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let (
+        client,
+        depositor,
+        beneficiary,
+        arbiter,
+        platform_governance,
+        agent_referral,
+        token_address,
+    ) = setup_test(&env);
+    let amount = 1000i128;
+
+    let escrow_id = client.create(
+        &depositor,
+        &beneficiary,
+        &arbiter,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
+        &amount,
+        &token_address,
+        &None,
+    );
+    let token_admin = TokenAdminClient::new(&env, &token_address);
+    token_admin.mint(&depositor, &amount);
+    client.fund_escrow(&escrow_id, &depositor);
+
+    // Partially release 300, then finish via the full 2-of-3 release path.
+    client.release_partial(&escrow_id, &depositor, &300i128);
+
+    // Full release should only move the remaining 700 balance, not the original.
+    client.approve_release(&escrow_id, &depositor, &beneficiary);
+    client.approve_release(&escrow_id, &arbiter, &beneficiary);
+
+    let escrow = client.get_escrow(&escrow_id);
+    assert_eq!(escrow.status, EscrowStatus::Released);
+
+    let token_client = TokenClient::new(&env, &token_address);
+    assert_eq!(token_client.balance(&beneficiary), amount); // 300 + 700
+    assert_eq!(token_client.balance(&client.address), 0i128);
+}
+
+#[test]
+fn test_release_partial_refund_invariant_after_tranches() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let (
+        client,
+        depositor,
+        beneficiary,
+        arbiter,
+        platform_governance,
+        agent_referral,
+        token_address,
+    ) = setup_test(&env);
+    let amount = 1000i128;
+
+    let cfg = TimeoutConfig {
+        escrow_timeout_days: 1,
+        dispute_timeout_days: 30,
+        payment_timeout_days: 7,
+    };
+    client.set_timeout_config(&depositor, &cfg);
+
+    let escrow_id = client.create(
+        &depositor,
+        &beneficiary,
+        &arbiter,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
+        &amount,
+        &token_address,
+        &None,
+    );
+    let token_admin = TokenAdminClient::new(&env, &token_address);
+    token_admin.mint(&depositor, &amount);
+    client.fund_escrow(&escrow_id, &depositor);
+
+    // Release a 400 tranche to the beneficiary, leaving 600 remaining.
+    client.release_partial(&escrow_id, &depositor, &400i128);
+
+    // After the timeout, the refund path should return only the remaining 600
+    // to the depositor (not the original 1000).
+    env.ledger().with_mut(|li| li.timestamp += 2 * 86_400);
+    client.release_escrow_on_timeout(&escrow_id);
+
+    let escrow = client.get_escrow(&escrow_id);
+    assert_eq!(escrow.status, EscrowStatus::Refunded);
+
+    let token_client = TokenClient::new(&env, &token_address);
+    assert_eq!(token_client.balance(&beneficiary), 400i128);
+    assert_eq!(token_client.balance(&depositor), 600i128);
+    assert_eq!(token_client.balance(&client.address), 0i128);
+}

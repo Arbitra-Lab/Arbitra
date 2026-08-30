@@ -17,8 +17,14 @@ pub struct DisputeTimeout {
 pub struct PartialRelease {
     #[topic]
     pub escrow_id: BytesN<32>,
+    /// Amount released in this specific tranche.
     pub amount: i128,
+    /// Recipient of this tranche.
     pub recipient: Address,
+    /// Cumulative amount released across all tranches after this release.
+    pub total_released: i128,
+    /// Remaining escrow balance after this release.
+    pub remaining: i128,
 }
 
 #[contractevent(topics = ["damage_deduction"])]
@@ -54,11 +60,20 @@ pub(crate) fn dispute_timeout(env: &Env, escrow_id: BytesN<32>) {
     DisputeTimeout { escrow_id }.publish(env);
 }
 
-pub(crate) fn partial_release(env: &Env, escrow_id: BytesN<32>, amount: i128, recipient: Address) {
+pub(crate) fn partial_release(
+    env: &Env,
+    escrow_id: BytesN<32>,
+    amount: i128,
+    recipient: Address,
+    total_released: i128,
+    remaining: i128,
+) {
     PartialRelease {
         escrow_id,
         amount,
         recipient,
+        total_released,
+        remaining,
     }
     .publish(env);
 }
