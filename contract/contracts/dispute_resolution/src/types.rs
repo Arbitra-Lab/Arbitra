@@ -102,7 +102,9 @@ pub struct ArbiterStake {
 
 /// Governance parameters for quorum gating and non-voter slashing.
 ///
-/// Both fields are basis points (10000 = 100%).
+/// `quorum_bps` and `slash_bps` are basis points (10000 = 100%). Quorum is a
+/// two-dimensional gate: both the weight threshold *and* the voter-count
+/// threshold must be met before a dispute can finalize.
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct QuorumConfig {
@@ -110,6 +112,9 @@ pub struct QuorumConfig {
     pub quorum_bps: u32,
     /// Fraction of a non-voter's snapshotted stake that is slashed on finalize.
     pub slash_bps: u32,
+    /// Minimum number of distinct assigned arbiters that must vote before a
+    /// dispute can finalize, independent of their stake weight.
+    pub min_voters: u32,
 }
 
 /// Snapshot of one arbiter's assignment to a dispute.
@@ -145,12 +150,17 @@ pub struct DisputeAssignment {
     pub slash_bps: u32,
     /// `total_weight × quorum_bps / 10000`, snapshotted at assignment.
     pub quorum_weight_required: i128,
+    /// Minimum distinct-voter count required, snapshotted from `QuorumConfig` at assignment.
+    pub min_voters_required: u32,
     /// Voting window deadline; votes cast after this are rejected.
     pub deadline: u64,
     pub assigned_at: u64,
     pub finalized: bool,
     /// The finalized outcome, or `OptionalOutcome::None` while still open.
     pub outcome: OptionalOutcome,
+    /// Set once the quorum gate (weight + voter count) has been met; used to
+    /// emit the `quorum_reached` event exactly once (on the crossing vote).
+    pub quorum_crossed: bool,
 }
 
 /// Per-arbiter participation row returned by `get_dispute_tally`.
@@ -173,6 +183,11 @@ pub struct DisputeTally {
     pub total_assigned_weight: i128,
     pub voted_weight: i128,
     pub quorum_weight_required: i128,
+    /// Number of distinct assigned arbiters who have voted so far.
+    pub voter_count: u32,
+    /// Minimum distinct-voter count required to finalize.
+    pub min_voters_required: u32,
+    /// True once both the weight and voter-count thresholds are met.
     pub quorum_reached: bool,
     pub finalized: bool,
     pub outcome: OptionalOutcome,
