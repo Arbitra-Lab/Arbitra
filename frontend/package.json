@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --webpack",
-    "build": "next build",
-    "start": "next start",
+    "dev": "node init && next dev --webpack",
+    "build": "node init && next build",
+    "start": "node init && next start",
     "lint": "echo 'ESLint disabled due to package compatibility issue. Build validation passes.'",
     "check": "pnpm run lint && pnpm run format:check && pnpm run build",
     "lint:fix": "echo 'ESLint disabled due to package compatibility issue. Run prettier format instead.'",

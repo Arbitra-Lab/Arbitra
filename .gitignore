@@ -39,8 +39,6 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # env files (can opt-in for committing if needed)
-.env
-.env.local
 
 # vercel
 .vercel
@@ -57,3 +55,4 @@ pr.md
 checks.md
 create-github-issues.sh
 /issues/frontend/storybook-static/
+config.bat
