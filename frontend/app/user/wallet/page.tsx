@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import WalletCard from '@/components/dashboard/agent/WalletCard';
 import RecentPayouts from '@/components/dashboard/agent/RecentPayouts';
 import WithdrawModal from '@/components/dashboard/agent/WithdrawModal';
+import { PortfolioOverview } from '@/components/wallet/PortfolioOverview';
 
 export default function WalletPage() {
   const [currency, setCurrency] = useState<'USDC' | 'XLM'>('USDC');
@@ -37,6 +38,12 @@ export default function WalletPage() {
 
         <div className="lg:col-span-2">
           <RecentPayouts />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-1">
+          <PortfolioOverview />
         </div>
       </div>
 
