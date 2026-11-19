@@ -7,13 +7,10 @@ import {
   Building2,
   CheckCircle2,
   Clock,
-  FileText,
   Gavel,
-  Image as ImageIcon,
   MessageSquare,
   User,
   Users,
-  Video,
   XCircle,
 } from 'lucide-react';
 import { format } from 'date-fns';
@@ -24,6 +21,7 @@ import {
   typeLabel,
 } from '@/lib/admin-dispute-detail';
 import type { DisputeStatus } from '@/lib/dashboard-data';
+import { EvidenceGallery } from '@/components/common/EvidenceGallery';
 
 const STATUS_STYLES: Record<DisputeStatus, string> = {
   OPEN: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
@@ -235,66 +233,7 @@ export function DisputeDetail({
               <AlertCircle className="text-amber-400" size={20} />
               Evidence
             </div>
-            {dispute.evidence.length === 0 ? (
-              <p className="text-slate-500 text-sm">No evidence uploaded.</p>
-            ) : (
-              <ul className="grid sm:grid-cols-2 gap-4">
-                {dispute.evidence.map((ev) => (
-                  <li
-                    key={ev.id}
-                    className="rounded-2xl border border-white/10 bg-white/5 overflow-hidden flex flex-col"
-                  >
-                    <div className="aspect-video bg-slate-950/80 flex items-center justify-center relative">
-                      {ev.type === 'image' ? (
-                        /* eslint-disable-next-line @next/next/no-img-element */
-                        <img
-                          src={ev.url}
-                          alt=""
-                          className="max-h-full max-w-full object-contain p-4"
-                        />
-                      ) : (
-                        <div className="flex flex-col items-center gap-2 text-slate-500 p-6">
-                          {ev.type === 'video' ? (
-                            <Video size={40} />
-                          ) : (
-                            <FileText size={40} />
-                          )}
-                          <span className="text-xs uppercase tracking-wider">
-                            {ev.type}
-                          </span>
-                        </div>
-                      )}
-                      <span className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/50 border border-white/10">
-                        {ev.type === 'image' ? (
-                          <ImageIcon size={14} className="text-white" />
-                        ) : ev.type === 'video' ? (
-                          <Video size={14} className="text-white" />
-                        ) : (
-                          <FileText size={14} className="text-white" />
-                        )}
-                      </span>
-                    </div>
-                    <div className="p-4 space-y-2">
-                      <p className="text-white font-medium text-sm leading-snug">
-                        {ev.label}
-                      </p>
-                      <p className="text-xs text-slate-500">
-                        {ev.uploadedByName} ·{' '}
-                        {format(new Date(ev.uploadedAt), 'MMM d, yyyy HH:mm')}
-                      </p>
-                      <a
-                        href={ev.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-block text-xs font-semibold text-brand-accent hover:text-brand-accent/80"
-                      >
-                        Open file
-                      </a>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
+            <EvidenceGallery items={dispute.evidence} />
           </section>
 
           <section className="bg-slate-900/80 border border-slate-800 rounded-3xl p-6 shadow-xl">

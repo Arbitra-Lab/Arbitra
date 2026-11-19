@@ -3,6 +3,15 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api-client';
 import { DisputeStatus } from '@/lib/dashboard-data';
+import type { EvidenceKind } from '@/components/common/EvidenceGallery';
+
+export interface TenantDisputeEvidence {
+  id: string;
+  filename: string;
+  uploadedAt: string;
+  url: string;
+  type: EvidenceKind;
+}
 
 export interface TenantDisputeDetail {
   id: string;
@@ -18,13 +27,24 @@ export interface TenantDisputeDetail {
   resolution?: string;
   createdAt: string;
   updatedAt: string;
-  evidence: Array<{ id: string; filename: string; uploadedAt: string }>;
+  evidence: TenantDisputeEvidence[];
   comments: Array<{
     id: string;
     author: { name: string; role: string };
     content: string;
     createdAt: string;
   }>;
+}
+
+function inferEvidenceType(filename: string): EvidenceKind {
+  const ext = filename.toLowerCase().split('.').pop() ?? '';
+  if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext)) {
+    return 'image';
+  }
+  if (['mp4', 'mov', 'webm', 'avi'].includes(ext)) {
+    return 'video';
+  }
+  return 'document';
 }
 
 const TENANT_DISPUTE_DETAIL_QUERY_KEY = (id: string) =>
@@ -49,16 +69,22 @@ const mockDetail: TenantDisputeDetail = {
       id: 'ev-1',
       filename: 'water_damage_1.jpg',
       uploadedAt: '2026-02-18T10:05:00Z',
+      url: '/globe.svg',
+      type: 'image',
     },
     {
       id: 'ev-2',
       filename: 'inspection_report.pdf',
       uploadedAt: '2026-02-19T14:30:00Z',
+      url: '/file.svg',
+      type: 'document',
     },
     {
       id: 'ev-3',
       filename: 'repair_delay_timeline.xlsx',
       uploadedAt: '2026-02-20T09:15:00Z',
+      url: '/file.svg',
+      type: 'document',
     },
   ],
   comments: [
@@ -125,12 +151,19 @@ export function useTenantDispute(disputeId: string) {
               id?: string;
               filename?: string;
               uploadedAt?: string;
+              url?: string;
+              type?: EvidenceKind;
             }>
-          ).map((e) => ({
-            id: String(e.id),
-            filename: e.filename || '',
-            uploadedAt: e.uploadedAt || new Date().toISOString(),
-          })),
+          ).map((e) => {
+            const filename = e.filename || '';
+            return {
+              id: String(e.id),
+              filename,
+              uploadedAt: e.uploadedAt || new Date().toISOString(),
+              url: e.url || '',
+              type: e.type || inferEvidenceType(filename),
+            };
+          }),
           comments: (
             ((apiData as TenantDisputeDetail).comments || []) as Array<{
               id?: string;

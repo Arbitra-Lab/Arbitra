@@ -16,6 +16,7 @@ import {
 } from '@/lib/query/hooks/use-tenant-dispute';
 import { format, formatDistanceToNow } from 'date-fns';
 import { useAuthStore } from '@/store/authStore';
+import { EvidenceGallery } from '@/components/common/EvidenceGallery';
 
 interface DisputeDetailProps {
   disputeId: string;
@@ -206,34 +207,15 @@ export function DisputeDetail({
           <h2 className="text-base font-bold text-white mb-4">
             Evidence ({dispute.evidence.length})
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {dispute.evidence.map((ev) => (
-              <div
-                key={ev.id}
-                className="bg-white/5 border border-white/10 rounded-xl p-4 hover:bg-white/10 transition-all cursor-pointer"
-              >
-                <div className="flex items-start gap-3 mb-3">
-                  <FileText
-                    size={16}
-                    className="text-neutral-500/40 mt-0.5 shrink-0"
-                  />
-                  <div className="min-w-0">
-                    <p className="font-medium text-white truncate text-sm">
-                      {ev.filename}
-                    </p>
-                    <p className="text-xs text-neutral-200/40 mt-0.5">
-                      {formatDistanceToNow(new Date(ev.uploadedAt), {
-                        addSuffix: true,
-                      })}
-                    </p>
-                  </div>
-                </div>
-                <button className="w-full text-xs font-semibold text-brand-accent hover:text-brand-accent/80 transition-colors text-left">
-                  Download
-                </button>
-              </div>
-            ))}
-          </div>
+          <EvidenceGallery
+            items={dispute.evidence.map((ev) => ({
+              id: ev.id,
+              label: ev.filename,
+              type: ev.type,
+              url: ev.url,
+              uploadedAt: ev.uploadedAt,
+            }))}
+          />
         </div>
       )}
 
