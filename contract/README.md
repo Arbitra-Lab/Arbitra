@@ -27,6 +27,7 @@ This is a Cargo workspace; each contract lives in its own directory under `contr
 - Each contract has its own `Cargo.toml` that relies on the top-level workspace for shared dependencies.
 - Per-contract documentation lives in [`docs/contracts/`](docs/contracts/).
 - See [`scripts/README.md`](scripts/README.md) for deployment.
+- See [`docs/README.md`](docs/README.md) for the full protocol documentation hub.
 
 ## Emergency Pause (Arbitra Agreement Contract)
 
