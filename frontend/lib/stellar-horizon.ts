@@ -6,6 +6,10 @@ export interface StellarBalanceRow {
   /** Raw balance string from Horizon */
   amount: string;
   assetType: string;
+  /** Asset code, e.g. `XLM` or `USDC` (native assets normalize to `XLM`) */
+  assetCode: string;
+  /** Issuer account id, absent for the native XLM asset */
+  assetIssuer?: string;
 }
 
 interface HorizonBalance {
@@ -30,6 +34,8 @@ export function parseHorizonBalances(
     label: labelFromBalance(b),
     amount: b.balance,
     assetType: b.asset_type,
+    assetCode: b.asset_type === 'native' ? 'XLM' : (b.asset_code ?? b.asset_type),
+    assetIssuer: b.asset_type === 'native' ? undefined : b.asset_issuer,
   }));
 }
 

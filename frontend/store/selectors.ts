@@ -20,6 +20,7 @@ export const selectIsAuthenticated = (state: AuthStore) =>
 export const selectAuthLoading = (state: AuthStore) => state.loading;
 export const selectUserRole = (state: AuthStore) => state.user?.role ?? null;
 export const selectAccessToken = (state: AuthStore) => state.accessToken;
+export const selectWalletAddress = (state: AuthStore) => state.walletAddress;
 
 // ─── Notification Selectors ──────────────────────────────────────────────────
 
