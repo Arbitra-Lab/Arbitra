@@ -129,6 +129,18 @@ export class DisputeNotFoundError extends ResourceNotFoundError {
   }
 }
 
+export class JurisdictionNotFoundError extends ResourceNotFoundError {
+  constructor(jurisdictionCode?: string) {
+    super(
+      ErrorCode.JURISDICTION_NOT_FOUND,
+      jurisdictionCode
+        ? `Jurisdiction with code ${jurisdictionCode} not found`
+        : undefined,
+      jurisdictionCode ? { jurisdictionCode } : undefined,
+    );
+  }
+}
+
 /**
  * Business Logic Errors
  */
