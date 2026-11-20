@@ -45,6 +45,10 @@ import {
   LedgerOperationType,
 } from './entities/ledger-entry.entity';
 import { LedgerService } from './ledger.service';
+import {
+  INSURANCE_POOL_ACCOUNT_ID,
+  getInsurancePoolFeeShare,
+} from './insurance-pool.constants';
 import { PaymentProcessingService } from '../stellar/services/payment-processing.service';
 import { StellarService } from '../stellar/services/stellar.service';
 import * as StellarSdk from '@stellar/stellar-sdk';
@@ -207,12 +211,29 @@ export class PaymentService {
         },
       ];
       if (transactionFee > 0) {
-        ledgerLines.push({
-          accountId: 'fees:revenue',
-          direction: LedgerDirection.CREDIT,
-          amount: transactionFee,
-          description: 'Platform fee revenue',
-        });
+        // A slice of every platform fee underwrites the protocol insurance
+        // pool (see InsuranceModule) instead of going to fee revenue, so the
+        // pool grows automatically with protocol usage.
+        const insuranceCut = roundMoney(
+          transactionFee * getInsurancePoolFeeShare(),
+        );
+        const feeRevenue = roundMoney(transactionFee - insuranceCut);
+        if (feeRevenue > 0) {
+          ledgerLines.push({
+            accountId: 'fees:revenue',
+            direction: LedgerDirection.CREDIT,
+            amount: feeRevenue,
+            description: 'Platform fee revenue',
+          });
+        }
+        if (insuranceCut > 0) {
+          ledgerLines.push({
+            accountId: INSURANCE_POOL_ACCOUNT_ID,
+            direction: LedgerDirection.CREDIT,
+            amount: insuranceCut,
+            description: 'Insurance pool contribution',
+          });
+        }
       }
 
       await this.ledgerService.recordOperation(manager, {

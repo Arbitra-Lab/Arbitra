@@ -24,6 +24,7 @@ import { StatusModule } from './modules/status/status.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 import { PaymentModule } from './modules/payments/payment.module';
+import { InsuranceModule } from './modules/insurance/insurance.module';
 import { ProfileModule } from './modules/profile/profile.module';
 import { SecurityModule } from './modules/security/security.module';
 import { AuthRateLimitMiddleware } from './modules/auth/middleware/rate-limit.middleware';
@@ -237,6 +238,7 @@ const appLogger = new Logger('AppModule');
       ? [require('./health/health.module').HealthModule]
       : []),
     PaymentModule,
+    InsuranceModule,
     NotificationsModule,
     ProfileModule,
     SecurityModule,
