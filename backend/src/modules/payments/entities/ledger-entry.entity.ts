@@ -15,6 +15,7 @@ export enum LedgerOperationType {
   CAPTURE = 'capture',
   REFUND = 'refund',
   FEE = 'fee',
+  INSURANCE_PAYOUT = 'insurance_payout',
 }
 
 /**
