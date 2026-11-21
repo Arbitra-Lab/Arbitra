@@ -2863,3 +2863,335 @@ fn test_release_partial_refund_invariant_after_tranches() {
     assert_eq!(token_client.balance(&depositor), 600i128);
     assert_eq!(token_client.balance(&client.address), 0i128);
 }
+
+// ─── Additional Edge Case Tests ────────────────────────────────────────────
+
+#[test]
+fn test_multiple_escrows_independent_state() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let (
+        client,
+        depositor,
+        beneficiary,
+        arbiter,
+        platform_governance,
+        agent_referral,
+        token_address,
+    ) = setup_test(&env);
+
+    // Create two independent escrows
+    let amount1 = 1000i128;
+    let amount2 = 2000i128;
+
+    let escrow_id1 = client.create(
+        &depositor,
+        &beneficiary,
+        &arbiter,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
+        &amount1,
+        &token_address,
+        &None,
+    );
+
+    let escrow_id2 = client.create(
+        &depositor,
+        &beneficiary,
+        &arbiter,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
+        &amount2,
+        &token_address,
+        &Some(7u64), // This one has auto-release
+    );
+
+    // Fund both escrows
+    let token_admin = TokenAdminClient::new(&env, &token_address);
+    token_admin.mint(&depositor, &amount1 + amount2);
+    client.fund_escrow(&escrow_id1, &depositor);
+    client.fund_escrow(&escrow_id2, &depositor);
+
+    // Dispute first escrow only
+    client.initiate_dispute(
+        &escrow_id1,
+        &depositor,
+        &soroban_sdk::String::from_str(&env, "Issue with first escrow"),
+    );
+
+    // Verify independent states
+    let escrow1 = client.get_escrow(&escrow_id1);
+    let escrow2 = client.get_escrow(&escrow_id2);
+
+    assert_eq!(escrow1.status, EscrowStatus::Disputed);
+    assert_eq!(escrow2.status, EscrowStatus::Funded);
+    assert_eq!(escrow1.amount, amount1);
+    assert_eq!(escrow2.amount, amount2);
+    assert_eq!(escrow1.auto_release_after, None);
+    assert!(escrow2.auto_release_after.is_some());
+
+    // Release second escrow should not affect first
+    client.approve_release(&escrow_id2, &depositor, &beneficiary);
+    client.approve_release(&escrow_id2, &arbiter, &beneficiary);
+
+    let escrow1_after = client.get_escrow(&escrow_id1);
+    let escrow2_after = client.get_escrow(&escrow_id2);
+
+    assert_eq!(escrow1_after.status, EscrowStatus::Disputed); // Still disputed
+    assert_eq!(escrow2_after.status, EscrowStatus::Released); // Released
+}
+
+#[test]
+fn test_freeze_unfreeze_workflow() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let (
+        client,
+        depositor,
+        beneficiary,
+        arbiter,
+        platform_governance,
+        agent_referral,
+        token_address,
+    ) = setup_test(&env);
+    let amount = 1000i128;
+
+    // Initialize admin
+    let admin = Address::generate(&env);
+    client.initialize_admin(&admin);
+
+    let escrow_id = client.create(
+        &depositor,
+        &beneficiary,
+        &arbiter,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
+        &amount,
+        &token_address,
+        &None,
+    );
+
+    let token_admin = TokenAdminClient::new(&env, &token_address);
+    token_admin.mint(&depositor, &amount);
+    client.fund_escrow(&escrow_id, &depositor);
+
+    // Freeze the escrow
+    let freeze_reason = soroban_sdk::String::from_str(&env, "Suspicious activity detected");
+    client.freeze_escrow(&escrow_id, &admin, &freeze_reason);
+
+    let escrow = client.get_escrow(&escrow_id);
+    assert!(escrow.is_frozen);
+
+    // All operations should be blocked while frozen
+    let result = client.try_approve_release(&escrow_id, &depositor, &beneficiary);
+    assert!(result.is_err());
+
+    let result = client.try_release_partial(&escrow_id, &depositor, &100i128);
+    assert!(result.is_err());
+
+    // Unfreeze the escrow
+    client.unfreeze_escrow(&escrow_id, &admin);
+
+    let escrow = client.get_escrow(&escrow_id);
+    assert!(!escrow.is_frozen);
+
+    // Operations should work again after unfreezing
+    client.approve_release(&escrow_id, &depositor, &beneficiary);
+    assert_eq!(client.get_approval_count(&escrow_id, &beneficiary), 1);
+
+    // Complete release
+    client.approve_release(&escrow_id, &arbiter, &beneficiary);
+    let escrow = client.get_escrow(&escrow_id);
+    assert_eq!(escrow.status, EscrowStatus::Released);
+
+    let token_client = TokenClient::new(&env, &token_address);
+    assert_eq!(token_client.balance(&beneficiary), amount);
+}
+
+#[test]
+fn test_partial_release_combined_with_damage_deduction() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let (
+        client,
+        depositor,
+        beneficiary,
+        arbiter,
+        platform_governance,
+        agent_referral,
+        token_address,
+    ) = setup_test(&env);
+    let amount = 1000i128;
+
+    let escrow_id = client.create(
+        &depositor,
+        &beneficiary,
+        &arbiter,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
+        &amount,
+        &token_address,
+        &None,
+    );
+
+    let token_admin = TokenAdminClient::new(&env, &token_address);
+    token_admin.mint(&depositor, &amount);
+    client.fund_escrow(&escrow_id, &depositor);
+
+    // Release partial payment for completed work
+    client.release_partial(&escrow_id, &depositor, &400i128);
+
+    let escrow = client.get_escrow(&escrow_id);
+    assert_eq!(escrow.amount, 600i128);
+    assert_eq!(escrow.total_released, 400i128);
+
+    // Now apply damage deduction on remaining balance
+    client.approve_partial_release(&escrow_id, &beneficiary, &depositor);
+    client.approve_partial_release(&escrow_id, &arbiter, &depositor);
+
+    let damage_amount = 200i128;
+    let reason = soroban_sdk::String::from_str(&env, "Property damage");
+    client.release_with_deduction(&escrow_id, &damage_amount, &reason);
+
+    let escrow = client.get_escrow(&escrow_id);
+    assert_eq!(escrow.status, EscrowStatus::Released);
+
+    // Verify final distribution:
+    // Beneficiary: 400 (partial release) + 200 (damage from remaining 600) = 600
+    // Depositor: 400 (refund from remaining 600 after damage)
+    let token_client = TokenClient::new(&env, &token_address);
+    assert_eq!(token_client.balance(&beneficiary), 600i128);
+    assert_eq!(token_client.balance(&depositor), 400i128);
+    assert_eq!(token_client.balance(&client.address), 0i128);
+}
+
+#[test]
+fn test_escrow_status_transitions() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let (
+        client,
+        depositor,
+        beneficiary,
+        arbiter,
+        platform_governance,
+        agent_referral,
+        token_address,
+    ) = setup_test(&env);
+    let amount = 1000i128;
+
+    // Create escrow - should be Pending
+    let escrow_id = client.create(
+        &depositor,
+        &beneficiary,
+        &arbiter,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
+        &amount,
+        &token_address,
+        &None,
+    );
+
+    let escrow = client.get_escrow(&escrow_id);
+    assert_eq!(escrow.status, EscrowStatus::Pending);
+
+    // Fund escrow - should transition to Funded
+    let token_admin = TokenAdminClient::new(&env, &token_address);
+    token_admin.mint(&depositor, &amount);
+    client.fund_escrow(&escrow_id, &depositor);
+
+    let escrow = client.get_escrow(&escrow_id);
+    assert_eq!(escrow.status, EscrowStatus::Funded);
+
+    // Initiate dispute - should transition to Disputed
+    let reason = soroban_sdk::String::from_str(&env, "Service issue");
+    client.initiate_dispute(&escrow_id, &depositor, &reason);
+
+    let escrow = client.get_escrow(&escrow_id);
+    assert_eq!(escrow.status, EscrowStatus::Disputed);
+
+    // Resolve dispute - should transition to Released
+    client.resolve_dispute(&escrow_id, &arbiter, &beneficiary);
+
+    let escrow = client.get_escrow(&escrow_id);
+    assert_eq!(escrow.status, EscrowStatus::Released);
+
+    // Verify final token distribution
+    let token_client = TokenClient::new(&env, &token_address);
+    assert_eq!(token_client.balance(&beneficiary), amount);
+    assert_eq!(token_client.balance(&client.address), 0);
+}
+
+#[test]
+fn test_release_history_tracking() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let (
+        client,
+        depositor,
+        beneficiary,
+        arbiter,
+        platform_governance,
+        agent_referral,
+        token_address,
+    ) = setup_test(&env);
+    let amount = 1000i128;
+
+    let escrow_id = client.create(
+        &depositor,
+        &beneficiary,
+        &arbiter,
+        &Some(platform_governance.clone()),
+        &Some(agent_referral.clone()),
+        &amount,
+        &token_address,
+        &None,
+    );
+
+    let token_admin = TokenAdminClient::new(&env, &token_address);
+    token_admin.mint(&depositor, &amount);
+    client.fund_escrow(&escrow_id, &depositor);
+
+    // Initially no release history
+    let history = client.get_release_history(&escrow_id);
+    assert_eq!(history.len(), 0);
+
+    // Perform multiple partial releases
+    client.release_partial(&escrow_id, &depositor, &250i128);
+    client.release_partial(&escrow_id, &depositor, &150i128);
+    client.release_partial(&escrow_id, &arbiter, &300i128);
+
+    // Check release history
+    let history = client.get_release_history(&escrow_id);
+    assert_eq!(history.len(), 3);
+
+    // Verify first release
+    let release1 = history.get(0).unwrap();
+    assert_eq!(release1.amount, 250i128);
+    assert_eq!(release1.recipient, beneficiary);
+
+    // Verify second release
+    let release2 = history.get(1).unwrap();
+    assert_eq!(release2.amount, 150i128);
+    assert_eq!(release2.recipient, beneficiary);
+
+    // Verify third release
+    let release3 = history.get(2).unwrap();
+    assert_eq!(release3.amount, 300i128);
+    assert_eq!(release3.recipient, beneficiary);
+
+    // Verify total released
+    let total_from_history = release1.amount + release2.amount + release3.amount;
+    assert_eq!(total_from_history, 700i128);
+    assert_eq!(client.get_total_released(&escrow_id), 700i128);
+
+    // Verify remaining balance
+    let escrow = client.get_escrow(&escrow_id);
+    assert_eq!(escrow.amount, 300i128);
+    assert_eq!(escrow.total_released, 700i128);
+}
