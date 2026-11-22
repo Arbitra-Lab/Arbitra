@@ -1,6 +1,6 @@
 'use client';
 
-import { Award, Gavel } from 'lucide-react';
+import { Award, FileText, Gavel } from 'lucide-react';
 import type { ComponentType } from 'react';
 
 export type AdminAppRole = 'admin';
@@ -23,6 +23,12 @@ const adminNavItems: AdminNavItem[] = [
     icon: Award,
     label: 'Arbiters Management',
     href: '/admin/arbiters',
+    visibleFor: ['admin'],
+  },
+  {
+    icon: FileText,
+    label: 'Agreement Templates',
+    href: '/admin/templates',
     visibleFor: ['admin'],
   },
 ];
