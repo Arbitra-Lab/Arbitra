@@ -51,6 +51,7 @@ import { LocalizationMiddleware } from './modules/i18n/middleware/localization.m
 import { CleanupModule } from './modules/cleanup/cleanup.module';
 import { AiModule } from './modules/ai/ai.module';
 import { LoggerModule } from './common/services/logger.module';
+import { ScheduleModule } from '@nestjs/schedule';
 import { QueuesModule } from './modules/queues/queues.module';
 import { WebhooksModule } from './modules/webhooks/webhooks.module';
 import { ScreeningModule } from './modules/screening/screening.module';
@@ -76,6 +77,7 @@ const appLogger = new Logger('AppModule');
       envFilePath: [`.env.${process.env.NODE_ENV || 'development'}`, '.env'],
       validate: validateEnvironment,
     }),
+    ScheduleModule.forRoot(),
     LoggerModule,
     LockModule,
     IdempotencyModule,

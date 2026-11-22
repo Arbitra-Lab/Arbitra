@@ -1,0 +1,121 @@
+name: Container Image Security Scan
+
+on:
+  push:
+    branches: [main, dev, develop]
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+      - 'contract/**'
+      - '.github/workflows/container-image-scan.yml'
+  pull_request:
+    branches: [main, dev, develop]
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+      - 'contract/**'
+      - '.github/workflows/container-image-scan.yml'
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
+jobs:
+  scan-images:
+    name: Build, Scan, and Generate SBOM
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: backend
+            context: ./backend
+            dockerfile: ./backend/Dockerfile
+            image: arbitra-backend:scan
+          - name: frontend
+            context: ./frontend
+            dockerfile: ./frontend/Dockerfile
+            image: arbitra-frontend:scan
+          - name: contract
+            context: ./contract
+            dockerfile: ./contract/Dockerfile
+            image: arbitra-contract:scan
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Check Dockerfile exists
+        id: dockerfile
+        run: |
+          if [ -f "${{ matrix.dockerfile }}" ]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "Dockerfile not found for ${{ matrix.name }}; skipping image scan."
+          fi
+
+      - name: Build image
+        if: steps.dockerfile.outputs.exists == 'true'
+        run: docker build -t ${{ matrix.image }} -f ${{ matrix.dockerfile }} ${{ matrix.context }}
+
+      - name: Generate SBOM (Syft)
+        if: steps.dockerfile.outputs.exists == 'true'
+        uses: anchore/sbom-action@v0
+        with:
+          image: ${{ matrix.image }}
+          artifact-name: sbom-${{ matrix.name }}.spdx.json
+          output-file: sbom-${{ matrix.name }}.spdx.json
+          format: spdx-json
+
+      - name: Upload SBOM artifact
+        if: steps.dockerfile.outputs.exists == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-${{ matrix.name }}
+          path: sbom-${{ matrix.name }}.spdx.json
+          retention-days: 30
+
+      - name: Scan image with Trivy
+        if: steps.dockerfile.outputs.exists == 'true'
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ${{ matrix.image }}
+          format: table
+          exit-code: '1'
+          severity: 'CRITICAL'
+          vuln-type: 'os,library'
+          ignore-unfixed: false
+
+      - name: Trivy SARIF report
+        if: always() && steps.dockerfile.outputs.exists == 'true'
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ${{ matrix.image }}
+          format: sarif
+          output: trivy-${{ matrix.name }}.sarif
+          severity: 'CRITICAL,HIGH,MEDIUM'
+          vuln-type: 'os,library'
+
+      - name: Upload Trivy SARIF
+        if: always() && steps.dockerfile.outputs.exists == 'true'
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-${{ matrix.name }}.sarif
+          category: trivy-${{ matrix.name }}
+
+      - name: Record scan result
+        if: always()
+        run: |
+          echo "## Image scan: ${{ matrix.name }}" >> "$GITHUB_STEP_SUMMARY"
+          if [ "${{ steps.dockerfile.outputs.exists }}" = "true" ]; then
+            echo "- Dockerfile: ${{ matrix.dockerfile }}" >> "$GITHUB_STEP_SUMMARY"
+            echo "- Critical vulnerabilities fail the build" >> "$GITHUB_STEP_SUMMARY"
+            echo "- SBOM artifact: sbom-${{ matrix.name }}" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "- Skipped: Dockerfile not present" >> "$GITHUB_STEP_SUMMARY"
+          fi

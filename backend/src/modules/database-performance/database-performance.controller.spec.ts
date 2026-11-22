@@ -15,6 +15,15 @@ describe('DatabasePerformanceController', () => {
         .mockResolvedValue({ generatedAt: '2023-01-01' }),
       getSlowQueries: jest.fn().mockResolvedValue([]),
       getIndexUsage: jest.fn().mockResolvedValue([]),
+      getIndexRecommendations: jest
+        .fn()
+        .mockResolvedValue({ recommendations: [] }),
+      getUnusedIndexes: jest.fn().mockResolvedValue([]),
+      getDuplicateIndexCandidates: jest.fn().mockResolvedValue([]),
+      runNightlyIndexOptimization: jest
+        .fn()
+        .mockResolvedValue({ analyzedQueries: 0 }),
+      getLastOptimizationReport: jest.fn().mockResolvedValue(null),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -53,6 +62,11 @@ describe('DatabasePerformanceController', () => {
   it('should return slow queries', async () => {
     const result = await controller.getSlowQueries();
     expect(result).toEqual([]);
-    expect(service.getSlowQueries).toHaveBeenCalledWith(20);
+    expect(service.getSlowQueries).toHaveBeenCalledWith(100);
+  });
+
+  it('should run nightly optimization', async () => {
+    await controller.runNightlyOptimization();
+    expect(service.runNightlyIndexOptimization).toHaveBeenCalled();
   });
 });

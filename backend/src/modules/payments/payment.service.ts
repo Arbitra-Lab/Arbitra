@@ -1122,6 +1122,168 @@ export class PaymentService {
     return summary;
   }
 
+  async getAdminReconciliationTransactions(query: {
+    from?: string;
+    to?: string;
+    userId?: string;
+    propertyId?: string;
+    minAmount?: number;
+    maxAmount?: number;
+    status?: string;
+    page?: number;
+    limit?: number;
+  }) {
+    const page = Math.max(1, query.page ?? 1);
+    const limit = Math.min(100, Math.max(1, query.limit ?? 20));
+    const qb = this.paymentRepository.createQueryBuilder('payment');
+    qb.orderBy('payment.createdAt', 'DESC');
+
+    if (query.from)
+      qb.andWhere('payment.createdAt >= :from', { from: new Date(query.from) });
+    if (query.to)
+      qb.andWhere('payment.createdAt <= :to', { to: new Date(query.to) });
+    if (query.userId)
+      qb.andWhere('payment.userId = :userId', { userId: query.userId });
+    if (query.status) {
+      if (query.status === 'disputed') {
+        const isSqlite = process.env.DB_TYPE === 'sqlite';
+        const metaExpr = isSqlite
+          ? "LOWER(COALESCE(CAST(payment.metadata AS TEXT), ''))"
+          : "LOWER(COALESCE(payment.metadata::text, ''))";
+        qb.andWhere(
+          `(payment.status IN (:...disputedStatuses) OR payment.refundStatus IN (:...refundStatuses) OR ${metaExpr} LIKE :disputedMeta)`,
+          {
+            disputedStatuses: [
+              PaymentStatus.REFUNDED,
+              PaymentStatus.PARTIAL_REFUND,
+            ],
+            refundStatuses: ['requested', 'under_review', 'disputed'],
+            disputedMeta: '%disput%',
+          },
+        );
+      } else {
+        qb.andWhere('payment.status = :status', { status: query.status });
+      }
+    }
+    if (query.minAmount !== undefined)
+      qb.andWhere('payment.amount >= :minAmount', {
+        minAmount: query.minAmount,
+      });
+    if (query.maxAmount !== undefined)
+      qb.andWhere('payment.amount <= :maxAmount', {
+        maxAmount: query.maxAmount,
+      });
+    if (query.propertyId) {
+      const isSqlite = process.env.DB_TYPE === 'sqlite';
+      const metaExpr = isSqlite
+        ? "LOWER(COALESCE(CAST(payment.metadata AS TEXT), ''))"
+        : "LOWER(COALESCE(payment.metadata::text, ''))";
+      qb.andWhere(
+        `(payment.agreementId = :propertyId OR ${metaExpr} LIKE :propertyMeta)`,
+        {
+          propertyId: query.propertyId,
+          propertyMeta: `%${query.propertyId.toLowerCase()}%`,
+        },
+      );
+    }
+
+    const [items, total] = await qb
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getManyAndCount();
+    return {
+      data: items.map((p) => this.toAdminReconciliationRow(p)),
+      meta: { page, limit, total, totalPages: Math.ceil(total / limit) || 1 },
+    };
+  }
+
+  async exportAdminReconciliationCsv(query: any): Promise<string> {
+    const result = await this.getAdminReconciliationTransactions({
+      ...query,
+      page: 1,
+      limit: 1000,
+    });
+    const header = [
+      'id',
+      'userId',
+      'agreementId',
+      'amount',
+      'currency',
+      'status',
+      'refundStatus',
+      'referenceNumber',
+      'createdAt',
+      'reconciledAt',
+      'manualReconciliationStatus',
+    ];
+    const rows = result.data.map((r: any) =>
+      header.map((k) => this.csvEscape(r[k])).join(','),
+    );
+    return [header.join(','), ...rows].join('\n');
+  }
+
+  async markTransactionReconciled(
+    paymentId: string,
+    dto: { status: 'verified' | 'corrected'; note?: string },
+    adminId: string,
+  ) {
+    const payment = await this.paymentRepository.findOne({
+      where: { id: paymentId },
+    });
+    if (!payment) throw new NotFoundException('Payment not found');
+    payment.metadata = {
+      ...(payment.metadata ?? {}),
+      manualReconciliation: {
+        status: dto.status,
+        note: dto.note ?? null,
+        reconciledBy: adminId,
+        reconciledAt: new Date().toISOString(),
+      },
+      reconciledAt: new Date().toISOString(),
+    };
+    const saved = await this.paymentRepository.save(payment);
+    this.logger.log(
+      `[Reconciliation] payment=${paymentId} status=${dto.status} admin=${adminId}`,
+    );
+    return this.toAdminReconciliationRow(saved);
+  }
+
+  private toAdminReconciliationRow(payment: Payment) {
+    const metadata = (payment.metadata ?? {}) as Record<string, any>;
+    return {
+      id: payment.id,
+      userId: payment.userId,
+      agreementId: payment.agreementId,
+      propertyId: metadata.propertyId ?? null,
+      amount: Number(payment.amount),
+      currency: payment.currency,
+      status: payment.status,
+      refundStatus: payment.refundStatus,
+      referenceNumber: payment.referenceNumber,
+      transactionHash: metadata.transactionHash ?? null,
+      createdAt: payment.createdAt,
+      processedAt: payment.processedAt,
+      reconciledAt: metadata.reconciledAt ?? null,
+      manualReconciliationStatus: metadata.manualReconciliation?.status ?? null,
+      manualReconciliationNote: metadata.manualReconciliation?.note ?? null,
+    };
+  }
+
+  private csvEscape(value: unknown): string {
+    let s = '';
+    if (value === null || value === undefined) s = '';
+    else if (
+      typeof value === 'string' ||
+      typeof value === 'number' ||
+      typeof value === 'boolean'
+    )
+      s = String(value);
+    else if (value instanceof Date) s = value.toISOString();
+    else s = JSON.stringify(value);
+    if (/[",\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+    return s;
+  }
+
   private parseEscrowReference(referenceNumber: string): number | null {
     if (referenceNumber?.startsWith('escrow:')) {
       const escrowIdStr = referenceNumber.substring('escrow:'.length);
