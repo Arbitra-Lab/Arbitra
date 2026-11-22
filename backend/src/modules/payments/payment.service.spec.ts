@@ -24,6 +24,7 @@ import { LockService } from '../../common/lock';
 import { IdempotencyService } from '../../common/idempotency';
 import { FraudHooksService } from '../fraud/fraud-hooks.service';
 import { LedgerService } from './ledger.service';
+import { FeeService } from '../fees/fee.service';
 
 const mockPaymentRepository = () => ({
   findOne: jest.fn(),
@@ -110,6 +111,12 @@ const mockLedgerService = {
   recordOperation: jest.fn().mockResolvedValue({ entries: [], replay: false }),
 };
 
+const mockFeeService = {
+  calculateFee: jest.fn().mockResolvedValue({ feeAmount: 2, netAmount: 98, rate: 0.02, flatFee: 0, transparent: true }),
+  recordCollection: jest.fn().mockResolvedValue({}),
+  markRefunded: jest.fn().mockResolvedValue(null),
+};
+
 describe('PaymentService', () => {
   let service: PaymentService;
   let paymentRepository: Repository<Payment>;
@@ -171,6 +178,10 @@ describe('PaymentService', () => {
         {
           provide: LedgerService,
           useValue: mockLedgerService,
+        },
+        {
+          provide: FeeService,
+          useValue: mockFeeService,
         },
       ],
     }).compile();
@@ -294,8 +305,8 @@ describe('PaymentService', () => {
       expect(paymentRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({
           amount: 250,
-          transactionFee: 5,
-          netAmount: 245,
+          transactionFee: 2,
+          netAmount: 248,
           currency: 'NGN',
         }),
       );

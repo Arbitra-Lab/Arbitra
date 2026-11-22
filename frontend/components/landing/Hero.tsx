@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { CheckCircle2 } from 'lucide-react';
 import { useAuth } from '@/store/authStore';
-import { useAuthRedirect } from '@/hooks/useAuthRedirect';
 import EscrowVault from './EscrowVault';
 
 export default function Hero() {

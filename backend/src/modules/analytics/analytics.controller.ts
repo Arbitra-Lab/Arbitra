@@ -1,4 +1,4 @@
-import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Header, Query, UseGuards } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -11,6 +11,11 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { User, UserRole } from '../users/entities/user.entity';
 import { AnalyticsService } from './analytics.service';
+import { AdminAnalyticsService } from './admin-analytics.service';
+import {
+  AdminAnalyticsQueryDto,
+  AnalyticsSection,
+} from './dto/admin-analytics-query.dto';
 import { LandlordAnalyticsQueryDto } from './dto/landlord-analytics-query.dto';
 import { DisputeCohortQueryDto } from './dto/dispute-cohort-query.dto';
 import { DisputeType } from '../disputes/entities/dispute.entity';
@@ -20,7 +25,10 @@ import { DisputeType } from '../disputes/entities/dispute.entity';
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth('JWT-auth')
 export class AnalyticsController {
-  constructor(private readonly analyticsService: AnalyticsService) {}
+  constructor(
+    private readonly analyticsService: AnalyticsService,
+    private readonly adminAnalyticsService: AdminAnalyticsService,
+  ) {}
 
   @Get('landlord/dashboard')
   @ApiOperation({ summary: 'Get landlord property analytics dashboard data' })
@@ -48,9 +56,39 @@ export class AnalyticsController {
     );
   }
 
+  @Get('admin/dashboard')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  @ApiOperation({
+    summary: '[Admin] Get aggregated platform analytics for custom dashboards',
+  })
+  @ApiQuery({
+    name: 'sections',
+    required: false,
+    enum: AnalyticsSection,
+    isArray: true,
+    description: 'Dashboard sections to include (repeat the query parameter)',
+  })
+  getAdminDashboard(@Query() query: AdminAnalyticsQueryDto) {
+    return this.adminAnalyticsService.getDashboard(query);
+  }
+
+  @Get('admin/export')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  @Header('Content-Type', 'text/csv; charset=utf-8')
+  @Header(
+    'Content-Disposition',
+    'attachment; filename="arbitra-admin-analytics.csv"',
+  )
+  @ApiOperation({ summary: '[Admin] Export platform analytics as CSV' })
+  exportAdminAnalytics(@Query() query: AdminAnalyticsQueryDto) {
+    return this.adminAnalyticsService.exportCsv(query);
+  }
+
   @Get('disputes/cohorts')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
   @ApiOperation({
     summary: '[Admin] Get dispute-outcome cohort metrics',
     description:
@@ -91,6 +129,6 @@ export class AnalyticsController {
       'When true, recomputes cohort metrics from the earliest dispute in the database',
   })
   async getDisputeCohortMetrics(@Query() query: DisputeCohortQueryDto) {
-    return this.analyticsService.getDisputeCohortMetrics(query);
+    return this.adminAnalyticsService.getDisputeCohortMetrics(query);
   }
 }

@@ -28,7 +28,17 @@ fi
 
 ln -sf "$BACKUP_DIR/backup_${TIMESTAMP}.sql" "$BACKUP_DIR/latest_db_backup.sql"
 gzip "$BACKUP_DIR/backup_${TIMESTAMP}.sql"
+BACKUP_FILE="$BACKUP_DIR/backup_${TIMESTAMP}.sql.gz"
 echo "✓ Backup created: backup_${TIMESTAMP}.sql.gz"
+
+# Optional cross-region replication (issue #134: RPO 1h / RTO 4h DR target)
+if [ -n "${BACKUP_S3_BUCKET:-}" ]; then
+  aws s3 cp "$BACKUP_FILE" "s3://${BACKUP_S3_BUCKET}/full/backup_${TIMESTAMP}.sql.gz" --sse AES256
+  if [ -n "${BACKUP_REPLICA_S3_BUCKET:-}" ]; then
+    aws s3 cp "$BACKUP_FILE" "s3://${BACKUP_REPLICA_S3_BUCKET}/full/backup_${TIMESTAMP}.sql.gz"       --region "${BACKUP_REPLICA_REGION:-eu-west-1}" --sse AES256
+    echo "✓ Backup replicated to s3://${BACKUP_REPLICA_S3_BUCKET}/full/"
+  fi
+fi
 
 find "$BACKUP_DIR" -name "backup_*.sql.gz" -mtime +$RETENTION_DAYS -delete 2>/dev/null || true
 echo "✓ Backup completed successfully"

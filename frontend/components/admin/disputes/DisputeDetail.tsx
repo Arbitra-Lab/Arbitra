@@ -3,18 +3,24 @@
 import React, { useMemo, useState } from 'react';
 import {
   AlertCircle,
+  AlertTriangle,
   ArrowLeft,
   Building2,
   CheckCircle2,
   Clock,
+  FileText,
   Gavel,
   MessageSquare,
+  Scale,
   User,
   Users,
   XCircle,
 } from 'lucide-react';
 import { format } from 'date-fns';
-import type { AdminDisputeDetail } from '@/lib/admin-dispute-detail';
+import type {
+  AdminDisputeDetail,
+  AdminDisputeVote,
+} from '@/lib/admin-dispute-detail';
 import {
   statusLabel,
   timelineIconType,
@@ -68,17 +74,37 @@ export interface DisputeDetailProps {
     resolutionNotes: string;
     action: 'approve' | 'reject';
   }) => Promise<void>;
+  onSubmitAppeal?: (reason: string) => Promise<void>;
+  onCastVote?: (vote: {
+    arbiterName: string;
+    weight: number;
+    favor: 'landlord' | 'tenant';
+    comment?: string;
+  }) => Promise<void>;
   isSubmitting?: boolean;
+  isSubmittingAppeal?: boolean;
+  isSubmittingVote?: boolean;
 }
 
 export function DisputeDetail({
   dispute,
   onBack,
   onSubmitResolution,
+  onSubmitAppeal,
+  onCastVote,
   isSubmitting = false,
+  isSubmittingAppeal = false,
+  isSubmittingVote = false,
 }: DisputeDetailProps) {
   const [resolutionNotes, setResolutionNotes] = useState('');
+  const [appealReason, setAppealReason] = useState('');
+  const [voteArbiter, setVoteArbiter] = useState('');
+  const [voteWeight, setVoteWeight] = useState(1);
+  const [voteFavor, setVoteFavor] = useState<'landlord' | 'tenant'>('tenant');
+  const [voteComment, setVoteComment] = useState('');
   const [localError, setLocalError] = useState<string | null>(null);
+  const [appealError, setAppealError] = useState<string | null>(null);
+  const [voteError, setVoteError] = useState<string | null>(null);
 
   const canResolve = useMemo(() => {
     return dispute.status === 'OPEN' || dispute.status === 'UNDER_REVIEW';
@@ -91,6 +117,16 @@ export function DisputeDetail({
     );
   }, [dispute.timeline]);
 
+  const weightedTotals = useMemo(() => {
+    return (dispute.votes ?? []).reduce(
+      (totals, vote: AdminDisputeVote) => {
+        totals[vote.favor] += vote.weight;
+        return totals;
+      },
+      { landlord: 0, tenant: 0 },
+    );
+  }, [dispute.votes]);
+
   const handleSubmit = async (action: 'approve' | 'reject') => {
     setLocalError(null);
     if (!resolutionNotes.trim()) {
@@ -102,6 +138,35 @@ export function DisputeDetail({
       resolutionNotes: resolutionNotes.trim(),
       action,
     });
+  };
+
+  const handleVote = async () => {
+    setVoteError(null);
+    if (voteArbiter.trim().length < 2 || voteWeight < 1) {
+      setVoteError('Enter an arbiter name and a positive weight.');
+      return;
+    }
+    if (!onCastVote) return;
+    await onCastVote({
+      arbiterName: voteArbiter.trim(),
+      weight: voteWeight,
+      favor: voteFavor,
+      comment: voteComment.trim() || undefined,
+    });
+    setVoteArbiter('');
+    setVoteWeight(1);
+    setVoteComment('');
+  };
+
+  const handleAppeal = async () => {
+    setAppealError(null);
+    if (appealReason.trim().length < 10) {
+      setAppealError('Add at least 10 characters explaining the appeal.');
+      return;
+    }
+    if (!onSubmitAppeal) return;
+    await onSubmitAppeal(appealReason.trim());
+    setAppealReason('');
   };
 
   return (
@@ -237,6 +302,109 @@ export function DisputeDetail({
           </section>
 
           <section className="bg-slate-900/80 border border-slate-800 rounded-3xl p-6 shadow-xl">
+            <div className="flex items-center gap-2 mb-4 text-white font-semibold">
+              <Scale className="text-brand-accent" size={20} />
+              Weighted votes
+            </div>
+            <div className="mb-4 flex flex-wrap gap-3 text-xs">
+              <span className="rounded-lg border border-emerald-500/25 bg-emerald-500/10 px-3 py-1 text-emerald-200">
+                Landlord weight: {weightedTotals.landlord}
+              </span>
+              <span className="rounded-lg border border-violet-500/25 bg-violet-500/10 px-3 py-1 text-violet-200">
+                Tenant weight: {weightedTotals.tenant}
+              </span>
+            </div>
+            {(dispute.votes ?? []).length === 0 ? (
+              <p className="text-sm text-slate-400">
+                No arbiter votes have been recorded for this case yet.
+              </p>
+            ) : (
+              <ul className="space-y-3">
+                {dispute.votes?.map((vote) => (
+                  <li
+                    key={vote.id}
+                    className="rounded-2xl border border-white/10 bg-white/5 p-4"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <p className="text-sm font-medium text-white">
+                        {vote.arbiterName}
+                      </p>
+                      <DecisionBadge decision={vote.favor} />
+                    </div>
+                    <p className="mt-1 text-xs text-slate-400">
+                      Weight {vote.weight} ·{' '}
+                      {format(new Date(vote.votedAt), 'MMM d, yyyy HH:mm')}
+                    </p>
+                    {vote.comment && (
+                      <p className="mt-2 text-sm text-slate-300">
+                        {vote.comment}
+                      </p>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {onCastVote && (
+              <div className="mt-4 space-y-3 border-t border-slate-800 pt-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                  Record a weighted vote
+                </p>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                  <input
+                    aria-label="Arbiter name"
+                    value={voteArbiter}
+                    onChange={(event) => setVoteArbiter(event.target.value)}
+                    placeholder="Arbiter name"
+                    className="rounded-xl border border-white/10 bg-slate-950/60 px-3 py-2 text-sm text-white"
+                  />
+                  <input
+                    aria-label="Vote weight"
+                    type="number"
+                    min={1}
+                    max={10}
+                    value={voteWeight}
+                    onChange={(event) =>
+                      setVoteWeight(Number(event.target.value))
+                    }
+                    className="rounded-xl border border-white/10 bg-slate-950/60 px-3 py-2 text-sm text-white"
+                  />
+                  <select
+                    aria-label="Vote favor"
+                    value={voteFavor}
+                    onChange={(event) =>
+                      setVoteFavor(event.target.value as 'landlord' | 'tenant')
+                    }
+                    className="rounded-xl border border-white/10 bg-slate-950/60 px-3 py-2 text-sm text-white"
+                  >
+                    <option value="tenant">Favor tenant</option>
+                    <option value="landlord">Favor landlord</option>
+                  </select>
+                </div>
+                <input
+                  aria-label="Vote comment"
+                  value={voteComment}
+                  onChange={(event) => setVoteComment(event.target.value)}
+                  placeholder="Optional reasoning"
+                  className="w-full rounded-xl border border-white/10 bg-slate-950/60 px-3 py-2 text-sm text-white"
+                />
+                {voteError && (
+                  <p className="text-xs text-amber-300">{voteError}</p>
+                )}
+                <button
+                  type="button"
+                  disabled={isSubmittingVote}
+                  onClick={() => void handleVote()}
+                  className="inline-flex items-center gap-2 rounded-xl border border-brand-accent/30 bg-brand-accent/15 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-accent/25 disabled:opacity-50"
+                >
+                  <Scale size={16} />
+                  {isSubmittingVote ? 'Saving…' : 'Record vote'}
+                </button>
+              </div>
+            )}
+          </section>
+
+          <section className="bg-slate-900/80 border border-slate-800 rounded-3xl p-6 shadow-xl">
             <div className="flex items-center gap-2 mb-6 text-white font-semibold">
               <Clock className="text-brand-accent" size={20} />
               Timeline
@@ -301,6 +469,88 @@ export function DisputeDetail({
               </ul>
             </section>
           )}
+
+          <section className="bg-slate-900/80 border border-slate-800 rounded-3xl p-6 shadow-xl">
+            <div className="flex items-center gap-2 mb-4 text-white font-semibold">
+              <FileText className="text-amber-400" size={20} />
+              Appeals
+            </div>
+            {(dispute.appeals ?? []).length === 0 ? (
+              <p className="text-sm text-slate-400">
+                No appeals have been filed for this case.
+              </p>
+            ) : (
+              <ul className="space-y-3">
+                {dispute.appeals?.map((appeal) => (
+                  <li
+                    key={appeal.id}
+                    className="rounded-2xl border border-white/10 bg-white/5 p-4 space-y-2"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="text-xs font-semibold uppercase text-slate-400">
+                        {appeal.status}
+                      </span>
+                      <span className="text-xs text-slate-500">
+                        {format(
+                          new Date(appeal.createdAt),
+                          'MMM d, yyyy HH:mm',
+                        )}
+                      </span>
+                    </div>
+                    <p className="text-sm text-slate-300">{appeal.reason}</p>
+                    {appeal.resolution && (
+                      <p className="text-sm text-emerald-200">
+                        {appeal.resolution}
+                      </p>
+                    )}
+                    {appeal.decidedByName && (
+                      <p className="text-xs text-slate-500">
+                        {appeal.decidedByName}
+                        {appeal.decidedAt
+                          ? ` · ${format(new Date(appeal.decidedAt), 'MMM d, yyyy HH:mm')}`
+                          : ''}
+                      </p>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {onSubmitAppeal && (
+              <div className="mt-4 space-y-2 border-t border-slate-800 pt-4">
+                <label
+                  htmlFor="appeal-reason"
+                  className="text-xs font-semibold uppercase tracking-wide text-slate-400"
+                >
+                  Record an appeal
+                </label>
+                <textarea
+                  id="appeal-reason"
+                  value={appealReason}
+                  onChange={(event) => setAppealReason(event.target.value)}
+                  rows={3}
+                  maxLength={1000}
+                  placeholder="Explain why this decision should be reviewed…"
+                  className="w-full rounded-xl border border-white/10 bg-slate-950/60 px-4 py-3 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-brand-accent/50"
+                />
+                {appealError && (
+                  <p className="flex items-center gap-2 text-xs text-amber-300">
+                    <AlertTriangle size={14} />
+                    {appealError}
+                  </p>
+                )}
+                <button
+                  type="button"
+                  disabled={isSubmittingAppeal}
+                  onClick={() => void handleAppeal()}
+                  className="inline-flex items-center gap-2 rounded-xl border border-amber-400/30 bg-amber-500/15 px-4 py-2 text-sm font-semibold text-amber-100 hover:bg-amber-500/25 disabled:opacity-50"
+                >
+                  <FileText size={16} />
+                  {isSubmittingAppeal ? 'Submitting…' : 'Submit appeal'}
+                </button>
+              </div>
+            )}
+          </section>
 
           {canResolve && onSubmitResolution && (
             <section className="bg-gradient-to-br from-slate-900 to-brand-blue-dark/40 border border-brand-accent/20 rounded-3xl p-6 shadow-xl">

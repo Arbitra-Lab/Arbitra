@@ -19,9 +19,9 @@ export function UserManagementModal({
   isOpen,
   onClose,
   arbiterAddress,
-  currentUserId,
+  currentUserId: _currentUserId,
   onUserSelected,
-  isLoading = false,
+  isLoading: _isLoading = false,
 }: UserManagementModalProps) {
   const [search, setSearch] = useState('');
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);

@@ -1,0 +1,93 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: arbitra-db-backup
+  namespace: production
+  labels:
+    app: arbitra-backend
+    component: backup
+spec:
+  schedule: "0 2 * * *" # Daily at 02:00 UTC
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 7
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        metadata:
+          labels:
+            app: arbitra-backend
+            component: backup
+        spec:
+          restartPolicy: OnFailure
+          serviceAccountName: arbitra-backend
+          containers:
+            - name: db-backup
+              image: postgres:16-alpine
+              imagePullPolicy: IfNotPresent
+              command:
+                - /bin/sh
+                - -ec
+                - |
+                  apk add --no-cache aws-cli gzip
+                  TS="$(date +%Y%m%d_%H%M%S)"
+                  FILE="/tmp/arbitra_backup_${TS}.sql.gz"
+                  pg_dump "$DATABASE_URL" | gzip > "$FILE"
+                  aws s3 cp "$FILE" "s3://${BACKUP_S3_BUCKET}/full/arbitra_backup_${TS}.sql.gz" --sse AES256
+                  if [ -n "${BACKUP_REPLICA_S3_BUCKET:-}" ]; then
+                    aws s3 cp "$FILE" "s3://${BACKUP_REPLICA_S3_BUCKET}/full/arbitra_backup_${TS}.sql.gz" --region "${BACKUP_REPLICA_REGION:-eu-west-1}" --sse AES256
+                  fi
+                  # Retention: keep latest 30 days in primary/replica
+                  aws s3 ls "s3://${BACKUP_S3_BUCKET}/full/" | awk '{print $4}' | while read -r f; do
+                    [ -z "$f" ] && continue
+                    d=$(echo "$f" | grep -oE '[0-9]{8}' | head -1)
+                    [ -z "$d" ] && continue
+                    age=$(( ($(date +%s) - $(date -d "$d" +%s)) / 86400 ))
+                    if [ "$age" -gt "${BACKUP_RETENTION_DAYS:-30}" ]; then
+                      aws s3 rm "s3://${BACKUP_S3_BUCKET}/full/$f"
+                      if [ -n "${BACKUP_REPLICA_S3_BUCKET:-}" ]; then
+                        aws s3 rm "s3://${BACKUP_REPLICA_S3_BUCKET}/full/$f" --region "${BACKUP_REPLICA_REGION:-eu-west-1}"
+                      fi
+                    fi
+                  done
+              env:
+                - name: DATABASE_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: arbitra-backend-secrets
+                      key: database_url
+                - name: BACKUP_S3_BUCKET
+                  valueFrom:
+                    configMapKeyRef:
+                      name: arbitra-backend-config
+                      key: backup_s3_bucket
+                - name: BACKUP_REPLICA_S3_BUCKET
+                  valueFrom:
+                    configMapKeyRef:
+                      name: arbitra-backend-config
+                      key: backup_replica_s3_bucket
+                      optional: true
+                - name: BACKUP_REPLICA_REGION
+                  valueFrom:
+                    configMapKeyRef:
+                      name: arbitra-backend-config
+                      key: backup_replica_region
+                      optional: true
+                - name: BACKUP_RETENTION_DAYS
+                  value: "30"
+                - name: AWS_REGION
+                  valueFrom:
+                    configMapKeyRef:
+                      name: arbitra-backend-config
+                      key: aws_region
+                - name: AWS_ACCESS_KEY_ID
+                  valueFrom:
+                    secretKeyRef:
+                      name: arbitra-backend-secrets
+                      key: aws_access_key_id
+                - name: AWS_SECRET_ACCESS_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: arbitra-backend-secrets
+                      key: aws_secret_access_key

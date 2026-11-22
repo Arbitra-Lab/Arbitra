@@ -3,18 +3,21 @@
  * Maps user roles to their respective dashboard routes
  */
 
-export type UserRole = 'admin' | 'user';
+export type UserRole = 'admin' | 'super_admin' | 'support' | 'auditor' | 'user';
 
 /**
  * Dashboard route mapping for each role
  */
 export const DASHBOARD_ROUTES: Record<UserRole, string> = {
   admin: '/admin',
+  super_admin: '/admin',
+  support: '/admin',
+  auditor: '/admin',
   user: '/user',
 };
 
 /**
- * Get the dashboard route for a given user role
+ * Get the dashboard route for a given role
  */
 export function getDashboardRoute(role: UserRole | null | undefined): string {
   if (!role) {
@@ -25,7 +28,7 @@ export function getDashboardRoute(role: UserRole | null | undefined): string {
 }
 
 /**
- * Navigate to the appropriate dashboard based on user role
+ * Navigate to the appropriate dashboard based on role
  */
 export function navigateToDashboard(role: UserRole | null | undefined): void {
   const route = getDashboardRoute(role);

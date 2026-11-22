@@ -209,6 +209,18 @@ groups:
           description: 'Rate limit violations: {{ $value }} per second'
           runbook_url: 'https://wiki.arbitra.app/runbooks/rate-limit-exceeded'
 
+      - alert: WAFBlockedRequestsSpike
+        expr: |
+          sum(rate(nginx_http_requests_total{status="403"}[5m])) > 5
+        for: 5m
+        labels:
+          severity: warning
+          component: security
+        annotations:
+          summary: 'WAF/gateway blocked request spike'
+          description: 'Blocked requests are above threshold. Inspect /var/log/nginx/arbitra-waf-blocked.log and gateway rate-limit logs.'
+          runbook_url: 'https://wiki.arbitra.app/runbooks/waf-blocks'
+
       - alert: WebhookDeliveryFailure
         expr: |
           sum(rate(webhook_delivery_failures_total[5m])) > 0.1

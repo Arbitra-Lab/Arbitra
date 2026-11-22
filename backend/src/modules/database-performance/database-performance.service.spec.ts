@@ -38,7 +38,7 @@ describe('DatabasePerformanceService', () => {
     expect(result).toEqual(mockResult);
     expect(mockDataSource.query).toHaveBeenCalledWith(
       expect.stringContaining('pg_stat_statements'),
-      [10],
+      [100],
     );
   });
 
@@ -51,14 +51,29 @@ describe('DatabasePerformanceService', () => {
     expect(result).toEqual([]);
   });
 
-  it('should get index usage', async () => {
-    const mockResult = [{ indexname: 'idx_1', index_scans: 5 }];
-    (mockDataSource.query as jest.Mock).mockResolvedValue(mockResult);
+  it('should recommend indexes from slow queries', () => {
+    const recs = service.recommendIndexesFromSlowQueries([
+      {
+        query:
+          'SELECT * FROM payments WHERE user_id = $1 ORDER BY created_at DESC',
+        mean_exec_time: 250,
+        calls: 30,
+      },
+    ] as any);
+    expect(recs.length).toBeGreaterThan(0);
+    expect(recs[0].sql).toContain('CREATE INDEX');
+  });
 
-    const result = await service.getIndexUsage();
-    expect(result).toEqual(mockResult);
-    expect(mockDataSource.query).toHaveBeenCalledWith(
-      expect.stringContaining('pg_stat_user_indexes'),
-    );
+  it('should run nightly optimization and store report', async () => {
+    (mockDataSource.query as jest.Mock).mockResolvedValueOnce([
+      {
+        query: 'SELECT * FROM payments WHERE user_id = $1',
+        mean_exec_time: 120,
+        calls: 10,
+      },
+    ]);
+    const report = await service.runNightlyIndexOptimization();
+    expect(report.analyzedQueries).toBe(1);
+    expect(service.getLastOptimizationReport()).toBeTruthy();
   });
 });

@@ -1,14 +1,55 @@
 @import 'tailwindcss';
 
-:root {
+/* #27 — theme tokens. Dark remains the default so existing screens are
+   unchanged until a user opts into light. The pre-paint script in layout.tsx
+   sets data-theme before first paint. */
+:root,
+[data-theme='dark'] {
   --background: #0b1f1d;
   --foreground: #eef7f5;
+  --surface: #123330;
+  --surface-raised: #1b3d38;
+  --border-subtle: rgba(238, 247, 245, 0.1);
+  --text-muted: #a9c5bf;
+  --chart-1: #2dd4bf;
+  --chart-2: #ff6b5e;
+  --chart-3: #ff8f6b;
+  --chart-4: #99e6da;
+  --focus-ring: #ff8f6b;
+  --glass-bg: rgba(238, 247, 245, 0.95);
+  --scrollbar-thumb: rgba(238, 247, 245, 0.1);
+  --scrollbar-thumb-hover: rgba(238, 247, 245, 0.2);
+}
+
+[data-theme='light'] {
+  --background: #f4f8f7;
+  --foreground: #0b1f1d;
+  --surface: #ffffff;
+  --surface-raised: #e8f1ef;
+  --border-subtle: rgba(11, 31, 29, 0.16);
+  --text-muted: #4a635e;
+  --chart-1: #0f766e;
+  --chart-2: #c2410c;
+  --chart-3: #b45309;
+  --chart-4: #1d4ed8;
+  --focus-ring: #9a3412;
+  --glass-bg: rgba(255, 255, 255, 0.92);
+  --scrollbar-thumb: rgba(11, 31, 29, 0.2);
+  --scrollbar-thumb-hover: rgba(11, 31, 29, 0.35);
 }
 
 @theme inline {
   /* Background & Foreground */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-border-subtle: var(--border-subtle);
+  --color-text-muted: var(--text-muted);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
 
   /* Brand Colors — deep teal base, coral verdict accent */
   --color-brand-blue: #ff6b5e;
@@ -42,7 +83,7 @@
   }
 
   .glass {
-    background: rgba(238, 247, 245, 0.95);
+    background: var(--glass-bg);
     backdrop-filter: blur(8px);
     border-bottom: 1px solid rgba(11, 31, 29, 0.1);
     box-shadow:
@@ -94,12 +135,12 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background: rgba(238, 247, 245, 0.1);
+    background: var(--scrollbar-thumb);
     border-radius: 4px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: rgba(238, 247, 245, 0.2);
+    background: var(--scrollbar-thumb-hover);
   }
 
   .animate-slide-in {
@@ -148,10 +189,22 @@
   }
 }
 
+.app-shell {
+  background: linear-gradient(
+    135deg,
+    var(--surface-raised) 0%,
+    var(--surface) 50%,
+    var(--background) 100%
+  );
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
+  transition:
+    background-color 180ms ease,
+    color 180ms ease;
   @apply antialiased;
   overflow-x: hidden;
   -webkit-tap-highlight-color: transparent;
@@ -159,7 +212,7 @@ body {
 }
 
 :focus-visible {
-  outline: 3px solid #ff8f6b;
+  outline: 3px solid var(--focus-ring);
   outline-offset: 3px;
 }
 
@@ -169,8 +222,8 @@ body {
   top: -100%;
   z-index: 999;
   border-radius: 0.5rem;
-  background: #eef7f5;
-  color: #0b1f1d;
+  background: var(--foreground);
+  color: var(--background);
   padding: 0.5rem 0.75rem;
   font-weight: 600;
 }
