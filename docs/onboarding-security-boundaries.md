@@ -1,0 +1,1 @@
+# Onboarding and security boundaries`n`nDeveloper onboarding requires reproducible setup and code-tour guidance; architecture decisions need ADRs; production origins must be constrained; and secrets require local and CI scanning.
