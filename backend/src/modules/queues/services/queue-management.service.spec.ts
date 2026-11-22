@@ -261,6 +261,30 @@ describe('QueueManagementService', () => {
     });
   });
 
+  describe('pauseAllQueues', () => {
+    it('should pause all queues during shutdown', async () => {
+      await service.pauseAllQueues();
+
+      expect(mockEmailQueue.pause).toHaveBeenCalledWith(true);
+      expect(mockDocumentsQueue.pause).toHaveBeenCalledWith(true);
+      expect(mockBlockchainQueue.pause).toHaveBeenCalledWith(true);
+      expect(mockDataSyncQueue.pause).toHaveBeenCalledWith(true);
+    });
+  });
+
+  describe('waitForActiveJobs', () => {
+    it('should return when no active jobs remain', async () => {
+      mockEmailQueue.getActiveCount = jest.fn().mockResolvedValue(0);
+      mockDocumentsQueue.getActiveCount = jest.fn().mockResolvedValue(0);
+      mockBlockchainQueue.getActiveCount = jest.fn().mockResolvedValue(0);
+      mockDataSyncQueue.getActiveCount = jest.fn().mockResolvedValue(0);
+
+      await service.waitForActiveJobs(1000);
+
+      expect(mockEmailQueue.getActiveCount).toHaveBeenCalled();
+    });
+  });
+
   describe('clearQueue', () => {
     it('should clear a queue', async () => {
       await service.clearQueue('email');

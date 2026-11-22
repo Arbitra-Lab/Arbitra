@@ -6,6 +6,10 @@ export interface GracefulShutdownOptions {
   /** Max time to wait for in-flight requests before forcing exit */
   timeoutMs?: number;
   logger?: Logger;
+  /** Mark application unhealthy as soon as shutdown begins. */
+  onShutdownStart?: () => void | Promise<void>;
+  /** Drain background work before closing the Nest application. */
+  beforeAppClose?: () => void | Promise<void>;
 }
 
 /**
@@ -37,6 +41,8 @@ export function registerGracefulShutdown(
     forceExitTimer.unref();
 
     try {
+      await options.onShutdownStart?.();
+      await options.beforeAppClose?.();
       await app.close();
       clearTimeout(forceExitTimer);
       logger.log('Application closed successfully');

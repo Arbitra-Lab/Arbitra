@@ -27,6 +27,8 @@ import { RateLimitInterceptor } from './common/interceptors/rate-limit.intercept
 import { ConfigService } from '@nestjs/config';
 import { LoggerService } from './common/services/logger.service';
 import { registerGracefulShutdown } from './config/graceful-shutdown';
+import { HealthService } from './health/health.service';
+import { QueueManagementService } from './modules/queues/services/queue-management.service';
 
 const bootstrapLogger = new Logger('Bootstrap');
 
@@ -210,14 +212,11 @@ async function bootstrap() {
     customSiteTitle: 'Arbitra API Docs',
   });
 
-  registerGracefulShutdown(app, { logger: bootstrapLogger });
-
   const port = process.env.PORT ?? 5000;
   const server = await app.listen(port);
   bootstrapLogger.log(`Application started on port ${port}`);
 
-  // ==================== GRACEFUL SHUTDOWN ====================
-  // Track active connections
+  // Track active connections so shutdown can drain in-flight requests.
   server.on('connection', (conn) => {
     activeConnections++;
     conn.on('close', () => {
@@ -225,87 +224,97 @@ async function bootstrap() {
     });
   });
 
-  // Handle graceful shutdown signals
-  const gracefulShutdown = async (signal: string) => {
-    if (isShuttingDown) {
-      bootstrapLogger.warn(`Shutdown already in progress, ignoring ${signal}`);
-      return;
-    }
+  const shutdownTimeoutMs = parseInt(
+    process.env.GRACEFUL_SHUTDOWN_TIMEOUT || '30000',
+    10,
+  );
 
-    isShuttingDown = true;
-    bootstrapLogger.log(`Received ${signal}, starting graceful shutdown...`);
-
-    // Stop accepting new connections
-    server.close(async () => {
-      bootstrapLogger.log('HTTP server closed');
+  const closeHttpServer = async () => {
+    await new Promise<void>((resolve, reject) => {
+      server.close((error?: Error) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+        resolve();
+      });
     });
+    bootstrapLogger.log('HTTP server closed');
+  };
 
-    // Wait for active connections to close (with timeout)
-    const shutdownTimeout = parseInt(
-      process.env.GRACEFUL_SHUTDOWN_TIMEOUT || '30000',
-      10,
-    );
+  const waitForActiveConnections = async () => {
     const startTime = Date.now();
 
     while (activeConnections > 0) {
       const elapsed = Date.now() - startTime;
-      if (elapsed > shutdownTimeout) {
+      if (elapsed > shutdownTimeoutMs) {
         bootstrapLogger.warn(
           `Graceful shutdown timeout exceeded. Forcing exit with ${activeConnections} active connections.`,
         );
-        break;
+        return;
       }
+
       bootstrapLogger.log(
         `Waiting for ${activeConnections} active connections to close...`,
       );
       await new Promise((resolve) => setTimeout(resolve, 1000));
     }
-
-    // Close database connections
-    try {
-      const dataSource = app.get('DataSource');
-      if (dataSource?.isInitialized) {
-        bootstrapLogger.log('Closing database connections...');
-        await dataSource.destroy();
-        bootstrapLogger.log('Database connections closed');
-      }
-    } catch (error) {
-      bootstrapLogger.error('Error closing database connections:', error);
-    }
-
-    // Close Redis connections
-    try {
-      const redisService = app.get('RedisService');
-      if (redisService?.disconnect) {
-        bootstrapLogger.log('Closing Redis connections...');
-        await redisService.disconnect();
-        bootstrapLogger.log('Redis connections closed');
-      }
-    } catch (error) {
-      bootstrapLogger.error('Error closing Redis connections:', error);
-    }
-
-    // Close NestJS application
-    await app.close();
-    bootstrapLogger.log('Application closed successfully');
-    process.exit(0);
   };
 
-  // Register signal handlers
-  process.on('SIGTERM', () => {
-    void gracefulShutdown('SIGTERM');
-  });
-  process.on('SIGINT', () => {
-    void gracefulShutdown('SIGINT');
+  const drainQueues = async () => {
+    try {
+      const queueManagementService = app.get(QueueManagementService, {
+        strict: false,
+      });
+
+      if (queueManagementService?.pauseAllQueues) {
+        bootstrapLogger.log('Pausing Bull queues...');
+        await queueManagementService.pauseAllQueues();
+      }
+
+      if (queueManagementService?.waitForActiveJobs) {
+        bootstrapLogger.log('Draining active Bull jobs...');
+        await queueManagementService.waitForActiveJobs(shutdownTimeoutMs);
+      }
+    } catch (error) {
+      bootstrapLogger.warn(
+        `Queue drain skipped: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  };
+
+  registerGracefulShutdown(app, {
+    logger: bootstrapLogger,
+    timeoutMs: shutdownTimeoutMs,
+    onShutdownStart: () => {
+      if (isShuttingDown) {
+        return;
+      }
+      isShuttingDown = true;
+      bootstrapLogger.log('Marking application as shutting down');
+
+      try {
+        const healthService = app.get(HealthService, { strict: false });
+        healthService?.setShuttingDown?.(true);
+      } catch (error) {
+        bootstrapLogger.warn(
+          `Unable to mark health service as shutting down: ${
+            error instanceof Error ? error.message : String(error)
+          }`,
+        );
+      }
+    },
+    beforeAppClose: async () => {
+      await closeHttpServer();
+      await waitForActiveConnections();
+      await drainQueues();
+    },
   });
 
-  // Handle uncaught exceptions
   process.on('uncaughtException', (error) => {
     bootstrapLogger.error('Uncaught Exception:', error);
-    gracefulShutdown('uncaughtException');
   });
 
-  // Handle unhandled promise rejections
   process.on('unhandledRejection', (reason, promise) => {
     bootstrapLogger.error(
       'Unhandled Rejection at:',
@@ -313,7 +322,6 @@ async function bootstrap() {
       'reason:',
       reason,
     );
-    gracefulShutdown('unhandledRejection');
   });
 }
 void bootstrap();

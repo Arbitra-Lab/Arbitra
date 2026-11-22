@@ -29,6 +29,12 @@ export class HealthController {
   @ApiResponse({ status: 503, description: 'Service unhealthy' })
   async check(@Res() res: Response) {
     try {
+      if (this.healthService.isShuttingDown()) {
+        return res
+          .status(HttpStatus.SERVICE_UNAVAILABLE)
+          .json(this.healthService.getShutdownResult());
+      }
+
       const result = await this.health.check([
         () => this.databaseHealthIndicator.isHealthy('database'),
         () => this.stellarHealthIndicator.isHealthy('stellar'),
@@ -36,13 +42,16 @@ export class HealthController {
       ]);
 
       const enhancedResult = this.healthService.enhanceHealthResult(result);
-
-      // Determine HTTP status based on overall health
       const status = this.determineHttpStatus(enhancedResult.status);
 
       return res.status(status).json(enhancedResult);
     } catch (error) {
-      // Handle partial failures with graceful degradation
+      if (this.healthService.isShuttingDown()) {
+        return res
+          .status(HttpStatus.SERVICE_UNAVAILABLE)
+          .json(this.healthService.getShutdownResult());
+      }
+
       const degradedResult = this.healthService.handlePartialFailure(error);
       const status = this.determineHttpStatus(degradedResult.status);
 
@@ -60,6 +69,12 @@ export class HealthController {
   @ApiResponse({ status: 503, description: 'Service unhealthy' })
   async detailedCheck(@Res() res: Response) {
     try {
+      if (this.healthService.isShuttingDown()) {
+        return res
+          .status(HttpStatus.SERVICE_UNAVAILABLE)
+          .json(this.healthService.getShutdownResult(true));
+      }
+
       const result = await this.health.check([
         () => this.databaseHealthIndicator.isHealthy('database'),
         () => this.stellarHealthIndicator.isHealthy('stellar'),
@@ -74,6 +89,12 @@ export class HealthController {
 
       return res.status(status).json(detailedResult);
     } catch (error) {
+      if (this.healthService.isShuttingDown()) {
+        return res
+          .status(HttpStatus.SERVICE_UNAVAILABLE)
+          .json(this.healthService.getShutdownResult(true));
+      }
+
       const degradedResult = this.healthService.handlePartialFailure(
         error,
         true,

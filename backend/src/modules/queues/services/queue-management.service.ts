@@ -135,6 +135,55 @@ export class QueueManagementService {
   }
 
   /**
+   * Pause all worker queues so no new jobs are picked up during shutdown.
+   */
+  async pauseAllQueues(): Promise<void> {
+    const queues = ['email', 'documents', 'blockchain', 'data-sync'];
+    await Promise.all(
+      queues.map(async (queueName) => {
+        const queue = this.getQueue(queueName);
+        if (typeof queue.pause === 'function') {
+          await queue.pause(true);
+        }
+      }),
+    );
+    this.logger.log('All queues paused');
+  }
+
+  /**
+   * Wait for active jobs to finish before application shutdown.
+   */
+  async waitForActiveJobs(timeoutMs = 30_000): Promise<void> {
+    const queues = ['email', 'documents', 'blockchain', 'data-sync'];
+    const deadline = Date.now() + timeoutMs;
+
+    while (Date.now() < deadline) {
+      const activeCounts = await Promise.all(
+        queues.map(async (queueName) => {
+          const queue = this.getQueue(queueName);
+          if (typeof queue.getActiveCount === 'function') {
+            return queue.getActiveCount();
+          }
+          const counts = await queue.getJobCounts();
+          return counts.active ?? 0;
+        }),
+      );
+
+      const totalActive = activeCounts.reduce((sum, count) => sum + count, 0);
+      if (totalActive === 0) {
+        this.logger.log('All active queue jobs drained');
+        return;
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 500));
+    }
+
+    this.logger.warn(
+      `Timed out waiting for active queue jobs to drain after ${timeoutMs}ms`,
+    );
+  }
+
+  /**
    * Pause queue
    */
   async pauseQueue(queueName: string): Promise<void> {

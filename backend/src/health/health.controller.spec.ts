@@ -32,6 +32,8 @@ describe('HealthController', () => {
           useValue: {
             enhanceHealthResult: jest.fn(),
             handlePartialFailure: jest.fn(),
+            isShuttingDown: jest.fn().mockReturnValue(false),
+            getShutdownResult: jest.fn(),
           },
         },
         {
@@ -151,6 +153,27 @@ describe('HealthController', () => {
 
       expect(mockResponse.status).toHaveBeenCalledWith(503);
       expect(mockResponse.json).toHaveBeenCalledWith(mockFailureResult);
+    });
+
+    it('should return 503 when shutdown has started', async () => {
+      const shutdownResult: EnhancedHealthResult = {
+        status: 'error',
+        timestamp: '2024-01-15T10:30:00Z',
+        version: '1.0.0',
+        uptime: 3600,
+        services: {
+          application: { status: 'error', message: 'Application is shutting down' },
+        },
+      };
+
+      jest.spyOn(healthService, 'isShuttingDown').mockReturnValue(true);
+      jest.spyOn(healthService, 'getShutdownResult').mockReturnValue(shutdownResult);
+
+      await controller.check(mockResponse as Response);
+
+      expect(healthCheckService.check).not.toHaveBeenCalled();
+      expect(mockResponse.status).toHaveBeenCalledWith(503);
+      expect(mockResponse.json).toHaveBeenCalledWith(shutdownResult);
     });
   });
 
