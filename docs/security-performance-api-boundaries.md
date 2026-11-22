@@ -1,0 +1,1 @@
+# Security, performance, and API boundaries`n`nThe project needs repeatable performance diagnosis, secure-coding guidance, endpoint examples and recovery paths, and dependency vulnerability scanning with prioritized remediation.
