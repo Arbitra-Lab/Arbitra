@@ -7,6 +7,7 @@ import {
   registerGracefulShutdown,
   GracefulShutdownOptions,
 } from '../src/config/graceful-shutdown';
+import { ShutdownState } from '../src/config/shutdown-state';
 
 describe('Graceful Shutdown Integration (e2e)', () => {
   describe('Shutdown Signal Handling', () => {
@@ -32,24 +33,29 @@ describe('Graceful Shutdown Integration (e2e)', () => {
     });
 
     it('registerGracefulShutdown returns a callable shutdown function', () => {
-      const shutdown = registerGracefulShutdown(app);
+      const shutdown = registerGracefulShutdown(app, {
+        state: app.get(ShutdownState),
+      });
       expect(typeof shutdown).toBe('function');
     });
 
     it('registers a SIGTERM listener on the process', () => {
       const listenersBefore = process.listenerCount('SIGTERM');
-      registerGracefulShutdown(app);
+      registerGracefulShutdown(app, { state: app.get(ShutdownState) });
       expect(process.listenerCount('SIGTERM')).toBeGreaterThan(listenersBefore);
     });
 
     it('registers a SIGINT listener on the process', () => {
       const listenersBefore = process.listenerCount('SIGINT');
-      registerGracefulShutdown(app);
+      registerGracefulShutdown(app, { state: app.get(ShutdownState) });
       expect(process.listenerCount('SIGINT')).toBeGreaterThan(listenersBefore);
     });
 
     it('accepts custom timeout via options', () => {
-      const options: GracefulShutdownOptions = { timeoutMs: 5000 };
+      const options: GracefulShutdownOptions = {
+        timeoutMs: 5000,
+        state: app.get(ShutdownState),
+      };
       const shutdown = registerGracefulShutdown(app, options);
       expect(typeof shutdown).toBe('function');
     });
@@ -57,7 +63,10 @@ describe('Graceful Shutdown Integration (e2e)', () => {
     it('accepts a custom logger via options', () => {
       const { Logger } = require('@nestjs/common');
       const logger = new Logger('TestShutdown');
-      const options: GracefulShutdownOptions = { logger };
+      const options: GracefulShutdownOptions = {
+        logger,
+        state: app.get(ShutdownState),
+      };
       const shutdown = registerGracefulShutdown(app, options);
       expect(typeof shutdown).toBe('function');
     });
@@ -174,7 +183,10 @@ describe('Graceful Shutdown Integration (e2e)', () => {
       process.removeAllListeners('SIGTERM');
       process.removeAllListeners('SIGINT');
 
-      const shutdown = registerGracefulShutdown(testApp, { timeoutMs: 5000 });
+      const shutdown = registerGracefulShutdown(testApp, {
+        timeoutMs: 5000,
+        state: testApp.get(ShutdownState),
+      });
 
       // Spy on process.exit to prevent actual exit during tests
       const exitSpy = jest
@@ -201,7 +213,10 @@ describe('Graceful Shutdown Integration (e2e)', () => {
       process.removeAllListeners('SIGTERM');
       process.removeAllListeners('SIGINT');
 
-      const shutdown = registerGracefulShutdown(testApp, { timeoutMs: 5000 });
+      const shutdown = registerGracefulShutdown(testApp, {
+        timeoutMs: 5000,
+        state: testApp.get(ShutdownState),
+      });
 
       const exitSpy = jest
         .spyOn(process, 'exit')
@@ -243,6 +258,7 @@ describe('Graceful Shutdown Integration (e2e)', () => {
 
       const shutdown = registerGracefulShutdown(testApp, {
         timeoutMs: 100,
+        state: testApp.get(ShutdownState),
       });
 
       await shutdown('SIGTERM');
@@ -275,6 +291,7 @@ describe('Graceful Shutdown Integration (e2e)', () => {
 
       const shutdown = registerGracefulShutdown(testApp, {
         timeoutMs: 30000,
+        state: testApp.get(ShutdownState),
       });
 
       const start = Date.now();

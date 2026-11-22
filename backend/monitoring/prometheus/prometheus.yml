@@ -9,10 +9,22 @@ alerting:
             - alertmanager:9093
 
 rule_files:
-  - "alerts.yml"
+  - 'alerts.yml'
+  - 'redis-sentinel-alerts.yml'
 
 scrape_configs:
   - job_name: 'arbitra-backend'
     static_configs:
       - targets: ['host.docker.internal:3000']
     metrics_path: '/metrics'
+
+  - job_name: 'redis-node'
+    static_configs:
+      - targets: ['redis-master:9121', 'redis-replica:9121']
+
+  - job_name: 'redis-sentinel'
+    static_configs:
+      - targets:
+          - 'sentinel-1:9121'
+          - 'sentinel-2:9121'
+          - 'sentinel-3:9121'
