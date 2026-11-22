@@ -19,6 +19,7 @@ import { UsersModule } from './modules/users/users.module';
 import { PropertiesModule } from './modules/properties/properties.module';
 import { StellarModule } from './modules/stellar/stellar.module';
 import { DisputesModule } from './modules/disputes/disputes.module';
+import { GovernanceModule } from './modules/governance/governance.module';
 import { MonitoringModule } from './modules/monitoring/monitoring.module';
 import { StatusModule } from './modules/status/status.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
@@ -189,6 +190,7 @@ import { TimeoutInterceptor } from './common/interceptors/timeout.interceptor';
     PropertiesModule,
     StellarModule,
     DisputesModule,
+    GovernanceModule,
     MonitoringModule,
     StatusModule,
     // Load HealthModule only when not generating OpenAPI (avoids loading broken @nestjs/terminus in script)
