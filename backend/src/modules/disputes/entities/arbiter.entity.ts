@@ -78,6 +78,18 @@ export class Arbiter {
   @Column({ name: 'expertise_tags', type: 'jsonb', nullable: true })
   expertiseTags: string[] | null;
 
+  /** Jurisdictions this arbiter is qualified to preside over (#23). */
+  @Column({ name: 'jurisdictions', type: 'jsonb', nullable: true })
+  jurisdictions: string[] | null;
+
+  /** ISO language codes the arbiter can work in (#23). */
+  @Column({ name: 'languages', type: 'jsonb', nullable: true })
+  languages: string[] | null;
+
+  /** Mean resolution time in hours; null means no history yet (#23). */
+  @Column({ name: 'average_resolution_hours', type: 'int', nullable: true })
+  averageResolutionHours: number | null;
+
   /**
    * User IDs this arbiter has declared a conflict of interest with
    * (e.g. prior representation, personal relationship). Assignment must

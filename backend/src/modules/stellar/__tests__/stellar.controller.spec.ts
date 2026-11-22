@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { StellarController } from '../controllers/stellar.controller';
 import { StellarService } from '../services/stellar.service';
 import { EscrowContractService } from '../services/escrow-contract.service';
+import { GenericEscrowService } from '../services/generic-escrow.service';
 import { StellarAccountType } from '../entities/stellar-account.entity';
 import {
   TransactionStatus,
@@ -57,6 +58,10 @@ describe('StellarController', () => {
         {
           provide: EscrowContractService,
           useValue: mockEscrowContractService,
+        },
+        {
+          provide: GenericEscrowService,
+          useValue: { create: jest.fn(), describeAsset: jest.fn() },
         },
       ],
     }).compile();

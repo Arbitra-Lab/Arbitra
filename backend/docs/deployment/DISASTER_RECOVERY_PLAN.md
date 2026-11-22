@@ -94,10 +94,18 @@ This plan applies to:
 
 ### 6.1 Database (PostgreSQL / Neon)
 
-- **Automated backups:** Neon provides continuous WAL archiving with point-in-time recovery (PITR) up to 7 days
-- **Manual snapshots:** Taken before every production deployment via `pg_dump`
-- **Snapshot storage:** Encrypted and stored in S3 (`s3://arbitra-backups/db/`)
-- **Retention:** 7 daily, 4 weekly, 12 monthly snapshots
+- **Automated backups:** Daily full backups at 02:00 UTC via `backend/k8s/backup-cronjob.yaml` and `backend/scripts/backup-db.sh`.
+- **Retention:** Latest 30 daily backups retained; older daily backups pruned automatically.
+- **Cross-region replication:** Every daily backup is replicated to a separate-region S3 bucket (`BACKUP_REPLICA_S3_BUCKET`, default `eu-west-1`) for regional failure resilience.
+- **WAL/PITR:** Neon provides continuous WAL archiving with point-in-time recovery (PITR) up to 7 days; managed PITR is preferred when available.
+- **Manual snapshots:** Taken before every production deployment via `pg_dump`.
+- **Snapshot storage:** Encrypted and stored in S3 (`s3://arbitra-backups/db/`).
+
+**Restore command:**
+
+```bash
+pg_restore --clean --no-acl --no-owner   -d $DATABASE_URL   backups/arbitra_$(date +%Y%m%d).dump
+```
 
 **Restore command:**
 

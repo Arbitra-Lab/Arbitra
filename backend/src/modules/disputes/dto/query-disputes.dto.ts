@@ -4,9 +4,12 @@ import {
   IsString,
   IsInt,
   Min,
+  Max,
   MaxLength,
   IsArray,
   IsUUID,
+  IsNumber,
+  IsDateString,
 } from 'class-validator';
 import { DisputeStatus, DisputeType } from '../entities/dispute.entity';
 import { Type } from 'class-transformer';
@@ -55,4 +58,44 @@ export class QueryDisputesDto {
   @IsArray()
   @IsUUID('all', { each: true })
   disputeIds?: string[];
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  q?: string;
+
+  @IsOptional()
+  @IsString()
+  @IsUUID()
+  arbiterId?: string;
+
+  @IsOptional()
+  @IsString()
+  @IsUUID()
+  partyId?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  minAmount?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  maxAmount?: number;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  jurisdiction?: string;
+
+  @IsOptional()
+  @IsDateString()
+  fromDate?: string;
+
+  @IsOptional()
+  @IsDateString()
+  toDate?: string;
 }

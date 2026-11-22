@@ -7,6 +7,7 @@ import {
 import { Response } from 'express';
 import { HealthController } from './health.controller';
 import { HealthService, EnhancedHealthResult } from './health.service';
+import { ShutdownState } from '../config/shutdown-state';
 import { DatabaseHealthIndicator } from './indicators/database.indicator';
 import { StellarHealthIndicator } from './indicators/stellar.indicator';
 import { MemoryHealthIndicator } from './indicators/memory.indicator';
@@ -15,6 +16,7 @@ describe('HealthController', () => {
   let controller: HealthController;
   let healthCheckService: HealthCheckService;
   let healthService: HealthService;
+  let shutdownState: ShutdownState;
   let mockResponse: Partial<Response>;
 
   beforeEach(async () => {
@@ -34,7 +36,12 @@ describe('HealthController', () => {
             handlePartialFailure: jest.fn(),
             isShuttingDown: jest.fn().mockReturnValue(false),
             getShutdownResult: jest.fn(),
+            shutdownResult: jest.fn(),
           },
+        },
+        {
+          provide: ShutdownState,
+          useValue: { isShuttingDown: false, receivedSignal: null },
         },
         {
           provide: DatabaseHealthIndicator,
@@ -60,6 +67,7 @@ describe('HealthController', () => {
     controller = module.get<HealthController>(HealthController);
     healthCheckService = module.get<HealthCheckService>(HealthCheckService);
     healthService = module.get<HealthService>(HealthService);
+    shutdownState = module.get<ShutdownState>(ShutdownState);
 
     mockResponse = {
       status: jest.fn().mockReturnThis(),
@@ -221,6 +229,68 @@ describe('HealthController', () => {
       );
       expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.json).toHaveBeenCalledWith(mockDetailedResult);
+    });
+  });
+
+  describe('shutdown behaviour', () => {
+    const shuttingDownResult: EnhancedHealthResult = {
+      status: 'error',
+      timestamp: '2024-01-15T10:30:00Z',
+      version: '1.0.0',
+      uptime: 3600,
+      services: { shutdown: { status: 'down', signal: 'SIGTERM' } },
+    };
+
+    beforeEach(() => {
+      (shutdownState as any).isShuttingDown = true;
+      (shutdownState as any).receivedSignal = 'SIGTERM';
+      jest
+        .spyOn(healthService, 'shutdownResult')
+        .mockReturnValue(shuttingDownResult);
+    });
+
+    it('returns 503 from the basic probe without running indicators', async () => {
+      await controller.check(mockResponse as Response);
+
+      expect(healthCheckService.check).not.toHaveBeenCalled();
+      expect(healthService.shutdownResult).toHaveBeenCalledWith(
+        false,
+        'SIGTERM',
+      );
+      expect(mockResponse.status).toHaveBeenCalledWith(503);
+      expect(mockResponse.json).toHaveBeenCalledWith(shuttingDownResult);
+    });
+
+    it('returns 503 from the detailed probe without running indicators', async () => {
+      await controller.detailedCheck(mockResponse as Response);
+
+      expect(healthCheckService.check).not.toHaveBeenCalled();
+      expect(healthService.shutdownResult).toHaveBeenCalledWith(
+        true,
+        'SIGTERM',
+      );
+      expect(mockResponse.status).toHaveBeenCalledWith(503);
+      expect(mockResponse.json).toHaveBeenCalledWith(shuttingDownResult);
+    });
+
+    it('runs all three indicators when the service is not shutting down', async () => {
+      (shutdownState as any).isShuttingDown = false;
+      jest.spyOn(healthCheckService, 'check').mockResolvedValue({
+        status: 'ok' as HealthCheckStatus,
+        info: {},
+        error: {},
+        details: {},
+      });
+      jest
+        .spyOn(healthService, 'enhanceHealthResult')
+        .mockReturnValue(shuttingDownResult);
+
+      await controller.check(mockResponse as Response);
+
+      expect(healthCheckService.check).toHaveBeenCalledTimes(1);
+      const indicators = (healthCheckService.check as jest.Mock).mock
+        .calls[0][0];
+      expect(indicators).toHaveLength(3);
     });
   });
 });

@@ -20,8 +20,10 @@ import { StellarModule } from '../stellar/stellar.module';
 import { User } from '../users/entities/user.entity';
 import { AdminRefundsController } from './admin-refunds.controller';
 import { AdminRefundsService } from './admin-refunds.service';
+import { AdminReconciliationController } from './admin-reconciliation.controller';
 import { FraudModule } from '../fraud/fraud.module';
 import { AuditModule } from '../audit/audit.module';
+import { FeeModule } from '../fees/fee.module';
 
 @Module({
   imports: [
@@ -38,6 +40,7 @@ import { AuditModule } from '../audit/audit.module';
     StellarModule,
     FraudModule,
     AuditModule,
+    FeeModule,
   ],
   controllers: [
     PaymentController,
@@ -46,6 +49,7 @@ import { AuditModule } from '../audit/audit.module';
     PaymentScheduleController,
     PaymentWebhookController,
     AdminRefundsController,
+    AdminReconciliationController,
   ],
   providers: [
     PaymentService,

@@ -33,10 +33,7 @@ export interface AdminDisputeEvidenceItem {
 }
 
 export type AdminResolutionDecision =
-  | 'approve'
-  | 'reject'
-  | 'partial'
-  | 'withdrawn';
+  'approve' | 'reject' | 'partial' | 'withdrawn';
 
 export interface AdminDisputeResolutionEntry {
   id: string;
@@ -45,6 +42,27 @@ export interface AdminDisputeResolutionEntry {
   decidedByName: string;
   decidedByRole: string;
   decidedAt: string;
+}
+
+export interface AdminDisputeVote {
+  id: string;
+  arbiterName: string;
+  weight: number;
+  favor: 'landlord' | 'tenant';
+  comment?: string;
+  votedAt: string;
+}
+
+export type AdminDisputeAppealStatus = 'pending' | 'approved' | 'rejected';
+
+export interface AdminDisputeAppeal {
+  id: string;
+  status: AdminDisputeAppealStatus;
+  reason: string;
+  createdAt: string;
+  decidedAt?: string;
+  decidedByName?: string;
+  resolution?: string;
 }
 
 export interface AdminDisputeDetail {
@@ -68,6 +86,8 @@ export interface AdminDisputeDetail {
   evidence: AdminDisputeEvidenceItem[];
   timeline: AdminDisputeTimelineEvent[];
   resolutionHistory: AdminDisputeResolutionEntry[];
+  votes?: AdminDisputeVote[];
+  appeals?: AdminDisputeAppeal[];
 }
 
 interface AdminDisputeDetailResponse {
@@ -238,6 +258,35 @@ const detailMocks: Record<string, AdminDisputeDetail> = {
         decidedAt: '2026-01-04T12:10:00.000Z',
       },
     ],
+    votes: [
+      {
+        id: 'vote-d2-1',
+        arbiterName: 'Efe Okafor',
+        weight: 3,
+        favor: 'tenant',
+        comment: 'Receipts did not cover the disputed deduction.',
+        votedAt: '2026-01-02T10:00:00.000Z',
+      },
+      {
+        id: 'vote-d2-2',
+        arbiterName: 'Team B',
+        weight: 1,
+        favor: 'landlord',
+        comment: 'Partial deduction was supported by the lease.',
+        votedAt: '2026-01-02T12:00:00.000Z',
+      },
+    ],
+    appeals: [
+      {
+        id: 'appeal-d2-1',
+        status: 'approved',
+        reason: 'Requested review of the deposit statement evidence.',
+        createdAt: '2026-01-02T14:00:00.000Z',
+        decidedAt: '2026-01-03T09:00:00.000Z',
+        decidedByName: 'Admin',
+        resolution: 'Panel reconvened with the full statement attached.',
+      },
+    ],
   },
   'dis-101': {
     id: 'dis-101',
@@ -382,6 +431,12 @@ function mergeApiDetail(
     resolutionHistory: Array.isArray(partial.resolutionHistory)
       ? (partial.resolutionHistory as AdminDisputeResolutionEntry[])
       : base.resolutionHistory,
+    votes: Array.isArray(partial.votes)
+      ? (partial.votes as AdminDisputeVote[])
+      : base.votes,
+    appeals: Array.isArray(partial.appeals)
+      ? (partial.appeals as AdminDisputeAppeal[])
+      : base.appeals,
   };
 }
 
@@ -445,6 +500,31 @@ export async function submitAdminDisputeResolution(
   } catch {
     // Offline-friendly: allow UI to complete when backend is not wired.
   }
+}
+
+export async function submitAdminDisputeVote(
+  disputeId: string,
+  vote: {
+    arbiterName: string;
+    weight: number;
+    favor: 'landlord' | 'tenant';
+    comment?: string;
+  },
+): Promise<void> {
+  await apiClient.post(
+    `/admin/disputes/${encodeURIComponent(disputeId)}/votes`,
+    vote,
+  );
+}
+
+export async function submitAdminDisputeAppeal(
+  disputeId: string,
+  reason: string,
+): Promise<void> {
+  await apiClient.post(
+    `/admin/disputes/${encodeURIComponent(disputeId)}/appeals`,
+    { reason: reason.trim() },
+  );
 }
 
 export function statusLabel(status: DisputeStatus): string {

@@ -50,7 +50,8 @@ export class MessagingGateway
         `Client connected: ${socket.id} | session: ${session.id}`,
       );
     } catch (err) {
-      this.logger.error(`handleConnection error: ${err.message}`);
+      const message = err instanceof Error ? err.message : String(err);
+      this.logger.error(`handleConnection error: ${message}`);
       socket.disconnect();
     }
   }

@@ -29,12 +29,20 @@ import { LoggerService } from './common/services/logger.service';
 import { registerGracefulShutdown } from './config/graceful-shutdown';
 import { HealthService } from './health/health.service';
 import { QueueManagementService } from './modules/queues/services/queue-management.service';
+import {
+  DrainableQueue,
+  ShutdownServer,
+  registerGracefulShutdown,
+} from './config/graceful-shutdown';
+import { ShutdownState } from './config/shutdown-state';
+import { RedisConnectionFactory } from './common/redis/redis-connection.factory';
+import { getQueueToken } from '@nestjs/bull';
+import {
+  DEAD_LETTER_QUEUE_NAME,
+  WORKER_QUEUE_NAMES,
+} from './modules/queues/queues.constants';
 
 const bootstrapLogger = new Logger('Bootstrap');
-
-// Graceful shutdown state
-let isShuttingDown = false;
-let activeConnections = 0;
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -309,10 +317,59 @@ async function bootstrap() {
       await waitForActiveConnections();
       await drainQueues();
     },
+  const queues = [...WORKER_QUEUE_NAMES, DEAD_LETTER_QUEUE_NAME]
+    .map((name) => {
+      try {
+        return app.get<DrainableQueue>(getQueueToken(name), { strict: false });
+      } catch {
+        bootstrapLogger.warn(`Queue ${name} is not registered, skipping drain`);
+        return null;
+      }
+    })
+    .filter((queue): queue is DrainableQueue => queue !== null);
+
+  const redisFactory = app.get(RedisConnectionFactory);
+  const checkpoints = [
+    {
+      name: 'database connections',
+      close: async () => {
+        try {
+          const dataSource = app.get('DataSource', { strict: false });
+          if (dataSource?.isInitialized) {
+            await dataSource.destroy();
+          }
+        } catch {
+          bootstrapLogger.debug('No DataSource registered, skipping');
+        }
+      },
+    },
+    {
+      name: 'Redis clients',
+      close: () => redisFactory.closeAll(),
+    },
+  ];
+
+  const configuredTimeout = parseInt(
+    process.env.GRACEFUL_SHUTDOWN_TIMEOUT || '30000',
+    10,
+  );
+  const timeoutMs =
+    Number.isFinite(configuredTimeout) && configuredTimeout > 0
+      ? configuredTimeout
+      : 30_000;
+
+  const shutdown = registerGracefulShutdown(app, {
+    state: app.get(ShutdownState),
+    logger: bootstrapLogger,
+    timeoutMs,
+    server: server as ShutdownServer,
+    queues,
+    checkpoints,
   });
 
   process.on('uncaughtException', (error) => {
     bootstrapLogger.error('Uncaught Exception:', error);
+    void shutdown('uncaughtException');
   });
 
   process.on('unhandledRejection', (reason, promise) => {
@@ -322,6 +379,7 @@ async function bootstrap() {
       'reason:',
       reason,
     );
+    void shutdown('unhandledRejection');
   });
 }
 void bootstrap();

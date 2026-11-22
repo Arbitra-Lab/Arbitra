@@ -3,6 +3,7 @@ import { Response } from 'express';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { HealthCheckService, HealthCheck } from '@nestjs/terminus';
 import { HealthService } from './health.service';
+import { ShutdownState } from '../config/shutdown-state';
 import { DatabaseHealthIndicator } from './indicators/database.indicator';
 import { StellarHealthIndicator } from './indicators/stellar.indicator';
 import { MemoryHealthIndicator } from './indicators/memory.indicator';
@@ -13,6 +14,7 @@ export class HealthController {
   constructor(
     private health: HealthCheckService,
     private healthService: HealthService,
+    private shutdownState: ShutdownState,
     private databaseHealthIndicator: DatabaseHealthIndicator,
     private stellarHealthIndicator: StellarHealthIndicator,
     private memoryHealthIndicator: MemoryHealthIndicator,
@@ -57,6 +59,7 @@ export class HealthController {
 
       return res.status(status).json(degradedResult);
     }
+    return this.respond(res, false);
   }
 
   @Get('detailed')
@@ -80,14 +83,38 @@ export class HealthController {
         () => this.stellarHealthIndicator.isHealthy('stellar'),
         () => this.memoryHealthIndicator.isHealthy('memory'),
       ]);
+    return this.respond(res, true);
+  }
 
-      const detailedResult = this.healthService.enhanceHealthResult(
+  private getIndicators() {
+    return [
+      () => this.databaseHealthIndicator.isHealthy('database'),
+      () => this.stellarHealthIndicator.isHealthy('stellar'),
+      () => this.memoryHealthIndicator.isHealthy('memory'),
+    ];
+  }
+
+  private async respond(@Res() res: Response, includeDetails: boolean) {
+    if (this.shutdownState.isShuttingDown) {
+      return res
+        .status(HttpStatus.SERVICE_UNAVAILABLE)
+        .json(
+          this.healthService.shutdownResult(
+            includeDetails,
+            this.shutdownState.receivedSignal,
+          ),
+        );
+    }
+
+    try {
+      const result = await this.health.check(this.getIndicators());
+      const enhancedResult = this.healthService.enhanceHealthResult(
         result,
-        true,
+        includeDetails,
       );
-      const status = this.determineHttpStatus(detailedResult.status);
-
-      return res.status(status).json(detailedResult);
+      return res
+        .status(this.determineHttpStatus(enhancedResult.status))
+        .json(enhancedResult);
     } catch (error) {
       if (this.healthService.isShuttingDown()) {
         return res
@@ -97,11 +124,11 @@ export class HealthController {
 
       const degradedResult = this.healthService.handlePartialFailure(
         error,
-        true,
+        includeDetails,
       );
-      const status = this.determineHttpStatus(degradedResult.status);
-
-      return res.status(status).json(degradedResult);
+      return res
+        .status(this.determineHttpStatus(degradedResult.status))
+        .json(degradedResult);
     }
   }
 

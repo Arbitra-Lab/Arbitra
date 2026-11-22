@@ -1043,6 +1043,14 @@ It's critical to test recovery procedures regularly. See:
 - [Monthly Backup Checklist](../checklists/MONTHLY_BACKUP_CHECKLIST.md) - Full recovery drills
 - [Quarterly Backup Checklist](../checklists/QUARTERLY_BACKUP_CHECKLIST.md) - Disaster recovery simulation
 
+Monthly drill command (staging, non-production target DB):
+
+```bash
+DRILL_ALLOW_DESTRUCTIVE=true ./backend/scripts/backup-restore-drill.sh
+```
+
+Reports: `backend/docs/deployment/reports/restore-drill-*.md`.
+
 ---
 
 ## References

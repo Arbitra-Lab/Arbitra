@@ -26,6 +26,7 @@ import { LockService } from '../../common/lock';
 import { IdempotencyService } from '../../common/idempotency';
 import { FraudHooksService } from '../fraud/fraud-hooks.service';
 import { LedgerService } from './ledger.service';
+import { FeeService } from '../fees/fee.service';
 
 // ─── Mock Factories (fresh per test) ────────────────────────────────────────
 
@@ -87,6 +88,7 @@ describe('PaymentService – edge cases & isolation', () => {
   };
   let mockPaymentProcessing: { processRentPayment: jest.Mock };
   let mockLedger: { recordOperation: jest.Mock };
+  let mockFee: { calculateFee: jest.Mock; recordCollection: jest.Mock; markRefunded: jest.Mock };
 
   beforeEach(async () => {
     paymentRepo = makePaymentRepo();
@@ -97,6 +99,11 @@ describe('PaymentService – edge cases & isolation', () => {
       recordOperation: jest
         .fn()
         .mockResolvedValue({ entries: [], replay: false }),
+    };
+    mockFee = {
+      calculateFee: jest.fn().mockResolvedValue({ feeAmount: 2, netAmount: 98, rate: 0.02, flatFee: 0, transparent: true }),
+      recordCollection: jest.fn().mockResolvedValue({}),
+      markRefunded: jest.fn().mockResolvedValue(null),
     };
 
     mockGateway = {
@@ -155,6 +162,7 @@ describe('PaymentService – edge cases & isolation', () => {
         },
         { provide: FraudHooksService, useValue: mockFraud },
         { provide: LedgerService, useValue: mockLedger },
+        { provide: FeeService, useValue: mockFee },
       ],
     }).compile();
 
