@@ -11,6 +11,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD, APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { AppController } from './app.controller';
+import { BatchModule } from './modules/batch/batch.module';
 import { AppService } from './app.service';
 import { AgreementsModule } from './modules/agreements/agreements.module';
 import { AuditModule } from './modules/audit/audit.module';
@@ -323,5 +324,8 @@ export class AppModule implements NestModule {
 
     // Real-time threat detection (applied to all API routes)
     consumer.apply(ThreatDetectionMiddleware).forRoutes('api/*path');
+  }
+}
+i/*path');
   }
 }

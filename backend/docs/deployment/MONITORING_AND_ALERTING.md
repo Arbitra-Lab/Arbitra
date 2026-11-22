@@ -302,6 +302,26 @@ Alerts defined in `backend/monitoring/prometheus/alerts.yml`:
     runbook: 'https://docs.arbitra.io/runbooks/job-failures'
 ```
 
+#### WAF / Gateway Blocks
+
+Gateway WAF and rate limiting are enforced in `backend/nginx/nginx.conf`.
+
+- SQLi/XSS/bot patterns return `403`; blocked requests are logged to `/var/log/nginx/arbitra-waf-blocked.log`.
+- IP limit: `1000r/m` per IP (`api_ip_limit`); API key limit: `100r/m` per key (`api_key_limit`, `X-API-Key` or Bearer token).
+- Alert on spikes and inspect blocked log before tightening rules to keep false positives < 0.1%.
+
+```yaml
+- alert: WAFBlockedRequestsSpike
+  expr: sum(rate(nginx_http_requests_total{status="403"}[5m])) > 5
+  for: 5m
+  labels:
+    severity: warning
+  annotations:
+    summary: 'WAF/gateway blocked request spike'
+    description: 'Inspect /var/log/nginx/arbitra-waf-blocked.log for false positives and attack patterns'
+    runbook: 'backend/docs/security/WAF_API_GATEWAY.md'
+```
+
 #### Disk Space Low
 
 ```yaml
