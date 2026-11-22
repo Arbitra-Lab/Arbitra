@@ -50,6 +50,9 @@ import {
 } from './entities/property-registry.entity';
 import { PropertyRegistryController } from './controllers/property-registry.controller';
 import { PropertyRegistryService } from './services/property-registry.service';
+import { EscrowBatchController } from './controllers/escrow-batch.controller';
+import { EscrowBatchService } from './services/escrow-batch.service';
+import { AuditModule } from '../audit/audit.module';
 
 @Module({
   imports: [
@@ -79,6 +82,7 @@ import { PropertyRegistryService } from './services/property-registry.service';
     ScheduleModule.forRoot(),
     EventEmitterModule.forRoot(),
     WebhooksModule,
+    AuditModule,
   ],
   controllers: [
     StellarController,
@@ -89,6 +93,7 @@ import { PropertyRegistryService } from './services/property-registry.service';
     PaymentProcessingController,
     PropertyRegistryController,
     BlockchainReconciliationController,
+    EscrowBatchController,
   ],
   providers: [
     StellarService,
@@ -106,6 +111,7 @@ import { PropertyRegistryService } from './services/property-registry.service';
     AgentRegistryService,
     PaymentProcessingService,
     PropertyRegistryService,
+    EscrowBatchService,
   ],
   exports: [
     StellarService,
@@ -123,6 +129,7 @@ import { PropertyRegistryService } from './services/property-registry.service';
     AgentRegistryService,
     PaymentProcessingService,
     PropertyRegistryService,
+    EscrowBatchService,
   ],
 })
 export class StellarModule {}

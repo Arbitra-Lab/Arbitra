@@ -1,7 +1,9 @@
 'use client';
 
-import { Award, Gavel } from 'lucide-react';
+import { Award, BarChart3, Gavel } from 'lucide-react';
 import type { ComponentType } from 'react';
+
+import { canAccessAdmin } from '@/lib/admin-access';
 
 export type AdminAppRole = 'admin';
 
@@ -25,6 +27,12 @@ const adminNavItems: AdminNavItem[] = [
     href: '/admin/arbiters',
     visibleFor: ['admin'],
   },
+  {
+    icon: BarChart3,
+    label: 'Platform Analytics',
+    href: '/admin/analytics',
+    visibleFor: ['admin'],
+  },
 ];
 
 function findBestNavMatch(pathname: string) {
@@ -36,14 +44,8 @@ function findBestNavMatch(pathname: string) {
 export function getAdminNavItems(
   role: string | null | undefined,
 ): AdminNavItem[] {
-  // FORCED TO ALL FOR DEVELOPMENT - Bypass role filtering
+  if (!canAccessAdmin(role)) return [];
   return adminNavItems;
-  /* 
-  if (!role) return [];
-  return adminNavItems.filter((item) =>
-    item.visibleFor.includes(role as AdminAppRole),
-  );
-  */
 }
 
 export function getAdminPageTitle(pathname: string): string {

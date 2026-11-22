@@ -17,7 +17,14 @@
     "tailwindcss": "^4.2.1"
   },
   "lint-staged": {
-    "*.{js,jsx,ts,tsx}": [
+    "frontend/**/*.{js,jsx,ts,tsx}": [
+      "node scripts/lint-frontend-files.mjs",
+      "node scripts/prettier-local-files.mjs frontend"
+    ],
+    "backend/**/*.{ts,js,mjs}": [
+      "node scripts/prettier-local-files.mjs backend"
+    ],
+    "*.{js,mjs,jsx,ts,tsx}": [
       "prettier --write"
     ],
     "*.{json,css,md}": [
