@@ -50,6 +50,9 @@ jobs:
       - name: Check Prettier formatting
         run: pnpm exec prettier --check "**/*.{js,jsx,ts,tsx,json,css,md}"
 
+      - name: Run dependency vulnerability scan
+        run: pnpm audit --audit-level=high
+
       - name: Run unit tests
         run: pnpm test
 

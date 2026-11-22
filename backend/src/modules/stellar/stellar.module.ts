@@ -35,6 +35,8 @@ import { DisputeContractService } from './services/dispute-contract.service';
 import { DisputeContractEnhancedService } from './services/dispute-contract-enhanced.service';
 import { RentObligationNftService } from './services/rent-obligation-nft.service';
 import { NftEventProcessor } from './services/nft-event-processor.service';
+import { DisputeChainIndexerService } from './services/dispute-chain-indexer.service';
+import { EscrowChainIndexerService } from './services/escrow-chain-indexer.service';
 import { EventReconciliationService } from './services/event-reconciliation.service';
 import { BlockchainEventIdempotency } from './entities/blockchain-event-idempotency.entity';
 import { BlockchainStreamCursor } from './entities/blockchain-stream-cursor.entity';
@@ -106,6 +108,8 @@ import { PropertyRegistryService } from './services/property-registry.service';
     AgentRegistryService,
     PaymentProcessingService,
     PropertyRegistryService,
+    DisputeChainIndexerService,
+    EscrowChainIndexerService,
   ],
   exports: [
     StellarService,
@@ -123,6 +127,7 @@ import { PropertyRegistryService } from './services/property-registry.service';
     AgentRegistryService,
     PaymentProcessingService,
     PropertyRegistryService,
+    DisputeChainIndexerService,
   ],
 })
 export class StellarModule {}
