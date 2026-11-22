@@ -1,0 +1,1 @@
+# Platform architecture boundaries`n`nPlatform changes require observable connection pooling, shared type-safe utilities, compatible payment strategies, and documented privacy, retention, and breach-response practices.
