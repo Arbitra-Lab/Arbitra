@@ -317,19 +317,28 @@ Alerts defined in `backend/monitoring/prometheus/alerts.yml`:
     runbook: 'https://docs.arbitra.io/runbooks/disk-space'
 ```
 
-#### SSL Certificate Expiring
+#### SSL Certificate Expiring / Renewal Failure
+
+Cert-manager-managed certificate alerts are defined in `backend/k8s/cert-manager/prometheusrule-cert-expiry.yaml`.
 
 ```yaml
-- alert: SSLCertificateExpiringSoon
-  expr: |
-    (ssl_certificate_expiry_seconds - time()) / 86400 < 14
+- alert: ArbitraTLSCertificateExpiringSoon
+  expr: (certmanager_certificate_expiration_timestamp_seconds{namespace="production",name="arbitra-api-tls"} - time()) / 86400 < 30
   for: 1h
   labels:
-    severity: medium
+    severity: warning
   annotations:
-    summary: 'SSL certificate expiring soon'
-    description: 'Certificate expires in {{ $value }} days'
-    runbook: 'https://docs.arbitra.io/runbooks/ssl-renewal'
+    summary: 'Arbitra TLS certificate expiring within 30 days'
+    description: 'Certificate expires in {{ $value }} days. Verify cert-manager renewal.'
+    runbook: 'backend/docs/SSL_TLS_CERTIFICATE_MANAGEMENT.md#manual-intervention'
+- alert: ArbitraTLSCertificateRenewalFailed
+  expr: max by (name, namespace) (certmanager_certificate_ready_status{namespace="production",name="arbitra-api-tls",condition="False"}) == 1
+  for: 15m
+  labels:
+    severity: critical
+  annotations:
+    summary: 'Arbitra TLS certificate renewal/readiness failed'
+    runbook: 'backend/docs/SSL_TLS_CERTIFICATE_MANAGEMENT.md#manual-intervention'
 ```
 
 ### 3.4 Alert Routing

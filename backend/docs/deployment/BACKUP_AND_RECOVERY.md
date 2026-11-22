@@ -50,10 +50,19 @@ Arbitra uses a multi-layered backup strategy:
 | Backup Type              | Frequency          | Retention | Purpose                          |
 | ------------------------ | ------------------ | --------- | -------------------------------- |
 | Continuous WAL archiving | Real-time          | 7 days    | Point-in-time recovery (PITR)    |
-| Full backup              | Daily              | 30 days   | Complete database restore        |
+| Full backup              | Daily (02:00 UTC)  | 30 days   | Complete database restore        |
 | Incremental backup       | Every 6 hours      | 7 days    | Faster recovery, reduced storage |
 | Snapshot backup          | Weekly             | 90 days   | Long-term retention, compliance  |
 | Pre-deployment backup    | Before each deploy | 7 days    | Rollback safety                  |
+
+**Operational targets (production):**
+
+- **RTO:** 4 hours
+- **RPO:** 1 hour
+- **Daily backups:** automated via `backend/k8s/backup-cronjob.yaml` and `backend/scripts/backup-db.sh`
+- **Retention:** latest 30 daily backups retained in primary backup bucket
+- **Cross-region replication:** each daily backup is copied to a separate region bucket (`BACKUP_REPLICA_S3_BUCKET`, default replica region `eu-west-1`)
+- **Monthly recovery test:** run `backend/scripts/backup-restore-drill.sh` in staging and record report under `backend/docs/deployment/reports/`
 
 ### 2.2 Backup Scope
 
@@ -117,7 +126,19 @@ Compliance retention:
 
 ## 3. Backup Procedures
 
-### 3.1 Continuous WAL Archiving
+### 3.1 Automated Daily Backup + Cross-Region Replication
+
+Kubernetes CronJob: `backend/k8s/backup-cronjob.yaml` runs daily at 02:00 UTC.
+
+- Creates `pg_dump | gzip` backup.
+- Uploads to primary S3 bucket (`BACKUP_S3_BUCKET`).
+- Replicates to separate-region bucket (`BACKUP_REPLICA_S3_BUCKET`, `BACKUP_REPLICA_REGION`).
+- Prunes backups older than 30 days in both buckets.
+- Requires `DATABASE_URL`, AWS credentials, and backup bucket config in `arbitra-backend-secrets` / `arbitra-backend-config`.
+
+Manual/operator script equivalent: `backend/scripts/backup-db.sh` supports `BACKUP_REPLICA_S3_BUCKET` and `BACKUP_REPLICA_REGION`.
+
+### 3.2 Continuous WAL Archiving
 
 PostgreSQL Write-Ahead Log (WAL) archiving enables point-in-time recovery.
 
