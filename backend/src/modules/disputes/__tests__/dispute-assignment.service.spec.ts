@@ -2,7 +2,14 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { Test } from '@nestjs/testing';
 import { DisputeAssignmentService } from '../dispute-assignment.service';
 import { Arbiter } from '../entities/arbiter.entity';
-import { Dispute, DisputeType } from '../entities/dispute.entity';
+import {
+  Dispute,
+  DisputePriority,
+  DisputeStatus,
+  DisputeType,
+} from '../entities/dispute.entity';
+import { AuditService } from '../../audit/audit.service';
+import { AuditAction } from '../../audit/entities/audit-log.entity';
 
 function makeArbiter(overrides: Partial<Arbiter> = {}): Arbiter {
   return {
@@ -20,8 +27,10 @@ function makeArbiter(overrides: Partial<Arbiter> = {}): Arbiter {
 
 describe('DisputeAssignmentService', () => {
   let service: DisputeAssignmentService;
+  let auditLog: jest.Mock;
 
   beforeEach(async () => {
+    auditLog = jest.fn().mockResolvedValue(undefined);
     const module = await Test.createTestingModule({
       providers: [
         DisputeAssignmentService,
@@ -32,6 +41,10 @@ describe('DisputeAssignmentService', () => {
         {
           provide: getRepositoryToken(Dispute),
           useValue: {},
+        },
+        {
+          provide: AuditService,
+          useValue: { log: auditLog },
         },
       ],
     }).compile();
@@ -231,6 +244,212 @@ describe('DisputeAssignmentService', () => {
         partyUserIds: [],
       });
       expect(result).toBeNull();
+    });
+
+    it('prefers a jurisdiction and language match over a generic arbiter (#23)', () => {
+      const local = makeArbiter({
+        id: 1,
+        jurisdictions: ['Nigeria'],
+        languages: ['en'],
+      });
+      const foreign = makeArbiter({ id: 2 });
+      const result = service.selectBestArbiter(
+        [
+          { arbiter: local, currentLoad: 1 },
+          { arbiter: foreign, currentLoad: 0 },
+        ],
+        {
+          disputeType: DisputeType.OTHER,
+          partyUserIds: [],
+          jurisdiction: 'Nigeria',
+          language: 'en',
+        },
+      );
+      expect(result?.id).toBe(1);
+    });
+
+    it('does not exclude an arbiter without profile preferences (#23)', () => {
+      const generic = makeArbiter({ id: 1 });
+      const result = service.selectBestArbiter(
+        [{ arbiter: generic, currentLoad: 0 }],
+        {
+          disputeType: DisputeType.OTHER,
+          partyUserIds: [],
+          jurisdiction: 'Kenya',
+          language: 'sw',
+        },
+      );
+      expect(result?.id).toBe(1);
+    });
+  });
+
+  describe('case complexity and performance (#23)', () => {
+    it('scores more evidence, larger claims and higher priority as more complex', () => {
+      const simple = service.scoreCaseComplexity({
+        disputeType: DisputeType.MAINTENANCE,
+        requestedAmount: 100,
+        evidenceCount: 0,
+        descriptionLength: 50,
+        priority: DisputePriority.LOW,
+      });
+      const complex = service.scoreCaseComplexity({
+        disputeType: DisputeType.PROPERTY_DAMAGE,
+        requestedAmount: 100000,
+        evidenceCount: 12,
+        descriptionLength: 4000,
+        priority: DisputePriority.URGENT,
+      });
+      expect(complex).toBeGreaterThan(simple);
+      expect(complex).toBeLessThanOrEqual(1);
+      expect(simple).toBeGreaterThanOrEqual(0);
+    });
+
+    it('clamps non-finite and negative complexity inputs', () => {
+      const score = service.scoreCaseComplexity({
+        disputeType: DisputeType.OTHER,
+        requestedAmount: Number.NaN,
+        evidenceCount: -5,
+      });
+      expect(score).toBeGreaterThanOrEqual(0);
+      expect(score).toBeLessThanOrEqual(1);
+    });
+
+    it('treats arbiters without a track record neutrally', () => {
+      expect(service.scorePerformance(makeArbiter())).toBe(1);
+    });
+
+    it('rewards successful and fast arbiters over slow unsuccessful ones', () => {
+      const good = makeArbiter({
+        totalDisputesResolved: 10,
+        successfulResolutions: 9,
+        averageResolutionHours: 24,
+      });
+      const poor = makeArbiter({
+        totalDisputesResolved: 10,
+        successfulResolutions: 2,
+        averageResolutionHours: 160,
+      });
+      expect(service.scorePerformance(good)).toBeGreaterThan(
+        service.scorePerformance(poor),
+      );
+    });
+
+    it('weights performance more heavily on complex cases', () => {
+      const good = makeArbiter({
+        id: 1,
+        totalDisputesResolved: 10,
+        successfulResolutions: 10,
+        averageResolutionHours: 1,
+      });
+      const poor = makeArbiter({
+        id: 2,
+        totalDisputesResolved: 10,
+        successfulResolutions: 0,
+        averageResolutionHours: 168,
+      });
+      const simpleGap =
+        service.scoreArbiter(good, 1, DisputeType.OTHER, { complexity: 0 }) -
+        service.scoreArbiter(poor, 1, DisputeType.OTHER, { complexity: 0 });
+      const complexGap =
+        service.scoreArbiter(good, 1, DisputeType.OTHER, { complexity: 1 }) -
+        service.scoreArbiter(poor, 1, DisputeType.OTHER, { complexity: 1 });
+      expect(complexGap).toBeGreaterThan(simpleGap);
+    });
+
+    it('scores jurisdiction and language matches deterministically', () => {
+      const arbiter = makeArbiter({
+        jurisdictions: ['nigeria'],
+        languages: ['EN'],
+      });
+      expect(
+        service.scoreLocalization(arbiter, {
+          jurisdiction: 'Nigeria',
+          language: 'en',
+        }),
+      ).toBe(1);
+      expect(
+        service.scoreLocalization(arbiter, {
+          jurisdiction: 'Ghana',
+          language: 'en',
+        }),
+      ).toBeCloseTo(0.4);
+    });
+  });
+
+  describe('assignArbiter audit trail (#23)', () => {
+    const dispute = {
+      id: 7,
+      disputeType: DisputeType.RENT_PAYMENT,
+      requestedAmount: 500,
+      description: 'short description',
+      metadata: { jurisdiction: 'Nigeria', language: 'en' },
+      initiatedBy: 3,
+      status: DisputeStatus.OPEN,
+    } as unknown as Dispute;
+
+    it('logs the selected arbiter and case context after a successful match', async () => {
+      const arbiter = makeArbiter({
+        id: 4,
+        jurisdictions: ['Nigeria'],
+        languages: ['en'],
+      });
+      const arbiterRepo = {
+        find: jest.fn().mockResolvedValue([arbiter]),
+      };
+      const disputeRepo = {
+        createQueryBuilder: jest.fn(() => ({
+          select: () => ({
+            addSelect: () => ({
+              where: () => ({
+                andWhere: () => ({
+                  groupBy: () => ({ getRawMany: async () => [] }),
+                }),
+              }),
+            }),
+          }),
+        })),
+      };
+      const module = await Test.createTestingModule({
+        providers: [
+          DisputeAssignmentService,
+          { provide: getRepositoryToken(Arbiter), useValue: arbiterRepo },
+          { provide: getRepositoryToken(Dispute), useValue: disputeRepo },
+          { provide: AuditService, useValue: { log: auditLog } },
+        ],
+      }).compile();
+      const dbService = module.get(DisputeAssignmentService);
+
+      expect(await dbService.assignArbiter(dispute)).toBe(arbiter);
+      expect(auditLog).toHaveBeenCalledWith(
+        expect.objectContaining({
+          action: AuditAction.ARBITER_ASSIGNED,
+          entityId: '7',
+          newValues: { arbiterId: 4 },
+          metadata: expect.objectContaining({
+            candidateCount: 1,
+            jurisdiction: 'Nigeria',
+            language: 'en',
+          }),
+        }),
+      );
+    });
+
+    it('logs a failure when no arbiter is eligible', async () => {
+      const arbiterRepo = { find: jest.fn().mockResolvedValue([]) };
+      const module = await Test.createTestingModule({
+        providers: [
+          DisputeAssignmentService,
+          { provide: getRepositoryToken(Arbiter), useValue: arbiterRepo },
+          { provide: getRepositoryToken(Dispute), useValue: {} },
+          { provide: AuditService, useValue: { log: auditLog } },
+        ],
+      }).compile();
+      const dbService = module.get(DisputeAssignmentService);
+
+      expect(await dbService.assignArbiter(dispute)).toBeNull();
+      expect(auditLog).toHaveBeenCalledWith(
+        expect.objectContaining({ status: 'FAILURE' }),
+      );
     });
   });
 });

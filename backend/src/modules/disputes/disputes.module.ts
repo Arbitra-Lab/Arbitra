@@ -6,6 +6,8 @@ import { DisputesService } from './disputes.service';
 import { DisputeBlockchainService } from './dispute-blockchain.service';
 import { DisputeSlaService } from './dispute-sla.service';
 import { DisputeAssignmentService } from './dispute-assignment.service';
+import { ArbiterOnboardingService } from './arbiter-onboarding.service';
+import { ArbiterOnboardingController } from './arbiter-onboarding.controller';
 import { DisputeSlaReconcilerService } from './dispute-sla-reconciler.service';
 import { DisputeNotificationService } from './dispute-notification.service';
 import { Dispute } from './entities/dispute.entity';
@@ -13,11 +15,13 @@ import { DisputeEvidence } from './entities/dispute-evidence.entity';
 import { DisputeComment } from './entities/dispute-comment.entity';
 import { DisputeEvent } from './entities/dispute-event.entity';
 import { Arbiter } from './entities/arbiter.entity';
+import { ArbiterApplication } from './entities/arbiter-application.entity';
 import { DisputeVote } from './entities/dispute-vote.entity';
 import { RentAgreement } from '../rent/entities/rent-contract.entity';
 import { User } from '../users/entities/user.entity';
 import { AuditModule } from '../audit/audit.module';
 import { StellarModule } from '../stellar/stellar.module';
+import { KycModule } from '../kyc/kyc.module';
 
 @Module({
   imports: [
@@ -27,6 +31,7 @@ import { StellarModule } from '../stellar/stellar.module';
       DisputeComment,
       DisputeEvent,
       Arbiter,
+      ArbiterApplication,
       DisputeVote,
       RentAgreement,
       User,
@@ -34,8 +39,9 @@ import { StellarModule } from '../stellar/stellar.module';
     ScheduleModule.forRoot(),
     AuditModule,
     StellarModule,
+    KycModule,
   ],
-  controllers: [DisputesController],
+  controllers: [DisputesController, ArbiterOnboardingController],
   providers: [
     DisputesService,
     DisputeBlockchainService,
@@ -43,6 +49,7 @@ import { StellarModule } from '../stellar/stellar.module';
     DisputeAssignmentService,
     DisputeSlaReconcilerService,
     DisputeNotificationService,
+    ArbiterOnboardingService,
   ],
   exports: [
     DisputesService,

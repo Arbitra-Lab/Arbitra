@@ -31,6 +31,7 @@ import { IndexedTransactionsService } from './services/indexed-transactions.serv
 import { ArbitraAgreementContractService } from './services/arbitra-agreement-contract.service';
 import { BlockchainEventService } from './services/blockchain-event.service';
 import { EscrowContractService } from './services/escrow-contract.service';
+import { GenericEscrowService } from './services/generic-escrow.service';
 import { DisputeContractService } from './services/dispute-contract.service';
 import { DisputeContractEnhancedService } from './services/dispute-contract-enhanced.service';
 import { RentObligationNftService } from './services/rent-obligation-nft.service';
@@ -99,6 +100,7 @@ import { PropertyRegistryService } from './services/property-registry.service';
     BlockchainEventService,
     EventReconciliationService,
     EscrowContractService,
+    GenericEscrowService,
     DisputeContractService,
     DisputeContractEnhancedService,
     RentObligationNftService,
@@ -116,6 +118,7 @@ import { PropertyRegistryService } from './services/property-registry.service';
     BlockchainEventService,
     EventReconciliationService,
     EscrowContractService,
+    GenericEscrowService,
     DisputeContractService,
     DisputeContractEnhancedService,
     RentObligationNftService,

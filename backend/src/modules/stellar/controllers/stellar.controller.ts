@@ -12,6 +12,7 @@ import {
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { StellarService } from '../services/stellar.service';
 import { EscrowContractService } from '../services/escrow-contract.service';
+import { GenericEscrowService } from '../services/generic-escrow.service';
 import {
   CreateAccountDto,
   AccountResponseDto,
@@ -35,6 +36,10 @@ import {
   IntegrateWithDisputeDto,
   ReleaseOnDisputeResolutionDto,
 } from '../dto/escrow-enhanced.dto';
+import {
+  CreateGenericEscrowDto,
+  LookupGenericAssetDto,
+} from '../dto/generic-escrow.dto';
 import { StellarAccount } from '../entities/stellar-account.entity';
 import { StellarTransaction } from '../entities/stellar-transaction.entity';
 import { StellarEscrow } from '../entities/stellar-escrow.entity';
@@ -45,6 +50,7 @@ export class StellarController {
   constructor(
     private readonly stellarService: StellarService,
     private readonly escrowContractService: EscrowContractService,
+    private readonly genericEscrowService: GenericEscrowService,
   ) {}
 
   // ==================== Account Endpoints ====================
@@ -281,6 +287,23 @@ export class StellarController {
       limit: dto.limit || 20,
       offset: dto.offset || 0,
     };
+  }
+
+  // ==================== Generic Escrow Endpoints ====================
+
+  /** Resolve an XLM or issued Stellar asset through Horizon (#6). */
+  @Post('escrow/generic/asset')
+  @ApiOperation({ summary: 'Resolve an asset for a generic escrow (#6)' })
+  lookupGenericAsset(@Body() dto: LookupGenericAssetDto) {
+    return this.genericEscrowService.describeAsset(dto);
+  }
+
+  /** Create a 2-of-3 escrow for any agreement type (#6). */
+  @Post('escrow/generic')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Create an agreement-agnostic escrow (#6)' })
+  createGenericEscrow(@Body() dto: CreateGenericEscrowDto) {
+    return this.genericEscrowService.create(dto);
   }
 
   // ==================== Enhanced Escrow Endpoints ====================
