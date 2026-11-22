@@ -1,6 +1,8 @@
 'use client';
 
 import { Award, BarChart3, Gavel } from 'lucide-react';
+import { Award, FileText, Gavel } from 'lucide-react';
+import { Award, Gavel, Scale } from 'lucide-react';
 import type { ComponentType } from 'react';
 
 import { canAccessAdmin } from '@/lib/admin-access';
@@ -31,6 +33,12 @@ const adminNavItems: AdminNavItem[] = [
     icon: BarChart3,
     label: 'Platform Analytics',
     href: '/admin/analytics',
+    icon: FileText,
+    label: 'Agreement Templates',
+    href: '/admin/templates',
+    icon: Scale,
+    label: 'Transaction Reconciliation',
+    href: '/admin/reconciliation',
     visibleFor: ['admin'],
   },
 ];

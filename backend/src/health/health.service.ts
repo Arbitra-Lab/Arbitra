@@ -86,6 +86,38 @@ export class HealthService {
     return result;
   }
 
+  /** Result returned by both probes once a shutdown signal has been received. */
+  shutdownResult(
+    includeDetails = false,
+    signal?: string | null,
+  ): EnhancedHealthResult {
+    const result: EnhancedHealthResult = {
+      status: 'error',
+      timestamp: new Date().toISOString(),
+      version: this.getPackageJson().version || '1.0.0',
+      uptime: Math.floor((Date.now() - this.startTime) / 1000),
+      services: {
+        shutdown: {
+          status: 'down',
+          signal: signal ?? 'unknown',
+        },
+      },
+    };
+
+    if (includeDetails) {
+      result.environment = process.env.NODE_ENV || 'development';
+      result.details = {
+        nodeVersion: process.version,
+        platform: process.platform,
+        architecture: process.arch,
+        processId: process.pid,
+        memoryUsage: process.memoryUsage(),
+      };
+    }
+
+    return result;
+  }
+
   private determineOverallStatus(
     result: HealthCheckResult,
   ): 'ok' | 'error' | 'warning' {

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Download, RefreshCcw, BellRing, X } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { registerPushSubscription } from '@/lib/pwa/push';
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
@@ -139,6 +140,19 @@ export default function PwaController() {
     setRequestingNotifications(false);
 
     if (permission === 'granted') {
+      try {
+        const sub = await registerPushSubscription();
+        if (sub) {
+          // Best-effort: backend push subscription endpoint may be added separately.
+          await fetch('/api/notifications/push-subscriptions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(sub),
+          }).catch(() => undefined);
+        }
+      } catch {
+        // Permission granted is still useful even if subscription registration fails.
+      }
       toast.success('Notifications enabled for Arbitra.');
       return;
     }

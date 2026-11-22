@@ -66,8 +66,31 @@ export const EvidenceUploadModal: React.FC<EvidenceUploadModalProps> = ({
     onClose();
   };
 
-  const handleFilesSelected = (selected: File[]) => {
-    setFiles(selected);
+  const optimizeImageFile = async (file: File): Promise<File> => {
+    if (!file.type.startsWith('image/')) return file;
+    if (file.size <= 1_500_000) return file;
+    try {
+      const bitmap = await createImageBitmap(file);
+      const maxDim = 1920;
+      const scale = Math.min(1, maxDim / Math.max(bitmap.width, bitmap.height));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+      canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return file;
+      ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+      const blob: Blob | null = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.82));
+      if (!blob) return file;
+      const optimized = new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg', lastModified: Date.now() });
+      return optimized.size < file.size ? optimized : file;
+    } catch {
+      return file;
+    }
+  };
+
+  const handleFilesSelected = async (selected: File[]) => {
+    const optimized = await Promise.all(selected.map(optimizeImageFile));
+    setFiles(optimized);
     setFileError(null);
   };
 

@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { DatabasePerformanceService } from './database-performance.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -28,7 +28,7 @@ export class DatabasePerformanceController {
     summary: 'Get slow query statistics from pg_stat_statements',
   })
   async getSlowQueries() {
-    return this.performanceService.getSlowQueries(20);
+    return this.performanceService.getSlowQueries(100);
   }
 
   @Get('indexes/usage')
@@ -57,5 +57,21 @@ export class DatabasePerformanceController {
   @ApiOperation({ summary: 'Get duplicate index candidates' })
   async getDuplicateIndexes() {
     return this.performanceService.getDuplicateIndexCandidates();
+  }
+
+  @Post('indexes/nightly-run')
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  @ApiOperation({ summary: 'Run nightly index optimization analysis now' })
+  async runNightlyOptimization() {
+    return this.performanceService.runNightlyIndexOptimization();
+  }
+
+  @Get('indexes/last-report')
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  @ApiOperation({
+    summary: 'Get last nightly/weekly index optimization report',
+  })
+  async getLastOptimizationReport() {
+    return this.performanceService.getLastOptimizationReport();
   }
 }

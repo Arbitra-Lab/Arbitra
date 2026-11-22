@@ -26,6 +26,7 @@ export function ThemeSelector({
             key={theme.value}
             type="button"
             disabled={disabled}
+            aria-pressed={isActive}
             onClick={() => onChange(theme.value)}
             className={`rounded-xl border px-4 py-3 text-sm font-medium transition-colors ${
               isActive

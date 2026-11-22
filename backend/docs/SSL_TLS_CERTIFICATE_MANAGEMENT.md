@@ -105,6 +105,22 @@ renews certificates that expire within 30 days.
 
 ## Certificate Renewal
 
+### Kubernetes (cert-manager) — preferred
+
+Kubernetes manifests live in `backend/k8s/cert-manager/`:
+
+- `cluster-issuer.yaml`: Let's Encrypt production and staging ClusterIssuers.
+- `certificate.yaml`: `arbitra-api-tls` for `api.arbitra.app`, `duration: 2160h` (90 days),
+  `renewBefore: 720h` (30 days before expiry), `privateKey.rotationPolicy: Always`.
+- `prometheusrule-cert-expiry.yaml`: alerts when expiry is <30 days or certificate is not ready.
+
+`backend/k8s/ingress.yaml` references `secretName: arbitra-api-tls` and is annotated with
+`cert-manager.io/cluster-issuer: letsencrypt-prod`.
+
+**Zero-downtime renewal:** cert-manager updates the TLS Secret in place before expiry. The ingress
+controller picks up the renewed secret; no pod restart is required. During renewal, existing
+connections continue using the currently loaded certificate until the controller reloads.
+
 ### Automatic (Docker)
 
 The `certbot` service in `docker-compose.production.yml` handles renewal
@@ -115,7 +131,46 @@ automatically. No manual action is required.
 `ssl-setup.sh` installs a cron job at `/etc/cron.d/arbitra-ssl-renew` that
 runs `certbot renew` daily at 03:00 and reloads nginx on success.
 
-### Manual renewal
+## Certificate Renewal Alerts
+
+Prometheus/cert-manager alerts:
+
+- `ArbitraTLSCertificateExpiringSoon` (warning): fires when `arbitra-api-tls` expires in <30 days for 1h.
+  This indicates automatic renewal did not complete as expected.
+- `ArbitraTLSCertificateRenewalFailed` (critical): fires when cert-manager reports `Ready=False` for 15m.
+
+Alert rule source: `backend/k8s/cert-manager/prometheusrule-cert-expiry.yaml`.
+
+### Manual intervention
+
+If renewal fails:
+
+1. Inspect cert-manager resources:
+   ```bash
+   kubectl describe certificate arbitra-api-tls -n production
+   kubectl get certificaterequest,order,challenge -n production
+   kubectl describe challenge -n production <challenge-name>
+   ```
+2. Check issuer and account secret:
+   ```bash
+   kubectl describe clusterissuer letsencrypt-prod
+   kubectl get secret letsencrypt-prod-account-key -n cert-manager
+   ```
+3. Verify DNS/HTTP-01 reachability for `api.arbitra.app` on port 80.
+4. Check cert-manager logs:
+   ```bash
+   kubectl logs -n cert-manager deploy/cert-manager --tail=200
+   ```
+5. For emergency/manual issuance (break-glass), run `backend/scripts/ssl-setup.sh` against the
+   ingress/load balancer endpoint and update the `arbitra-api-tls` secret, then resolve cert-manager
+   issue before next expiry window.
+6. After recovery, confirm:
+   ```bash
+   kubectl get certificate arbitra-api-tls -n production
+   kubectl get secret arbitra-api-tls -n production
+   ```
+
+## Manual renewal
 
 ```bash
 # Renew if expiring within 30 days

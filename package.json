@@ -2,7 +2,8 @@
   "private": true,
   "scripts": {
     "prepare": "husky install",
-    "seed": "pnpm --dir backend run seed"
+    "seed": "pnpm --dir backend run seed",
+    "validate:terraform": "node infra/terraform/tests/validate-deployment.mjs"
   },
   "devDependencies": {
     "@jest/globals": "^30.3.0",

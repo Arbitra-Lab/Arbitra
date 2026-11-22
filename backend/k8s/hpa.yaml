@@ -12,7 +12,7 @@ spec:
     name: arbitra-backend
 
   # Scaling bounds
-  minReplicas: 3
+  minReplicas: 2
   maxReplicas: 10
 
   # Scaling metrics
@@ -32,27 +32,6 @@ spec:
         target:
           type: Utilization
           averageUtilization: 80
-
-    # Custom metrics - HTTP request rate
-    - type: Pods
-      pods:
-        metric:
-          name: http_requests_per_second
-        target:
-          type: AverageValue
-          averageValue: '1000'
-
-    # Custom metrics - Response time
-    - type: Pods
-      pods:
-        metric:
-          name: http_request_duration_seconds
-          selector:
-            matchLabels:
-              quantile: '0.95'
-        target:
-          type: AverageValue
-          averageValue: '1'
 
   # Scaling behavior
   behavior:

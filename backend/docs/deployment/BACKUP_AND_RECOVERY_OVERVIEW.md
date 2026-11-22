@@ -19,7 +19,7 @@ This document provides a quick reference for database backup and recovery proced
 | Backup Type                  | Frequency            | Retention | Storage           | Purpose                          |
 | ---------------------------- | -------------------- | --------- | ----------------- | -------------------------------- |
 | **Continuous WAL Archiving** | Real-time            | 7 days    | S3 `wal/`         | Point-in-time recovery           |
-| **Full Backup**              | Daily (2 AM)         | 30 days   | S3 `full/`        | Complete restore capability      |
+| **Full Backup**              | Daily (02:00 UTC)    | 30 days   | S3 `full/` + separate-region replica | Complete restore capability      |
 | **Incremental Backup**       | Every 6 hours        | 7 days    | S3 `incremental/` | Faster recovery, less storage    |
 | **Snapshot Backup**          | Weekly (Sunday 3 AM) | 90 days   | S3 Glacier        | Long-term retention & compliance |
 | **Pre-Deploy Backup**        | Before deployment    | 7 days    | S3 `pre-deploy/`  | Rollback safety                  |
@@ -93,7 +93,7 @@ tail -100 /var/log/arbitra/backup-full.log
 | ----------------------- | ---------------------- | ------- | -------- | ------- |
 | **Accidental deletion** | Point-in-time recovery | 1 hour  | 5 min    | 3 steps |
 | **Database corruption** | Full backup restore    | 2 hours | 24 hours | 4 steps |
-| **Complete data loss**  | Full backup + WAL      | 4 hours | 5 min    | 5 steps |
+| **Complete data loss**  | Full backup + WAL      | 4 hours | 1 hour   | 5 steps |
 | **Disaster recovery**   | Snapshot restore       | 8 hours | 7 days   | 8 steps |
 
 **RTO** = Recovery Time Objective (max acceptable downtime)  
@@ -105,7 +105,7 @@ tail -100 /var/log/arbitra/backup-full.log
 
 ### Scenario 1: Accidental Data Deletion (Table Dropped)
 
-**RTO:** 1 hour | **RPO:** 5 minutes
+**RTO:** 1 hour | **RPO:** 1 hour
 
 ```bash
 # 1. Identify the backup needed
