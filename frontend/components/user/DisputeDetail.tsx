@@ -14,6 +14,7 @@ import {
   useTenantDispute,
   useAddDisputeComment,
 } from '@/lib/query/hooks/use-tenant-dispute';
+import { useOfflineStatus } from '@/lib/offline/hooks';
 import { format, formatDistanceToNow } from 'date-fns';
 import { useAuthStore } from '@/store/authStore';
 import { EvidenceGallery } from '@/components/common/EvidenceGallery';
@@ -51,13 +52,54 @@ export function DisputeDetail({
   className = '',
 }: DisputeDetailProps) {
   const { user } = useAuthStore();
+  const draftKey = `dispute-comment-draft:${disputeId}`;
   const [newComment, setNewComment] = useState('');
-  const { data: dispute, isLoading, error } = useTenantDispute(disputeId);
+  const { isOnline } = useOfflineStatus();
+  const { data: disputeData, isLoading, error } = useTenantDispute(disputeId);
   const addCommentMutation = useAddDisputeComment();
+  const cacheKey = `offline-dispute:${disputeId}`;
+  const [cachedDispute, setCachedDispute] = React.useState<any | null>(null);
+
+  React.useEffect(() => {
+    if (disputeData && typeof window !== 'undefined') {
+      localStorage.setItem(cacheKey, JSON.stringify(disputeData));
+      setCachedDispute(disputeData);
+    }
+  }, [cacheKey, disputeData]);
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const raw = localStorage.getItem(cacheKey);
+    if (raw) {
+      try { setCachedDispute(JSON.parse(raw)); } catch {}
+    }
+  }, [cacheKey]);
+
+  const dispute = disputeData ?? cachedDispute;
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const saved = localStorage.getItem(draftKey);
+    if (saved) setNewComment(saved);
+  }, [draftKey]);
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (newComment) localStorage.setItem(draftKey, newComment);
+    else localStorage.removeItem(draftKey);
+  }, [draftKey, newComment]);
 
   const handleSubmitComment = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newComment.trim() || !dispute || addCommentMutation.isPending) return;
+    if (!isOnline && typeof window !== 'undefined') {
+      const queueKey = `offline-dispute-comments:${dispute.id}`;
+      const existing = JSON.parse(localStorage.getItem(queueKey) || '[]');
+      existing.push({ content: newComment.trim(), createdAt: new Date().toISOString() });
+      localStorage.setItem(queueKey, JSON.stringify(existing));
+      setNewComment('');
+      return;
+    }
     addCommentMutation.mutate(
       { disputeId: dispute.id, content: newComment.trim() },
       { onSuccess: () => setNewComment('') },
@@ -295,7 +337,7 @@ export function DisputeDetail({
                     disabled={
                       !newComment.trim() || addCommentMutation.isPending
                     }
-                    className="px-4 py-2 bg-brand-blue hover:bg-brand-blue-dark text-white rounded-xl text-sm font-semibold disabled:opacity-50 transition-colors flex items-center gap-2"
+                    className="min-h-11 px-4 py-2 bg-brand-blue hover:bg-brand-blue-dark text-white rounded-xl text-sm font-semibold disabled:opacity-50 transition-colors flex items-center gap-2 touch-manipulation"
                   >
                     {addCommentMutation.isPending && (
                       <Loader2 className="w-3.5 h-3.5 animate-spin" />

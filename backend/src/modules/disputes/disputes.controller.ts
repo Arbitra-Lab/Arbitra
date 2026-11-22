@@ -12,6 +12,8 @@ import {
   UseInterceptors,
   HttpStatus,
   HttpCode,
+  Delete,
+  Res,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import {
@@ -28,6 +30,8 @@ import { AddEvidenceDto } from './dto/add-evidence.dto';
 import { AddCommentDto } from './dto/add-comment.dto';
 import { ResolveDisputeDto } from './dto/resolve-dispute.dto';
 import { QueryDisputesDto } from './dto/query-disputes.dto';
+import { SaveDisputeSearchDto } from './dto/save-dispute-search.dto';
+import { Response } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -64,10 +68,39 @@ export class DisputesController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'List disputes with filters' })
+  @ApiOperation({ summary: 'List disputes with advanced filters and full-text search' })
   @ApiResponse({ status: 200, description: 'Paginated disputes' })
   async findAll(@Query() query: QueryDisputesDto, @Request() req) {
-    return this.disputesService.findAll(query, req.user.id);
+    const isAdmin = [UserRole.ADMIN, UserRole.SUPER_ADMIN].includes(req.user?.role);
+    return this.disputesService.findAll(query, isAdmin ? undefined : req.user.id);
+  }
+
+  @Get('export')
+  @ApiOperation({ summary: 'Export filtered dispute search results as CSV' })
+  async export(@Query() query: QueryDisputesDto, @Request() req, @Res() res: Response) {
+    const isAdmin = [UserRole.ADMIN, UserRole.SUPER_ADMIN].includes(req.user?.role);
+    const csv = await this.disputesService.exportDisputes(query, isAdmin ? undefined : req.user.id);
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename="disputes-export.csv"');
+    return res.send(csv);
+  }
+
+  @Post('saved-searches')
+  @ApiOperation({ summary: 'Save a dispute search filter set' })
+  async saveSearch(@Body() dto: SaveDisputeSearchDto, @Request() req) {
+    return this.disputesService.saveSearch(req.user.id, dto.name, dto.filters);
+  }
+
+  @Get('saved-searches')
+  @ApiOperation({ summary: 'List saved dispute searches' })
+  async listSavedSearches(@Request() req) {
+    return this.disputesService.listSavedSearches(req.user.id);
+  }
+
+  @Delete('saved-searches/:id')
+  @ApiOperation({ summary: 'Delete a saved dispute search' })
+  async deleteSavedSearch(@Param('id') id: string, @Request() req) {
+    return this.disputesService.deleteSavedSearch(req.user.id, id);
   }
 
   @Get('sla/overview')

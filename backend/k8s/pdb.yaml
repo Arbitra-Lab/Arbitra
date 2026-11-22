@@ -6,7 +6,7 @@ metadata:
   labels:
     app: arbitra-backend
 spec:
-  minAvailable: 2
+  minAvailable: 1
   selector:
     matchLabels:
       app: arbitra-backend

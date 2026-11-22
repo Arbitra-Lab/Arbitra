@@ -25,6 +25,12 @@ export const metadata: Metadata = {
   description:
     'Trustless escrow and arbitration for rentals, freelance work, trade finance, and insurance claims — settled in seconds on the Stellar network.',
   manifest: '/manifest.webmanifest',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'Arbitra',
+  },
+  formatDetection: { telephone: false },
 };
 
 import { RootLayoutClient } from './RootLayoutClient';

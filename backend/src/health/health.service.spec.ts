@@ -186,4 +186,26 @@ describe('HealthService', () => {
       });
     });
   });
+
+  describe('shutdownResult', () => {
+    it('reports error status and the received signal', () => {
+      const result = service.shutdownResult(false, 'SIGTERM');
+
+      expect(result.status).toBe('error');
+      expect(result.services).toEqual({
+        shutdown: { status: 'down', signal: 'SIGTERM' },
+      });
+      expect(result.details).toBeUndefined();
+    });
+
+    it('includes system details when requested', () => {
+      const result = service.shutdownResult(true, 'SIGINT');
+
+      expect(result.details).toMatchObject({
+        nodeVersion: expect.any(String),
+        platform: expect.any(String),
+        processId: expect.any(Number),
+      });
+    });
+  });
 });

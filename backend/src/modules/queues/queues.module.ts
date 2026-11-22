@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bull';
-import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { EmailQueueProcessor } from './processors/email.processor';
 import { DocumentQueueProcessor } from './processors/document.processor';
@@ -18,36 +17,15 @@ import { NotificationsModule } from '../notifications/notifications.module';
 import { StorageModule } from '../storage/storage.module';
 import { StellarModule } from '../stellar/stellar.module';
 import { DEAD_LETTER_QUEUE_NAME } from './queues.constants';
+import { RedisConnectionFactory } from '../../common/redis/redis-connection.factory';
 
 @Module({
   imports: [
     ScheduleModule.forRoot(),
     BullModule.forRootAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) => {
-        const redisUrl = configService.get<string>('REDIS_URL');
-        const redisToken = configService.get<string>('REDIS_TOKEN');
-        const redisHost = configService.get<string>('REDIS_HOST', 'localhost');
-        const redisPort = configService.get<number>('REDIS_PORT', 6379);
-        const redisPassword = configService.get<string>('REDIS_PASSWORD');
-
-        if (redisUrl && redisToken) {
-          return {
-            url: redisUrl,
-            token: redisToken,
-          };
-        }
-
-        return {
-          host: redisHost,
-          port: redisPort,
-          password: redisPassword,
-          retryStrategy: (times: number) => Math.min(times * 50, 2000),
-          maxRetriesPerRequest: null,
-          enableReadyCheck: false,
-        };
-      },
+      inject: [RedisConnectionFactory],
+      useFactory: (redisFactory: RedisConnectionFactory) =>
+        redisFactory.createBullOptions(),
     }),
     BullModule.registerQueue(
       { name: 'email' },
