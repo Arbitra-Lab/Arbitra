@@ -26,6 +26,9 @@ import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { RateLimitInterceptor } from './common/interceptors/rate-limit.interceptor';
 import { ConfigService } from '@nestjs/config';
 import { LoggerService } from './common/services/logger.service';
+import { registerGracefulShutdown } from './config/graceful-shutdown';
+import { HealthService } from './health/health.service';
+import { QueueManagementService } from './modules/queues/services/queue-management.service';
 import {
   DrainableQueue,
   ShutdownServer,
@@ -221,6 +224,99 @@ async function bootstrap() {
   const server = await app.listen(port);
   bootstrapLogger.log(`Application started on port ${port}`);
 
+  // Track active connections so shutdown can drain in-flight requests.
+  server.on('connection', (conn) => {
+    activeConnections++;
+    conn.on('close', () => {
+      activeConnections--;
+    });
+  });
+
+  const shutdownTimeoutMs = parseInt(
+    process.env.GRACEFUL_SHUTDOWN_TIMEOUT || '30000',
+    10,
+  );
+
+  const closeHttpServer = async () => {
+    await new Promise<void>((resolve, reject) => {
+      server.close((error?: Error) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+        resolve();
+      });
+    });
+    bootstrapLogger.log('HTTP server closed');
+  };
+
+  const waitForActiveConnections = async () => {
+    const startTime = Date.now();
+
+    while (activeConnections > 0) {
+      const elapsed = Date.now() - startTime;
+      if (elapsed > shutdownTimeoutMs) {
+        bootstrapLogger.warn(
+          `Graceful shutdown timeout exceeded. Forcing exit with ${activeConnections} active connections.`,
+        );
+        return;
+      }
+
+      bootstrapLogger.log(
+        `Waiting for ${activeConnections} active connections to close...`,
+      );
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+  };
+
+  const drainQueues = async () => {
+    try {
+      const queueManagementService = app.get(QueueManagementService, {
+        strict: false,
+      });
+
+      if (queueManagementService?.pauseAllQueues) {
+        bootstrapLogger.log('Pausing Bull queues...');
+        await queueManagementService.pauseAllQueues();
+      }
+
+      if (queueManagementService?.waitForActiveJobs) {
+        bootstrapLogger.log('Draining active Bull jobs...');
+        await queueManagementService.waitForActiveJobs(shutdownTimeoutMs);
+      }
+    } catch (error) {
+      bootstrapLogger.warn(
+        `Queue drain skipped: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  };
+
+  registerGracefulShutdown(app, {
+    logger: bootstrapLogger,
+    timeoutMs: shutdownTimeoutMs,
+    onShutdownStart: () => {
+      if (isShuttingDown) {
+        return;
+      }
+      isShuttingDown = true;
+      bootstrapLogger.log('Marking application as shutting down');
+
+      try {
+        const healthService = app.get(HealthService, { strict: false });
+        healthService?.setShuttingDown?.(true);
+      } catch (error) {
+        bootstrapLogger.warn(
+          `Unable to mark health service as shutting down: ${
+            error instanceof Error ? error.message : String(error)
+          }`,
+        );
+      }
+    },
+    beforeAppClose: async () => {
+      await closeHttpServer();
+      await waitForActiveConnections();
+      await drainQueues();
+    },
   const queues = [...WORKER_QUEUE_NAMES, DEAD_LETTER_QUEUE_NAME]
     .map((name) => {
       try {

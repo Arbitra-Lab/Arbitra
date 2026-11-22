@@ -27,6 +27,10 @@ export interface ShutdownCheckpoint {
 export interface GracefulShutdownOptions {
   state: ShutdownState;
   logger?: Logger;
+  /** Mark application unhealthy as soon as shutdown begins. */
+  onShutdownStart?: () => void | Promise<void>;
+  /** Drain background work before closing the Nest application. */
+  beforeAppClose?: () => void | Promise<void>;
   timeoutMs?: number;
   server?: ShutdownServer;
   queues?: ReadonlyArray<DrainableQueue>;
@@ -80,6 +84,12 @@ export function registerGracefulShutdown(
 
     let failed = false;
     try {
+      await options.onShutdownStart?.();
+      await options.beforeAppClose?.();
+      await app.close();
+      clearTimeout(forceExitTimer);
+      logger.log('Application closed successfully');
+      process.exit(0);
       if (options.server) {
         await Promise.race([closeServer(options.server), deadline]);
         logger.log('HTTP server stopped accepting connections');

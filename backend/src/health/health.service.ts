@@ -17,6 +17,45 @@ export interface EnhancedHealthResult {
 export class HealthService {
   private readonly logger = new Logger(HealthService.name);
   private readonly startTime = Date.now();
+  private shuttingDown = false;
+
+  setShuttingDown(value = true): void {
+    this.shuttingDown = value;
+  }
+
+  isShuttingDown(): boolean {
+    return this.shuttingDown;
+  }
+
+  getShutdownResult(includeDetails = false): EnhancedHealthResult {
+    const packageJson = this.getPackageJson();
+    const result: EnhancedHealthResult = {
+      status: 'error',
+      timestamp: new Date().toISOString(),
+      version: packageJson.version || '1.0.0',
+      uptime: Math.floor((Date.now() - this.startTime) / 1000),
+      services: {
+        application: {
+          status: 'error',
+          message: 'Application is shutting down',
+        },
+      },
+    };
+
+    if (includeDetails) {
+      result.environment = process.env.NODE_ENV || 'development';
+      result.details = {
+        nodeVersion: process.version,
+        platform: process.platform,
+        architecture: process.arch,
+        processId: process.pid,
+        memoryUsage: process.memoryUsage(),
+        shutdown: true,
+      };
+    }
+
+    return result;
+  }
 
   enhanceHealthResult(
     result: HealthCheckResult,

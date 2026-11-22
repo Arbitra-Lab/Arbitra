@@ -194,4 +194,39 @@ describe('registerGracefulShutdown', () => {
 
     expect(exit).toHaveBeenCalledWith(1);
   });
+
+  it('marks shutdown started and drains before closing app', async () => {
+    const close = jest.fn().mockResolvedValue(undefined);
+    const enableShutdownHooks = jest.fn();
+    const onShutdownStart = jest.fn().mockResolvedValue(undefined);
+    const beforeAppClose = jest.fn().mockResolvedValue(undefined);
+    const app = {
+      close,
+      enableShutdownHooks,
+    } as unknown as INestApplication;
+
+    const exitSpy = jest
+      .spyOn(process, 'exit')
+      .mockImplementation((() => undefined) as typeof process.exit);
+
+    const shutdown = registerGracefulShutdown(app, {
+      logger: new Logger('TestShutdown'),
+      onShutdownStart,
+      beforeAppClose,
+    });
+
+    await shutdown('SIGTERM');
+
+    expect(onShutdownStart).toHaveBeenCalledTimes(1);
+    expect(beforeAppClose).toHaveBeenCalledTimes(1);
+    expect(onShutdownStart.mock.invocationCallOrder[0]).toBeLessThan(
+      beforeAppClose.mock.invocationCallOrder[0],
+    );
+    expect(beforeAppClose.mock.invocationCallOrder[0]).toBeLessThan(
+      close.mock.invocationCallOrder[0],
+    );
+    expect(exitSpy).toHaveBeenCalledWith(0);
+
+    exitSpy.mockRestore();
+  });
 });

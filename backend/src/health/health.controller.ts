@@ -30,6 +30,35 @@ export class HealthController {
   @ApiResponse({ status: 200, description: 'Service healthy or degraded' })
   @ApiResponse({ status: 503, description: 'Service unhealthy' })
   async check(@Res() res: Response) {
+    try {
+      if (this.healthService.isShuttingDown()) {
+        return res
+          .status(HttpStatus.SERVICE_UNAVAILABLE)
+          .json(this.healthService.getShutdownResult());
+      }
+
+      const result = await this.health.check([
+        () => this.databaseHealthIndicator.isHealthy('database'),
+        () => this.stellarHealthIndicator.isHealthy('stellar'),
+        () => this.memoryHealthIndicator.isHealthy('memory'),
+      ]);
+
+      const enhancedResult = this.healthService.enhanceHealthResult(result);
+      const status = this.determineHttpStatus(enhancedResult.status);
+
+      return res.status(status).json(enhancedResult);
+    } catch (error) {
+      if (this.healthService.isShuttingDown()) {
+        return res
+          .status(HttpStatus.SERVICE_UNAVAILABLE)
+          .json(this.healthService.getShutdownResult());
+      }
+
+      const degradedResult = this.healthService.handlePartialFailure(error);
+      const status = this.determineHttpStatus(degradedResult.status);
+
+      return res.status(status).json(degradedResult);
+    }
     return this.respond(res, false);
   }
 
@@ -42,6 +71,18 @@ export class HealthController {
   @ApiResponse({ status: 200, description: 'Detailed health info' })
   @ApiResponse({ status: 503, description: 'Service unhealthy' })
   async detailedCheck(@Res() res: Response) {
+    try {
+      if (this.healthService.isShuttingDown()) {
+        return res
+          .status(HttpStatus.SERVICE_UNAVAILABLE)
+          .json(this.healthService.getShutdownResult(true));
+      }
+
+      const result = await this.health.check([
+        () => this.databaseHealthIndicator.isHealthy('database'),
+        () => this.stellarHealthIndicator.isHealthy('stellar'),
+        () => this.memoryHealthIndicator.isHealthy('memory'),
+      ]);
     return this.respond(res, true);
   }
 
@@ -75,6 +116,12 @@ export class HealthController {
         .status(this.determineHttpStatus(enhancedResult.status))
         .json(enhancedResult);
     } catch (error) {
+      if (this.healthService.isShuttingDown()) {
+        return res
+          .status(HttpStatus.SERVICE_UNAVAILABLE)
+          .json(this.healthService.getShutdownResult(true));
+      }
+
       const degradedResult = this.healthService.handlePartialFailure(
         error,
         includeDetails,

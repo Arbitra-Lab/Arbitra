@@ -141,6 +141,20 @@ describe('HealthService', () => {
     });
   });
 
+  describe('shutdown state', () => {
+    it('should report unhealthy when shutting down', () => {
+      service.setShuttingDown(true);
+
+      const result = service.getShutdownResult();
+
+      expect(service.isShuttingDown()).toBe(true);
+      expect(result.status).toBe('error');
+      expect(result.services.application).toMatchObject({
+        status: 'error',
+      });
+    });
+  });
+
   describe('handlePartialFailure', () => {
     it('should handle HealthCheckError with causes', () => {
       const mockCauses = {
