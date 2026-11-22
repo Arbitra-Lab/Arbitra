@@ -1,11 +1,12 @@
 import type { Metadata, Viewport } from 'next';
+import { buildThemeScript } from '@/lib/theme';
 import './globals.css';
 
 import '@fontsource-variable/inter';
 
 export const viewport: Viewport = {
   themeColor: '#ff6b5e',
-  colorScheme: 'dark',
+  colorScheme: 'light dark',
   width: 'device-width',
   initialScale: 1,
   maximumScale: 5,
@@ -42,13 +43,12 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        {/* #27 — apply the stored theme before first paint to avoid a flash. */}
+        <script dangerouslySetInnerHTML={{ __html: buildThemeScript() }} />
         <link rel="dns-prefetch" href="https://images.unsplash.com" />
       </head>
 
-      <body
-        suppressHydrationWarning
-        className="font-sans bg-linear-to-br from-[#0b1f1d] via-[#123330] to-[#0b1f1d]"
-      >
+      <body suppressHydrationWarning className="app-shell font-sans">
         {/* Accessibility: skip link */}
         <a href="#main-content" className="skip-link">
           Skip to main content

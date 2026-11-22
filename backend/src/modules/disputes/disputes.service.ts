@@ -42,6 +42,7 @@ import {
 } from '../../common/errors/domain-errors';
 import { DisputeSlaService, DisputeSlaState } from './dispute-sla.service';
 import { DisputeAssignmentService } from './dispute-assignment.service';
+import { realtimeEvents } from '../notifications/realtime-event-bus';
 
 export interface DisputeSlaStatusDto {
   disputeId: string;
@@ -450,6 +451,14 @@ export class DisputesService {
           dueAt: dispute.stageDueAt,
         },
       );
+
+      // #12 — push the new status to both parties in real time.
+      realtimeEvents.disputeStatus({
+        userIds: this.disputePartyIds(dispute),
+        disputeId: dispute.disputeId,
+        status: updateDisputeDto.status,
+        previousStatus,
+      });
     }
 
     return this.disputeRepository.save(dispute);
@@ -571,6 +580,22 @@ export class DisputesService {
       }
 
       await queryRunner.commitTransaction();
+
+      // #12 — notify both parties that the dispute (and any linked escrow)
+      // has been resolved. These go through the rate-limited socket channel.
+      const partyIds = this.disputePartyIds(dispute);
+      realtimeEvents.disputeStatus({
+        userIds: partyIds,
+        disputeId: dispute.disputeId,
+        status: DisputeStatus.RESOLVED,
+        resolution: resolveDisputeDto.resolution,
+      });
+      realtimeEvents.escrowReleased({
+        userIds: partyIds,
+        disputeId: dispute.disputeId,
+        agreementId: dispute.agreement?.id,
+        resolution: resolveDisputeDto.resolution,
+      });
 
       return this.findByDisputeId(disputeId);
     } catch (error) {
@@ -712,6 +737,19 @@ export class DisputesService {
   /**
    * Validate status transition
    */
+  /** Party user IDs for realtime fan-out, deduplicated and without nulls. */
+  private disputePartyIds(dispute: Dispute): string[] {
+    const agreement = dispute.agreement;
+    if (!agreement) return [];
+    return Array.from(
+      new Set(
+        [agreement.adminId, agreement.userId].filter(
+          (id): id is string => typeof id === 'string' && id.length > 0,
+        ),
+      ),
+    );
+  }
+
   private isValidStatusTransition(
     currentStatus: DisputeStatus,
     newStatus: DisputeStatus,

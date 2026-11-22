@@ -373,6 +373,49 @@ describe('EncryptionService', () => {
     });
   });
 
+  // ── versioned envelopes and key lookup (#26) ───────────────────────────────
+
+  describe('versioned envelopes', () => {
+    it('embeds a stable key id and decrypts through the map', async () => {
+      const encrypted = await service.encryptVersioned('versioned secret');
+      const envelope = JSON.parse(encrypted) as {
+        version: number;
+        keyId: string;
+      };
+      expect(envelope.version).toBe(2);
+      expect(envelope.keyId).toBe(service.getCurrentKeyId());
+      expect(await service.decrypt(encrypted)).toBe('versioned secret');
+    });
+
+    it('rejects unknown key ids without falling back to a scan', async () => {
+      const encrypted = JSON.stringify({
+        version: 2,
+        keyId: 'unknown',
+        iv: Buffer.alloc(12).toString('base64'),
+        data: Buffer.alloc(1).toString('base64'),
+        tag: Buffer.alloc(16).toString('base64'),
+      });
+      await expect(service.decrypt(encrypted)).rejects.toThrow(
+        DecryptionFailedError,
+      );
+    });
+
+    it('still decrypts legacy envelopes after rotation', async () => {
+      const module = await buildModule((key) => {
+        if (key === 'ENCRYPTION_KEYS') return JSON.stringify([KEY_A, KEY_B]);
+        return undefined;
+      });
+      const rotating = module.get<EncryptionService>(EncryptionService);
+      const legacy = await rotating.encrypt('old format');
+
+      rotating.rotateKey(KEY_C);
+      expect(await rotating.decrypt(legacy)).toBe('old format');
+      expect(
+        await rotating.decrypt(await rotating.encryptVersioned('new')),
+      ).toBe('new');
+    });
+  });
+
   // ── error class identity ───────────────────────────────────────────────────
 
   describe('error class identity', () => {

@@ -11,13 +11,18 @@ import { SettingsCard } from './SettingsCard';
 import { PreferenceSwitch } from './PreferenceSwitch';
 import { ThemeSelector } from './ThemeSelector';
 import { MfaSetupPayload, ThemePreference, UserPreferences } from './types';
+import {
+  applyThemeDocument,
+  parseThemePreference,
+  THEME_STORAGE_KEY,
+} from '@/lib/theme';
 
 interface SettingsPageClientProps {
   embedded?: boolean;
   requireAuthGuard?: boolean;
 }
 
-const SETTINGS_STORAGE_KEY = 'arbitra_user_preferences';
+const SETTINGS_STORAGE_KEY = THEME_STORAGE_KEY;
 
 const DEFAULT_PREFERENCES: UserPreferences = {
   notifications: {
@@ -74,17 +79,8 @@ const CURRENCY_OPTIONS = [
 
 function applyTheme(theme: ThemePreference) {
   if (typeof window === 'undefined') return;
-
-  const resolvedTheme =
-    theme === 'system'
-      ? window.matchMedia('(prefers-color-scheme: dark)').matches
-        ? 'dark'
-        : 'light'
-      : theme;
-
-  document.documentElement.classList.toggle('dark', resolvedTheme === 'dark');
-  document.documentElement.style.colorScheme = resolvedTheme;
-  document.documentElement.setAttribute('data-theme', theme);
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  applyThemeDocument(window.document, theme, prefersDark);
 }
 
 function getPasswordStrength(password: string) {
@@ -140,12 +136,7 @@ function normalizePreferences(payload: unknown): UserPreferences | null {
         DEFAULT_PREFERENCES.notifications.inAppSummary,
       ),
     },
-    appearanceTheme:
-      raw.appearanceTheme === 'light' ||
-      raw.appearanceTheme === 'dark' ||
-      raw.appearanceTheme === 'system'
-        ? raw.appearanceTheme
-        : DEFAULT_PREFERENCES.appearanceTheme,
+    appearanceTheme: parseThemePreference(raw.appearanceTheme),
     language:
       typeof raw.language === 'string'
         ? raw.language
@@ -245,6 +236,17 @@ export function SettingsPageClient({
       active = false;
     };
   }, [accessToken]);
+
+  // #27 — follow OS colour-scheme changes while the user is on "system".
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const query = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = () => {
+      if (preferences.appearanceTheme === 'system') applyTheme('system');
+    };
+    query.addEventListener('change', handleChange);
+    return () => query.removeEventListener('change', handleChange);
+  }, [preferences.appearanceTheme]);
 
   useEffect(() => {
     let active = true;

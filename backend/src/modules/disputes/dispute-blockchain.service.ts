@@ -9,6 +9,7 @@ import {
   DisputeOutcome,
 } from '../stellar/services/dispute-contract.service';
 import * as crypto from 'crypto';
+import { realtimeEvents } from '../notifications/realtime-event-bus';
 
 @Injectable()
 export class DisputeBlockchainService {
@@ -125,6 +126,22 @@ export class DisputeBlockchainService {
       });
 
       await this.voteRepository.save(vote);
+
+      // #12 — push vote-cast updates to both dispute parties.
+      const agreement = dispute.agreement;
+      const userIds = Array.from(
+        new Set(
+          [agreement?.adminId, agreement?.userId].filter(
+            (id): id is string => typeof id === 'string' && id.length > 0,
+          ),
+        ),
+      );
+      realtimeEvents.voteCast({
+        userIds,
+        disputeId,
+        voteId: vote.id,
+        favorLandlord,
+      });
 
       // Update vote counts
       if (favorLandlord) {

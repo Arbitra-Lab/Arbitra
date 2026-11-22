@@ -8,6 +8,8 @@ import { DisputeSlaService } from './dispute-sla.service';
 import { DisputeAssignmentService } from './dispute-assignment.service';
 import { DisputeSlaReconcilerService } from './dispute-sla-reconciler.service';
 import { DisputeNotificationService } from './dispute-notification.service';
+import { DisputeEvidenceEncryptionService } from './dispute-evidence-encryption.service';
+import { EncryptionModule } from '../../common/services/encryption.module';
 import { DisputeSearchIndexService } from './dispute-search-index.service';
 import { Dispute } from './entities/dispute.entity';
 import { DisputeEvidence } from './entities/dispute-evidence.entity';
@@ -37,6 +39,7 @@ import { StellarModule } from '../stellar/stellar.module';
     ScheduleModule.forRoot(),
     AuditModule,
     StellarModule,
+    EncryptionModule,
   ],
   controllers: [DisputesController],
   providers: [
@@ -46,6 +49,7 @@ import { StellarModule } from '../stellar/stellar.module';
     DisputeAssignmentService,
     DisputeSlaReconcilerService,
     DisputeNotificationService,
+    DisputeEvidenceEncryptionService,
     DisputeSearchIndexService,
   ],
   exports: [
@@ -53,6 +57,7 @@ import { StellarModule } from '../stellar/stellar.module';
     DisputeBlockchainService,
     DisputeSlaService,
     DisputeAssignmentService,
+    DisputeEvidenceEncryptionService,
   ],
 })
 export class DisputesModule {}

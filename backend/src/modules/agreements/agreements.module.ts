@@ -8,6 +8,11 @@ import { NftAnalyticsService } from './nft-analytics.service';
 import { BlockchainSyncService } from './blockchain-sync.service';
 import { EscrowIntegrationService } from './escrow-integration.service';
 import { TemplateRenderingService } from './template-rendering.service';
+import { TemplateManagementService } from './template-management.service';
+import { TemplatesController } from './templates.controller';
+import { AgreementTemplate } from './entities/agreement-template.entity';
+import { TemplateClause } from './entities/template-clause.entity';
+import { TemplateUsage } from './entities/template-usage.entity';
 import { PDFGenerationService } from './pdf-generation.service';
 import { RentAgreement } from '../rent/entities/rent-contract.entity';
 import { Payment } from '../rent/entities/payment.entity';
@@ -37,6 +42,9 @@ import { AgreementActivationSagaService } from './sagas/agreement-activation-sag
       RentObligationNft,
       NFTTransfer,
       AgreementActivationSaga,
+      AgreementTemplate,
+      TemplateClause,
+      TemplateUsage,
     ]),
     AuditModule,
     ReviewsModule,
@@ -45,7 +53,11 @@ import { AgreementActivationSagaService } from './sagas/agreement-activation-sag
     EventEmitterModule.forRoot(),
     ScheduleModule.forRoot(),
   ],
-  controllers: [AgreementsController, AgreementNftController],
+  controllers: [
+    AgreementsController,
+    AgreementNftController,
+    TemplatesController,
+  ],
   providers: [
     AgreementsService,
     AgreementNftService,
@@ -53,6 +65,7 @@ import { AgreementActivationSagaService } from './sagas/agreement-activation-sag
     BlockchainSyncService,
     EscrowIntegrationService,
     TemplateRenderingService,
+    TemplateManagementService,
     PDFGenerationService,
     AgreementStateService,
     AgreementsEventListener,
@@ -66,6 +79,7 @@ import { AgreementActivationSagaService } from './sagas/agreement-activation-sag
     BlockchainSyncService,
     EscrowIntegrationService,
     TemplateRenderingService,
+    TemplateManagementService,
     PDFGenerationService,
   ],
 })
