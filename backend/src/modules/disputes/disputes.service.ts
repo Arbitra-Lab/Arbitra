@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource, In } from 'typeorm';
+import { Repository, DataSource, In, Brackets } from 'typeorm';
 import {
   Dispute,
   DisputeStatus,
@@ -13,6 +13,8 @@ import {
   DisputeEvent,
   DisputeEventType,
 } from './entities/dispute-event.entity';
+import { SavedDisputeSearch } from './entities/saved-dispute-search.entity';
+import { DisputeSearchIndexService } from './dispute-search-index.service';
 import {
   RentAgreement,
   AgreementStatus,
@@ -229,64 +231,79 @@ export class DisputesService {
    */
   async findAll(
     query: QueryDisputesDto,
-    _userId?: string,
-  ): Promise<{ disputes: Dispute[]; total: number }> {
-    const queryBuilder = this.disputeRepository
-      .createQueryBuilder('dispute')
-      .leftJoinAndSelect('dispute.agreement', 'agreement')
-      .leftJoinAndSelect('dispute.initiator', 'initiator')
-      .leftJoinAndSelect('dispute.resolver', 'resolver')
-      .leftJoinAndSelect('dispute.evidence', 'evidence')
+    userId?: string,
+  ): Promise<{ disputes: Dispute[]; total: number; page: number; limit: number }> {
+    let esDisputeIds: string[] | undefined;
+    if (query.q && this.searchIndexService.isEnabled()) {
+      esDisputeIds = await this.searchIndexService.search(query.q, 500);
+      if (esDisputeIds.length === 0) return { disputes: [], total: 0, page: query?.page || 1, limit: query?.limit || 10 };
+    }
+    const qb = this.buildDisputeQuery(query, userId, esDisputeIds);
+    qb.leftJoinAndSelect('dispute.evidence', 'evidence')
       .leftJoinAndSelect('dispute.comments', 'comments')
       .leftJoinAndSelect('comments.user', 'commentUser');
 
-    // Apply filters
-    if (query.status) {
-      queryBuilder.andWhere('dispute.status = :status', {
-        status: query.status,
-      });
-    }
-
-    if (query.disputeType) {
-      queryBuilder.andWhere('dispute.disputeType = :disputeType', {
-        disputeType: query.disputeType,
-      });
-    }
-
-    if (query.agreementId) {
-      queryBuilder.andWhere('dispute.agreementId = :agreementId', {
-        agreementId: query.agreementId,
-      });
-    }
-
-    if (query.initiatedBy) {
-      queryBuilder.andWhere('dispute.initiatedBy = :initiatedBy', {
-        initiatedBy: query.initiatedBy,
-      });
-    }
-
-    if (query.disputeIds && query.disputeIds.length > 0) {
-      queryBuilder.andWhere('dispute.disputeId IN (:...disputeIds)', {
-        disputeIds: query.disputeIds,
-      });
-    }
-
-    // Apply sorting
     const sortField =
-      query.sortBy === 'createdAt'
-        ? 'dispute.createdAt'
-        : query.sortBy === 'status'
-          ? 'dispute.status'
-          : 'dispute.createdAt';
-    queryBuilder.orderBy(sortField, query.sortOrder);
+      query.sortBy === 'status'
+        ? 'dispute.status'
+        : query.sortBy === 'amount'
+          ? 'dispute.requestedAmount'
+          : query.sortBy === 'priority'
+            ? 'dispute.priority'
+            : 'dispute.createdAt';
+    qb.orderBy(sortField, query.sortOrder || 'DESC');
 
-    // Apply pagination
-    const skip = ((query?.page || 1) - 1) * (query?.limit || 10);
-    queryBuilder.skip(skip).take(query?.limit || 10);
+    const page = query?.page || 1;
+    const limit = query?.limit || 10;
+    qb.skip((page - 1) * limit).take(limit);
+    const [disputes, total] = await qb.getManyAndCount();
+    this.logger.log(`dispute_search user=${userId ?? 'admin'} q=${query.q ?? ''} filters=${JSON.stringify({status:query.status,type:query.disputeType,arbiterId:query.arbiterId,partyId:query.partyId,fromDate:query.fromDate,toDate:query.toDate,minAmount:query.minAmount,maxAmount:query.maxAmount,jurisdiction:query.jurisdiction})} total=${total}`);
+    return { disputes, total, page, limit };
+  }
 
-    const [disputes, total] = await queryBuilder.getManyAndCount();
+  private buildDisputeQuery(query: QueryDisputesDto, userId?: string, esDisputeIds?: string[]) {
+    const qb = this.disputeRepository
+      .createQueryBuilder('dispute')
+      .leftJoinAndSelect('dispute.agreement', 'agreement')
+      .leftJoinAndSelect('agreement.property', 'property')
+      .leftJoinAndSelect('dispute.initiator', 'initiator')
+      .leftJoinAndSelect('dispute.resolver', 'resolver');
+    if (esDisputeIds && esDisputeIds.length > 0) {
+      qb.andWhere('dispute.disputeId IN (:...esDisputeIds)', { esDisputeIds });
+    }
 
-    return { disputes, total };
+    if (query.status) qb.andWhere('dispute.status = :status', { status: query.status });
+    if (query.disputeType) qb.andWhere('dispute.disputeType = :disputeType', { disputeType: query.disputeType });
+    if (query.agreementId) qb.andWhere('agreement.id = :agreementId', { agreementId: query.agreementId });
+    if (query.initiatedBy) qb.andWhere('dispute.initiatedBy = :initiatedBy', { initiatedBy: query.initiatedBy });
+    if (query.disputeIds?.length) qb.andWhere('dispute.disputeId IN (:...disputeIds)', { disputeIds: query.disputeIds });
+    if (query.q && !esDisputeIds) {
+      const q = `%${query.q.toLowerCase()}%`;
+      qb.andWhere(new Brackets((b) => {
+        b.where('LOWER(dispute.description) LIKE :q', { q })
+          .orWhere('LOWER(dispute.disputeId) LIKE :q', { q })
+          .orWhere('LOWER(COALESCE(dispute.resolution, '')) LIKE :q', { q })
+          .orWhere('LOWER(initiator.email) LIKE :q', { q })
+          .orWhere('LOWER(COALESCE(initiator.firstName, '')) LIKE :q', { q })
+          .orWhere('LOWER(COALESCE(initiator.lastName, '')) LIKE :q', { q });
+      }));
+    }
+    if (query.arbiterId) qb.andWhere('(dispute.resolvedBy = :arbiterId OR dispute.arbiter_id = :arbiterId)', { arbiterId: query.arbiterId });
+    if (query.partyId) qb.andWhere('(dispute.initiatedBy = :partyId OR agreement.tenant = :partyId OR agreement.landlord = :partyId)', { partyId: query.partyId });
+    if (query.minAmount !== undefined) qb.andWhere('dispute.requestedAmount >= :minAmount', { minAmount: query.minAmount });
+    if (query.maxAmount !== undefined) qb.andWhere('dispute.requestedAmount <= :maxAmount', { maxAmount: query.maxAmount });
+    if (query.jurisdiction) qb.andWhere("LOWER(COALESCE(dispute.metadata->>'jurisdiction','')) LIKE :jurisdiction", { jurisdiction: `%${query.jurisdiction.toLowerCase()}%` });
+    if (query.fromDate) qb.andWhere('dispute.createdAt >= :fromDate', { fromDate: query.fromDate });
+    if (query.toDate) qb.andWhere('dispute.createdAt <= :toDate', { toDate: query.toDate });
+    if (userId) {
+      qb.andWhere(new Brackets((b) => {
+        b.where('dispute.initiatedBy = :userId', { userId })
+          .orWhere('agreement.tenant = :userId', { userId })
+          .orWhere('agreement.landlord = :userId', { userId })
+          .orWhere('dispute.resolvedBy = :userId', { userId });
+      }));
+    }
+    return qb;
   }
 
   /**
@@ -311,6 +328,52 @@ export class DisputesService {
     }
 
     return dispute;
+  }
+
+  async saveSearch(userId: string, name: string, filters: Record<string, unknown>) {
+    const saved = this.savedSearchRepository.create({ userId, name, filters });
+    return this.savedSearchRepository.save(saved);
+  }
+
+  async listSavedSearches(userId: string) {
+    return this.savedSearchRepository.find({ where: { userId }, order: { createdAt: 'DESC' } });
+  }
+
+  async deleteSavedSearch(userId: string, id: string) {
+    const existing = await this.savedSearchRepository.findOne({ where: { id, userId } });
+    if (!existing) throw new NotFoundException('Saved search not found');
+    await this.savedSearchRepository.remove(existing);
+    return { deleted: true };
+  }
+
+  async exportDisputes(query: QueryDisputesDto, userId?: string): Promise<string> {
+    let esDisputeIds: string[] | undefined;
+    if (query.q && this.searchIndexService.isEnabled()) {
+      esDisputeIds = await this.searchIndexService.search(query.q, 1000);
+      if (esDisputeIds.length === 0) return 'disputeId,status,type,priority,requestedAmount,initiatedBy,agreementId,createdAt,stage,stageDueAt,resolution\n';
+    }
+    const qb = this.buildDisputeQuery(query, userId, esDisputeIds);
+    qb.orderBy('dispute.createdAt', 'DESC').take(1000);
+    const disputes = await qb.getMany();
+    const header = ['disputeId','status','type','priority','requestedAmount','initiatedBy','agreementId','createdAt','stage','stageDueAt','resolution'];
+    const rows = disputes.map((d) => [
+      d.disputeId,
+      d.status,
+      d.disputeType,
+      d.priority,
+      d.requestedAmount ?? '',
+      d.initiatedBy,
+      d.agreement?.id ?? '',
+      d.createdAt?.toISOString?.() ?? '',
+      d.stage ?? '',
+      d.stageDueAt?.toISOString?.() ?? '',
+      (d.resolution ?? '').replace(/\n/g, ' '),
+    ]);
+    const esc = (v: unknown) => {
+      const s = String(v ?? '');
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    return [header, ...rows].map((r) => r.map(esc).join(',')).join('\n');
   }
 
   /**
