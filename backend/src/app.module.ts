@@ -65,6 +65,7 @@ import { ResilienceModule } from './common/resilience';
 import { FraudModule } from './modules/fraud/fraud.module';
 import { TransactionModule } from './modules/transactions/transaction.module';
 import { ApiVersionModule } from './common/api-versioning/api-version.module';
+import { FeeModule } from './modules/fees/fee.module';
 import { ResponseTimeInterceptor } from './common/interceptors/response-time.interceptor';
 import { TimeoutInterceptor } from './common/interceptors/timeout.interceptor';
 
@@ -225,6 +226,7 @@ import { TimeoutInterceptor } from './common/interceptors/timeout.interceptor';
     ...(process.env.OPENAPI_GENERATE !== 'true' ? [QueuesModule] : []),
     // API versioning module
     ApiVersionModule,
+    FeeModule,
   ],
   controllers: [AppController],
   providers: [

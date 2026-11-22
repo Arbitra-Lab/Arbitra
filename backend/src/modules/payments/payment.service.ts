@@ -62,6 +62,8 @@ import { RefundEscrowDto, ReleaseEscrowDto } from '../stellar/dto/escrow.dto';
 import { TransactionStatus } from '../stellar/entities/stellar-transaction.entity';
 import { Idempotent, IdempotencyService } from '../../common/idempotency';
 import { FraudHooksService } from '../fraud/fraud-hooks.service';
+import { FeeService } from '../fees/fee.service';
+import { FeeAgreementType } from '../fees/entities/fee-config.entity';
 
 @Injectable()
 export class PaymentService {
@@ -83,6 +85,7 @@ export class PaymentService {
     private readonly dataSource: DataSource,
     private readonly fraudHooksService: FraudHooksService,
     private readonly ledgerService: LedgerService,
+    private readonly feeService: FeeService,
   ) {}
 
   @Locked({
@@ -123,8 +126,14 @@ export class PaymentService {
       throw new NotFoundException('Payment method not found');
     }
 
-    // Calculate fees (mock: 2% fee)
-    const transactionFee = roundMoney(dto.amount * 0.02);
+    // Calculate fees using configurable protocol fee engine
+    const feeCalc = await this.feeService.calculateFee({
+      amount: dto.amount,
+      agreementType: (dto as any).agreementType ?? FeeAgreementType.DEFAULT,
+      historicalVolume: 0,
+      currency: 'NGN',
+    });
+    const transactionFee = roundMoney(feeCalc.feeAmount);
     const netAmount = roundMoney(dto.amount - transactionFee);
 
     // Note: In production, fetch actual user email from UsersService.findById(userId)
@@ -250,6 +259,20 @@ export class PaymentService {
     });
     this.logger.log(`Payment recorded: ${savedPayment.id}`);
 
+    if (transactionFee > 0) {
+      await this.feeService.recordCollection({
+        paymentId: savedPayment.id,
+        agreementId: dto.agreementId ?? null,
+        agreementType: String(
+          (dto as any).agreementType ?? FeeAgreementType.DEFAULT,
+        ),
+        grossAmount: dto.amount,
+        feeAmount: transactionFee,
+        currency: savedPayment.currency,
+        breakdown: feeCalc as any,
+      });
+    }
+
     void this.fraudHooksService.onPaymentRecorded({
       userId,
       amount: Number(savedPayment.amount),
@@ -366,6 +389,20 @@ export class PaymentService {
       });
 
       this.logger.log(`Refund processed for payment: ${paymentId}`);
+
+      const feeRec = await this.feeService.markRefunded(
+        paymentId,
+        roundMoney(
+          dto.amount *
+            (payment.transactionFee /
+              Math.max(Number(payment.amount), 0.00001)),
+        ),
+      );
+      if (feeRec) {
+        this.logger.log(
+          `Fee collection adjusted for refund payment=${paymentId}`,
+        );
+      }
 
       await this.notificationsService.notify(
         userId,
