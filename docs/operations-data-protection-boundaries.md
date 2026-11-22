@@ -1,0 +1,1 @@
+# Operations and data protection boundaries`n`nOperational tasks require verified runbooks; access control needs role coverage; request inputs require consistent validation; and log output must mask sensitive fields.
