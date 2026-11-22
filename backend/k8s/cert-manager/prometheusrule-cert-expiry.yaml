@@ -1,0 +1,32 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: arbitra-cert-manager-alerts
+  namespace: production
+  labels:
+    app: arbitra-backend
+    release: prometheus
+spec:
+  groups:
+    - name: arbitra.certificate.rules
+      rules:
+        - alert: ArbitraTLSCertificateExpiringSoon
+          expr: (certmanager_certificate_expiration_timestamp_seconds{namespace="production",name="arbitra-api-tls"} - time()) / 86400 < 30
+          for: 1h
+          labels:
+            severity: warning
+            component: security
+          annotations:
+            summary: "Arbitra TLS certificate expiring within 30 days"
+            description: "Certificate {{ $labels.name }} in {{ $labels.namespace }} expires in {{ $value | printf \"%.1f\" }} days. cert-manager should renew automatically at 30 days before expiry; investigate if renewal has not occurred."
+            runbook_url: "https://github.com/Arbitra-Lab/Arbitra/blob/dev/backend/docs/SSL_TLS_CERTIFICATE_MANAGEMENT.md#certificate-renewal-alerts"
+        - alert: ArbitraTLSCertificateRenewalFailed
+          expr: max by (name, namespace) (certmanager_certificate_ready_status{namespace="production",name="arbitra-api-tls",condition="False"}) == 1
+          for: 15m
+          labels:
+            severity: critical
+            component: security
+          annotations:
+            summary: "Arbitra TLS certificate renewal/readiness failed"
+            description: "Certificate {{ $labels.name }} is not ready. Check cert-manager CertificateRequest/Order/Challenge resources and follow manual intervention steps in backend/docs/SSL_TLS_CERTIFICATE_MANAGEMENT.md."
+            runbook_url: "https://github.com/Arbitra-Lab/Arbitra/blob/dev/backend/docs/SSL_TLS_CERTIFICATE_MANAGEMENT.md#manual-intervention"

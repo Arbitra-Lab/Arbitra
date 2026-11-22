@@ -1,0 +1,20 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: arbitra-api-tls
+  namespace: production
+  labels:
+    app: arbitra-backend
+spec:
+  secretName: arbitra-api-tls
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+  dnsNames:
+    - api.arbitra.app
+  duration: 2160h # 90 days
+  renewBefore: 720h # 30 days before expiry
+  privateKey:
+    rotationPolicy: Always
+    algorithm: RSA
+    size: 2048

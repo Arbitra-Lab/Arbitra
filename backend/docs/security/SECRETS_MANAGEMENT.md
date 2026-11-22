@@ -89,6 +89,8 @@ Bitwarden, or an internal vault). Never share secrets over chat or email.
 
 ## Secret Rotation
 
+Policy: see [SECRETS_ROTATION_POLICY.md](./SECRETS_ROTATION_POLICY.md) for the production 90-day rotation policy, AWS Secrets Manager + External Secrets delivery, zero-downtime rollout, and audit requirements.
+
 ### Rotation Schedule
 
 | Secret type          | Rotation frequency                      |
@@ -96,8 +98,8 @@ Bitwarden, or an internal vault). Never share secrets over chat or email.
 | Encryption keys      | Every 90 days                           |
 | JWT signing keys     | Every 90 days                           |
 | Database credentials | Every 90 days                           |
-| Third-party API keys | Per provider policy or every 180 days   |
-| Webhook secrets      | On suspected exposure or every 180 days |
+| Third-party API keys | Every 90 days (or provider minimum)     |
+| Webhook secrets      | On suspected exposure or every 90 days  |
 
 ### Rotation Procedure
 
