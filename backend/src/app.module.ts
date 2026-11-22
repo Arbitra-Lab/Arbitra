@@ -3,7 +3,6 @@ import {
   ValidationPipe,
   MiddlewareConsumer,
   NestModule,
-  Logger,
 } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { validateEnvironment } from './config/env.validation';
@@ -35,7 +34,6 @@ import { RequestSizeLimitMiddleware } from './common/middleware/request-size-lim
 import { CsrfMiddleware } from './common/middleware/csrf.middleware';
 import { ThreatDetectionMiddleware } from './common/middleware/threat-detection.middleware';
 import { CacheModule } from '@nestjs/cache-manager';
-import { redisStore } from 'cache-manager-redis-yet';
 import { SentryModule } from '@sentry/nestjs/setup';
 import { StorageModule } from './modules/storage/storage.module';
 import { ReviewsModule } from './modules/reviews/reviews.module';
@@ -45,8 +43,10 @@ import { SearchModule } from './modules/search/search.module';
 import { JobQueueService } from './common/services/job-queue.service';
 import { RateLimitingModule } from './modules/rate-limiting/rate-limiting.module';
 import { RateLimitHeadersMiddleware } from './modules/rate-limiting/middleware/rate-limit-headers.middleware';
-import { upstashStore } from './common/cache/upstash-cache.store';
 import { AppCacheModule } from './common/cache/cache.module';
+import { RedisModule } from './common/redis/redis.module';
+import { RedisConnectionFactory } from './common/redis/redis-connection.factory';
+import { ShutdownModule } from './config/shutdown.module';
 import { I18nModule } from './modules/i18n/i18n.module';
 import { LocalizationMiddleware } from './modules/i18n/middleware/localization.middleware';
 import { CleanupModule } from './modules/cleanup/cleanup.module';
@@ -68,8 +68,6 @@ import { ApiVersionModule } from './common/api-versioning/api-version.module';
 import { ResponseTimeInterceptor } from './common/interceptors/response-time.interceptor';
 import { TimeoutInterceptor } from './common/interceptors/timeout.interceptor';
 
-const appLogger = new Logger('AppModule');
-
 @Module({
   imports: [
     ...(process.env.NODE_ENV === 'test' ? [] : [SentryModule.forRoot()]),
@@ -80,6 +78,8 @@ const appLogger = new Logger('AppModule');
     }),
     ScheduleModule.forRoot(),
     LoggerModule,
+    RedisModule,
+    ShutdownModule,
     LockModule,
     IdempotencyModule,
     ResilienceModule,
@@ -92,57 +92,11 @@ const appLogger = new Logger('AppModule');
         })
       : CacheModule.registerAsync({
           isGlobal: true,
-          inject: [],
-          useFactory: async () => {
-            // Use Upstash REST API if URL is provided (better for serverless/Render)
-            if (process.env.REDIS_URL && process.env.REDIS_TOKEN) {
-              appLogger.log('[Redis] Using Upstash REST API');
-
-              return {
-                store: upstashStore({
-                  url: process.env.REDIS_URL,
-                  token: process.env.REDIS_TOKEN,
-                  ttl: 600,
-                }),
-              };
-            }
-
-            // Fallback to ioredis for traditional Redis connections
-            const Redis = require('ioredis');
-
-            const redisConfig: any = {
-              host: process.env.REDIS_HOST || 'localhost',
-              port: parseInt(process.env.REDIS_PORT || '6379'),
-              password: process.env.REDIS_PASSWORD || undefined,
-              maxRetriesPerRequest: 3,
-              retryStrategy(times: number) {
-                const delay = Math.min(times * 50, 2000);
-                return delay;
-              },
-              connectTimeout: 10000,
-            };
-
-            // Enable TLS for production Redis (e.g., Upstash)
-            if (process.env.REDIS_TLS === 'true') {
-              redisConfig.tls = {
-                rejectUnauthorized: true,
-              };
-            }
-
-            // Add username if provided (for Redis 6+ ACL)
-            if (process.env.REDIS_USERNAME) {
-              redisConfig.username = process.env.REDIS_USERNAME;
-            }
-
-            appLogger.log('[Redis] Using ioredis with TLS');
-
-            const client = new Redis(redisConfig);
-
-            return {
-              store: await redisStore(client),
-              ttl: 600,
-            };
-          },
+          inject: [RedisConnectionFactory],
+          useFactory: async (
+            redisFactory: RedisConnectionFactory,
+          ): Promise<{ store: unknown; ttl: number }> =>
+            redisFactory.createCacheStore(),
         }),
     AppCacheModule,
     ThrottlerModule.forRoot([

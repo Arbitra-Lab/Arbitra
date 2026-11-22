@@ -1,0 +1,29 @@
+groups:
+  - name: redis-sentinel
+    rules:
+      - alert: RedisNodeDown
+        expr: redis_up{job=~"redis-node|redis-sentinel"} == 0
+        for: 15s
+        labels:
+          severity: warning
+        annotations:
+          summary: Redis node is unreachable
+          description: A Redis data node or Sentinel has stopped responding.
+
+      - alert: RedisReplicaLinkDown
+        expr: redis_master_link_up == 0
+        for: 30s
+        labels:
+          severity: warning
+        annotations:
+          summary: Redis replica is not linked to its master
+          description: Replication is broken, so a Sentinel failover may promote stale data.
+
+      - alert: RedisSentinelQuorumLost
+        expr: count(redis_up{job="redis-sentinel"} == 1) < 3
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: Redis Sentinel quorum is lost
+          description: Fewer than three Sentinels are healthy, automatic failover is not safe.
