@@ -2,15 +2,24 @@
 
 import Link from 'next/link';
 import { getAdminNavItems } from '@/components/admin-dashboard/navigation';
+import { canAccessAdmin, isAdminBypassEnabled } from '@/lib/admin-access';
+import type { UserRole } from '@/lib/navigation/role-navigation';
 import { useAuth } from '@/store/authStore';
 import { useRoleRedirect } from '@/hooks/useRoleRedirect';
 
 export default function AdminHomePage() {
-  // AUTH DISABLED - useRoleRedirect commented out for development
-  // useRoleRedirect(['admin', 'support', 'auditor']);
+  const bypassEnabled = isAdminBypassEnabled();
+  useRoleRedirect(
+    bypassEnabled
+      ? undefined
+      : (['admin', 'super_admin', 'support', 'auditor'] as UserRole[]),
+    !bypassEnabled,
+  );
 
   const { user, loading } = useAuth();
-  const navItems = getAdminNavItems(user?.role);
+  const navItems = canAccessAdmin(user?.role)
+    ? getAdminNavItems(user?.role)
+    : [];
 
   if (loading) {
     return (

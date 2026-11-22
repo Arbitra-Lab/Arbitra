@@ -31,9 +31,6 @@ const statusBadge: Record<DisputeStatus, string> = {
   WITHDRAWN: 'bg-white/5 text-neutral-500/40 border-white/10',
 };
 
-const DISPUTE_PREVIEW_FALLBACK =
-  'https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=80&q=80';
-
 interface DisputesListProps {
   className?: string;
 }

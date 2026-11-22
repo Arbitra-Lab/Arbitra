@@ -4,11 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api-client';
 
 export type AdminDisputeStatus =
-  | 'OPEN'
-  | 'UNDER_REVIEW'
-  | 'RESOLVED'
-  | 'REJECTED'
-  | 'WITHDRAWN';
+  'OPEN' | 'UNDER_REVIEW' | 'RESOLVED' | 'REJECTED' | 'WITHDRAWN';
 
 export type AdminDisputeType =
   | 'RENT_PAYMENT'
@@ -28,7 +24,7 @@ export interface AdminDisputeRecord {
   disputeType: AdminDisputeType;
   description: string;
   status: AdminDisputeStatus;
-  priority: 'low' | 'medium' | 'high';
+  priority: AdminDisputePriority;
   requestedAmount?: number;
   resolution?: string;
   evidenceCount: number;
@@ -67,8 +63,11 @@ interface ApiDispute {
   priority?: 'low' | 'medium' | 'high';
 }
 
+export type AdminDisputePriority = 'low' | 'medium' | 'high' | 'urgent';
+
 export interface AdminDisputeFilters {
   status?: AdminDisputeStatus | 'ALL';
+  priority?: AdminDisputePriority | 'ALL';
   search?: string;
 }
 
@@ -176,6 +175,14 @@ function matchesFilter(
     filters.status &&
     filters.status !== 'ALL' &&
     dispute.status !== filters.status
+  ) {
+    return false;
+  }
+
+  if (
+    filters.priority &&
+    filters.priority !== 'ALL' &&
+    dispute.priority !== filters.priority
   ) {
     return false;
   }
