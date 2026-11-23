@@ -9,6 +9,7 @@ export interface JwtPayload {
   email: string;
   role: string;
   type: 'access' | 'refresh';
+  mfaVerified?: boolean;
 }
 
 @Injectable()
@@ -39,6 +40,6 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       throw new UnauthorizedException('User not found or inactive');
     }
 
-    return user;
+    return { ...user, mfaVerified: payload.mfaVerified === true };
   }
 }

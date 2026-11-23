@@ -24,6 +24,8 @@ import { AdminReconciliationController } from './admin-reconciliation.controller
 import { FraudModule } from '../fraud/fraud.module';
 import { AuditModule } from '../audit/audit.module';
 import { FeeModule } from '../fees/fee.module';
+import { AuthModule } from '../auth/auth.module';
+import { MfaEnforcementGuard } from '../auth/guards/mfa-enforcement.guard';
 
 @Module({
   imports: [
@@ -41,6 +43,7 @@ import { FeeModule } from '../fees/fee.module';
     FraudModule,
     AuditModule,
     FeeModule,
+    AuthModule,
   ],
   controllers: [
     PaymentController,
@@ -56,6 +59,7 @@ import { FeeModule } from '../fees/fee.module';
     PaymentGatewayService,
     AdminRefundsService,
     LedgerService,
+    MfaEnforcementGuard,
   ],
   exports: [PaymentService, PaymentGatewayService, LedgerService],
 })

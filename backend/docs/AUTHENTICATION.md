@@ -286,7 +286,7 @@ Client                        Server
   │─────────────────────────────▶│
   │                              │── Check no existing active MFA device
   │                              │── Generate TOTP secret (speakeasy, 32 bytes)
-  │                              │── Encrypt secret with AES-256-CBC
+  │                              │── Encrypt secret with AES-256-GCM
   │                              │── Generate 10 backup codes (8-char hex each)
   │                              │── Hash backup codes with bcrypt
   │                              │── Store MfaDevice record
@@ -296,7 +296,7 @@ Client                        Server
   │◀─────────────────────────────│
 ```
 
-**MFA secret encryption:** The TOTP secret is encrypted at rest using AES-256-CBC with a key derived from `SECURITY_ENCRYPTION_KEY`. The IV is prepended to the ciphertext as `iv:encrypted`.
+**MFA secret encryption:** New TOTP secrets use AES-256-GCM authenticated encryption with a key derived from `SECURITY_ENCRYPTION_KEY`. Existing AES-256-CBC records remain readable for migration compatibility.
 
 ### MFA Login Flow
 
@@ -702,7 +702,7 @@ Old metrics are automatically cleaned up after 90 days via `AuthMetricsCleanupSe
 ### Credential Security
 
 - Passwords are hashed with bcrypt (12 salt rounds) — never stored in plaintext
-- MFA secrets are encrypted with AES-256-CBC at rest
+- MFA secrets are encrypted with AES-256-GCM at rest; legacy CBC records remain readable
 - Reset tokens are stored as SHA-256 hashes
 - Backup codes are individually bcrypt-hashed
 

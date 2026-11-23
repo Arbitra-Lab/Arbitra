@@ -1,0 +1,108 @@
+{
+  "regressionThresholdPercent": 10,
+  "scenarios": [
+    {
+      "id": "health",
+      "name": "Health check",
+      "method": "GET",
+      "path": "/health",
+      "p95TargetMs": 100
+    },
+    {
+      "id": "health-detailed",
+      "name": "Detailed health check",
+      "method": "GET",
+      "path": "/health/detailed",
+      "p95TargetMs": 200
+    },
+    {
+      "id": "security-text",
+      "name": "Security policy",
+      "method": "GET",
+      "path": "/security.txt",
+      "p95TargetMs": 100
+    },
+    {
+      "id": "openapi",
+      "name": "OpenAPI document",
+      "method": "GET",
+      "path": "/api/docs-json",
+      "p95TargetMs": 500
+    },
+    {
+      "id": "property-list",
+      "name": "Property listing",
+      "method": "GET",
+      "path": "/api/properties",
+      "auth": true,
+      "p95TargetMs": 500
+    },
+    {
+      "id": "property-search",
+      "name": "Property search",
+      "method": "GET",
+      "path": "/api/search/properties?city=Test%20City&limit=20",
+      "p95TargetMs": 200
+    },
+    {
+      "id": "user-profile",
+      "name": "User profile",
+      "method": "GET",
+      "path": "/api/users/me",
+      "auth": true,
+      "p95TargetMs": 300
+    },
+    {
+      "id": "agreement-list",
+      "name": "Agreement listing",
+      "method": "GET",
+      "path": "/api/agreements",
+      "auth": true,
+      "p95TargetMs": 500
+    },
+    {
+      "id": "payment-list",
+      "name": "Payment listing",
+      "method": "GET",
+      "path": "/api/payments",
+      "auth": true,
+      "p95TargetMs": 500
+    },
+    {
+      "id": "dispute-list",
+      "name": "Dispute listing",
+      "method": "GET",
+      "path": "/api/disputes",
+      "auth": true,
+      "p95TargetMs": 500
+    },
+    {
+      "id": "notification-list",
+      "name": "Notification listing",
+      "method": "GET",
+      "path": "/api/notifications",
+      "auth": true,
+      "p95TargetMs": 500
+    },
+    {
+      "id": "payment-submission",
+      "name": "Payment submission",
+      "method": "POST",
+      "path": "/api/payments",
+      "mutation": true,
+      "auth": true,
+      "payloadEnv": "BENCHMARK_PAYMENT_PAYLOAD",
+      "p95TargetMs": 500
+    },
+    {
+      "id": "dispute-creation",
+      "name": "Dispute creation",
+      "method": "POST",
+      "path": "/api/disputes",
+      "mutation": true,
+      "auth": true,
+      "payloadEnv": "BENCHMARK_DISPUTE_PAYLOAD",
+      "p95TargetMs": 300
+    }
+  ]
+}

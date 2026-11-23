@@ -1,7 +1,16 @@
-import { IsString, IsOptional, MaxLength } from 'class-validator';
+import { IsString, IsOptional, MaxLength, IsIn } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class EnableMfaDto {
+  @ApiPropertyOptional({
+    enum: ['totp', 'sms'],
+    default: 'totp',
+    description: 'Authentication factor to enroll',
+  })
+  @IsOptional()
+  @IsIn(['totp', 'sms'])
+  method?: 'totp' | 'sms';
+
   @ApiPropertyOptional({
     example: 'My iPhone',
     description: 'Optional device name for the MFA device',

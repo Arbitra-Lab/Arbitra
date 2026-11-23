@@ -13,13 +13,16 @@ HTTP endpoints under `/api/auth` for user registration, login, token refresh, pa
 | POST   | `/register`           | Public          | Create a new user account           |
 | POST   | `/login`              | Public          | Authenticate with email/password    |
 | POST   | `/login/mfa/complete` | Public          | Complete login when MFA is required |
+| POST   | `/login/mfa/sms`      | Public          | Send SMS MFA fallback code          |
 | POST   | `/refresh`            | Public / cookie | Issue new access token              |
 | POST   | `/logout`             | JWT             | Invalidate session                  |
 | POST   | `/forgot-password`    | Public          | Request password reset email        |
 | POST   | `/reset-password`     | Public          | Reset password with token           |
 | GET    | `/verify-email`       | Public          | Verify email via query token        |
-| POST   | `/mfa/enable`         | JWT             | Start MFA enrollment                |
-| POST   | `/mfa/verify`         | JWT             | Confirm MFA setup                   |
+| POST   | `/2fa/enable`         | JWT             | Start TOTP or SMS enrollment        |
+| POST   | `/2fa/verify-setup`   | JWT             | Confirm initial TOTP/SMS code       |
+| POST   | `/mfa/enable`         | JWT             | Legacy alias for MFA enrollment     |
+| POST   | `/mfa/verify`         | JWT             | Legacy alias for setup verification |
 | POST   | `/mfa/disable`        | JWT             | Disable MFA                         |
 | POST   | `/mfa/backup-codes`   | JWT             | Regenerate backup codes             |
 | GET    | `/mfa/status`         | JWT             | Check MFA enrollment status         |
@@ -89,13 +92,25 @@ Or send the refresh token cookie when `credentials: include` is used in browsers
 
 ## MFA
 
-Enable flow:
+Enable TOTP flow:
 
-1. `POST /mfa/enable` — returns QR secret / setup payload
-2. `POST /mfa/verify` with TOTP code — activates MFA
+1. `POST /2fa/enable` — returns a QR code, setup secret, and one-time recovery codes
+2. `POST /2fa/verify-setup` with a TOTP code — activates MFA only after code verification
 3. `GET /mfa/status` — verify enrollment
 
+Enable SMS fallback by sending `{"method":"sms"}` to `/2fa/enable`; verify the
+delivered code at `/2fa/verify-setup`. SMS delivery requires a configured gateway.
+For SMS login, call `/login/mfa/sms` with the temporary `mfaToken`, then complete
+login using the delivered code at `/login/mfa/complete`.
+
 Disable: `POST /mfa/disable` (requires password or backup code per DTO).
+
+TOTP secrets are stored with AES-256-GCM authenticated encryption. Admin-role endpoints
+and high-value payment submission require an access token issued after an MFA challenge.
+Configure SMS delivery with `SMS_GATEWAY_URL` (an HTTP JSON endpoint accepting
+`to` and `message`) and `SMS_GATEWAY_API_KEY` (Bearer authentication). Set
+`HIGH_VALUE_PAYMENT_THRESHOLD` to the minimum payment amount requiring verified MFA
+(default: 100000).
 
 ## Using JWT on protected routes
 

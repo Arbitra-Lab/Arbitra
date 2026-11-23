@@ -11,6 +11,7 @@ import { EmailService } from './email.service';
 import { MessagingModule } from '../messaging/messaging.module';
 import { NotificationsGateway } from './notifications.gateway';
 import { NotificationsRealtimeService } from './notifications-realtime.service';
+import { SmsGatewayService } from './sms-gateway.service';
 
 @Module({
   imports: [
@@ -31,7 +32,13 @@ import { NotificationsRealtimeService } from './notifications-realtime.service';
     EmailService,
     NotificationsGateway,
     NotificationsRealtimeService,
+    SmsGatewayService,
   ],
-  exports: [NotificationsService, EmailService, NotificationsRealtimeService],
+  exports: [
+    NotificationsService,
+    EmailService,
+    NotificationsRealtimeService,
+    SmsGatewayService,
+  ],
 })
 export class NotificationsModule {}

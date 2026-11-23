@@ -30,6 +30,7 @@ import { CreatePaymentScheduleDto } from './dto/create-payment-schedule.dto';
 import { UpdatePaymentScheduleDto } from './dto/update-payment-schedule.dto';
 import { PaymentScheduleFiltersDto } from './dto/payment-schedule-filters.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { MfaEnforcementGuard } from '../auth/guards/mfa-enforcement.guard';
 import { AuditLog } from '../audit/decorators/audit-log.decorator';
 import { AuditAction, AuditLevel } from '../audit/entities/audit-log.entity';
 import { AuditLogInterceptor } from '../audit/interceptors/audit-log.interceptor';
@@ -52,6 +53,7 @@ export class PaymentController {
   constructor(private readonly paymentService: PaymentService) {}
 
   @Post()
+  @UseGuards(MfaEnforcementGuard)
   @ApiOperation({ summary: 'Record a payment' })
   @ApiResponse({ status: 201, description: 'Payment recorded' })
   @ApiResponse({ status: 400, description: 'Validation error' })
@@ -86,6 +88,7 @@ export class PaymentController {
   }
 
   @Post('stellar/rent')
+  @UseGuards(MfaEnforcementGuard)
   @ApiOperation({ summary: 'Process Stellar rent payment' })
   async processStellarRent(
     @Body() dto: ProcessStellarRentGatewayDto,
@@ -98,6 +101,7 @@ export class PaymentController {
   }
 
   @Post('stellar/escrow')
+  @UseGuards(MfaEnforcementGuard)
   @ApiOperation({ summary: 'Create Stellar escrow deposit' })
   async createEscrowDeposit(
     @Body() dto: CreateEscrowGatewayDto,
@@ -107,6 +111,7 @@ export class PaymentController {
   }
 
   @Post('stellar/escrow/:escrowId/release')
+  @UseGuards(MfaEnforcementGuard)
   @ApiOperation({ summary: 'Release Stellar escrow deposit' })
   async releaseEscrowDeposit(
     @Param('escrowId') escrowId: string,
@@ -121,6 +126,7 @@ export class PaymentController {
   }
 
   @Post('stellar/escrow/:escrowId/refund')
+  @UseGuards(MfaEnforcementGuard)
   @ApiOperation({ summary: 'Refund Stellar escrow deposit' })
   async refundEscrowDeposit(
     @Param('escrowId') escrowId: string,
@@ -135,6 +141,7 @@ export class PaymentController {
   }
 
   @Post('reconciliation/run')
+  @UseGuards(MfaEnforcementGuard)
   @ApiOperation({ summary: 'Reconcile Stellar-backed payments' })
   async reconcilePayments(
     @Body() dto: ReconcilePaymentsDto,
@@ -147,6 +154,7 @@ export class PaymentController {
   }
 
   @Post('retry-failed')
+  @UseGuards(MfaEnforcementGuard)
   @ApiOperation({ summary: 'Retry failed payment records' })
   async retryFailedPayments(
     @Body() dto: RetryFailedPaymentsDto,
@@ -177,6 +185,7 @@ export class PaymentController {
   }
 
   @Post(':id/refund')
+  @UseGuards(MfaEnforcementGuard)
   @AuditLog({
     action: AuditAction.PAYMENT_REFUNDED,
     entityType: 'Payment',
@@ -299,6 +308,7 @@ export class PaymentScheduleController {
   constructor(private readonly paymentService: PaymentService) {}
 
   @Post()
+  @UseGuards(MfaEnforcementGuard)
   @ApiOperation({ summary: 'Create payment schedule' })
   @ApiResponse({ status: 201, description: 'Schedule created' })
   @AuditLog({
@@ -326,6 +336,7 @@ export class PaymentScheduleController {
   }
 
   @Patch(':id')
+  @UseGuards(MfaEnforcementGuard)
   @AuditLog({
     action: AuditAction.UPDATE,
     entityType: 'PaymentSchedule',
@@ -346,6 +357,7 @@ export class PaymentScheduleController {
   }
 
   @Post(':id/run')
+  @UseGuards(MfaEnforcementGuard)
   @AuditLog({
     action: AuditAction.PAYMENT_INITIATED,
     entityType: 'PaymentSchedule',
@@ -360,6 +372,7 @@ export class PaymentScheduleController {
   }
 
   @Post('process-due')
+  @UseGuards(MfaEnforcementGuard)
   @AuditLog({
     action: AuditAction.BULK_OPERATION,
     entityType: 'PaymentSchedule',
