@@ -9,6 +9,7 @@ import {
   Bell,
   User,
   MessageSquare,
+  BarChart3,
 } from 'lucide-react';
 
 export const userNavItems: navItems[] = [
@@ -46,6 +47,11 @@ export const userNavItems: navItems[] = [
     name: 'Notifications',
     href: '/user/notifications',
     icon: Bell,
+  },
+  {
+    name: 'Analytics',
+    href: '/user/analytics',
+    icon: BarChart3,
   },
   {
     name: 'Security',

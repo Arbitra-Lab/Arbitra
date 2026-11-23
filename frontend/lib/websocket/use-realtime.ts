@@ -7,6 +7,8 @@ import { useNotificationStore } from '@/store/notificationStore';
 import * as ws from './manager';
 import { EventBatcher } from './event-batcher';
 import { queryKeys } from '@/lib/query/keys';
+import { notify } from '@/components/ui/toast';
+import { toastForEvent } from './toast-events';
 import type { Notification } from '@/components/notifications/types';
 
 const SETTINGS_STORAGE_KEY = 'arbitra_user_preferences';
@@ -33,6 +35,12 @@ const INVALIDATION_KEYS: Record<CacheDomain, readonly string[]> = {
   maintenance: queryKeys.maintenance.all,
   agreements: queryKeys.agreements.all,
 };
+
+/** Show the toast for a server event, if it has one (#149). */
+function showEventToast(event: string, payload: unknown) {
+  const spec = toastForEvent(event, payload);
+  if (spec) notify[spec.type](spec.message);
+}
 
 function isSoundEnabled(): boolean {
   if (typeof window === 'undefined') return false;
@@ -179,7 +187,10 @@ export function useRealtime(): void {
     });
 
     on('property:updated', () => queue('properties'));
-    on('payment:completed', () => queue('payments'));
+    on('payment:completed', (raw) => {
+      showEventToast('payment:completed', raw);
+      queue('payments');
+    });
     on('maintenance:updated', () => queue('maintenance'));
 
     // #12 — domain events for disputes, votes, escrow and appeals.
@@ -192,6 +203,7 @@ export function useRealtime(): void {
     domainHandlers.forEach(([event, title, domain]) => {
       on(event, (raw) => {
         addNotification(domainNotification(title, raw as DomainEventPayload));
+        showEventToast(event, raw);
         queue(domain);
         queue('notifications');
       });
