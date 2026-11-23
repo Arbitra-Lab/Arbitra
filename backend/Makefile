@@ -139,7 +139,12 @@ security-lint: ## Run security-focused linting
 
 security-test: ## Run security smoke tests
 	@echo "$(BLUE)Running security smoke tests...$(NC)"
-	pnpm exec jest --runInBand "src/common/__tests__/security-smoke.spec.ts"
+	pnpm exec jest --runInBand --runTestsByPath \
+		src/common/__tests__/api-input-fuzz.spec.ts \
+		src/common/__tests__/csrf-validation.spec.ts \
+		src/common/__tests__/sql-injection.spec.ts \
+		src/common/__tests__/security-smoke.spec.ts \
+		src/modules/auth/__tests__/auth-endpoint-security.spec.ts
 	@echo "$(GREEN)✓ Security tests passed$(NC)"
 
 ##@ CI/CD Pipeline Validation

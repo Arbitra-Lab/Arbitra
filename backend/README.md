@@ -78,7 +78,7 @@ Every HTTP request is instrumented by `ResponseTimeInterceptor` (global `APP_INT
 GitHub Actions workflows:
 
 - [`.github/workflows/backend-ci-cd.yml`](../.github/workflows/backend-ci-cd.yml) for release-oriented CI/CD (lint, test, build, Docker, deploy).
-- [`.github/workflows/backend-tests.yml`](../.github/workflows/backend-tests.yml) for continuous testing (PRs, pushes, and scheduled runs every 6 hours).
+- [`.github/workflows/security-testing.yml`](../.github/workflows/security-testing.yml) for OWASP regression tests, high/critical dependency and secret scans on PRs, and weekly security runs.
 
 PRs touching `backend/**` run: ESLint → Prettier → TypeScript → unit tests → coverage → build.
 
@@ -86,4 +86,7 @@ Run the same checks locally before pushing:
 
 ```bash
 make ci
+make security-test
 ```
+
+The security test target fuzzes 23 critical API DTOs with 100 malformed inputs each. To enable the weekly OWASP ZAP baseline scan, set the repository variable `API_SECURITY_SCAN_TARGET` to an API URL authorized for scanning. A one-off scan can be started with the `Backend Security Testing` workflow by providing its `target_url` input. ZAP reports are retained as workflow artifacts, and any detected alert fails the scan.

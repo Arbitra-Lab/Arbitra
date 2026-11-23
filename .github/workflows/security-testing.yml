@@ -1,0 +1,101 @@
+name: Backend Security Testing
+
+on:
+  pull_request:
+    paths:
+      - "backend/**"
+      - ".github/workflows/security-testing.yml"
+  push:
+    branches: [main, dev, develop]
+    paths:
+      - "backend/**"
+      - ".github/workflows/security-testing.yml"
+  schedule:
+    - cron: "0 3 * * 1"
+  workflow_dispatch:
+    inputs:
+      target_url:
+        description: "Authorized API URL for the OWASP ZAP baseline scan"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  security-regressions:
+    name: Security regressions and dependency scan
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+          cache-dependency-path: "./backend/pnpm-lock.yaml"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run OWASP regression tests
+        run: >-
+          pnpm exec jest --runInBand --runTestsByPath
+          src/common/__tests__/api-input-fuzz.spec.ts
+          src/common/__tests__/csrf-validation.spec.ts
+          src/common/__tests__/sql-injection.spec.ts
+          src/common/__tests__/security-smoke.spec.ts
+          src/modules/auth/__tests__/auth-endpoint-security.spec.ts
+
+      - name: Audit dependencies
+        run: pnpm audit --audit-level=high
+
+      - name: Scan backend source for vulnerabilities and secrets
+        if: always()
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: fs
+          scan-ref: ./backend
+          scanners: vuln,secret,misconfig
+          severity: HIGH,CRITICAL
+          vuln-type: os,library
+          ignore-unfixed: false
+          format: sarif
+          output: trivy-backend.sarif
+          exit-code: "1"
+
+      - name: Upload Trivy results
+        if: always() && hashFiles('trivy-backend.sarif') != ''
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-backend.sarif
+          category: trivy-backend-source
+
+  zap-baseline:
+    name: OWASP ZAP baseline scan
+    runs-on: ubuntu-latest
+    if: >-
+      (github.event_name == 'schedule' && vars.API_SECURITY_SCAN_TARGET != '') ||
+      (github.event_name == 'workflow_dispatch' && inputs.target_url != '')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Scan authorized API target
+        uses: zaproxy/action-baseline@v0.15.0
+        with:
+          target: ${{ inputs.target_url || vars.API_SECURITY_SCAN_TARGET }}
+          fail_action: true
+          allow_issue_writing: false
+          artifact_name: zap-baseline-report

@@ -87,7 +87,7 @@ jobs:
           image-ref: ${{ matrix.image }}
           format: table
           exit-code: '1'
-          severity: 'CRITICAL'
+          severity: 'CRITICAL,HIGH'
           vuln-type: 'os,library'
           ignore-unfixed: false
 
@@ -114,7 +114,7 @@ jobs:
           echo "## Image scan: ${{ matrix.name }}" >> "$GITHUB_STEP_SUMMARY"
           if [ "${{ steps.dockerfile.outputs.exists }}" = "true" ]; then
             echo "- Dockerfile: ${{ matrix.dockerfile }}" >> "$GITHUB_STEP_SUMMARY"
-            echo "- Critical vulnerabilities fail the build" >> "$GITHUB_STEP_SUMMARY"
+            echo "- High and critical vulnerabilities fail the build" >> "$GITHUB_STEP_SUMMARY"
             echo "- SBOM artifact: sbom-${{ matrix.name }}" >> "$GITHUB_STEP_SUMMARY"
           else
             echo "- Skipped: Dockerfile not present" >> "$GITHUB_STEP_SUMMARY"
