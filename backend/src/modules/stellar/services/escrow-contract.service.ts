@@ -51,6 +51,7 @@ export class EscrowContractService {
   private readonly server: SorobanRpc.Server;
   private readonly contract?: Contract;
   private readonly networkPassphrase: string;
+  private readonly allowHttpRpc: boolean;
   private readonly adminKeypair?: StellarSdk.Keypair;
   private readonly isConfigured: boolean;
 
@@ -75,7 +76,11 @@ export class EscrowContractService {
       'testnet',
     );
 
-    this.server = new SorobanRpc.Server(rpcUrl);
+    this.allowHttpRpc =
+      this.configService.get<string>('SOROBAN_RPC_ALLOW_HTTP') === 'true';
+    this.server = new SorobanRpc.Server(rpcUrl, {
+      allowHttp: this.allowHttpRpc,
+    });
 
     // Only create contract if contractId is provided
     if (contractId) {
@@ -89,9 +94,10 @@ export class EscrowContractService {
     }
 
     this.networkPassphrase =
-      network === 'mainnet'
+      this.configService.get<string>('STELLAR_NETWORK_PASSPHRASE') ||
+      (network === 'mainnet'
         ? StellarSdk.Networks.PUBLIC
-        : StellarSdk.Networks.TESTNET;
+        : StellarSdk.Networks.TESTNET);
 
     if (adminSecret) {
       this.adminKeypair = StellarSdk.Keypair.fromSecret(adminSecret);
@@ -124,6 +130,7 @@ export class EscrowContractService {
           : xdr.ScVal.scvVoid(),
         StellarSdk.nativeToScVal(BigInt(params.amount), { type: 'i128' }),
         new StellarSdk.Address(params.token).toScVal(),
+        xdr.ScVal.scvVoid(),
       );
 
       const tx = new StellarSdk.TransactionBuilder(account, {
@@ -134,11 +141,26 @@ export class EscrowContractService {
         .setTimeout(30)
         .build();
 
-      const prepared = await this.server.prepareTransaction(tx);
+      const simulated = await this.server.simulateTransaction(tx);
+      if (SorobanRpc.Api.isSimulationError(simulated)) {
+        throw new Error(
+          `Escrow creation simulation failed: ${simulated.error}`,
+        );
+      }
+      if (!SorobanRpc.Api.isSimulationSuccess(simulated) || !simulated.result) {
+        throw new Error('Escrow creation simulation returned no result');
+      }
+
+      const escrowId = StellarSdk.scValToNative(simulated.result.retval);
+      if (!Buffer.isBuffer(escrowId) || escrowId.length !== 32) {
+        throw new Error('Escrow contract returned an invalid escrow ID');
+      }
+
+      const prepared = SorobanRpc.assembleTransaction(tx, simulated).build();
       prepared.sign(this.adminKeypair);
 
-      const result = await this.server.sendTransaction(prepared);
-      return await this.pollTransactionStatus(result.hash);
+      await this.submitAndWait(prepared);
+      return escrowId.toString('hex');
     } catch (error) {
       this.logger.error(
         `Failed to create escrow: ${error.message}`,
@@ -176,8 +198,7 @@ export class EscrowContractService {
       const prepared = await this.server.prepareTransaction(tx);
       prepared.sign(callerKeypair);
 
-      const result = await this.server.sendTransaction(prepared);
-      return await this.pollTransactionStatus(result.hash);
+      return await this.submitAndWait(prepared);
     } catch (error) {
       this.logger.error(`Failed to fund escrow: ${error.message}`, error.stack);
       throw error;
@@ -214,8 +235,7 @@ export class EscrowContractService {
       const prepared = await this.server.prepareTransaction(tx);
       prepared.sign(callerKeypair);
 
-      const result = await this.server.sendTransaction(prepared);
-      return await this.pollTransactionStatus(result.hash);
+      return await this.submitAndWait(prepared);
     } catch (error) {
       this.logger.error(
         `Failed to approve release: ${error.message}`,
@@ -255,8 +275,7 @@ export class EscrowContractService {
       const prepared = await this.server.prepareTransaction(tx);
       prepared.sign(callerKeypair);
 
-      const result = await this.server.sendTransaction(prepared);
-      return await this.pollTransactionStatus(result.hash);
+      return await this.submitAndWait(prepared);
     } catch (error) {
       this.logger.error(
         `Failed to raise dispute: ${error.message}`,
@@ -296,8 +315,7 @@ export class EscrowContractService {
       const prepared = await this.server.prepareTransaction(tx);
       prepared.sign(arbiterKeypair);
 
-      const result = await this.server.sendTransaction(prepared);
-      return await this.pollTransactionStatus(result.hash);
+      return await this.submitAndWait(prepared);
     } catch (error) {
       this.logger.error(
         `Failed to resolve dispute: ${error.message}`,
@@ -376,8 +394,7 @@ export class EscrowContractService {
       const prepared = await this.server.prepareTransaction(tx);
       prepared.sign(this.adminKeypair);
 
-      const result = await this.server.sendTransaction(prepared);
-      return await this.pollTransactionStatus(result.hash);
+      return await this.submitAndWait(prepared);
     } catch (error) {
       this.logger.error(
         `Failed to release rent for escrow ${escrowId}: ${error.message}`,
@@ -419,6 +436,19 @@ export class EscrowContractService {
     }
 
     throw new Error(`Transaction timeout: ${hash}`);
+  }
+
+  private async submitAndWait(
+    transaction: StellarSdk.Transaction,
+  ): Promise<string> {
+    const result = await this.server.sendTransaction(transaction);
+    if (result.status === 'ERROR') {
+      throw new Error(
+        `Escrow contract rejected transaction: ${JSON.stringify(result.errorResult)}`,
+      );
+    }
+
+    return this.pollTransactionStatus(result.hash);
   }
 
   private parseEscrowResult(result: xdr.ScVal): EscrowData | null {

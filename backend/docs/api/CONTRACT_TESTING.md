@@ -74,6 +74,33 @@ Or using pnpm:
 pnpm run test:contract
 ```
 
+## Running Soroban backend E2E tests
+
+`test/soroban-contracts.e2e-spec.ts` uses a live local Soroban RPC endpoint and
+PostgreSQL. It creates and funds accounts through the local Friendbot, calls the
+escrow and dispute contracts through the backend services, and checks that
+confirmed contract state is reflected by the backend's escrow reconciliation
+pipeline.
+
+The local network must have the escrow, payment, and dispute contracts deployed;
+the admin identity must already be funded, and the dispute contract must be
+initialized with the escrow contract as its case registry. Set
+`SOROBAN_RPC_URL`, `STELLAR_FRIENDBOT_URL`,
+`STELLAR_ADMIN_SECRET_KEY`, `ESCROW_CONTRACT_ID`, `DISPUTE_CONTRACT_ID`,
+`PAYMENT_PROCESSING_CONTRACT_ID`, and `NATIVE_TOKEN_CONTRACT_ID` to the local
+network values. For plain HTTP RPC, set `SOROBAN_RPC_ALLOW_HTTP=true` and set
+`STELLAR_NETWORK_PASSPHRASE` to the local network passphrase. The E2E Jest
+bootstrap preserves these explicit network and database settings.
+
+Run the focused suite from `backend/`:
+
+```bash
+pnpm exec jest --config ./test/jest-e2e.json --runInBand ./test/soroban-contracts.e2e-spec.ts
+```
+
+The `Soroban Contract E2E` GitHub Actions workflow starts Stellar Quickstart and
+PostgreSQL, builds and deploys the contracts, then runs this suite.
+
 ## Best Practices
 
 1.  **Test only the boundaries**: Contract tests should focus on the interaction between our service and the external API, not the internal business logic.

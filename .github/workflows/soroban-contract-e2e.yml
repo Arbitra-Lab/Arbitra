@@ -1,0 +1,137 @@
+name: Soroban Contract E2E
+
+on:
+  pull_request:
+    branches: [dev]
+    paths:
+      - "backend/**"
+      - "contract/**"
+      - ".github/workflows/soroban-contract-e2e.yml"
+  push:
+    branches: [dev]
+    paths:
+      - "backend/**"
+      - "contract/**"
+      - ".github/workflows/soroban-contract-e2e.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  soroban-e2e:
+    name: Local Soroban and backend integration
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres_cax
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: arbitra_test
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres_cax -d arbitra_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DB_HOST: localhost
+      DB_PORT: 5433
+      DB_USERNAME: postgres_cax
+      DB_PASSWORD: password
+      DB_NAME: arbitra_test
+      SOROBAN_RPC_URL: http://localhost:8000/rpc
+      STELLAR_FRIENDBOT_URL: http://localhost:8000/friendbot
+      STELLAR_HORIZON_URL: http://localhost:8000
+      STELLAR_NETWORK: testnet
+      STELLAR_NETWORK_PASSPHRASE: Standalone Network ; February 2017
+      SOROBAN_RPC_ALLOW_HTTP: "true"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Start local Stellar network
+        uses: stellar/quickstart@a1ebfcf341d036d8b71559d5d3eec3a4f546193c
+        with:
+          network: local
+          enable: core,horizon,rpc
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: contract
+
+      - name: Build contract WASM
+        working-directory: contract
+        run: cargo build --locked --release --target wasm32-unknown-unknown -p escrow -p payment -p dispute_resolution
+
+      - name: Install Stellar CLI
+        run: |
+          curl --fail --location --silent --show-error \
+            https://github.com/stellar/stellar-cli/releases/download/v30.0.1/stellar-cli-30.0.1-x86_64-unknown-linux-gnu.tar.gz \
+            --output "$RUNNER_TEMP/stellar-cli.tar.gz"
+          echo "48c70074020e09af0a3ebbd2bf62d53c9aec47935e49a112d3cd90fb4e37658f  $RUNNER_TEMP/stellar-cli.tar.gz" | sha256sum --check
+          mkdir "$RUNNER_TEMP/stellar-cli"
+          tar -xzf "$RUNNER_TEMP/stellar-cli.tar.gz" -C "$RUNNER_TEMP/stellar-cli"
+          chmod +x "$RUNNER_TEMP/stellar-cli/stellar"
+          echo "$RUNNER_TEMP/stellar-cli" >> "$GITHUB_PATH"
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: pnpm
+          cache-dependency-path: backend/pnpm-lock.yaml
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: corepack enable && pnpm install --frozen-lockfile
+
+      - name: Deploy contracts to local Soroban
+        env:
+          NETWORK_PASSPHRASE: Standalone Network ; February 2017
+        run: |
+          set -euo pipefail
+          stellar keys generate e2e-admin --overwrite >/dev/null 2>&1
+          ADMIN_SECRET="$(stellar keys secret e2e-admin)"
+          ADMIN_PUBLIC="$(stellar keys public-key e2e-admin)"
+          echo "::add-mask::$ADMIN_SECRET"
+          curl --fail --silent --show-error "$STELLAR_FRIENDBOT_URL?addr=$ADMIN_PUBLIC"
+
+          stellar contract asset deploy --asset native --source-account e2e-admin --alias e2e-native --rpc-url "$SOROBAN_RPC_URL" --network-passphrase "$NETWORK_PASSPHRASE" --quiet
+          stellar contract deploy --wasm contract/target/wasm32-unknown-unknown/release/escrow.wasm --source-account e2e-admin --alias e2e-escrow --optimize=false --rpc-url "$SOROBAN_RPC_URL" --network-passphrase "$NETWORK_PASSPHRASE" --quiet
+          stellar contract deploy --wasm contract/target/wasm32-unknown-unknown/release/payment.wasm --source-account e2e-admin --alias e2e-payment --optimize=false --rpc-url "$SOROBAN_RPC_URL" --network-passphrase "$NETWORK_PASSPHRASE" --quiet
+          stellar contract deploy --wasm contract/target/wasm32-unknown-unknown/release/dispute_resolution.wasm --source-account e2e-admin --alias e2e-dispute --optimize=false --rpc-url "$SOROBAN_RPC_URL" --network-passphrase "$NETWORK_PASSPHRASE" --quiet
+
+          ESCROW_CONTRACT_ID="$(stellar contract alias show e2e-escrow --quiet)"
+          PAYMENT_PROCESSING_CONTRACT_ID="$(stellar contract alias show e2e-payment --quiet)"
+          DISPUTE_CONTRACT_ID="$(stellar contract alias show e2e-dispute --quiet)"
+          NATIVE_TOKEN_CONTRACT_ID="$(stellar contract alias show e2e-native --quiet)"
+          stellar contract invoke --id "$DISPUTE_CONTRACT_ID" --source-account e2e-admin --rpc-url "$SOROBAN_RPC_URL" --network-passphrase "$NETWORK_PASSPHRASE" -- initialize --admin "$ADMIN_PUBLIC" --min-votes-required 1 --case-registry "$ESCROW_CONTRACT_ID"
+
+          {
+            echo "STELLAR_ADMIN_SECRET_KEY=$ADMIN_SECRET"
+            echo "ESCROW_CONTRACT_ID=$ESCROW_CONTRACT_ID"
+            echo "PAYMENT_PROCESSING_CONTRACT_ID=$PAYMENT_PROCESSING_CONTRACT_ID"
+            echo "DISPUTE_CONTRACT_ID=$DISPUTE_CONTRACT_ID"
+            echo "NATIVE_TOKEN_CONTRACT_ID=$NATIVE_TOKEN_CONTRACT_ID"
+          } >> "$GITHUB_ENV"
+
+      - name: Run Soroban backend E2E tests
+        working-directory: backend
+        run: |
+          start=$(date +%s)
+          pnpm exec jest --config ./test/jest-e2e.json --runInBand ./test/soroban-contracts.e2e-spec.ts
+          elapsed=$(( $(date +%s) - start ))
+          echo "Soroban backend E2E runtime: ${elapsed}s"
+          test "$elapsed" -lt 600

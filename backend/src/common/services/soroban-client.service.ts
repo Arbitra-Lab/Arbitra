@@ -27,7 +27,10 @@ export class SorobanClientService {
       'SOROBAN_RPC_URL',
       'https://soroban-testnet.stellar.org',
     );
-    this.server = new SorobanRpc.Server(rpcUrl);
+    this.server = new SorobanRpc.Server(rpcUrl, {
+      allowHttp:
+        this.configService.get<string>('SOROBAN_RPC_ALLOW_HTTP') === 'true',
+    });
     this.contractId = this.configService.get<string>(
       'ARBITRA_AGREEMENT_CONTRACT_ID',
       '',
@@ -62,7 +65,10 @@ export class SorobanClientService {
       'STELLAR_NETWORK',
       'testnet',
     );
-    return network === 'mainnet' ? Networks.PUBLIC : Networks.TESTNET;
+    return (
+      this.configService.get<string>('STELLAR_NETWORK_PASSPHRASE') ||
+      (network === 'mainnet' ? Networks.PUBLIC : Networks.TESTNET)
+    );
   }
 
   getServerKeypair(): Keypair {

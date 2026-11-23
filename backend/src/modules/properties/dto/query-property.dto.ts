@@ -5,6 +5,7 @@ import {
   IsNumber,
   IsBoolean,
   IsArray,
+  IsDateString,
   Min,
   Max,
   MaxLength,
@@ -186,6 +187,22 @@ export class QueryPropertyDto {
   })
   @IsBoolean()
   petsAllowed?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'First date that must be available (inclusive)',
+    example: '2026-07-01',
+  })
+  @IsOptional()
+  @IsDateString()
+  availabilityStart?: string;
+
+  @ApiPropertyOptional({
+    description: 'Last date that must be available (inclusive)',
+    example: '2026-07-05',
+  })
+  @IsOptional()
+  @IsDateString()
+  availabilityEnd?: string;
 
   // Proximity / geospatial filters
   @ApiPropertyOptional({
