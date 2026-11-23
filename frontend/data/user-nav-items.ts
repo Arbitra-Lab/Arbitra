@@ -8,6 +8,7 @@ import {
   ShieldCheck,
   Bell,
   User,
+  MessageSquare,
 } from 'lucide-react';
 
 export const userNavItems: navItems[] = [
@@ -35,6 +36,11 @@ export const userNavItems: navItems[] = [
     name: 'Disputes',
     href: '/user/disputes',
     icon: Flag,
+  },
+  {
+    name: 'Messages',
+    href: '/user/messages',
+    icon: MessageSquare,
   },
   {
     name: 'Notifications',

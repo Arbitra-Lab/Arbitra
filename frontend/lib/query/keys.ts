@@ -42,6 +42,13 @@ export const queryKeys = {
       [...queryKeys.notifications.all, 'unread-count'] as const,
   },
 
+  messaging: {
+    all: ['messaging'] as const,
+    rooms: () => [...queryKeys.messaging.all, 'rooms'] as const,
+    thread: (roomId: string) =>
+      [...queryKeys.messaging.all, 'thread', roomId] as const,
+  },
+
   maintenance: {
     all: ['maintenance'] as const,
     lists: () => [...queryKeys.maintenance.all, 'list'] as const,
