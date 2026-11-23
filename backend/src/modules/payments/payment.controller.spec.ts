@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { Reflector } from '@nestjs/core';
+import { ConfigService } from '@nestjs/config';
 import {
   PaymentController,
   PaymentMethodController,
@@ -78,6 +79,10 @@ describe('Payment Controllers', () => {
           useValue: {
             get: jest.fn().mockReturnValue(undefined),
           },
+        },
+        {
+          provide: ConfigService,
+          useValue: { get: jest.fn().mockReturnValue('100000') },
         },
       ],
     }).compile();

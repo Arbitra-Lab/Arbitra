@@ -11,10 +11,12 @@ import { User } from '../../users/entities/user.entity';
 
 export enum MfaDeviceType {
   TOTP = 'totp',
+  SMS = 'sms',
   BACKUP_CODE = 'backup_code',
 }
 
 export enum MfaDeviceStatus {
+  PENDING = 'pending',
   ACTIVE = 'active',
   DISABLED = 'disabled',
 }

@@ -32,12 +32,18 @@ describe('RBAC - Role-Based Access Control', () => {
   // ─── Helper Functions ────────────────────────────────────────────────────────
 
   function createMockExecutionContext(
-    user: { id: string; role: UserRole } | null,
+    user: { id: string; role: UserRole; mfaVerified?: boolean } | null,
     requiredRoles: UserRole[] | null,
   ): ExecutionContext {
+    const requestUser =
+      user &&
+      (user.role === UserRole.ADMIN || user.role === UserRole.SUPER_ADMIN) &&
+      user.mfaVerified === undefined
+        ? { ...user, mfaVerified: true }
+        : user;
     const mockContext = {
       switchToHttp: jest.fn().mockReturnValue({
-        getRequest: jest.fn().mockReturnValue({ user }),
+        getRequest: jest.fn().mockReturnValue({ user: requestUser }),
       }),
       getHandler: jest.fn(),
       getClass: jest.fn(),
@@ -71,6 +77,17 @@ describe('RBAC - Role-Based Access Control', () => {
       const result = guard.canActivate(context);
 
       expect(result).toBe(true);
+    });
+
+    it('blocks ADMIN from privileged endpoints until MFA has been verified', () => {
+      const context = createMockExecutionContext(
+        { id: 'admin-1', role: UserRole.ADMIN, mfaVerified: false },
+        [UserRole.ADMIN],
+      );
+
+      expect(() => guard.canActivate(context)).toThrow(
+        'MFA verification required for admin access',
+      );
     });
 
     it('blocks USER from accessing ADMIN-only endpoints', () => {
@@ -511,7 +528,10 @@ describe('RBAC - Role-Based Access Control', () => {
     }
 
     it('allows ADMIN users', () => {
-      const context = createAdminContext({ role: UserRole.ADMIN });
+      const context = createAdminContext({
+        role: UserRole.ADMIN,
+        mfaVerified: true,
+      });
 
       expect(adminGuard.canActivate(context)).toBe(true);
     });

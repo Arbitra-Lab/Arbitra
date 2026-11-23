@@ -7,6 +7,8 @@ import { BulkheadService } from '../src/common/resilience/bulkhead.service';
 import { FallbackService } from '../src/common/resilience/fallback.service';
 import { DegradationService } from '../src/common/resilience/degradation.service';
 import { IncidentService } from '../src/common/resilience/incident.service';
+import { CircuitBreakerService } from '../src/common/resilience/circuit-breaker.service';
+import { RetryService } from '../src/common/resilience/retry.service';
 import {
   DegradationLevel,
   FeaturePriority,
@@ -20,6 +22,8 @@ describe('Chaos Engineering: Resilience (e2e)', () => {
   let fallbackService: FallbackService;
   let degradationService: DegradationService;
   let incidentService: IncidentService;
+  let retryService: RetryService;
+  let circuitBreakerService: CircuitBreakerService;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -31,6 +35,8 @@ describe('Chaos Engineering: Resilience (e2e)', () => {
     fallbackService = moduleFixture.get(FallbackService);
     degradationService = moduleFixture.get(DegradationService);
     incidentService = moduleFixture.get(IncidentService);
+    retryService = moduleFixture.get(RetryService);
+    circuitBreakerService = moduleFixture.get(CircuitBreakerService);
 
     await app.init();
   });
@@ -41,6 +47,7 @@ describe('Chaos Engineering: Resilience (e2e)', () => {
 
   beforeEach(() => {
     fallbackService.resetStats();
+    circuitBreakerService.resetAll();
   });
 
   describe('Bulkhead isolation under load spikes', () => {
@@ -55,7 +62,7 @@ describe('Chaos Engineering: Resilience (e2e)', () => {
       });
 
       const hold = new Promise<void>(() => {});
-      const slowCalls = Array.from({ length: 4 }, () =>
+      const _slowCalls = Array.from({ length: 4 }, () =>
         bulkheadService.execute('chaos-slow', () => hold),
       );
 
@@ -90,7 +97,7 @@ describe('Chaos Engineering: Resilience (e2e)', () => {
       });
 
       const hold = new Promise<void>(() => {});
-      const first = bulkheadService.execute('chaos-tight', () => hold);
+      const _first = bulkheadService.execute('chaos-tight', () => hold);
 
       await new Promise((r) => setImmediate(r));
 
@@ -117,6 +124,86 @@ describe('Chaos Engineering: Resilience (e2e)', () => {
 
       expect(result).toEqual({ cached: true, data: [] });
       expect(fallbackService.getStats().totalFallbacks).toBe(1);
+    });
+
+    describe('Deterministic dependency fault injection', () => {
+      it('retries a lost database connection and falls back after bounded exhaustion', async () => {
+        const databaseQuery = jest
+          .fn<Promise<string[]>, []>()
+          .mockRejectedValue(new Error('database connection lost: ECONNRESET'));
+        const fallbackResult: string[] = [];
+
+        const result = await fallbackService.execute(
+          () =>
+            retryService.execute('chaos-db-connection-loss', databaseQuery, {
+              maxAttempts: 2,
+              initialDelayMs: 0,
+              maxDelayMs: 0,
+              jitterFactor: 0,
+            }),
+          {
+            fallbackValue: fallbackResult,
+            context: 'chaos-db-connection-loss',
+          },
+        );
+
+        expect(result).toBe(fallbackResult);
+        expect(databaseQuery).toHaveBeenCalledTimes(2);
+        expect(
+          retryService.getMetrics('chaos-db-connection-loss'),
+        ).toMatchObject({
+          totalAttempts: 2,
+          failedAttempts: 2,
+        });
+        expect(fallbackService.getStats().totalFallbacks).toBe(1);
+      });
+
+      it('falls back for a deterministic 50% external API error rate and opens its breaker', async () => {
+        const outcomes = ['live-1', 'error', 'live-2', 'error'] as const;
+        const externalApi = jest.fn(async () => {
+          const outcome = outcomes[externalApi.mock.calls.length];
+          if (outcome === 'error') {
+            throw new Error('temporarily unavailable');
+          }
+          return outcome;
+        });
+        const breakerName = 'chaos-half-failing-api';
+
+        const responses: string[] = [];
+        for (let index = 0; index < outcomes.length; index++) {
+          responses.push(
+            await fallbackService.execute(
+              () =>
+                circuitBreakerService.execute(breakerName, externalApi, {
+                  failureThreshold: 0.5,
+                  windowSize: outcomes.length,
+                }),
+              { fallbackValue: `cached-${index}` },
+            ),
+          );
+        }
+
+        expect(responses).toEqual(['live-1', 'cached-1', 'live-2', 'cached-3']);
+        expect(externalApi).toHaveBeenCalledTimes(4);
+        expect(
+          circuitBreakerService.getMetricsForBreaker(breakerName),
+        ).toMatchObject({
+          state: 'OPEN',
+          failures: 2,
+          successes: 2,
+        });
+
+        await expect(
+          fallbackService.execute(
+            () => circuitBreakerService.execute(breakerName, externalApi),
+            { fallbackValue: 'cached-open-circuit' },
+          ),
+        ).resolves.toBe('cached-open-circuit');
+        expect(externalApi).toHaveBeenCalledTimes(4);
+        expect(
+          circuitBreakerService.getMetricsForBreaker(breakerName)?.rejects,
+        ).toBe(1);
+      });
     });
 
     it('invokes fallbackFn with the original error context', async () => {
@@ -286,7 +373,7 @@ describe('Chaos Engineering: Resilience (e2e)', () => {
 
       const neverResolve = new Promise<void>(() => {});
 
-      const stuck = bulkheadService.execute('chaos-leaky', () => neverResolve);
+      const _stuck = bulkheadService.execute('chaos-leaky', () => neverResolve);
       await new Promise((r) => setImmediate(r));
 
       const healthyResults = await Promise.all(

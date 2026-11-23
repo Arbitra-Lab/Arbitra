@@ -104,6 +104,58 @@ jobs:
           path: backend/dist/
           retention-days: 7
 
+  performance-regression:
+    name: Critical-path performance regression gate
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
+    defaults:
+      run:
+        working-directory: ./backend
+    env:
+      BASE_URL: ${{ vars.BENCHMARK_BASE_URL }}
+      BENCHMARK_TOKEN: ${{ secrets.BENCHMARK_TOKEN }}
+      BENCHMARK_BASELINE_FILE: ${{ vars.BENCHMARK_BASELINE_FILE }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+          cache-dependency-path: "./backend/pnpm-lock.yaml"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Test benchmark thresholds and regression logic
+        run: pnpm run test:perf-critical
+
+      - name: Run critical-path benchmark
+        if: env.BASE_URL != ''
+        run: |
+          if [ -n "$BENCHMARK_BASELINE_FILE" ]; then
+            pnpm run perf:ci -- "$BASE_URL" --baseline "$BENCHMARK_BASELINE_FILE"
+          else
+            pnpm run perf:ci -- "$BASE_URL"
+          fi
+
+      - name: Upload benchmark reports
+        if: always() && env.BASE_URL != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-performance-${{ github.run_id }}
+          path: |
+            backend/performance-report.json
+            backend/performance-trends.jsonl
+          if-no-files-found: warn
+          retention-days: 90
+
   docker-build:
     name: Build Docker Image
     runs-on: ubuntu-latest

@@ -25,7 +25,7 @@ export class RolesGuard implements CanActivate {
 
     const { user } = context
       .switchToHttp()
-      .getRequest<{ user?: { role?: UserRole } }>();
+      .getRequest<{ user?: { role?: UserRole; mfaVerified?: boolean } }>();
 
     if (!user) {
       throw new ForbiddenException('User not authenticated');
@@ -35,6 +35,19 @@ export class RolesGuard implements CanActivate {
 
     if (!hasRole) {
       throw new ForbiddenException('Insufficient permissions');
+    }
+
+    const privilegedRoleRequested = requiredRoles.some(
+      (role) => role === UserRole.ADMIN || role === UserRole.SUPER_ADMIN,
+    );
+    if (
+      privilegedRoleRequested &&
+      (user.role === UserRole.ADMIN || user.role === UserRole.SUPER_ADMIN) &&
+      user.mfaVerified !== true
+    ) {
+      throw new ForbiddenException(
+        'MFA verification required for admin access',
+      );
     }
 
     return true;

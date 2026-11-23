@@ -1,8 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { Reflector } from '@nestjs/core';
 import {
-  Injectable,
-  CanActivate,
   ExecutionContext,
   Controller,
   Get,
@@ -32,19 +30,6 @@ describe('Auth Endpoint Security', () => {
   });
 
   describe('JwtAuthGuard', () => {
-    @Injectable()
-    class MockJwtAuthGuard extends JwtAuthGuard {
-      constructor(reflector: Reflector) {
-        super(reflector);
-      }
-    }
-
-    let guard: MockJwtAuthGuard;
-
-    beforeEach(() => {
-      guard = new MockJwtAuthGuard(reflector);
-    });
-
     it('allows access to @Public() routes without authentication', () => {
       @Controller()
       class TestController {
@@ -192,12 +177,26 @@ describe('Auth Endpoint Security', () => {
       const context = {
         switchToHttp: () => ({
           getRequest: () => ({
-            user: { role: UserRole.ADMIN },
+            user: { role: UserRole.ADMIN, mfaVerified: true },
           }),
         }),
       } as ExecutionContext;
 
       expect(adminGuard.canActivate(context)).toBe(true);
+    });
+
+    it('blocks admin users without a verified MFA login', () => {
+      const context = {
+        switchToHttp: () => ({
+          getRequest: () => ({
+            user: { role: UserRole.ADMIN, mfaVerified: false },
+          }),
+        }),
+      } as ExecutionContext;
+
+      expect(() => adminGuard.canActivate(context)).toThrow(
+        'MFA verification required for admin access',
+      );
     });
 
     it('blocks non-admin users', () => {

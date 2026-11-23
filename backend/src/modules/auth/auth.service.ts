@@ -234,6 +234,7 @@ export class AuthService {
         email: string;
         role: string;
         type: string;
+        mfaVerified?: boolean;
       }>(refreshToken, {
         secret: this.getJwtRefreshSecret(),
       });
@@ -277,7 +278,13 @@ export class AuthService {
       }
 
       // Token rotation: generate new tokens and invalidate old refresh token
-      const tokens = this.generateTokens(user.id, user.email, user.role);
+      const mfaStillEnabled = await this.mfaService.checkMfaRequired(user.id);
+      const tokens = this.generateTokens(
+        user.id,
+        user.email,
+        user.role,
+        payload.mfaVerified === true && Boolean(mfaStillEnabled),
+      );
 
       // Invalidate old refresh token before setting new one (token rotation)
       await this.updateRefreshToken(user.id, tokens.refreshToken);
@@ -471,6 +478,7 @@ export class AuthService {
     userId: string,
     email: string,
     role: string,
+    mfaVerified = false,
   ): { accessToken: string; refreshToken: string } {
     const accessToken = this.jwtService.sign(
       {
@@ -478,6 +486,7 @@ export class AuthService {
         email,
         role,
         type: 'access',
+        mfaVerified,
       },
       {
         secret: this.getJwtSecret(),
@@ -491,6 +500,7 @@ export class AuthService {
         email,
         role,
         type: 'refresh',
+        mfaVerified,
       },
       {
         secret: this.getJwtRefreshSecret(),

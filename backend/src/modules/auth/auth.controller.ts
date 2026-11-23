@@ -41,6 +41,7 @@ import {
   DisableMfaDto,
 } from './dto/enable-mfa.dto';
 import { CompleteMfaLoginDto } from './dto/complete-mfa-login.dto';
+import { RequestMfaSmsCodeDto } from './dto/request-mfa-sms-code.dto';
 import { Request, Response } from 'express';
 import { RateLimitCategory, EndpointCategory } from '../rate-limiting';
 import { AuditLog } from '../audit/decorators/audit-log.decorator';
@@ -258,7 +259,7 @@ export class AuthController {
       role: string;
       type: string;
     }>(completeMfaLoginDto.mfaToken, {
-      secret: this.configService.get<string>('JWT_SECRET') || 'your-secret-key',
+      secret: this.authService.getJwtSecret(),
     });
 
     if (payload.type !== 'mfa_required') {
@@ -268,15 +269,10 @@ export class AuthController {
     const userId = payload.sub;
 
     // Verify MFA code
-    const isValid =
-      (await this.mfaService.verifyTotpToken(
-        userId,
-        completeMfaLoginDto.mfaCode,
-      )) ||
-      (await this.mfaService.verifyBackupCode(
-        userId,
-        completeMfaLoginDto.mfaCode,
-      ));
+    const isValid = await this.mfaService.verifyMfaLoginCode(
+      userId,
+      completeMfaLoginDto.mfaCode,
+    );
 
     if (!isValid) {
       throw new UnauthorizedException('Invalid MFA code');
@@ -303,6 +299,27 @@ export class AuthController {
     // Don't return refreshToken in response body when using cookies
     const { refreshToken: _refreshToken, ...responseWithoutRefresh } = result;
     return responseWithoutRefresh as AuthResponseDto;
+  }
+
+  @Post('login/mfa/sms')
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Send an SMS MFA fallback code',
+    description: 'Send a one-time code to the phone verified during MFA setup',
+  })
+  async requestMfaSmsCode(
+    @Body() requestDto: RequestMfaSmsCodeDto,
+  ): Promise<MessageResponseDto> {
+    const payload = this.jwtService.verify<{
+      sub: string;
+      type: string;
+    }>(requestDto.mfaToken, { secret: this.authService.getJwtSecret() });
+    if (payload.type !== 'mfa_required') {
+      throw new UnauthorizedException('Invalid token type');
+    }
+    await this.mfaService.sendSmsLoginCode(payload.sub);
+    return { message: 'SMS verification code sent' };
   }
 
   @Post('refresh')
@@ -477,7 +494,7 @@ export class AuthController {
     return this.authService.verifyEmail(verifyEmailDto.token);
   }
 
-  @Post('mfa/enable')
+  @Post(['2fa/enable', 'mfa/enable'])
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('JWT-auth')
   @Throttle({ default: { limit: 5, ttl: 60000 } })
@@ -499,40 +516,27 @@ export class AuthController {
     @CurrentUser() user: User,
     @Body() enableMfaDto: EnableMfaDto,
   ) {
+    if (enableMfaDto.method === 'sms') {
+      return this.mfaService.generateSmsSetup(user.id);
+    }
     return this.mfaService.generateMfaSecret(user.id, enableMfaDto.deviceName);
   }
 
-  @Post('mfa/verify')
+  @Post(['2fa/verify-setup', 'mfa/verify'])
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('JWT-auth')
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Verify MFA token',
-    description: 'Verify TOTP token or backup code',
+    summary: 'Verify and complete 2FA setup',
+    description: 'Activate TOTP after confirming an initial authenticator code',
   })
-  @ApiResponse({
-    status: 200,
-    description: 'MFA token verified successfully',
-  })
-  @ApiResponse({
-    status: 401,
-    description: 'Invalid MFA token',
-    type: ErrorResponseDto,
-  })
-  async verifyMfa(
+  async verifyMfaSetup(
     @CurrentUser() user: User,
     @Body() verifyMfaDto: VerifyMfaDto,
   ) {
-    const isValid =
-      (await this.mfaService.verifyTotpToken(user.id, verifyMfaDto.token)) ||
-      (await this.mfaService.verifyBackupCode(user.id, verifyMfaDto.token));
-
-    if (!isValid) {
-      throw new UnauthorizedException('Invalid MFA token');
-    }
-
-    return { message: 'MFA token verified successfully' };
+    await this.mfaService.verifyMfaSetup(user.id, verifyMfaDto.token);
+    return { message: 'Two-factor authentication enabled' };
   }
 
   @Post('mfa/disable')
@@ -553,9 +557,10 @@ export class AuthController {
     @Body() disableMfaDto: DisableMfaDto,
   ) {
     // Verify token before disabling
-    const isValid =
-      (await this.mfaService.verifyTotpToken(user.id, disableMfaDto.token)) ||
-      (await this.mfaService.verifyBackupCode(user.id, disableMfaDto.token));
+    const isValid = await this.mfaService.verifyMfaLoginCode(
+      user.id,
+      disableMfaDto.token,
+    );
 
     if (!isValid) {
       throw new UnauthorizedException('Invalid MFA token');

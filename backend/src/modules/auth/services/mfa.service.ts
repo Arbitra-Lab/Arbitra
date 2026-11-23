@@ -23,6 +23,7 @@ import {
 } from '../dto/auth-response.dto';
 import { AuthService } from '../auth.service';
 import { JwtService } from '@nestjs/jwt';
+import { SmsGatewayService } from '../../notifications/sms-gateway.service';
 
 @Injectable()
 export class MfaService {
@@ -36,6 +37,7 @@ export class MfaService {
     private userRepository: Repository<User>,
     private configService: ConfigService,
     private jwtService: JwtService,
+    private smsGatewayService: SmsGatewayService,
   ) {
     const key = this.configService.get<string>('SECURITY_ENCRYPTION_KEY');
     if (!key) {
@@ -73,6 +75,11 @@ export class MfaService {
       throw new BadRequestException('MFA is already enabled for this user');
     }
 
+    await this.mfaDeviceRepository.update(
+      { userId, type: MfaDeviceType.TOTP, status: MfaDeviceStatus.PENDING },
+      { status: MfaDeviceStatus.DISABLED },
+    );
+
     // Generate TOTP secret
     const secret = speakeasy.generateSecret({
       name: `Arbitra (${user.email})`,
@@ -92,7 +99,7 @@ export class MfaService {
     const mfaDevice = this.mfaDeviceRepository.create({
       userId,
       type: MfaDeviceType.TOTP,
-      status: MfaDeviceStatus.ACTIVE,
+      status: MfaDeviceStatus.PENDING,
       deviceName: deviceName || 'Authenticator App',
       secretKey: encryptedSecret,
       backupCodes: JSON.stringify(hashedBackupCodes),
@@ -110,6 +117,204 @@ export class MfaService {
       qrCodeUrl,
       backupCodes,
     };
+  }
+
+  async verifyMfaSetup(userId: string, token: string): Promise<void> {
+    const totpDevice = await this.mfaDeviceRepository.findOne({
+      where: {
+        userId,
+        type: MfaDeviceType.TOTP,
+        status: MfaDeviceStatus.PENDING,
+      },
+    });
+
+    if (totpDevice?.secretKey) {
+      const secret = this.decryptSecret(totpDevice.secretKey);
+      const verified = speakeasy.totp.verify({
+        secret,
+        encoding: 'base32',
+        token,
+        window: 1,
+      });
+      if (!verified) {
+        throw new UnauthorizedException('Invalid MFA setup code');
+      }
+
+      await this.activateDevice(totpDevice);
+      return;
+    }
+
+    const smsDevice = await this.mfaDeviceRepository.findOne({
+      where: {
+        userId,
+        type: MfaDeviceType.SMS,
+        status: MfaDeviceStatus.PENDING,
+      },
+    });
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (
+      !smsDevice?.secretKey ||
+      !smsDevice.createdAt ||
+      Date.now() - smsDevice.createdAt.getTime() > 5 * 60 * 1000 ||
+      !user?.phoneNumber ||
+      smsDevice.deviceName !== this.phoneFingerprint(user.phoneNumber) ||
+      !(await bcrypt.compare(token, smsDevice.secretKey))
+    ) {
+      throw new UnauthorizedException('Invalid MFA setup code');
+    }
+
+    smsDevice.secretKey = null;
+    await this.activateDevice(smsDevice);
+  }
+
+  private async activateDevice(device: MfaDevice): Promise<void> {
+    await this.mfaDeviceRepository.update(
+      {
+        userId: device.userId,
+        type: device.type,
+        status: MfaDeviceStatus.ACTIVE,
+      },
+      { status: MfaDeviceStatus.DISABLED },
+    );
+    device.status = MfaDeviceStatus.ACTIVE;
+    device.lastUsedAt = new Date();
+    await this.mfaDeviceRepository.save(device);
+    await this.userRepository.update(device.userId, { twoFactorEnabled: true });
+  }
+
+  async generateSmsSetup(
+    userId: string,
+  ): Promise<{ method: 'sms'; message: string }> {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user?.phoneNumber || !/^\+[1-9]\d{7,14}$/.test(user.phoneNumber)) {
+      throw new BadRequestException(
+        'Add a valid E.164 phone number before enabling SMS fallback',
+      );
+    }
+
+    const activeDevice = await this.mfaDeviceRepository.findOne({
+      where: {
+        userId,
+        type: MfaDeviceType.SMS,
+        status: MfaDeviceStatus.ACTIVE,
+      },
+    });
+    if (activeDevice) {
+      throw new BadRequestException('SMS MFA is already enabled');
+    }
+
+    await this.mfaDeviceRepository.update(
+      { userId, type: MfaDeviceType.SMS, status: MfaDeviceStatus.PENDING },
+      { status: MfaDeviceStatus.DISABLED },
+    );
+    const code = crypto.randomInt(100000, 1000000).toString();
+    const device = this.mfaDeviceRepository.create({
+      userId,
+      type: MfaDeviceType.SMS,
+      status: MfaDeviceStatus.PENDING,
+      deviceName: this.phoneFingerprint(user.phoneNumber),
+      secretKey: await bcrypt.hash(code, 10),
+    });
+    await this.mfaDeviceRepository.save(device);
+    await this.smsGatewayService.sendVerificationCode(user.phoneNumber, code);
+    return { method: 'sms', message: 'Verification code sent' };
+  }
+
+  async sendSmsLoginCode(userId: string): Promise<void> {
+    const [user, device] = await Promise.all([
+      this.userRepository.findOne({ where: { id: userId } }),
+      this.mfaDeviceRepository.findOne({
+        where: {
+          userId,
+          type: MfaDeviceType.SMS,
+          status: MfaDeviceStatus.ACTIVE,
+        },
+      }),
+    ]);
+    if (!user?.phoneNumber || !device) {
+      throw new UnauthorizedException('SMS MFA is not enabled for this user');
+    }
+    if (device.deviceName !== this.phoneFingerprint(user.phoneNumber)) {
+      throw new UnauthorizedException(
+        'Phone number changed; re-enroll SMS MFA before using it',
+      );
+    }
+
+    const code = crypto.randomInt(100000, 1000000).toString();
+    device.secretKey = await bcrypt.hash(code, 10);
+    await this.mfaDeviceRepository.save(device);
+    await this.smsGatewayService.sendVerificationCode(user.phoneNumber, code);
+  }
+
+  private phoneFingerprint(phoneNumber: string): string {
+    return crypto
+      .createHmac('sha256', this.encryptionKey)
+      .update(phoneNumber)
+      .digest('hex');
+  }
+
+  async verifyMfaLoginCode(userId: string, token: string): Promise<boolean> {
+    const totpDevice = await this.mfaDeviceRepository.findOne({
+      where: {
+        userId,
+        type: MfaDeviceType.TOTP,
+        status: MfaDeviceStatus.ACTIVE,
+      },
+    });
+    if (totpDevice?.secretKey) {
+      const secret = this.decryptSecret(totpDevice.secretKey);
+      if (
+        speakeasy.totp.verify({
+          secret,
+          encoding: 'base32',
+          token,
+          window: 2,
+        })
+      ) {
+        totpDevice.lastUsedAt = new Date();
+        await this.mfaDeviceRepository.save(totpDevice);
+        return true;
+      }
+      if (await this.consumeBackupCode(totpDevice, token)) return true;
+    }
+
+    const smsDevice = await this.mfaDeviceRepository.findOne({
+      where: {
+        userId,
+        type: MfaDeviceType.SMS,
+        status: MfaDeviceStatus.ACTIVE,
+      },
+    });
+    if (
+      !smsDevice?.secretKey ||
+      !smsDevice.updatedAt ||
+      Date.now() - smsDevice.updatedAt.getTime() > 5 * 60 * 1000 ||
+      !(await bcrypt.compare(token, smsDevice.secretKey))
+    ) {
+      return false;
+    }
+    smsDevice.secretKey = null;
+    smsDevice.lastUsedAt = new Date();
+    await this.mfaDeviceRepository.save(smsDevice);
+    return true;
+  }
+
+  private async consumeBackupCode(
+    device: MfaDevice,
+    code: string,
+  ): Promise<boolean> {
+    if (!device.backupCodes) return false;
+    const hashedCodes: string[] = JSON.parse(device.backupCodes) as string[];
+    for (let index = 0; index < hashedCodes.length; index++) {
+      if (await bcrypt.compare(code, hashedCodes[index])) {
+        hashedCodes.splice(index, 1);
+        device.backupCodes =
+          hashedCodes.length > 0 ? JSON.stringify(hashedCodes) : null;
+        await this.mfaDeviceRepository.save(device);
+        return true;
+      }
+    }
+    return false;
   }
 
   /**
@@ -200,14 +405,23 @@ export class MfaService {
    * Check if user has MFA enabled
    */
   async isMfaEnabled(userId: string): Promise<boolean> {
-    const device = await this.mfaDeviceRepository.findOne({
-      where: {
-        userId,
-        type: MfaDeviceType.TOTP,
-        status: MfaDeviceStatus.ACTIVE,
-      },
-    });
-    return !!device;
+    const [totp, sms] = await Promise.all([
+      this.mfaDeviceRepository.findOne({
+        where: {
+          userId,
+          type: MfaDeviceType.TOTP,
+          status: MfaDeviceStatus.ACTIVE,
+        },
+      }),
+      this.mfaDeviceRepository.findOne({
+        where: {
+          userId,
+          type: MfaDeviceType.SMS,
+          status: MfaDeviceStatus.ACTIVE,
+        },
+      }),
+    ]);
+    return Boolean(totp || sms);
   }
 
   /**
@@ -225,6 +439,8 @@ export class MfaService {
       device.status = MfaDeviceStatus.DISABLED;
       await this.mfaDeviceRepository.save(device);
     }
+
+    await this.userRepository.update(userId, { twoFactorEnabled: false });
 
     this.logger.log(`MFA disabled for user: ${userId}`);
   }
@@ -274,22 +490,40 @@ export class MfaService {
    * Encrypt secret key
    */
   private encryptSecret(secret: string): string {
-    const algorithm = 'aes-256-cbc';
     const key = crypto.createHash('sha256').update(this.encryptionKey).digest();
-    const iv = crypto.randomBytes(16);
-    const cipher = crypto.createCipheriv(algorithm, key, iv);
-    let encrypted = cipher.update(secret, 'utf8', 'hex');
-    encrypted += cipher.final('hex');
-    return iv.toString('hex') + ':' + encrypted;
+    const iv = crypto.randomBytes(12);
+    const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
+    const encrypted = Buffer.concat([
+      cipher.update(secret, 'utf8'),
+      cipher.final(),
+    ]);
+    return `gcm:${iv.toString('hex')}:${cipher.getAuthTag().toString('hex')}:${encrypted.toString('hex')}`;
   }
 
   /**
    * Decrypt secret key
    */
   private decryptSecret(encryptedSecret: string): string {
-    const algorithm = 'aes-256-cbc';
     const key = crypto.createHash('sha256').update(this.encryptionKey).digest();
     const parts = encryptedSecret.split(':');
+    if (parts[0] === 'gcm') {
+      if (parts.length !== 4) {
+        throw new UnauthorizedException('Stored MFA secret is invalid');
+      }
+      const decipher = crypto.createDecipheriv(
+        'aes-256-gcm',
+        key,
+        Buffer.from(parts[1], 'hex'),
+      );
+      decipher.setAuthTag(Buffer.from(parts[2], 'hex'));
+      return Buffer.concat([
+        decipher.update(Buffer.from(parts[3], 'hex')),
+        decipher.final(),
+      ]).toString('utf8');
+    }
+
+    // Retain compatibility with MFA secrets written before authenticated encryption.
+    const algorithm = 'aes-256-cbc';
     const iv = Buffer.from(parts[0], 'hex');
     const encrypted = parts[1];
     const decipher = crypto.createDecipheriv(algorithm, key, iv);
@@ -337,6 +571,7 @@ export class MfaService {
         user.id,
         user.email,
         user.role,
+        true,
       );
 
       await authService.updateRefreshToken(user.id, refreshToken);
@@ -385,13 +620,22 @@ export class MfaService {
   }
 
   async checkMfaRequired(userId: string) {
-    // Check if MFA is enabled
-    return await this.mfaDeviceRepository.findOne({
-      where: {
-        userId,
-        type: MfaDeviceType.TOTP,
-        status: MfaDeviceStatus.ACTIVE,
-      },
-    });
+    const [totp, sms] = await Promise.all([
+      this.mfaDeviceRepository.findOne({
+        where: {
+          userId,
+          type: MfaDeviceType.TOTP,
+          status: MfaDeviceStatus.ACTIVE,
+        },
+      }),
+      this.mfaDeviceRepository.findOne({
+        where: {
+          userId,
+          type: MfaDeviceType.SMS,
+          status: MfaDeviceStatus.ACTIVE,
+        },
+      }),
+    ]);
+    return totp ?? sms;
   }
 }

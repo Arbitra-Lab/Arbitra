@@ -84,8 +84,8 @@ NODE_ENV=production ts-node src/commands/index.ts tenant \
 
 After seeding, you can log in with these credentials:
 
-| Role     | Email                | Password           |
-| -------- | -------------------- | ------------------ |
+| Role     | Email                 | Password           |
+| -------- | --------------------- | ------------------ |
 | Admin    | admin@arbitra.demo    | Admin@Demo2024!    |
 | Agent    | agent@arbitra.demo    | Agent@Demo2024!    |
 | Landlord | landlord@arbitra.demo | Landlord@Demo2024! |
@@ -197,6 +197,22 @@ pnpm db:backup
 # Restore database
 pnpm db:restore
 ```
+
+The consistency check exits non-zero if required tables or migration records are
+missing, required payment foreign keys or unique indexes are invalid, payment
+references are inconsistent, or an agreement-linked payment belongs to a
+different agreement user. It also checks that payment amounts are positive and
+that net settled payments do not exceed the agreement's security deposit plus
+monthly rent for every scheduled lease month (including an applicable
+early-termination fee). Agreements with settled payments but missing lease
+dates fail this check because their contractual limit cannot be determined.
+The cap is lease-term-aware rather than a single `security_deposit +
+monthly_rent` lifetime ceiling: `RentService.generatePaymentSchedule` creates a
+monthly rent installment for each month from the lease start through end, so
+the simpler ceiling would incorrectly fail valid multi-month agreements.
+The hourly production check requires the repository variable
+`PRODUCTION_DATABASE_CHECK_ENABLED=true` and secret `PRODUCTION_DATABASE_URL`;
+failed scheduled checks open an incident-review issue.
 
 ## Next Steps
 
