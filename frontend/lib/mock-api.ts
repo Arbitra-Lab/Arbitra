@@ -184,11 +184,67 @@ const mockData: Record<string, unknown> = {
   },
 };
 
+const mockThreadMessages: Record<string, unknown[]> = {
+  'room-001': [
+    {
+      id: 'msg-001',
+      roomId: 'room-001',
+      senderId: 'user-001',
+      senderName: 'You',
+      content: 'Hi Alex, could you review the lease draft before Friday?',
+      createdAt: '2026-03-31T13:58:00Z',
+      read: true,
+    },
+    {
+      id: 'msg-002',
+      roomId: 'room-001',
+      senderId: 'user-002',
+      senderName: 'Alex Okafor',
+      content: 'Of course, I will take a look this evening.',
+      createdAt: '2026-03-31T14:05:00Z',
+      read: true,
+    },
+    {
+      id: 'msg-003',
+      roomId: 'room-001',
+      senderId: 'user-002',
+      senderName: 'Alex Okafor',
+      content: 'The lease agreement looks good.',
+      createdAt: '2026-03-31T14:20:00Z',
+      read: false,
+    },
+  ],
+  'room-002': [
+    {
+      id: 'msg-004',
+      roomId: 'room-002',
+      senderId: 'user-001',
+      senderName: 'You',
+      content: 'James, the shower is still leaking in unit 2A.',
+      createdAt: '2026-03-30T10:02:00Z',
+      read: true,
+    },
+    {
+      id: 'msg-005',
+      roomId: 'room-002',
+      senderId: 'user-003',
+      senderName: 'James Adebayo',
+      content: 'When can I expect the maintenance team?',
+      createdAt: '2026-03-30T10:15:00Z',
+      read: true,
+    },
+  ],
+};
+
 // Pattern matching for dynamic routes
 const dynamicPatterns: Array<{
   pattern: RegExp;
   handler: (match: RegExpMatchArray) => unknown;
 }> = [
+  {
+    pattern: /^\/messaging\/rooms\/([^/?]+)\/messages/,
+    handler: (match) => ({ data: mockThreadMessages[match[1]] ?? [] }),
+  },
   {
     pattern: /^\/disputes\/(.+)$/,
     handler: (match) => ({
