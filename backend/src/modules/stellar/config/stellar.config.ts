@@ -20,9 +20,11 @@ export default registerAs('stellar', (): StellarConfig => {
 
   return {
     network,
-    networkPassphrase: isTestnet
-      ? 'Test SDF Network ; September 2015'
-      : 'Public Global Stellar Network ; September 2015',
+    networkPassphrase:
+      process.env.STELLAR_NETWORK_PASSPHRASE ||
+      (isTestnet
+        ? 'Test SDF Network ; September 2015'
+        : 'Public Global Stellar Network ; September 2015'),
     horizonUrl: isTestnet
       ? process.env.STELLAR_HORIZON_URL || 'https://horizon-testnet.stellar.org'
       : process.env.STELLAR_HORIZON_URL || 'https://horizon.stellar.org',

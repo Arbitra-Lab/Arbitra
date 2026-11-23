@@ -34,8 +34,10 @@ if (!process.env.DB_PASSWORD) process.env.DB_PASSWORD = 'password';
 if (!process.env.DB_NAME) process.env.DB_NAME = 'arbitra_test';
 
 // Stellar configuration
-process.env.STELLAR_NETWORK = 'testnet';
-process.env.STELLAR_HORIZON_URL = 'https://horizon-testnet.stellar.org';
+if (!process.env.STELLAR_NETWORK) process.env.STELLAR_NETWORK = 'testnet';
+if (!process.env.STELLAR_HORIZON_URL) {
+  process.env.STELLAR_HORIZON_URL = 'https://horizon-testnet.stellar.org';
+}
 
 // Other required configs
 process.env.FRONTEND_URL = 'http://localhost:3001';

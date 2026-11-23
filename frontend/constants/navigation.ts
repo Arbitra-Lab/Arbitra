@@ -4,6 +4,7 @@ export type NavigationLink = {
 };
 
 export const NAV_LINKS: NavigationLink[] = [
+  { name: 'Properties', href: '/properties' },
   { name: 'Agreements', href: '/user/contracts' },
   { name: 'Disputes', href: '/user/disputes' },
   { name: 'Resources', href: '/resources' },

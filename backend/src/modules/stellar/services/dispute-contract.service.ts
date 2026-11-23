@@ -37,6 +37,8 @@ export class DisputeContractService {
   private readonly contractId: string;
   private readonly rpcUrl: string;
   private readonly network: string;
+  private readonly networkPassphrase: string;
+  private readonly allowHttpRpc: boolean;
   private readonly adminKeypair?: StellarSdk.Keypair;
 
   constructor(private configService: ConfigService) {
@@ -46,6 +48,13 @@ export class DisputeContractService {
       this.configService.get<string>('SOROBAN_RPC_URL') ||
       'https://soroban-testnet.stellar.org';
     this.network = this.configService.get<string>('STELLAR_NETWORK', 'testnet');
+    this.networkPassphrase =
+      this.configService.get<string>('STELLAR_NETWORK_PASSPHRASE') ||
+      (this.network === 'mainnet'
+        ? StellarSdk.Networks.PUBLIC
+        : StellarSdk.Networks.TESTNET);
+    this.allowHttpRpc =
+      this.configService.get<string>('SOROBAN_RPC_ALLOW_HTTP') === 'true';
 
     const adminSecret = this.configService.get<string>(
       'STELLAR_ADMIN_SECRET_KEY',
@@ -62,7 +71,9 @@ export class DisputeContractService {
 
     this.logger.log(`Adding arbiter: ${arbiterAddress}`);
 
-    const server = new StellarSdk.SorobanRpc.Server(this.rpcUrl);
+    const server = new StellarSdk.SorobanRpc.Server(this.rpcUrl, {
+      allowHttp: this.allowHttpRpc,
+    });
     const contract = new StellarSdk.Contract(this.contractId);
 
     const tx = new StellarSdk.TransactionBuilder(
@@ -87,8 +98,7 @@ export class DisputeContractService {
     const prepared = await server.prepareTransaction(tx);
     prepared.sign(this.adminKeypair);
 
-    const result = await server.sendTransaction(prepared);
-    return result.hash;
+    return this.submitAndWait(server, prepared);
   }
 
   async raiseDispute(
@@ -98,7 +108,9 @@ export class DisputeContractService {
   ): Promise<string> {
     this.logger.log(`Raising dispute for case: ${caseId}`);
 
-    const server = new StellarSdk.SorobanRpc.Server(this.rpcUrl);
+    const server = new StellarSdk.SorobanRpc.Server(this.rpcUrl, {
+      allowHttp: this.allowHttpRpc,
+    });
     const contract = new StellarSdk.Contract(this.contractId);
 
     const raiserKeypair = StellarSdk.Keypair.fromSecret(raiserAddress);
@@ -124,8 +136,7 @@ export class DisputeContractService {
     const prepared = await server.prepareTransaction(tx);
     prepared.sign(raiserKeypair);
 
-    const result = await server.sendTransaction(prepared);
-    return result.hash;
+    return this.submitAndWait(server, prepared);
   }
 
   async voteOnDispute(
@@ -135,7 +146,9 @@ export class DisputeContractService {
   ): Promise<string> {
     this.logger.log(`Arbiter voting on dispute: ${caseId}`);
 
-    const server = new StellarSdk.SorobanRpc.Server(this.rpcUrl);
+    const server = new StellarSdk.SorobanRpc.Server(this.rpcUrl, {
+      allowHttp: this.allowHttpRpc,
+    });
     const contract = new StellarSdk.Contract(this.contractId);
 
     const arbiterKeypair = StellarSdk.Keypair.fromSecret(arbiterAddress);
@@ -161,8 +174,7 @@ export class DisputeContractService {
     const prepared = await server.prepareTransaction(tx);
     prepared.sign(arbiterKeypair);
 
-    const result = await server.sendTransaction(prepared);
-    return result.hash;
+    return this.submitAndWait(server, prepared);
   }
 
   async resolveDispute(
@@ -174,7 +186,9 @@ export class DisputeContractService {
 
     this.logger.log(`Resolving dispute: ${caseId}`);
 
-    const server = new StellarSdk.SorobanRpc.Server(this.rpcUrl);
+    const server = new StellarSdk.SorobanRpc.Server(this.rpcUrl, {
+      allowHttp: this.allowHttpRpc,
+    });
     const contract = new StellarSdk.Contract(this.contractId);
 
     const tx = new StellarSdk.TransactionBuilder(
@@ -196,10 +210,10 @@ export class DisputeContractService {
     const prepared = await server.prepareTransaction(tx);
     prepared.sign(this.adminKeypair);
 
-    const result = await server.sendTransaction(prepared);
+    const txHash = await this.submitAndWait(server, prepared);
 
     const outcome = await this.getDisputeOutcome(caseId);
-    return { outcome, txHash: result.hash };
+    return { outcome, txHash };
   }
 
   async getDispute(caseId: string): Promise<DisputeInfo | null> {
@@ -207,7 +221,9 @@ export class DisputeContractService {
       return null;
     }
 
-    const server = new StellarSdk.SorobanRpc.Server(this.rpcUrl);
+    const server = new StellarSdk.SorobanRpc.Server(this.rpcUrl, {
+      allowHttp: this.allowHttpRpc,
+    });
     const contract = new StellarSdk.Contract(this.contractId);
 
     const tx = new StellarSdk.TransactionBuilder(
@@ -244,7 +260,9 @@ export class DisputeContractService {
       return null;
     }
 
-    const server = new StellarSdk.SorobanRpc.Server(this.rpcUrl);
+    const server = new StellarSdk.SorobanRpc.Server(this.rpcUrl, {
+      allowHttp: this.allowHttpRpc,
+    });
     const contract = new StellarSdk.Contract(this.contractId);
 
     const tx = new StellarSdk.TransactionBuilder(
@@ -281,7 +299,9 @@ export class DisputeContractService {
       return 0;
     }
 
-    const server = new StellarSdk.SorobanRpc.Server(this.rpcUrl);
+    const server = new StellarSdk.SorobanRpc.Server(this.rpcUrl, {
+      allowHttp: this.allowHttpRpc,
+    });
     const contract = new StellarSdk.Contract(this.contractId);
 
     const tx = new StellarSdk.TransactionBuilder(
@@ -316,7 +336,9 @@ export class DisputeContractService {
       return null;
     }
 
-    const server = new StellarSdk.SorobanRpc.Server(this.rpcUrl);
+    const server = new StellarSdk.SorobanRpc.Server(this.rpcUrl, {
+      allowHttp: this.allowHttpRpc,
+    });
     const contract = new StellarSdk.Contract(this.contractId);
 
     const tx = new StellarSdk.TransactionBuilder(
@@ -357,8 +379,8 @@ export class DisputeContractService {
     return dispute.outcome;
   }
 
-  private parseDisputeInfo(result: any): DisputeInfo {
-    const native = StellarSdk.scValToNative(result.retval);
+  private parseDisputeInfo(result: StellarSdk.xdr.ScVal): DisputeInfo {
+    const native = StellarSdk.scValToNative(result);
     return {
       caseId: native.case_id,
       detailsHash: native.details_hash,
@@ -374,8 +396,8 @@ export class DisputeContractService {
     };
   }
 
-  private parseArbiterInfo(result: any): ArbiterInfo {
-    const native = StellarSdk.scValToNative(result.retval);
+  private parseArbiterInfo(result: StellarSdk.xdr.ScVal): ArbiterInfo {
+    const native = StellarSdk.scValToNative(result);
     return {
       address: native.address,
       addedAt: native.added_at,
@@ -383,8 +405,8 @@ export class DisputeContractService {
     };
   }
 
-  private parseVoteInfo(result: any): VoteInfo {
-    const native = StellarSdk.scValToNative(result.retval);
+  private parseVoteInfo(result: StellarSdk.xdr.ScVal): VoteInfo {
+    const native = StellarSdk.scValToNative(result);
     return {
       arbiter: native.arbiter,
       caseId: native.case_id,
@@ -394,8 +416,37 @@ export class DisputeContractService {
   }
 
   private getNetworkPassphrase(): string {
-    return this.network === 'mainnet'
-      ? StellarSdk.Networks.PUBLIC
-      : StellarSdk.Networks.TESTNET;
+    return this.networkPassphrase;
+  }
+
+  private async submitAndWait(
+    server: StellarSdk.SorobanRpc.Server,
+    transaction: StellarSdk.Transaction,
+  ): Promise<string> {
+    const result = await server.sendTransaction(transaction);
+    if (result.status === 'ERROR') {
+      throw new Error(
+        `Dispute contract rejected transaction: ${JSON.stringify(result.errorResult)}`,
+      );
+    }
+
+    for (let attempt = 0; attempt < 30; attempt += 1) {
+      const response = await server.getTransaction(result.hash);
+      if (
+        response.status ===
+        StellarSdk.SorobanRpc.Api.GetTransactionStatus.SUCCESS
+      ) {
+        return result.hash;
+      }
+      if (
+        response.status ===
+        StellarSdk.SorobanRpc.Api.GetTransactionStatus.FAILED
+      ) {
+        throw new Error(`Dispute contract transaction failed: ${result.hash}`);
+      }
+      await new Promise((resolve) => setTimeout(resolve, 500));
+    }
+
+    throw new Error(`Dispute contract transaction timed out: ${result.hash}`);
   }
 }

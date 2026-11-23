@@ -1,3 +1,4 @@
+import { BadRequestException } from '@nestjs/common';
 import { SelectQueryBuilder } from 'typeorm';
 import { Property } from './entities/property.entity';
 import { QueryPropertyDto } from './dto/query-property.dto';
@@ -31,6 +32,10 @@ export class PropertyQueryBuilder {
         filters.isFurnished,
         filters.hasParking,
         filters.petsAllowed,
+      )
+      .applyAvailabilityDateRange(
+        filters.availabilityStart,
+        filters.availabilityEnd,
       )
       .applyProximityFilter(filters.lat, filters.lng, filters.radiusKm);
 
@@ -188,6 +193,31 @@ export class PropertyQueryBuilder {
         petsAllowed,
       });
     }
+    return this;
+  }
+
+  applyAvailabilityDateRange(start?: string, end?: string): this {
+    if (!start && !end) return this;
+
+    const firstDate = start ?? end!;
+    const lastDate = end ?? start!;
+    if (firstDate > lastDate) {
+      throw new BadRequestException(
+        'availabilityStart must be before or equal to availabilityEnd',
+      );
+    }
+
+    this.queryBuilder.andWhere(
+      'NOT EXISTS (' +
+        'SELECT 1 FROM property_availability pa ' +
+        'WHERE pa.property_id = property.id ' +
+        'AND pa.date BETWEEN :availabilityStart AND :availabilityEnd ' +
+        'AND pa.available = false)',
+      {
+        availabilityStart: firstDate,
+        availabilityEnd: lastDate,
+      },
+    );
     return this;
   }
 

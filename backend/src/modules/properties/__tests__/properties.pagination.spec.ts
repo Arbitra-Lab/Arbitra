@@ -14,9 +14,7 @@ import { RentalUnit } from '../entities/rental-unit.entity';
 import { PropertyListingDraft } from '../entities/property-listing-draft.entity';
 import { CacheService } from '../../../common/cache/cache.service';
 import { FraudHooksService } from '../../fraud/fraud-hooks.service';
-import { QueryPropertyDto } from '../dto/query-property.dto';
-import { User, UserRole, AuthMethod } from '../../users/entities/user.entity';
-import { KycStatus } from '../../kyc/kyc-status.enum';
+import { User } from '../../users/entities/user.entity';
 
 describe('PropertiesService – Pagination', () => {
   let service: PropertiesService;
@@ -351,6 +349,37 @@ describe('PropertiesService – Pagination', () => {
       expect(mockQb.andWhere).toHaveBeenCalledWith(
         'property.price <= :maxPrice',
         { maxPrice: 3000 },
+      );
+    });
+
+    it('should exclude properties with blocked dates in the requested range', async () => {
+      mockQb = makeQueryBuilder([], 0);
+      mockPropertyRepository.createQueryBuilder.mockReturnValue(mockQb);
+
+      await service.findAll({
+        availabilityStart: '2026-07-01',
+        availabilityEnd: '2026-07-05',
+      });
+
+      expect(mockQb.andWhere).toHaveBeenCalledWith(
+        expect.stringContaining(
+          'FROM property_availability pa WHERE pa.property_id = property.id',
+        ),
+        {
+          availabilityStart: '2026-07-01',
+          availabilityEnd: '2026-07-05',
+        },
+      );
+    });
+
+    it('should reject an availability range with the end before the start', async () => {
+      await expect(
+        service.findAll({
+          availabilityStart: '2026-07-05',
+          availabilityEnd: '2026-07-01',
+        }),
+      ).rejects.toThrow(
+        'availabilityStart must be before or equal to availabilityEnd',
       );
     });
 

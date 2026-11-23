@@ -11,6 +11,7 @@ export class PaymentProcessingService {
   private readonly server: SorobanRpc.Server;
   private readonly contract?: Contract;
   private readonly networkPassphrase: string;
+  private readonly allowHttpRpc: boolean;
   private readonly adminKeypair?: StellarSdk.Keypair;
   private readonly isConfigured: boolean;
 
@@ -33,7 +34,11 @@ export class PaymentProcessingService {
       'testnet',
     );
 
-    this.server = new SorobanRpc.Server(rpcUrl);
+    this.allowHttpRpc =
+      this.configService.get<string>('SOROBAN_RPC_ALLOW_HTTP') === 'true';
+    this.server = new SorobanRpc.Server(rpcUrl, {
+      allowHttp: this.allowHttpRpc,
+    });
 
     if (contractId) {
       this.contract = new Contract(contractId);
@@ -46,9 +51,10 @@ export class PaymentProcessingService {
     }
 
     this.networkPassphrase =
-      network === 'mainnet'
+      this.configService.get<string>('STELLAR_NETWORK_PASSPHRASE') ||
+      (network === 'mainnet'
         ? StellarSdk.Networks.PUBLIC
-        : StellarSdk.Networks.TESTNET;
+        : StellarSdk.Networks.TESTNET);
 
     if (adminSecret) {
       this.adminKeypair = StellarSdk.Keypair.fromSecret(adminSecret);
