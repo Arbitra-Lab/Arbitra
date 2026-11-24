@@ -8,6 +8,17 @@ import Image from 'next/image';
 import { useAuth } from '@/store/authStore';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { SettingsCard } from './SettingsCard';
+import {
+  isSettingsTab,
+  SettingsTabs,
+  settingsPanelId,
+  settingsTabId,
+  type SettingsTabId,
+} from './SettingsTabs';
+import { ProfileSettingsPanel } from './ProfileSettingsPanel';
+import { PaymentMethodsPanel } from './PaymentMethodsPanel';
+import { SavedSearchesPanel } from './SavedSearchesPanel';
+import { ReferralsPanel } from './ReferralsPanel';
 import { PreferenceSwitch } from './PreferenceSwitch';
 import { ThemeSelector } from './ThemeSelector';
 import { MfaSetupPayload, ThemePreference, UserPreferences } from './types';
@@ -166,6 +177,22 @@ export function SettingsPageClient({
   const [mfaVerificationCode, setMfaVerificationCode] = useState('');
   const [showMfaDisableFlow, setShowMfaDisableFlow] = useState(false);
   const [mfaDisableCode, setMfaDisableCode] = useState('');
+  const [activeTab, setActiveTab] = useState<SettingsTabId>('profile');
+
+  // Deep links such as /settings#security open that tab.
+  useEffect(() => {
+    const fromHash = window.location.hash.replace(/^#/, '');
+    if (isSettingsTab(fromHash)) setActiveTab(fromHash);
+  }, []);
+
+  const selectTab = (tab: SettingsTabId) => {
+    setActiveTab(tab);
+    window.history.replaceState(
+      window.history.state,
+      '',
+      `${window.location.pathname}${window.location.search}#${tab}`,
+    );
+  };
 
   const {
     register,
@@ -473,8 +500,8 @@ export function SettingsPageClient({
             Settings & Preferences
           </h1>
           <p className="mt-1 text-sm text-neutral-200/60">
-            Manage your security, notification delivery, appearance, and
-            regional preferences.
+            Manage your profile, payment methods, notifications, security and
+            referrals.
           </p>
         </header>
 
@@ -489,398 +516,424 @@ export function SettingsPageClient({
           </div>
         )}
 
-        <SettingsCard
-          title="Notification Preferences"
-          description="Select exactly what should trigger notifications."
-        >
-          <div className="space-y-2 divide-y divide-neutral-100">
-            <PreferenceSwitch
-              id="email-new-property"
-              label="Email: New property matches"
-              checked={preferences.notifications.email.newPropertyMatches}
-              disabled={isSavingPreferences}
-              onChange={(checked) =>
-                updatePreference({
-                  ...preferences,
-                  notifications: {
-                    ...preferences.notifications,
-                    email: {
-                      ...preferences.notifications.email,
-                      newPropertyMatches: checked,
-                    },
-                  },
-                })
-              }
-            />
-            <PreferenceSwitch
-              id="email-payment-reminders"
-              label="Email: Payment reminders"
-              checked={preferences.notifications.email.paymentReminders}
-              disabled={isSavingPreferences}
-              onChange={(checked) =>
-                updatePreference({
-                  ...preferences,
-                  notifications: {
-                    ...preferences.notifications,
-                    email: {
-                      ...preferences.notifications.email,
-                      paymentReminders: checked,
-                    },
-                  },
-                })
-              }
-            />
-            <PreferenceSwitch
-              id="email-maintenance-updates"
-              label="Email: Maintenance updates"
-              checked={preferences.notifications.email.maintenanceUpdates}
-              disabled={isSavingPreferences}
-              onChange={(checked) =>
-                updatePreference({
-                  ...preferences,
-                  notifications: {
-                    ...preferences.notifications,
-                    email: {
-                      ...preferences.notifications.email,
-                      maintenanceUpdates: checked,
-                    },
-                  },
-                })
-              }
-            />
-            <PreferenceSwitch
-              id="push-new-messages"
-              label="Push: New messages"
-              checked={preferences.notifications.push.newMessages}
-              disabled={isSavingPreferences}
-              onChange={(checked) =>
-                updatePreference({
-                  ...preferences,
-                  notifications: {
-                    ...preferences.notifications,
-                    push: {
-                      ...preferences.notifications.push,
-                      newMessages: checked,
-                    },
-                  },
-                })
-              }
-            />
-            <PreferenceSwitch
-              id="push-critical-alerts"
-              label="Push: Critical alerts"
-              checked={preferences.notifications.push.criticalAlerts}
-              disabled={isSavingPreferences}
-              onChange={(checked) =>
-                updatePreference({
-                  ...preferences,
-                  notifications: {
-                    ...preferences.notifications,
-                    push: {
-                      ...preferences.notifications.push,
-                      criticalAlerts: checked,
-                    },
-                  },
-                })
-              }
-            />
-            <PreferenceSwitch
-              id="in-app-summary"
-              label="In-app notifications summary"
-              description="Show a compact daily in-app summary card."
-              checked={preferences.notifications.inAppSummary}
-              disabled={isSavingPreferences}
-              onChange={(checked) =>
-                updatePreference({
-                  ...preferences,
-                  notifications: {
-                    ...preferences.notifications,
-                    inAppSummary: checked,
-                  },
-                })
-              }
-            />
-          </div>
-          <div className="mt-4 rounded-xl bg-white/5 border border-white/10 px-4 py-3 text-sm text-neutral-200/70">
-            In-app summary: {enabledEmailCount} email types and{' '}
-            {enabledPushCount} push types are currently enabled.
-          </div>
-        </SettingsCard>
+        <SettingsTabs active={activeTab} onChange={selectTab} />
 
-        <SettingsCard
-          title="Appearance"
-          description="Choose how Arbitra should look across sessions."
+        <div
+          role="tabpanel"
+          id={settingsPanelId(activeTab)}
+          aria-labelledby={settingsTabId(activeTab)}
+          className="space-y-6"
         >
-          <ThemeSelector
-            value={preferences.appearanceTheme}
-            disabled={isSavingPreferences}
-            onChange={handleThemeChange}
-          />
-        </SettingsCard>
+          {activeTab === 'profile' && (
+            <ProfileSettingsPanel accessToken={accessToken ?? null} />
+          )}
+          {activeTab === 'payments' && <PaymentMethodsPanel />}
 
-        <SettingsCard
-          title="Language & Region"
-          description="Set your default language and currency."
-        >
-          <div className="grid gap-4 md:grid-cols-2">
-            <div>
-              <label
-                htmlFor="language"
-                className="mb-2 block text-sm font-medium text-white"
-              >
-                Language
-              </label>
-              <select
-                id="language"
-                value={preferences.language}
+          {activeTab === 'notifications' && (
+            <SettingsCard
+              title="Notification Preferences"
+              description="Select exactly what should trigger notifications."
+            >
+              <div className="space-y-2 divide-y divide-neutral-100">
+                <PreferenceSwitch
+                  id="email-new-property"
+                  label="Email: New property matches"
+                  checked={preferences.notifications.email.newPropertyMatches}
+                  disabled={isSavingPreferences}
+                  onChange={(checked) =>
+                    updatePreference({
+                      ...preferences,
+                      notifications: {
+                        ...preferences.notifications,
+                        email: {
+                          ...preferences.notifications.email,
+                          newPropertyMatches: checked,
+                        },
+                      },
+                    })
+                  }
+                />
+                <PreferenceSwitch
+                  id="email-payment-reminders"
+                  label="Email: Payment reminders"
+                  checked={preferences.notifications.email.paymentReminders}
+                  disabled={isSavingPreferences}
+                  onChange={(checked) =>
+                    updatePreference({
+                      ...preferences,
+                      notifications: {
+                        ...preferences.notifications,
+                        email: {
+                          ...preferences.notifications.email,
+                          paymentReminders: checked,
+                        },
+                      },
+                    })
+                  }
+                />
+                <PreferenceSwitch
+                  id="email-maintenance-updates"
+                  label="Email: Maintenance updates"
+                  checked={preferences.notifications.email.maintenanceUpdates}
+                  disabled={isSavingPreferences}
+                  onChange={(checked) =>
+                    updatePreference({
+                      ...preferences,
+                      notifications: {
+                        ...preferences.notifications,
+                        email: {
+                          ...preferences.notifications.email,
+                          maintenanceUpdates: checked,
+                        },
+                      },
+                    })
+                  }
+                />
+                <PreferenceSwitch
+                  id="push-new-messages"
+                  label="Push: New messages"
+                  checked={preferences.notifications.push.newMessages}
+                  disabled={isSavingPreferences}
+                  onChange={(checked) =>
+                    updatePreference({
+                      ...preferences,
+                      notifications: {
+                        ...preferences.notifications,
+                        push: {
+                          ...preferences.notifications.push,
+                          newMessages: checked,
+                        },
+                      },
+                    })
+                  }
+                />
+                <PreferenceSwitch
+                  id="push-critical-alerts"
+                  label="Push: Critical alerts"
+                  checked={preferences.notifications.push.criticalAlerts}
+                  disabled={isSavingPreferences}
+                  onChange={(checked) =>
+                    updatePreference({
+                      ...preferences,
+                      notifications: {
+                        ...preferences.notifications,
+                        push: {
+                          ...preferences.notifications.push,
+                          criticalAlerts: checked,
+                        },
+                      },
+                    })
+                  }
+                />
+                <PreferenceSwitch
+                  id="in-app-summary"
+                  label="In-app notifications summary"
+                  description="Show a compact daily in-app summary card."
+                  checked={preferences.notifications.inAppSummary}
+                  disabled={isSavingPreferences}
+                  onChange={(checked) =>
+                    updatePreference({
+                      ...preferences,
+                      notifications: {
+                        ...preferences.notifications,
+                        inAppSummary: checked,
+                      },
+                    })
+                  }
+                />
+              </div>
+              <div className="mt-4 rounded-xl bg-white/5 border border-white/10 px-4 py-3 text-sm text-neutral-200/70">
+                In-app summary: {enabledEmailCount} email types and{' '}
+                {enabledPushCount} push types are currently enabled.
+              </div>
+            </SettingsCard>
+          )}
+          {activeTab === 'notifications' && <SavedSearchesPanel />}
+
+          {activeTab === 'profile' && (
+            <SettingsCard
+              title="Appearance"
+              description="Choose how Arbitra should look across sessions."
+            >
+              <ThemeSelector
+                value={preferences.appearanceTheme}
                 disabled={isSavingPreferences}
-                onChange={(event) =>
-                  updatePreference({
-                    ...preferences,
-                    language: event.target.value,
-                  })
-                }
-                className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-brand-accent focus:ring-1 focus:ring-brand-accent/50"
-              >
-                {LANGUAGE_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label
-                htmlFor="currency"
-                className="mb-2 block text-sm font-medium text-white"
-              >
-                Preferred currency
-              </label>
-              <select
-                id="currency"
-                value={preferences.currency}
-                disabled={isSavingPreferences}
-                onChange={(event) =>
-                  updatePreference({
-                    ...preferences,
-                    currency: event.target.value,
-                  })
-                }
-                className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-brand-accent focus:ring-1 focus:ring-brand-accent/50"
-              >
-                {CURRENCY_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-        </SettingsCard>
+                onChange={handleThemeChange}
+              />
+            </SettingsCard>
+          )}
 
-        <SettingsCard
-          title="Account Security"
-          description="Update your password and manage multi-factor authentication."
-        >
-          <form
-            onSubmit={handlePasswordChange}
-            className="space-y-4"
-            noValidate
-          >
-            <div className="grid gap-4 md:grid-cols-3">
-              <div>
-                <label
-                  htmlFor="currentPassword"
-                  className="mb-2 block text-sm font-medium text-white"
-                >
-                  Current password
-                </label>
-                <input
-                  id="currentPassword"
-                  type="password"
-                  autoComplete="current-password"
-                  {...register('currentPassword')}
-                  className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-brand-accent placeholder:text-white/20"
-                />
-                {errors.currentPassword && (
-                  <p className="mt-1 text-xs text-red-400">
-                    {errors.currentPassword.message}
-                  </p>
-                )}
-              </div>
-              <div>
-                <label
-                  htmlFor="newPassword"
-                  className="mb-2 block text-sm font-medium text-white"
-                >
-                  New password
-                </label>
-                <input
-                  id="newPassword"
-                  type="password"
-                  autoComplete="new-password"
-                  {...register('newPassword')}
-                  className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-brand-accent placeholder:text-white/20"
-                />
-                {errors.newPassword && (
-                  <p className="mt-1 text-xs text-red-400">
-                    {errors.newPassword.message}
-                  </p>
-                )}
-              </div>
-              <div>
-                <label
-                  htmlFor="confirmPassword"
-                  className="mb-2 block text-sm font-medium text-white"
-                >
-                  Confirm new password
-                </label>
-                <input
-                  id="confirmPassword"
-                  type="password"
-                  autoComplete="new-password"
-                  {...register('confirmPassword')}
-                  className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-brand-accent placeholder:text-white/20"
-                />
-                {errors.confirmPassword && (
-                  <p className="mt-1 text-xs text-red-400">
-                    {errors.confirmPassword.message}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            <div className="rounded-xl bg-white/5 border border-white/10 p-3">
-              <p className="mb-2 text-xs font-medium text-neutral-200/70">
-                Password strength: {strength.label}
-              </p>
-              <div className="h-2 w-full rounded-full bg-white/10">
-                <div
-                  className="h-2 rounded-full bg-brand-accent transition-all"
-                  style={{ width: `${strength.score}%` }}
-                />
-              </div>
-            </div>
-
-            <div>
-              <button
-                type="submit"
-                disabled={isUpdatingPassword}
-                className="rounded-xl bg-gradient-to-r from-brand-blue to-brand-blue-dark px-4 py-2 text-sm font-semibold text-white transition-all hover:from-brand-blue-dark hover:to-brand-blue-dark disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {isUpdatingPassword
-                  ? 'Updating password...'
-                  : 'Update password'}
-              </button>
-            </div>
-          </form>
-
-          <div className="mt-6 border-t border-white/10 pt-6">
-            <PreferenceSwitch
-              id="mfa-switch"
-              label="Multi-factor authentication (MFA)"
-              description={
-                isCheckingMfa
-                  ? 'Checking status...'
-                  : mfaEnabled
-                    ? 'Enabled. You can disable with a valid authenticator code.'
-                    : 'Disabled. Enable MFA to secure your account.'
-              }
-              checked={mfaEnabled}
-              disabled={isCheckingMfa || isMfaBusy}
-              onChange={(checked) => {
-                if (checked) {
-                  void startMfaSetup();
-                  return;
-                }
-                setShowMfaDisableFlow(true);
-              }}
-            />
-
-            {mfaSetup && (
-              <div className="mt-4 rounded-xl border border-white/10 bg-white/5 p-4">
-                <h3 className="text-sm font-semibold text-white">
-                  Complete MFA setup
-                </h3>
-                <p className="mt-1 text-xs text-neutral-200/60">
-                  Scan the QR code with your authenticator app, then enter a
-                  generated code to confirm.
-                </p>
-                {mfaSetup.qrCodeUrl && (
-                  <Image
-                    src={mfaSetup.qrCodeUrl}
-                    alt="MFA QR code for authenticator setup"
-                    width={160}
-                    height={160}
-                    unoptimized
-                    className="mt-3 rounded-lg border border-white/10 bg-white p-2"
-                  />
-                )}
-                <p className="mt-3 text-xs text-neutral-200/70">
-                  Setup key:{' '}
-                  <span className="font-mono text-white">
-                    {mfaSetup.secret}
-                  </span>
-                </p>
-                <p className="mt-2 text-xs text-neutral-200/70">
-                  Backup codes:{' '}
-                  <span className="font-mono text-white">
-                    {mfaSetup.backupCodes.join(', ')}
-                  </span>
-                </p>
-                <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-                  <input
-                    value={mfaVerificationCode}
+          {activeTab === 'profile' && (
+            <SettingsCard
+              title="Language & Region"
+              description="Set your default language and currency."
+            >
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <label
+                    htmlFor="language"
+                    className="mb-2 block text-sm font-medium text-white"
+                  >
+                    Language
+                  </label>
+                  <select
+                    id="language"
+                    value={preferences.language}
+                    disabled={isSavingPreferences}
                     onChange={(event) =>
-                      setMfaVerificationCode(event.target.value)
+                      updatePreference({
+                        ...preferences,
+                        language: event.target.value,
+                      })
                     }
-                    type="text"
-                    inputMode="numeric"
-                    placeholder="Enter 6-digit code"
-                    className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-brand-accent placeholder:text-white/20 sm:max-w-xs"
-                  />
+                    className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-brand-accent focus:ring-1 focus:ring-brand-accent/50"
+                  >
+                    {LANGUAGE_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label
+                    htmlFor="currency"
+                    className="mb-2 block text-sm font-medium text-white"
+                  >
+                    Preferred currency
+                  </label>
+                  <select
+                    id="currency"
+                    value={preferences.currency}
+                    disabled={isSavingPreferences}
+                    onChange={(event) =>
+                      updatePreference({
+                        ...preferences,
+                        currency: event.target.value,
+                      })
+                    }
+                    className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-brand-accent focus:ring-1 focus:ring-brand-accent/50"
+                  >
+                    {CURRENCY_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </SettingsCard>
+          )}
+
+          {activeTab === 'security' && (
+            <SettingsCard
+              title="Account Security"
+              description="Update your password and manage multi-factor authentication."
+            >
+              <form
+                onSubmit={handlePasswordChange}
+                className="space-y-4"
+                noValidate
+              >
+                <div className="grid gap-4 md:grid-cols-3">
+                  <div>
+                    <label
+                      htmlFor="currentPassword"
+                      className="mb-2 block text-sm font-medium text-white"
+                    >
+                      Current password
+                    </label>
+                    <input
+                      id="currentPassword"
+                      type="password"
+                      autoComplete="current-password"
+                      {...register('currentPassword')}
+                      className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-brand-accent placeholder:text-white/20"
+                    />
+                    {errors.currentPassword && (
+                      <p className="mt-1 text-xs text-red-400">
+                        {errors.currentPassword.message}
+                      </p>
+                    )}
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="newPassword"
+                      className="mb-2 block text-sm font-medium text-white"
+                    >
+                      New password
+                    </label>
+                    <input
+                      id="newPassword"
+                      type="password"
+                      autoComplete="new-password"
+                      {...register('newPassword')}
+                      className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-brand-accent placeholder:text-white/20"
+                    />
+                    {errors.newPassword && (
+                      <p className="mt-1 text-xs text-red-400">
+                        {errors.newPassword.message}
+                      </p>
+                    )}
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="confirmPassword"
+                      className="mb-2 block text-sm font-medium text-white"
+                    >
+                      Confirm new password
+                    </label>
+                    <input
+                      id="confirmPassword"
+                      type="password"
+                      autoComplete="new-password"
+                      {...register('confirmPassword')}
+                      className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-brand-accent placeholder:text-white/20"
+                    />
+                    {errors.confirmPassword && (
+                      <p className="mt-1 text-xs text-red-400">
+                        {errors.confirmPassword.message}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="rounded-xl bg-white/5 border border-white/10 p-3">
+                  <p className="mb-2 text-xs font-medium text-neutral-200/70">
+                    Password strength: {strength.label}
+                  </p>
+                  <div className="h-2 w-full rounded-full bg-white/10">
+                    <div
+                      className="h-2 rounded-full bg-brand-accent transition-all"
+                      style={{ width: `${strength.score}%` }}
+                    />
+                  </div>
+                </div>
+
+                <div>
                   <button
-                    type="button"
-                    disabled={!mfaVerificationCode.trim() || isMfaBusy}
-                    onClick={() => void confirmMfaSetup()}
+                    type="submit"
+                    disabled={isUpdatingPassword}
                     className="rounded-xl bg-gradient-to-r from-brand-blue to-brand-blue-dark px-4 py-2 text-sm font-semibold text-white transition-all hover:from-brand-blue-dark hover:to-brand-blue-dark disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    Verify & enable MFA
+                    {isUpdatingPassword
+                      ? 'Updating password...'
+                      : 'Update password'}
                   </button>
                 </div>
-              </div>
-            )}
+              </form>
 
-            {showMfaDisableFlow && mfaEnabled && (
-              <div className="mt-4 rounded-xl border border-white/10 bg-white/5 p-4">
-                <h3 className="text-sm font-semibold text-white">
-                  Disable MFA
-                </h3>
-                <p className="mt-1 text-xs text-neutral-200/60">
-                  Enter a valid authenticator or backup code to disable MFA.
-                </p>
-                <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-                  <input
-                    value={mfaDisableCode}
-                    onChange={(event) => setMfaDisableCode(event.target.value)}
-                    type="text"
-                    inputMode="numeric"
-                    placeholder="Authenticator or backup code"
-                    className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-brand-accent placeholder:text-white/20 sm:max-w-xs"
-                  />
-                  <button
-                    type="button"
-                    disabled={!mfaDisableCode.trim() || isMfaBusy}
-                    onClick={() => void disableMfa()}
-                    className="rounded-xl bg-red-500/80 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    Disable MFA
-                  </button>
-                </div>
+              <div className="mt-6 border-t border-white/10 pt-6">
+                <PreferenceSwitch
+                  id="mfa-switch"
+                  label="Multi-factor authentication (MFA)"
+                  description={
+                    isCheckingMfa
+                      ? 'Checking status...'
+                      : mfaEnabled
+                        ? 'Enabled. You can disable with a valid authenticator code.'
+                        : 'Disabled. Enable MFA to secure your account.'
+                  }
+                  checked={mfaEnabled}
+                  disabled={isCheckingMfa || isMfaBusy}
+                  onChange={(checked) => {
+                    if (checked) {
+                      void startMfaSetup();
+                      return;
+                    }
+                    setShowMfaDisableFlow(true);
+                  }}
+                />
+
+                {mfaSetup && (
+                  <div className="mt-4 rounded-xl border border-white/10 bg-white/5 p-4">
+                    <h3 className="text-sm font-semibold text-white">
+                      Complete MFA setup
+                    </h3>
+                    <p className="mt-1 text-xs text-neutral-200/60">
+                      Scan the QR code with your authenticator app, then enter a
+                      generated code to confirm.
+                    </p>
+                    {mfaSetup.qrCodeUrl && (
+                      <Image
+                        src={mfaSetup.qrCodeUrl}
+                        alt="MFA QR code for authenticator setup"
+                        width={160}
+                        height={160}
+                        unoptimized
+                        className="mt-3 rounded-lg border border-white/10 bg-white p-2"
+                      />
+                    )}
+                    <p className="mt-3 text-xs text-neutral-200/70">
+                      Setup key:{' '}
+                      <span className="font-mono text-white">
+                        {mfaSetup.secret}
+                      </span>
+                    </p>
+                    <p className="mt-2 text-xs text-neutral-200/70">
+                      Backup codes:{' '}
+                      <span className="font-mono text-white">
+                        {mfaSetup.backupCodes.join(', ')}
+                      </span>
+                    </p>
+                    <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+                      <input
+                        value={mfaVerificationCode}
+                        onChange={(event) =>
+                          setMfaVerificationCode(event.target.value)
+                        }
+                        type="text"
+                        inputMode="numeric"
+                        placeholder="Enter 6-digit code"
+                        className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-brand-accent placeholder:text-white/20 sm:max-w-xs"
+                      />
+                      <button
+                        type="button"
+                        disabled={!mfaVerificationCode.trim() || isMfaBusy}
+                        onClick={() => void confirmMfaSetup()}
+                        className="rounded-xl bg-gradient-to-r from-brand-blue to-brand-blue-dark px-4 py-2 text-sm font-semibold text-white transition-all hover:from-brand-blue-dark hover:to-brand-blue-dark disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        Verify & enable MFA
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {showMfaDisableFlow && mfaEnabled && (
+                  <div className="mt-4 rounded-xl border border-white/10 bg-white/5 p-4">
+                    <h3 className="text-sm font-semibold text-white">
+                      Disable MFA
+                    </h3>
+                    <p className="mt-1 text-xs text-neutral-200/60">
+                      Enter a valid authenticator or backup code to disable MFA.
+                    </p>
+                    <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+                      <input
+                        value={mfaDisableCode}
+                        onChange={(event) =>
+                          setMfaDisableCode(event.target.value)
+                        }
+                        type="text"
+                        inputMode="numeric"
+                        placeholder="Authenticator or backup code"
+                        className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-brand-accent placeholder:text-white/20 sm:max-w-xs"
+                      />
+                      <button
+                        type="button"
+                        disabled={!mfaDisableCode.trim() || isMfaBusy}
+                        onClick={() => void disableMfa()}
+                        className="rounded-xl bg-red-500/80 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        Disable MFA
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-        </SettingsCard>
+            </SettingsCard>
+          )}
+          {activeTab === 'referrals' && <ReferralsPanel />}
+        </div>
       </div>
     </main>
   );

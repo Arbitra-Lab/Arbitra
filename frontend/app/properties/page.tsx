@@ -1,7 +1,11 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { apiClient } from '@/lib/api-client';
+import { recordActivity } from '@/lib/activity-log';
+import { PropertyDetailsModal } from '@/components/properties/PropertyDetailsModal';
+import { SaveSearchButton } from '@/components/properties/SaveSearchButton';
 import {
   DEFAULT_PROPERTY_FILTERS,
   filterProperties,
@@ -10,6 +14,22 @@ import {
   type PropertySearchFilters,
   type SearchableProperty,
 } from '@/lib/property-search';
+
+// Leaflet needs `window`, so the map is only ever loaded in the browser.
+const PropertyMap = dynamic(
+  () => import('@/components/properties/PropertyMap'),
+  {
+    ssr: false,
+    loading: () => (
+      <div
+        role="status"
+        className="rounded-2xl border border-border-subtle bg-surface p-8 text-center text-text-muted"
+      >
+        Loading map…
+      </div>
+    ),
+  },
+);
 
 interface PropertyRecord extends SearchableProperty {
   id: string;
@@ -23,6 +43,8 @@ interface PropertyRecord extends SearchableProperty {
   bathrooms?: number | null;
   area?: number | string | null;
   images?: Array<{ url: string; isPrimary?: boolean; sortOrder?: number }>;
+  latitude?: number | string | null;
+  longitude?: number | string | null;
 }
 
 interface PropertyPageResponse {
@@ -320,6 +342,8 @@ export default function PropertiesPage() {
   const [availabilityLoading, setAvailabilityLoading] = useState(false);
   const [availabilityError, setAvailabilityError] = useState('');
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [view, setView] = useState<'list' | 'map'>('list');
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const initialized = useRef(false);
 
@@ -465,6 +489,21 @@ export default function PropertiesPage() {
     Number(Boolean(filters.leaseTerm)) +
     Number(Boolean(filters.petPolicy));
   const clearFilters = () => updateFilters(DEFAULT_PROPERTY_FILTERS);
+  const selectedProperty =
+    filteredProperties.find((property) => property.id === selectedId) ?? null;
+  const currentQuery = serializePropertyFilters(
+    filters,
+    new URLSearchParams(),
+  ).toString();
+  const handleSelect = (propertyId: string) => {
+    setSelectedId(propertyId);
+    const property = properties.find((item) => item.id === propertyId);
+    recordActivity({
+      type: 'property_viewed',
+      refId: propertyId,
+      label: property?.title,
+    });
+  };
 
   return (
     <main
@@ -521,6 +560,28 @@ export default function PropertiesPage() {
         </aside>
 
         <section aria-label="Property results">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <div
+              role="group"
+              aria-label="Results view"
+              className="inline-flex rounded-lg border border-border-subtle p-1"
+            >
+              {(['list', 'map'] as const).map((mode) => (
+                <button
+                  key={mode}
+                  type="button"
+                  aria-pressed={view === mode}
+                  onClick={() => setView(mode)}
+                  className={`rounded-md px-4 py-1.5 text-sm font-semibold capitalize ${
+                    view === mode ? 'bg-brand-blue text-white' : ''
+                  }`}
+                >
+                  {mode}
+                </button>
+              ))}
+            </div>
+            <SaveSearchButton query={currentQuery} />
+          </div>
           {loading || checkingAvailability ? (
             <div
               role="status"
@@ -579,6 +640,11 @@ export default function PropertiesPage() {
                 </button>
               )}
             </div>
+          ) : view === 'map' ? (
+            <PropertyMap
+              properties={filteredProperties}
+              onSelect={handleSelect}
+            />
           ) : (
             <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
               {filteredProperties.map((property) => (
@@ -588,6 +654,11 @@ export default function PropertiesPage() {
           )}
         </section>
       </div>
+
+      <PropertyDetailsModal
+        property={selectedProperty}
+        onClose={() => setSelectedId(null)}
+      />
 
       {filtersOpen && (
         <div className="fixed inset-0 z-50 lg:hidden" role="presentation">
